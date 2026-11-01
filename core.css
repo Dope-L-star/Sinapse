@@ -611,6 +611,9 @@ html.noanim #side.two-p .pf-l,html.noanim #side.two-p .pf-r{transition-duration:
 @media (max-width:560px){.pill-total.lim{font-size:12px}}
 .sxfoot.lim{display:flex;align-items:center;gap:10px}
 .rcoin .lring{margin:0 -1px}
+/* v3.7 · «De dónde» salía vacío: el panel de filtros es una columna con scroll y achicaba la fila de proveedores (tiene overflow:auto) a 10 px. Ningún filtro se achica: el panel hace scroll. */
+#side.two-p .pf-l>*{flex-shrink:0}
+#side.two-p .pf-l #provSeg{min-height:max-content}
 /* ===== v1.3 · logos de vidrio: la S de «Synth», la Z y «Flow» ===== */
 .gS{position:relative;display:inline-block;color:transparent;background:linear-gradient(165deg,rgba(255,255,255,.96) 0%,rgba(255,198,220,.62) 20%,rgba(196,128,214,.42) 46%,rgba(255,150,140,.62) 70%,rgba(255,255,255,.92) 100%);background-size:100% 240%;-webkit-background-clip:text;background-clip:text;-webkit-text-stroke:.024em rgba(255,236,246,.78);filter:drop-shadow(0 0 .12em rgba(232,140,190,.42)) drop-shadow(0 .03em .02em rgba(0,0,0,.35));animation:gSflow 6s ease-in-out infinite;padding-right:.01em}
 @keyframes gSflow{0%,100%{background-position:0 0}50%{background-position:0 100%}}
