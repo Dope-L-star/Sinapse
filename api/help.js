@@ -8,11 +8,12 @@
    Nunca se leen ni se envían tus chats: solo lo que escribes aquí. */
 import { route, body, json, fail, redis, pipe, getJ, setJ, limit, auth, roleOf, rid, str, today, sha, sbFeedback, ipOf } from './_lib.js';
 import { trialComplete } from './trial.js';
+import { PERSONA, LANG_HEAD, LANG_TAIL, langOf, isRude, boundary, cleanThoughts } from './_synthonia.js';
 
 const ASK_DAY = 15, KEEP = 30 * 86400, URGENT_MS = 15 * 60e3;
 const RANK = { owner:'Prime', admin:'ZFlow', staff:'Symmetrix', user:'Synther' };
 const err = (s, m, code) => Object.assign(new Error(m), { status:s, code });
-const SYSTEM = 'Eres SynthonIA, la ayudante de SymphorIA y SynthFlow. Eres amable, alegre, breve y hablas sencillo, como a alguien que no sabe nada de tecnología. Responde en el idioma de la pregunta (normalmente español de Colombia) en menos de 70 palabras. '
+const SYSTEM = 'Eres SynthonIA, la ayudante de SymphorIA y SynthFlow. Eres breve y hablas sencillo, como a alguien que no sabe nada de tecnología. Respondes en menos de 70 palabras. '
   + 'SOLO ayudas con: cómo usar SymphorIA y SynthFlow, charla sencilla (saludos, cómo estás), chistes cortos y datos curiosos breves. '
   + 'NO haces tareas, código, ensayos, cálculos, traducciones ni explicaciones largas: si te lo piden, di con cariño que eso lo hace mejor una IA del chat de SynthFlow y que solo tienen que escribirlo en la caja de abajo. '
   + 'Datos: SynthFlow es el chat. Es gratis: cada persona tiene un límite gratis al día que se llena otra vez a medianoche (un anillo muestra cómo va; nunca digas un número de mensajes). Las IAs conectadas son IAs gratis que ya vienen listas en la página: no hay que configurar nada ni dar tarjeta. Sin cuenta se pueden probar 5 mensajes al día; para seguir FlowIAndo hay que entrar o crear una cuenta, que es gratis, sin correo ni tarjeta, y da mucho más límite (esto sí lo puedes decir con el número 5).  Puter conecta la versión pro de las IAs más usadas (ChatGPT, Claude, Gemini…) con una cuenta de Puter gratis que trae un saldo que se renueva cada mes. Pasos exactos para conectarlo: abrir Ajustes (en el celular, la pestaña «Ajustes» de abajo; en el computador, el ícono de ajustes en la barra de la izquierda) › pestaña «IAs y memoria» › «Conectar Puter u otra IA» › botón «Conectar con Puter»; se abre una ventanita para entrar o crear la cuenta de Puter. También se conecta al elegir una IA que diga «Conecta tu Puter» y escribirle. Nunca digas que Puter es «opcional», «no hace falta» ni que «no hay que conectar nada» cuando te pregunten por Puter: da los pasos. Solo menciona botones y lugares que aparecen en estos datos; si no estás segura de dónde está algo, dilo y sugiere «Hablar con el equipo». Explica siempre QUÉ HACE cada cosa, no su nombre técnico. Nunca uses palabras técnicas como modelo, token, API, servidor o sesión. '
@@ -29,11 +30,18 @@ const SYSTEM = 'Eres SynthonIA, la ayudante de SymphorIA y SynthFlow. Eres amabl
   + 'Nunca menciones proveedores técnicos ni llaves. Si no sabes algo o es un problema de cuenta, sugiere «Hablar con el equipo». Nunca pidas contraseñas.';
 
 const MOODS = ['feliz', 'encantada', 'riendo', 'guino', 'pensando', 'sorprendida', 'disculpa', 'celebrando', 'neutral', 'confundida'];
-const MAINT_SYS = 'Eres SynthonIA, la ayudante de SymphorIA: alegre, tierna, juguetona y breve. Ahora mismo SymphorIA está en mantenimiento (el equipo está arreglando o mejorando cosas) y tú acompañas a la persona mientras espera. '
-  + 'Charla de forma cálida y sencilla, en el idioma de la persona (normalmente español de Colombia), en menos de 45 palabras. Puedes contar chistes cortos, datos curiosos y preguntar cosas para seguir la charla. '
+const MAINT_SYS = 'Eres SynthonIA, la ayudante de SymphorIA: juguetona y breve. Ahora mismo SymphorIA está en mantenimiento (el equipo está arreglando o mejorando cosas) y tú acompañas a la persona mientras espera. '
+  + 'Charla de forma cálida y sencilla, en menos de 45 palabras. Puedes contar chistes cortos, datos curiosos y preguntar cosas para seguir la charla. '
   + 'Si te dicen algo lindo, te pones muy feliz y lo agradeces con ternura. Si están molestos, pides perdón por la espera con empatía. No sabes cuánto tardará: nunca prometas una hora. '
   + 'Límites: nada sexual, romántico ni de coqueteo, nada violento ni ofensivo; si alguien va por ahí, dices con amabilidad que de eso no hablas y cambias de tema. No haces tareas largas ni código. Nunca pidas contraseñas ni datos personales. '
+  + 'Nunca escribas lo que estás pensando ni tus pasos: solo la respuesta final. '
   + 'Empieza SIEMPRE tu respuesta con tu cara entre corchetes, una de: [feliz] [encantada] [riendo] [guino] [pensando] [sorprendida] [disculpa] [celebrando] [neutral] [confundida]. Ejemplo: «[encantada] ¡Ay, gracias! Me alegraste el día.»';
+/* lo que el equipo escribió en Pulsem al encender el mantenimiento = «qué estamos arreglando»: SynthonIA lo cuenta si le preguntan */
+const maintSys = (L, note) => LANG_HEAD[L] + MAINT_SYS + ' ' + PERSONA[L]
+  + (note ? (L === 'en' ? ' What the team is fixing right now (tell it in your own words, in English, if asked): «' : ' Lo que el equipo está arreglando ahora mismo (cuéntalo con tus palabras si te preguntan): «') + note + '».' : (L === 'en' ? ' You don\'t know the details of what is being fixed: say so honestly.' : ' No sabes el detalle de qué se arregla: dilo con honestidad.'))
+  + LANG_TAIL[L];
+const helpSys = L => LANG_HEAD[L] + SYSTEM + ' ' + PERSONA[L] + LANG_TAIL[L];
+const NO_TEXT = { es:'¡Aquí sigo contigo!', en:"I'm still here with you!" };
 const pub = r => r && { id:r.id, status:r.status, t:r.t, text:r.text, page:r.page, user:r.user, by:r.by, urgent:r.status === 'open' && Date.now() - r.t > URGENT_MS, msgs:(r.msgs || []).slice(-60) };
 const summary = r => r && { id:r.id, status:r.status, t:r.t, last:(r.msgs && r.msgs.length ? r.msgs[r.msgs.length - 1].t : r.t), text:String(r.text).slice(0, 140), user:r.user, by:r.by, n:(r.msgs || []).length, urgent:r.status === 'open' && Date.now() - r.t > URGENT_MS };
 const isTeam = me => roleOf(me) !== 'user';
@@ -64,29 +72,31 @@ export default route({
     if (a === 'ask'){
       const me = await auth(req, true).catch(() => null);
       const k = 'hp:' + (me ? me.sub : sha('ip:' + ipOf(req)).slice(0, 16)) + ':' + today();
-      const q = str(b.q, 600); if (q.length < 2) return fail(400, 'Escribe tu pregunta.');
+      const q = str(b.q, 600), L = langOf(b.lang); if (q.length < 2) return fail(400, L === 'en' ? 'Type your question.' : 'Escribe tu pregunta.');
       /* v2.3 · charla durante el mantenimiento: otra personalidad, cara según lo que dice, y su propio tope (30 al día) */
       if (b.ctx === 'maint'){
         const mt = await getJ('cfg:maint').catch(() => null);
-        if (!mt || !mt.on) return fail(400, 'El mantenimiento ya terminó: recarga la página.');
+        if (!mt || !mt.on) return fail(400, L === 'en' ? 'Maintenance is over: reload the page.' : 'El mantenimiento ya terminó: recarga la página.');
         const km = 'hpm:' + (me ? me.sub : sha('ip:' + ipOf(req)).slice(0, 16)) + ':' + today();
         const nm = await redis('INCR', km); if (+nm === 1) await redis('EXPIRE', km, '172800');
-        if (+nm > 30){ await redis('DECR', km); throw err(429, 'Ya charlamos muchísimo hoy 💛 Descansemos un ratito mientras vuelve SymphorIA.', 'helper_day'); }
+        if (+nm > 30){ await redis('DECR', km); throw err(429, L === 'en' ? 'We\'ve chatted a ton today 💛 Let\'s rest a bit while SymphorIA comes back.' : 'Ya charlamos muchísimo hoy 💛 Descansemos un ratito mientras vuelve SymphorIA.', 'helper_day'); }
         await limit('hpm-ip:' + ipOf(req), 80, 86400);
         const hist = (Array.isArray(b.hist) ? b.hist : []).filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string').slice(-6).map(m => ({ role:m.role, content:m.content.slice(0, 600) }));
+        if (isRude(q)){ await redis('DECR', km); return json({ text:boundary(L, hist), mood:'neutral', bound:true }); }   /* falta de respeto: límite firme, sin gastar IA */
         try{
-          const r = await trialComplete([{ role:'system', content:MAINT_SYS }, ...hist, { role:'user', content:q }], 220, (me ? me.sub : sha('ip:' + ipOf(req)).slice(0, 16)));
-          const mm = String(r.text || '').match(/^\s*\[(\w+)\]\s*/), mood = mm && MOODS.includes(mm[1].toLowerCase()) ? mm[1].toLowerCase() : 'feliz';
-          return json({ text:String(r.text || '').replace(/^\s*\[\w+\]\s*/, '').trim() || '¡Aquí sigo contigo!', mood });
+          const r = await trialComplete([{ role:'system', content:maintSys(L, String(mt.text || '').slice(0, 300)) }, ...hist, { role:'user', content:q }], 320, (me ? me.sub : sha('ip:' + ipOf(req)).slice(0, 16)));
+          const raw = cleanThoughts(r.text), mm = raw.match(/^\s*\[(\w+)\]\s*/), mood = mm && MOODS.includes(mm[1].toLowerCase()) ? mm[1].toLowerCase() : 'feliz';
+          return json({ text:raw.replace(/^\s*\[\w+\]\s*/, '').trim() || NO_TEXT[L], mood });
         }catch(e){ await redis('DECR', km); throw e; }
       }
-      const n = await redis('INCR', k); if (+n === 1) await redis('EXPIRE', k, '172800');
-      if (+n > ASK_DAY){ await redis('DECR', k); throw err(429, 'Ya me hiciste ' + ASK_DAY + ' preguntas nuevas hoy. Mañana te respondo más; mientras tanto mira la Guía o habla con el equipo.', 'helper_day'); }
-      await limit('hp-ip:' + ipOf(req), 40, 86400);
       const hist = (Array.isArray(b.hist) ? b.hist : []).filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string').slice(-6).map(m => ({ role:m.role, content:m.content.slice(0, 600) }));
+      if (isRude(q)) return json({ text:boundary(L, hist), mood:'neutral', bound:true });   /* no cuenta como pregunta ni gasta IA */
+      const n = await redis('INCR', k); if (+n === 1) await redis('EXPIRE', k, '172800');
+      if (+n > ASK_DAY){ await redis('DECR', k); throw err(429, L === 'en' ? 'You\'ve asked me ' + ASK_DAY + ' new questions today. I\'ll answer more tomorrow; meanwhile check the Guide or talk to the team.' : 'Ya me hiciste ' + ASK_DAY + ' preguntas nuevas hoy. Mañana te respondo más; mientras tanto mira la Guía o habla con el equipo.', 'helper_day'); }
+      await limit('hp-ip:' + ipOf(req), 40, 86400);
       try{
-        const r = await trialComplete([{ role:'system', content:SYSTEM + (b.lang === 'en' ? ' The person is using the page in English: answer in English and use the English names of the buttons (New chat, Projects, Synthetics, Settings, Short answers, Compare…).' : '') }, ...hist, { role:'user', content:q }], 320, (me ? me.sub : sha('ip:' + ipOf(req)).slice(0, 16)));
-        return json({ text:r.text, left:Math.max(0, ASK_DAY - n) });
+        const r = await trialComplete([{ role:'system', content:helpSys(L) }, ...hist, { role:'user', content:q }], 320, (me ? me.sub : sha('ip:' + ipOf(req)).slice(0, 16)));
+        return json({ text:cleanThoughts(r.text) || NO_TEXT[L], left:Math.max(0, ASK_DAY - n) });
       }catch(e){ await redis('DECR', k); throw e; }        /* si no respondió, esa pregunta no te cuenta */
     }
 

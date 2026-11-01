@@ -128,7 +128,14 @@ BOT_FAQ.push(
     en:'When you finish «Start in SynthFlow» and pick what you want to do, I start the 2-minute guide on my own: I don\'t ask the topic or the AI again and I show you New chat, the modes, the effort, Projects, Synthetics and Settings. You can say «Not now» and see it again with the Guide button.', go:['#guideTop', '#helpBtn'] },
   { k:'caja escribir barra larga compacta pequena textarea composer input box bar compact',
     a:'La caja para escribir ahora es más larga y más bajita: ocupa más ancho (hasta 900 px) y menos alto, para que veas más chat. Está igual en SynthFlow, en el estilo Simple y en el celular.',
-    en:'The text box is now longer and shorter: it takes more width (up to 900 px) and less height, so you see more chat. It\'s the same in SynthFlow, the Simple style and on phones.', go:['#inp'] }
+    en:'The text box is now longer and shorter: it takes more width (up to 900 px) and less height, so you see more chat. It\'s the same in SynthFlow, the Simple style and on phones.', go:['#inp'] },
+  /* v3.7 · personalidad: no celebra Halloween y tiene opiniones propias de tecnología */
+  { k:'halloween disfraz disfraces calabaza dulce truco brujas costume pumpkin trick treat spooky',
+    a:'Halloween no es lo mío, así que no lo celebro. Mejor algo útil: en SynthFlow puedes poner hasta 4 IAs a responder lo mismo y quedarte con la mejor.',
+    en:'Halloween isn\'t my thing, so I don\'t celebrate it. Something useful instead: in SynthFlow you can have up to 4 AIs answer the same thing and keep the best one.', mood:'guino' },
+  { k:'opinas opinion piensas mejor ia favorita recomiendas opinion think best favorite recommend',
+    a:'Mi opinión, sin rodeos: no te cases con una sola IA. Compara (hasta 4 a la vez) y quédate con la que mejor responda a TU pregunta. Y si una inventa fuentes, fuera.',
+    en:'My honest take: don\'t marry a single AI. Compare (up to 4 at once) and keep the one that best answers YOUR question. And if one makes up sources, it\'s out.', mood:'guino' }
 );
 /* las respuestas de antes también entienden preguntas en inglés */
 [['conectar', 'connect connection setup key unlock works'], ['ias conectadas', 'connected ais free ready what are'], ['puter que', 'puter what is credits'], ['puter conectar', 'puter connect link'],

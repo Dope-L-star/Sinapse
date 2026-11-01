@@ -95,8 +95,9 @@ addEventListener('pointerdown', e => {
     if (left.length){ const i = left[Math.floor(Math.random() * left.length)]; s[kind] = [...used, i]; keep(s); return L[i]; }
     for (let k = 0; k < 2; k++){
       try{
-        const q = kind === 'j' ? 'Cuéntame un chiste corto, blanco y nuevo, de una o dos líneas.' : 'Dime un dato curioso corto y verdadero del mundo, de una línea.';
-        const r = await fetch('/api/help', { method:'POST', headers:Object.assign({ 'content-type':'application/json' }, B.SESS ? { authorization:'Bearer ' + B.SESS } : {}), body:JSON.stringify({ action:'ask', q, hist:[] }) });
+        /* v3.7 · en inglés se pide en inglés (antes llegaban chistes en español con la página en inglés) */
+        const en = B.LANG === 'en', q = kind === 'j' ? (en ? 'Tell me a short, clean, new joke, one or two lines.' : 'Cuéntame un chiste corto, blanco y nuevo, de una o dos líneas.') : (en ? 'Tell me a short, true fun fact about the world, one line.' : 'Dime un dato curioso corto y verdadero del mundo, de una línea.');
+        const r = await fetch('/api/help', { method:'POST', headers:Object.assign({ 'content-type':'application/json' }, B.SESS ? { authorization:'Bearer ' + B.SESS } : {}), body:JSON.stringify({ action:'ask', q, lang:B.LANG, hist:[] }) });
         const d = await r.json().catch(() => ({}));
         if (r.ok && d.text && !s.x.includes(hash(d.text))){ s.x = [...s.x, hash(d.text)].slice(-500); keep(s); return d.text; }
       }catch(e){ break; }

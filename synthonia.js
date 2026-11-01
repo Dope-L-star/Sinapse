@@ -783,7 +783,7 @@ const BOT_FAQ = [
   /* charla sencilla */
   { k:'hola buenas hey saludos holi buenos dias tardes noches', a:'¡Hola! Soy SynthonIA 😊 ¿En qué te ayudo con SymphorIA?', wave:true },
   { k:'como estas andas va todo bien que tal', a:'¡Muy bien, gracias por preguntar! Aquí, lista para ayudarte. ¿Y tú cómo vas?', mood:'encantada' },
-  { k:'como te llamas quien eres tu nombre eres', a:'Me llamo SynthonIA. Soy la ayudante de SymphorIA: te explico la página, te muestro dónde están las cosas y, de vez en cuando, te cuento un dato curioso.', mood:'guino' },
+  { k:'como te llamas quien eres tu nombre eres', a:'Me llamo SynthonIA. Soy la ayudante de SymphorIA: te explico la página, te digo las cosas claras y tengo mis opiniones sobre tecnología (spoiler: lo simple que funciona le gana a lo brillante que se rompe).', en:'I\'m SynthonIA, SymphorIA\'s helper: I explain the site, I tell it like it is, and I have my own opinions about tech (spoiler: simple things that work beat shiny things that break).', mood:'guino' },
   { k:'chiste broma cuentame algo gracioso risa', a:'', joke:true, mood:'riendo' },
   { k:'dato curioso sabias algo interesante', a:'', fact:true, mood:'sorprendida' },
   { k:'gracias genial perfecto listo vale chevere bacano', a:'¡Con gusto! Aquí estoy cuando me necesites. ✨', mood:'encantada' },
@@ -1074,6 +1074,8 @@ async function botAsk(q){
     if (!r.ok) return botSay(d.error || 'No pude pensar una respuesta ahora. Mira la Guía o habla con el equipo.', 'disculpa', ['team', 'Hablar con el equipo']);
     /* v3.0 · si la IA dice [ver:lugar], la manita lo señala */
     const pm = String(d.text || '').match(/\[ver:(\w+)\]/), place = pm && BOT_PLACES[pm[1]];
+    /* v3.7 · si le faltaron al respeto, pone el límite con cara seria (sin señalar nada) */
+    if (d.bound) return botSay(String(d.text || ''), 'neutral');
     botSay(String(d.text || '').replace(/\s*\[ver:\w+\]/g, '').trim() + (d.left <= 3 ? '\n\n' + (B.LANG === 'en' ? '(You have ' + d.left + ' new questions left today.)' : '(Te quedan ' + d.left + ' preguntas nuevas hoy.)') : ''), place ? 'senalando' : 'feliz');
     if (place) botAnswer({ a:'', go:place, point:true });
   }catch(e){ botSay('No pude conectarme. Revisa tu internet e intenta otra vez.', 'disculpa'); }
@@ -1217,7 +1219,14 @@ BOT_FAQ.push(
     en:'When you finish «Start in SynthFlow» and pick what you want to do, I start the 2-minute guide on my own: I don\'t ask the topic or the AI again and I show you New chat, the modes, the effort, Projects, Synthetics and Settings. You can say «Not now» and see it again with the Guide button.', go:['#guideTop', '#helpBtn'] },
   { k:'caja escribir barra larga compacta pequena textarea composer input box bar compact',
     a:'La caja para escribir ahora es más larga y más bajita: ocupa más ancho (hasta 900 px) y menos alto, para que veas más chat. Está igual en SynthFlow, en el estilo Simple y en el celular.',
-    en:'The text box is now longer and shorter: it takes more width (up to 900 px) and less height, so you see more chat. It\'s the same in SynthFlow, the Simple style and on phones.', go:['#inp'] }
+    en:'The text box is now longer and shorter: it takes more width (up to 900 px) and less height, so you see more chat. It\'s the same in SynthFlow, the Simple style and on phones.', go:['#inp'] },
+  /* v3.7 · personalidad: no celebra Halloween y tiene opiniones propias de tecnología */
+  { k:'halloween disfraz disfraces calabaza dulce truco brujas costume pumpkin trick treat spooky',
+    a:'Halloween no es lo mío, así que no lo celebro. Mejor algo útil: en SynthFlow puedes poner hasta 4 IAs a responder lo mismo y quedarte con la mejor.',
+    en:'Halloween isn\'t my thing, so I don\'t celebrate it. Something useful instead: in SynthFlow you can have up to 4 AIs answer the same thing and keep the best one.', mood:'guino' },
+  { k:'opinas opinion piensas mejor ia favorita recomiendas opinion think best favorite recommend',
+    a:'Mi opinión, sin rodeos: no te cases con una sola IA. Compara (hasta 4 a la vez) y quédate con la que mejor responda a TU pregunta. Y si una inventa fuentes, fuera.',
+    en:'My honest take: don\'t marry a single AI. Compare (up to 4 at once) and keep the one that best answers YOUR question. And if one makes up sources, it\'s out.', mood:'guino' }
 );
 /* las respuestas de antes también entienden preguntas en inglés */
 [['conectar', 'connect connection setup key unlock works'], ['ias conectadas', 'connected ais free ready what are'], ['puter que', 'puter what is credits'], ['puter conectar', 'puter connect link'],
@@ -1561,8 +1570,9 @@ addEventListener('pointerdown', e => {
     if (left.length){ const i = left[Math.floor(Math.random() * left.length)]; s[kind] = [...used, i]; keep(s); return L[i]; }
     for (let k = 0; k < 2; k++){
       try{
-        const q = kind === 'j' ? 'Cuéntame un chiste corto, blanco y nuevo, de una o dos líneas.' : 'Dime un dato curioso corto y verdadero del mundo, de una línea.';
-        const r = await fetch('/api/help', { method:'POST', headers:Object.assign({ 'content-type':'application/json' }, B.SESS ? { authorization:'Bearer ' + B.SESS } : {}), body:JSON.stringify({ action:'ask', q, hist:[] }) });
+        /* v3.7 · en inglés se pide en inglés (antes llegaban chistes en español con la página en inglés) */
+        const en = B.LANG === 'en', q = kind === 'j' ? (en ? 'Tell me a short, clean, new joke, one or two lines.' : 'Cuéntame un chiste corto, blanco y nuevo, de una o dos líneas.') : (en ? 'Tell me a short, true fun fact about the world, one line.' : 'Dime un dato curioso corto y verdadero del mundo, de una línea.');
+        const r = await fetch('/api/help', { method:'POST', headers:Object.assign({ 'content-type':'application/json' }, B.SESS ? { authorization:'Bearer ' + B.SESS } : {}), body:JSON.stringify({ action:'ask', q, lang:B.LANG, hist:[] }) });
         const d = await r.json().catch(() => ({}));
         if (r.ok && d.text && !s.x.includes(hash(d.text))){ s.x = [...s.x, hash(d.text)].slice(-500); keep(s); return d.text; }
       }catch(e){ break; }
@@ -1830,7 +1840,9 @@ addEventListener('synthz-szq', () => {
 const MT = { el:null, hist:[], timer:0, mood:'feliz', busy:false, since:0, idle:0 };
 const MT_LOVE = /(gracias|te quiero|te amo|te adoro|eres (muy |la |una )?(linda|bonita|hermosa|genial|la mejor|incre[ií]ble|tierna|buena|top)|qu[eé] (linda|bonita|tierna|genial)|me (caes|encantas|gustas)|eres lo m[aá]ximo|abrazo|besito|❤|♥|💖|😍|🥰)/i;
 const MT_FUN = /(ja(ja)+|je(je)+|xd|😂|🤣|chiste|gracios)/i;
-const MT_SAD = /(fe[ao]|tonta|in[uú]til|odio|aburr|mala|est[uú]pida)/i;
+const MT_SAD = /(fe[ao]|odio|aburr|mala|lent[ao]|demora|cu[aá]ndo vuelve)/i;
+/* v3.7 · falta de respeto: ya no pide perdón; pone el límite con firmeza y elegancia (el servidor responde igual, sin gastar IA) */
+const MT_RUDE = /\b(idiota|est[uú]pid[ao]|imb[eé]cil|pendej[ao]|malparid[ao]|gonorrea|hijueputa|hp|hdp|puta|maric[oó]n|perra|zorra|mierda|c[aá]llate|idiot|stupid|moron|bitch|fuck\w*|shit\w*|asshole|shut up)\b|\b(eres|you'?re|you are)\s+(una?\s+|muy\s+|so\s+|a\s+)?(tonta|in[uú]til|basura|fea|dumb|useless|trash|ugly)\b/i;
 const mtOff = () => /pulsem/.test(location.pathname);
 const mtAdmin = () => !!(ACC && ACC.user && ['owner', 'admin'].includes(ACC.user.role));
 const mtTeam = () => !!(ACC && ACC.user && ['owner', 'admin', 'staff'].includes(ACC.user.role));
@@ -1840,12 +1852,13 @@ const mtSkipped = () => { try{ return sessionStorage.getItem('synthz:mtskip') ==
 const MT_LOCAL = {
   love:['¡Ay, me sonrojé! 💛 Gracias, de verdad. Tú también eres lo máximo.', '¡Me hiciste el día! Ya casi vuelvo con todo, gracias por esperarme.', 'Awww 🥰 Con gente como tú da gusto arreglar cosas.'],
   fun:['¡Jajaja! Me dio risa hasta en los circuitos.', 'Jaja, ¿te sabes otro? Mientras tanto el equipo sigue arreglando.', '¡Me hiciste reír! Eso me recarga más que la electricidad.'],
+  rude:['Así no. Con respeto te ayudo en lo que quieras.', 'Ese tono no va conmigo. Si quieres seguimos, pero con respeto.'],
   sad:['Uy… tienes razón en estar molesto. Estamos trabajando para que vuelva pronto y mejor.', 'Perdón por la espera. El equipo está en ello, te lo prometo.'],
   any:['¡Te escucho! Ahora mismo no puedo pensar muy profundo porque estamos arreglando cosas, pero aquí sigo contigo.', 'Mientras se arregla todo, cuéntame: ¿qué es lo primero que quieres hacer cuando vuelva SynthFlow?', 'Buena pregunta. En cuanto termine el mantenimiento te respondo mejor. ¿Me cuentas algo más?']
 };
 const mtPick = L => L[Math.floor(Math.random() * L.length)];
-const mtKind = q => MT_LOVE.test(q) ? 'love' : MT_FUN.test(q) ? 'fun' : MT_SAD.test(q) ? 'sad' : 'any';
-const MT_MOOD_OF = { love:'encantada', fun:'riendo', sad:'disculpa', any:'feliz' };
+const mtKind = q => MT_RUDE.test(q) ? 'rude' : MT_LOVE.test(q) ? 'love' : MT_FUN.test(q) ? 'fun' : MT_SAD.test(q) ? 'sad' : 'any';
+const MT_MOOD_OF = { love:'encantada', fun:'riendo', sad:'disculpa', rude:'neutral', any:'feliz' };
 
 function mtSetMood(m, hop){
   if (!MT.el) return;
@@ -1884,7 +1897,7 @@ async function mtSend(q){
   MT.busy = true; $('.mt-send', MT.el).disabled = true; MT.el.classList.add('thinking');
   let text = '', mood = MT_MOOD_OF[kind];
   try{
-    const r = await fetch('/api/help', { method:'POST', headers:Object.assign({ 'content-type':'application/json' }, B.SESS ? { authorization:'Bearer ' + B.SESS } : {}), body:JSON.stringify({ action:'ask', ctx:'maint', q, hist:MT.hist.slice(-7, -1) }) });
+    const r = await fetch('/api/help', { method:'POST', headers:Object.assign({ 'content-type':'application/json' }, B.SESS ? { authorization:'Bearer ' + B.SESS } : {}), body:JSON.stringify({ action:'ask', ctx:'maint', q, lang:B.LANG, hist:MT.hist.slice(-7, -1) }) });
     const d = await r.json().catch(() => ({}));
     if (r.ok && d.text){ text = d.text; if (d.mood && FACE[d.mood]) mood = d.mood; }
   }catch(e){}

@@ -34,5 +34,7 @@ jobs:
         run: node t/humo/prueba-mensajes.mjs
       - name: Calidad de la portada (6 pantallas)
         run: node t/portada/calidad.mjs
+      - name: Personalidad de SynthonIA
+        run: node t/synthonia/personalidad.mjs
       - name: Contrato de A.L.I.A.S.
         run: node t/alias/contrato.mjs

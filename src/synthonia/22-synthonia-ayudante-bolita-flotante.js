@@ -30,7 +30,7 @@ const BOT_FAQ = [
   /* charla sencilla */
   { k:'hola buenas hey saludos holi buenos dias tardes noches', a:'¡Hola! Soy SynthonIA 😊 ¿En qué te ayudo con SymphorIA?', wave:true },
   { k:'como estas andas va todo bien que tal', a:'¡Muy bien, gracias por preguntar! Aquí, lista para ayudarte. ¿Y tú cómo vas?', mood:'encantada' },
-  { k:'como te llamas quien eres tu nombre eres', a:'Me llamo SynthonIA. Soy la ayudante de SymphorIA: te explico la página, te muestro dónde están las cosas y, de vez en cuando, te cuento un dato curioso.', mood:'guino' },
+  { k:'como te llamas quien eres tu nombre eres', a:'Me llamo SynthonIA. Soy la ayudante de SymphorIA: te explico la página, te digo las cosas claras y tengo mis opiniones sobre tecnología (spoiler: lo simple que funciona le gana a lo brillante que se rompe).', en:'I\'m SynthonIA, SymphorIA\'s helper: I explain the site, I tell it like it is, and I have my own opinions about tech (spoiler: simple things that work beat shiny things that break).', mood:'guino' },
   { k:'chiste broma cuentame algo gracioso risa', a:'', joke:true, mood:'riendo' },
   { k:'dato curioso sabias algo interesante', a:'', fact:true, mood:'sorprendida' },
   { k:'gracias genial perfecto listo vale chevere bacano', a:'¡Con gusto! Aquí estoy cuando me necesites. ✨', mood:'encantada' },
@@ -321,6 +321,8 @@ async function botAsk(q){
     if (!r.ok) return botSay(d.error || 'No pude pensar una respuesta ahora. Mira la Guía o habla con el equipo.', 'disculpa', ['team', 'Hablar con el equipo']);
     /* v3.0 · si la IA dice [ver:lugar], la manita lo señala */
     const pm = String(d.text || '').match(/\[ver:(\w+)\]/), place = pm && BOT_PLACES[pm[1]];
+    /* v3.7 · si le faltaron al respeto, pone el límite con cara seria (sin señalar nada) */
+    if (d.bound) return botSay(String(d.text || ''), 'neutral');
     botSay(String(d.text || '').replace(/\s*\[ver:\w+\]/g, '').trim() + (d.left <= 3 ? '\n\n' + (B.LANG === 'en' ? '(You have ' + d.left + ' new questions left today.)' : '(Te quedan ' + d.left + ' preguntas nuevas hoy.)') : ''), place ? 'senalando' : 'feliz');
     if (place) botAnswer({ a:'', go:place, point:true });
   }catch(e){ botSay('No pude conectarme. Revisa tu internet e intenta otra vez.', 'disculpa'); }
