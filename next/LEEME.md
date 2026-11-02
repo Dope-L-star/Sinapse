@@ -8,7 +8,7 @@ Estas rutas salen de `app/` como páginas React (Next App Router):
 |---|---|
 | `/` y `/index.html` | `app/(site)/page.jsx` |
 | `/chat.html` (SynthFlow) | `app/(site)/chat/page.jsx` |
-| `/alias.html` (A.L.I.A.S.) | `app/(site)/alias/page.jsx` |
+| `/alias.html` (A.L.I.A.S.) | `app/(site)/alias/page.jsx` → **React de verdad** (`componentes/alias/*`, v3.8) |
 | `/ayuda.html` | `app/(site)/ayuda/page.jsx` |
 | `/offline.html` | `app/(site)/offline/page.jsx` |
 | `/pulsem.html` | `app/(panel)/pulsem/page.jsx` → **React de verdad** (`componentes/pulsem/*`, v3.8) |
@@ -23,6 +23,10 @@ Las páginas principales tienen su estructura renderizada como elementos de Reac
 ## Pulsem ya es React (v3.8)
 
 `componentes/pulsem/` reemplaza a `pulsem.js` en la versión publicada: `PulsemApp.jsx` (cabecera, puerta, menú, datos cada minuto), `Resumen.jsx`, `Llaves.jsx`, `Ajustes.jsx`, `Bandejas.jsx` (comentarios, ayuda, contactar) y `textos.js` (todo en ES/EN; cambia al instante con `<html lang>`). De `core.js` solo usa lo compartido (cuenta, `SZ.api`, avisos, íconos, SynthonIA, mantenimiento). Un cambio de Pulsem se hace en estos componentes; `src/pulsem/` queda solo para el `pulsem.html` estático (pruebas de humo y Vercel). El rediseño del panel (`componentes/admin/*`) se monta dentro de `PulsemApp` por sección.
+
+## A.L.I.A.S. ya es React (v3.8)
+
+`componentes/alias/` reemplaza a `alias.js` en la versión publicada: `AliasApp.jsx` (idioma, tema, inicio, plan, controles y el recorrido paso a paso), `Pasos.jsx`, `Resultado.jsx` (texto, Síntesis, descargas .pptx/archivos, fuentes) e `iconos.jsx`. El motor sigue igual: `alias-tools.js` (`window.ALIAS`). Textos en `alias-textos.json`. Se conservan IDs y `data-alias`; la suite de siempre corre contra la versión React con `ALIAS_UI_ROOT=next/out node t/alias/ui.mjs` (después de `node next/armar.mjs`).
 
 ## Pruebas de estructura
 

@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup, NavigableString, Comment, Tag
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = Path(__file__).resolve().parent / 'contenido' / 'arboles-react'
-PAGES = ['index.html', 'chat.html', 'alias.html', 'ayuda.html', 'offline.html']
+PAGES = ['index.html', 'chat.html', 'ayuda.html', 'offline.html']
 VOID = {'area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr'}
 
 def body_of(file: Path) -> str:

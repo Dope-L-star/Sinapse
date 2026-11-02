@@ -7,7 +7,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+/* ALIAS_UI_ROOT=next/out prueba la versión publicada (A.L.I.A.S. en React); sin ella, el alias.html de siempre */
+const ROOT = process.env.ALIAS_UI_ROOT ? path.resolve(process.env.ALIAS_UI_ROOT) : path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const PAGE_CANDIDATES = ['alias.html', path.join('src', 'alias', 'alias.html')];
 const TEXTOS = path.join(ROOT, 'alias-textos.json');
 const GOAL = 'Resumir el clima de Bogotá para un viaje corto';
