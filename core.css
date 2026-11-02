@@ -1586,6 +1586,65 @@ html.simple .cfgnav-i.on svg{background:none}
   html.simple .cfgnav-i{border-color:var(--sline,rgba(255,255,255,.16))}
   html.simple .cfgnav-i.on{border-color:var(--stext,#fff)}
 }
+/* ===== v3.8 · Vista previa de temas en Ajustes (componente React next/componentes/ajustes/VistaTemas.jsx)
+   Una ventanita de SynthFlow con los colores del tema que señalas. Los colores llegan como variables --vt-* desde React. ===== */
+.cfgth button[data-lock]{opacity:.62;cursor:help}
+.cfgth button[data-lock]:hover,.cfgth button[data-lock]:focus-visible{opacity:.9}
+.cfgthprev{margin:12px 0 2px}
+.cfgthprev:empty{display:none}
+.vt{margin:0;display:grid;gap:8px}
+.vt-win{position:relative;overflow:hidden;aspect-ratio:16/9;border-radius:16px;background:var(--vt-bg);border:1px solid color-mix(in srgb,var(--vt-a) 34%,transparent);
+  box-shadow:0 14px 36px -20px var(--vt-b),inset 0 1px 0 rgba(255,255,255,.12);color:var(--vt-text);font-size:9.5px;line-height:1.3;isolation:isolate;
+  transition:background-color .45s,border-color .45s,box-shadow .45s}
+.vt-blob{position:absolute;z-index:-1;width:46%;aspect-ratio:1;border-radius:50%;filter:blur(26px);opacity:.55;background:var(--vt-a);top:-18%;left:-10%;
+  animation:vtf 7s ease-in-out infinite alternate;transition:background-color .5s}
+.vt-blob:nth-child(2){background:var(--vt-b);left:auto;right:-12%;top:30%;animation-delay:-2.5s}
+.vt-blob:nth-child(3){background:var(--vt-c);top:auto;bottom:-30%;left:30%;width:36%;opacity:.4;animation-delay:-5s}
+@keyframes vtf{to{translate:14px 10px;scale:1.12}}
+.vt-bar{display:flex;align-items:center;gap:4px;height:20px;padding:0 9px;background:rgba(0,0,0,.22);border-bottom:1px solid rgba(255,255,255,.07)}
+.vt-bar i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.28)}
+.vt-bar i:first-child{background:#ff6b6b}.vt-bar i:nth-child(2){background:#ffd166}.vt-bar i:nth-child(3){background:#5ee39a}
+.vt-bar b{margin-left:6px;font-weight:600;letter-spacing:.02em;background:linear-gradient(95deg,var(--vt-light),var(--vt-a) 40%,var(--vt-b) 75%,var(--vt-c));-webkit-background-clip:text;background-clip:text;color:transparent}
+.vt-body{display:grid;grid-template-columns:30% 1fr;height:calc(100% - 20px)}
+.vt-side{display:flex;flex-direction:column;gap:4px;padding:8px 7px;background:var(--vt-side);border-right:1px solid rgba(255,255,255,.06);transition:background-color .45s}
+.vt-new{padding:4px 7px;border-radius:7px;font-weight:600;color:#fff;background:linear-gradient(100deg,var(--vt-a),var(--vt-b) 60%,var(--vt-c));box-shadow:0 4px 12px -6px var(--vt-b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vt-chat{padding:3px 7px;border-radius:6px;color:var(--vt-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vt-chat.on{background:rgba(255,255,255,.08);color:var(--vt-text);box-shadow:inset 2px 0 0 var(--vt-a)}
+.vt-main{position:relative;display:flex;flex-direction:column;gap:7px;padding:9px 10px 34px}
+.vt-user{align-self:flex-end;max-width:78%;margin:0;padding:5px 8px;border-radius:10px 10px 3px 10px;background:color-mix(in srgb,var(--vt-a) 30%,rgba(255,255,255,.06));border:1px solid color-mix(in srgb,var(--vt-a) 40%,transparent)}
+.vt-ai{display:flex;gap:6px;align-items:flex-start}
+.vt-ai p{margin:0 0 4px;color:var(--vt-text)}
+.vt-dot{flex:none;width:14px;height:14px;border-radius:50%;background:conic-gradient(from 200deg,var(--vt-a),var(--vt-b),var(--vt-c),var(--vt-a));box-shadow:0 0 10px -2px var(--vt-b)}
+.vt-line{display:block;height:5px;width:88%;margin-top:4px;border-radius:9px;background:linear-gradient(90deg,var(--vt-soft) 0 60%,transparent 60%);opacity:.35}
+.vt-line.s{width:60%}
+.vt-comp{position:absolute;left:10px;right:10px;bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:4px 4px 4px 9px;border-radius:999px;background:var(--vt-card);
+  border:1px solid color-mix(in srgb,var(--vt-a) 45%,transparent);box-shadow:0 0 0 1px rgba(255,255,255,.04),0 6px 16px -10px var(--vt-a);color:var(--vt-mute)}
+.vt-send{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;color:#fff;background:linear-gradient(135deg,var(--vt-a),var(--vt-b))}
+.vt-send svg{width:11px;height:11px}
+/* estilo Simple: colores propios, letra con serifa y sin manchas de luz */
+.vt-simple .vt-blob{display:none}
+.vt-simple .vt-win{border-color:rgba(255,255,255,.1);box-shadow:0 12px 30px -20px #000}
+.vt-simple .vt-bar b{font-family:var(--serif,'Instrument Serif',Georgia,serif);font-size:11px;font-weight:400;color:var(--vt-text);background:none}
+.vt-simple .vt-new{background:transparent;color:var(--vt-text);border:1px solid rgba(255,255,255,.12);box-shadow:none}
+.vt-simple .vt-user{background:var(--vt-card);border-color:transparent}
+.vt-simple .vt-dot{background:var(--vt-a);box-shadow:none}
+.vt-simple .vt-comp{border-color:rgba(255,255,255,.1);box-shadow:none}
+.vt-simple .vt-send{background:var(--vt-a)}
+/* Normal: todo un poco más grande, como en la página */
+.vt-normal .vt-win{font-size:11px}
+.vt-normal .vt-body{grid-template-columns:34% 1fr}
+.vt-cap{display:grid;gap:3px}
+.vt-tag{display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:12px;color:var(--soft)}
+.vt-tag b{color:var(--text);font-weight:600}
+.vt-tag em{margin-left:4px;font-style:normal;font-size:10px;padding:1px 7px;border-radius:99px;background:rgba(255,255,255,.08);color:var(--mute)}
+.vt-cap small{font-size:11.5px;color:var(--mute);line-height:1.4}
+html.noanim .vt *,html.noanim .vt{animation:none!important;transition:none!important}
+html.pmode .vt-blob{animation:none}
+@media (max-width:520px){.vt-win{font-size:8.5px}.vt-body{grid-template-columns:34% 1fr}.vt-chat:nth-child(4){display:none}}
+/* los <p> de Ajustes traen su propio tamaño de letra: dentro de la miniatura manda el de la miniatura */
+.vt .vt-win p{font-size:inherit!important;line-height:1.3!important;letter-spacing:0;margin-top:0}
+.vt .vt-win span,.vt .vt-win b{font-size:inherit}
+.vt{max-width:460px}
 /* v3.0 · ventana de Planes: cuatro tarjetas de vidrio; la tuya brilla con su color */
 .tcard.plans{width:min(760px,calc(100vw - 24px))}
 .pl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:14px 0 6px}
