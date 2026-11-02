@@ -7,9 +7,9 @@ import { redis, pipe, getJ, setJ, enc, dec, today, sha } from './_lib.js';
 
 export const PROV = {
   groq:{ name:'Groq', base:() => process.env.TRIAL_GROQ_URL || 'https://api.groq.com/openai/v1', cap:+process.env.POOL_CAP_GROQ || 900,
-    best:['llama-3.3-70b-versatile', 'openai/gpt-oss-120b', 'qwen/qwen3-32b', 'openai/gpt-oss-20b', 'llama-3.1-8b-instant'] },
+    best:['llama-3.3-70b-versatile', 'openai/gpt-oss-20b', 'llama-3.1-8b-instant'] },
   mistral:{ name:'Mistral', base:() => process.env.TRIAL_MISTRAL_URL || 'https://api.mistral.ai/v1', cap:+process.env.POOL_CAP_MISTRAL || 400,
-    best:['mistral-small-latest', 'mistral-medium-latest', 'open-mistral-nemo', 'ministral-8b-latest'] },
+    best:['mistral-small-latest', 'open-mistral-nemo', 'ministral-8b-latest'] },
   openrouter:{ name:'OpenRouter', base:() => process.env.OPENROUTER_URL || 'https://openrouter.ai/api/v1', cap:+process.env.POOL_CAP_OR || 45,
     best:['openrouter/free'] },
   cloudflare:{ name:'Cloudflare', base:acct => (process.env.TRIAL_CF_URL || 'https://api.cloudflare.com/client/v4') + '/accounts/' + acct + '/ai/v1', cap:+process.env.POOL_CAP_CF || 250,
@@ -19,7 +19,7 @@ export const PROV = {
     best:['gemini-flash-latest', 'gemini-flash-lite-latest', 'gemma-3-27b-it'] },
   /* Ollama (nube): desde el 9-nov-2026 varios modelos piden créditos; esos se quitan (ver OLLAMA_PAID) y solo quedan los sin costo */
   ollama:{ name:'Ollama', base:() => process.env.POOL_OLLAMA_URL || 'https://ollama.com/v1', cap:+process.env.POOL_CAP_OLLAMA || 300,
-    best:['qwen3-coder:480b', 'deepseek-v3.1:671b'] },
+    best:[] },   /* v3.7 · lo que queda gratis en Ollama es de alto consumo (qwen3-coder 480B, deepseek 671B): sin modelos por ahora */
   /* SiliconFlow (.com): SOLO la lista de modelos gratis; los de pago se rechazan aunque haya saldo */
   siliconflow:{ name:'SiliconFlow', base:() => process.env.POOL_SF_URL || 'https://api.siliconflow.com/v1', cap:+process.env.POOL_CAP_SF || 500,
     best:['Qwen/Qwen3-8B', 'THUDM/GLM-4-9B-0414', 'Qwen/Qwen2.5-7B-Instruct'] }
@@ -116,6 +116,10 @@ const gSort = (a, b) => (/^gemma/.test(a.id) - /^gemma/.test(b.id)) || (gVer(b.i
 const SF_FREE = /(^|\/)(qwen3-8b|qwen2\.5-7b-instruct|qwen3\.5-4b|glm-4-9b-0414|glm-z1-9b-0414|deepseek-r1-0528-qwen3-8b|hunyuan-mt-7b)$/i;
 /* modelos de la nube de Ollama que piden créditos desde el 9-nov-2026: nunca se listan ni se usan */
 const OLLAMA_PAID = /^(gemma4:31b|gpt-oss:(120b|20b)|nemotron-3-(super|ultra|nano:30b))(-cloud)?$/i;
+/* v3.7 · fuera los modelos de alto consumo (Sammuel, 2 nov): los de 100B parámetros o más, los «medium/large/pro» y los que piensan en voz alta.
+   Gastan la cuota gratis mucho más rápido y tardan más; quedan los pequeños y rápidos (Llama 3.3 70B, Gemini Flash, Mistral Small, Llama 8B, Gemma…). */
+const HEAVY = /(?:^|[^\d.])(?:[1-9]\d{2,})(?:\.\d+)?b\b|mistral-(medium|large)|magistral|pixtral-large|codestral|devstral-medium|-pro\b|qwen3-(32b|coder)|qwq|deepseek-(r1|v3|v4)(?!.*-qwen3-8b)|kimi-k2|maverick|grok/i;
+export const isHeavy = id => HEAVY.test(String(id || ''));
 const DROP = /whisper|guard|tts|orpheus|safeguard|allam|compound|distil|playai|embed|moderation|ocr|voxtral|transcri|lora|vision-preview|lyria|music|audio|image|flux|stable|dall/i;
 async function listFor(prov, k){
   const base = await baseOf(k), H = { Authorization:'Bearer ' + k.key };
@@ -140,7 +144,7 @@ async function listFor(prov, k){
 }
 const nice = s => String(s).replace(/^[^/]+\//, '').replace(/-latest$/, '').split(/[-_]/).map(w => /^gpt$/i.test(w) ? 'GPT' : /^oss$/i.test(w) ? 'OSS' : /^\d+(\.\d+)?b$/i.test(w) ? w.toUpperCase() : /^[a-z]/.test(w) ? w[0].toUpperCase() + w.slice(1) : w).join(' ');
 export async function models(force){
-  if (!force){ const c = await getJ('pool:models'); if (c && Date.now() - c.t < 6 * 3600e3) return c; }
+  if (!force){ const c = await getJ('pool:models'); if (c && Date.now() - c.t < 6 * 3600e3) return Object.assign(c, { list:(c.list || []).filter(m => !isHeavy(m.mid)) }); }
   const keys = await loadKeys(), out = [], provs = [];
   for (const p of ORDER){
     const ks = keys.filter(k => k.prov === p); if (!ks.length) continue;
@@ -148,6 +152,7 @@ export async function models(force){
     for (const k of ks.slice(0, 2)){ try{ got = await listFor(p, k); if (got && got.length) break; }catch(e){} }
     if (!got || !got.length) got = PROV[p].best.map(mid => ({ mid, name:mid, ctx:0 }));
     provs.push(p);
+    got = got.filter(m => !isHeavy(m.mid));
     got.slice(0, 40).forEach(m => out.push({ id:'sz:' + p + ':' + m.mid, prov:p, mid:m.mid, name:m.name && m.name !== m.mid ? m.name : nice(m.mid), ctx:m.ctx }));
   }
   const bad = (await redis('HGETALL', 'pool:badm').catch(() => [])) || [], gone = new Set();
@@ -219,7 +224,7 @@ async function visionPlan(model){
   return first ? [first, ...alts.filter(a => a.prov !== first.prov)].slice(0, 3) : alts.slice(0, 3);
 }
 /* v3.4 · la IA que revisa las respuestas: la que mejor razona entre las gratis (con fotos, una que ve) */
-const REVIEW_PREF = ['groq:openai/gpt-oss-120b', 'google:gemini-flash-latest', 'google:gemini-2.5-flash', 'groq:llama-3.3-70b-versatile', 'mistral:mistral-medium-latest', 'groq:qwen/qwen3-32b'];
+const REVIEW_PREF = ['google:gemini-flash-latest', 'google:gemini-2.5-flash', 'groq:llama-3.3-70b-versatile', 'mistral:mistral-small-latest', 'groq:openai/gpt-oss-20b'];   /* v3.7 · sin modelos de alto consumo */
 export async function reviewerModel(withImg){
   const cat = await models(false);
   if (withImg){ const v = await visionPlan(''); return v[0] ? v[0].id : ''; }

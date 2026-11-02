@@ -147,7 +147,8 @@ export default route({
       guest = { turn, isNew, ipNew:!(+inIp) };
     }
     const free = !!(me && roleOf(me) !== 'user');
-    const r = b.action === 'review' ? await review(who, ipKey, b, free) : await chat({ who, ipKey, messages:b.messages, model:typeof b.model === 'string' ? b.model : 'sz:auto', maxTokens:b.maxTokens, stream:true, free });
+    /* v3.7 · la revisión de calidad la pide la página, no la persona: no gasta su EnerX (antes un «hola» bajaba la batería 2 veces, la segunda sin hacer nada) */
+    const r = b.action === 'review' ? await review(who, ipKey, b, true) : await chat({ who, ipKey, messages:b.messages, model:typeof b.model === 'string' ? b.model : 'sz:auto', maxTokens:b.maxTokens, stream:true, free });
     let gu = '';
     if (guest){
       const tk = 'gt:' + who + ':' + guest.turn;
