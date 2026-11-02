@@ -61,3 +61,30 @@ html.noanim :is(#startBtn,.flowbtn,#nav .navgo,#tNext,.tcard .btn[data-next],[da
 .gq-full{--edge-r:16px}
 :is(#startBtn,.flowbtn,#nav .navgo,#tNext,.tcard .btn[data-next],[data-gnext],[data-nw="show"],#szSay .sb .btn:not(.ghost),#szWelcome .btn.flow,[data-bcmp],.gq-full,[data-gq="go"]:not(:disabled),[data-lk="pu"],.mv-edge):focus-visible::before{inset:-4px;padding:4px}
 :is(#startBtn,.flowbtn,#nav .navgo,#tNext,.tcard .btn[data-next],[data-gnext],[data-nw="show"],#szSay .sb .btn:not(.ghost),#szWelcome .btn.flow,[data-bcmp],.gq-full,[data-gq="go"]:not(:disabled),[data-lk="pu"],.mv-edge):focus-visible::after{opacity:1}
+/* v3.7 · «Blurry» en todo lo que baja (referencia de Sammuel: neiden.framer.media, «Blurry bajando»).
+   Lo que entra por abajo, o se va por arriba, se ve desenfocado y se aclara hacia el centro. Tres capas, más blur cuanto más al borde.
+   · La página entera (portada, Pulsem, Ayuda, Privacidad, Términos): franjas fijas arriba y abajo; la de arriba va debajo del menú.
+   · Lo que baja por dentro (Ajustes, tus chats, la conversación, la lista de IAs, los filtros, el menú de Ajustes): franjas más finas en sus bordes.
+   Arriba solo aparece cuando ya bajaste; abajo se apaga al llegar al final. Nunca se puede tocar (pointer-events:none).
+   Con «Vidrio» apagado, en el modo rápido o con la página bloqueada, no hay ninguno. */
+.szBlur{position:fixed;left:0;right:0;height:calc(min(120px,16vh) + 2px);z-index:40;pointer-events:none;opacity:0;transition:opacity .45s ease}
+#szBlurAbajo{bottom:0}
+#szBlurArriba{top:0}
+.szBlur.on,.szbe i.on{opacity:1}
+.szBlur b,.szbe i b{position:absolute;inset:0;display:block}
+/* abajo: lo más borroso pegado al borde de abajo */
+.szBlur.abajo b:nth-child(1),.szbe i.abajo b:nth-child(1){-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);-webkit-mask-image:linear-gradient(to top,#000 0%,#000 40%,transparent 100%);mask-image:linear-gradient(to top,#000 0%,#000 40%,transparent 100%)}
+.szBlur.abajo b:nth-child(2),.szbe i.abajo b:nth-child(2){-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);-webkit-mask-image:linear-gradient(to top,#000 0%,#000 25%,transparent 70%);mask-image:linear-gradient(to top,#000 0%,#000 25%,transparent 70%)}
+.szBlur.abajo b:nth-child(3),.szbe i.abajo b:nth-child(3){-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);-webkit-mask-image:linear-gradient(to top,#000 0%,transparent 40%);mask-image:linear-gradient(to top,#000 0%,transparent 40%)}
+/* arriba: igual, al revés */
+.szBlur.arriba b:nth-child(1),.szbe i.arriba b:nth-child(1){-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 40%,transparent 100%);mask-image:linear-gradient(to bottom,#000 0%,#000 40%,transparent 100%)}
+.szBlur.arriba b:nth-child(2),.szbe i.arriba b:nth-child(2){-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 25%,transparent 70%);mask-image:linear-gradient(to bottom,#000 0%,#000 25%,transparent 70%)}
+.szBlur.arriba b:nth-child(3),.szbe i.arriba b:nth-child(3){-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);-webkit-mask-image:linear-gradient(to bottom,#000 0%,transparent 40%);mask-image:linear-gradient(to bottom,#000 0%,transparent 40%)}
+/* por dentro: una capa pegada a la caja que baja (va justo después de ella, así queda encima) */
+.szbe{position:absolute;pointer-events:none;overflow:hidden;border-radius:inherit}
+.szbe i{position:absolute;left:0;right:0;height:var(--h,48px);opacity:0;transition:opacity .35s ease}
+.szbe i.arriba{top:0}
+.szbe i.abajo{bottom:0}
+html.noglass .szBlur,html.lock .szBlur,html.noglass .szbe,html.lock .szbe,html.perf-speed .szbe{display:none !important}
+@media (max-width:760px){.szBlur{height:calc(min(90px,13vh) + 2px)}}
+@media print{.szBlur,.szbe{display:none !important}}

@@ -1095,11 +1095,16 @@ document.querySelectorAll('.uscene[data-scene]').forEach(el => {
 const { $ } = SZ;
 const form = $('#heroAsk'), inp = $('#heroInp');
 if (form && inp){
-  const SUG = [['birrete', SZ.t('ix.sug1')], ['estrella', SZ.t('ix.sug2')], ['codigo', SZ.t('ix.sug3')]];
   const box = document.createElement('div');
-  box.className = 'hsug'; box.id = 'heroSug'; box.setAttribute('role', 'listbox'); box.setAttribute('aria-label', SZ.t('ix.sugAria')); box.hidden = true;
-  box.innerHTML = '<p class="hsug-t">' + SZ.t('ix.sugT') + '</p>' + SUG.map(([ic, t], i) => '<button type="button" class="hsug-i" role="option" style="--i:' + i + '"><i class="gi" data-gi="' + ic + '"></i><span>' + t + '</span></button>').join('');
-  form.appendChild(box); SZ.giFill(box);
+  box.className = 'hsug'; box.id = 'heroSug'; box.setAttribute('role', 'listbox'); box.hidden = true;
+  /* v3.7 · se vuelve a escribir si cambias el idioma (aquí o en otra pestaña), sin recargar */
+  const fill = () => {
+    const SUG = [['birrete', SZ.t('ix.sug1')], ['estrella', SZ.t('ix.sug2')], ['codigo', SZ.t('ix.sug3')]];
+    box.setAttribute('aria-label', SZ.t('ix.sugAria'));
+    box.innerHTML = '<p class="hsug-t">' + SZ.t('ix.sugT') + '</p>' + SUG.map(([ic, t], i) => '<button type="button" class="hsug-i" role="option" style="--i:' + i + '"><i class="gi" data-gi="' + ic + '"></i><span>' + t + '</span></button>').join('');
+    SZ.giFill(box);
+  };
+  fill(); form.appendChild(box); if (SZ.onLang) SZ.onLang(fill);
   inp.setAttribute('aria-controls', 'heroSug'); inp.setAttribute('aria-autocomplete', 'list');
   let y0 = 0;
   const show = on => { if (on && box.hidden) y0 = scrollY; box.hidden = !on; inp.setAttribute('aria-expanded', on ? 'true' : 'false'); form.classList.toggle('sugon', on); };
@@ -1125,13 +1130,15 @@ if (form && inp){
 }
 /* «Ver demo» decía demo pero bajaba a los pasos: ahora dice lo que hace */
 const demo = $('#demoBtn');
-if (demo && demo.firstChild && demo.firstChild.nodeType === 3) demo.firstChild.textContent = SZ.t('ix.demo') + ' ';
+const demoTxt = () => { if (demo && demo.firstChild && demo.firstChild.nodeType === 3) demo.firstChild.textContent = SZ.t('ix.demo') + ' '; };
+demoTxt(); if (SZ.onLang) SZ.onLang(demoTxt);
 /* el botón principal en el menú de arriba, solo cuando el de la portada ya no se ve */
 const nav = $('#nav'), start = $('#startBtn'), navr = nav && nav.querySelector('.navr');
 if (nav && start && navr && 'IntersectionObserver' in window){
   const go = document.createElement('a');
-  go.className = 'navgo'; go.href = 'chat.html'; go.innerHTML = '<span class="ng-l">' + SZ.t('ix.020') + '</span><span class="ng-s">' + SZ.t('tour.start') + '</span>';
-  go.setAttribute('aria-label', SZ.t('ix.goAria')); go.tabIndex = -1;
+  go.className = 'navgo'; go.href = 'chat.html'; go.tabIndex = -1;
+  const goTxt = () => { go.innerHTML = '<span class="ng-l">' + SZ.t('ix.020') + '</span><span class="ng-s">' + SZ.t('tour.start') + '</span>'; go.setAttribute('aria-label', SZ.t('ix.goAria')); };
+  goTxt(); if (SZ.onLang) SZ.onLang(goTxt);
   navr.insertBefore(go, $('#accBtn') || navr.firstChild);
   new IntersectionObserver(([e]) => {
     const on = !e.isIntersecting && e.boundingClientRect.top < 0;
@@ -1159,18 +1166,4 @@ const pause = on => { try{ if (svg && svg.pauseAnimations) on ? svg.unpauseAnima
 pause(false);
 if ('IntersectionObserver' in window) new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) sec.classList.add('on'); pause(en.isIntersecting); }), { threshold:.25 }).observe(sec);
 else sec.classList.add('on');
-})();
-/* v3.7 · desenfoque progresivo abajo y arriba (index-css 11).
-   Abajo se esconde al llegar al final, para que el pie se lea nítido; arriba aparece solo después de bajar un poco. */
-(function blurBordes(){
-  if (document.getElementById('szBlurAbajo')) return;
-  const mk = id => { const el = document.createElement('div'); el.id = id; el.className = 'szBlur'; el.setAttribute('aria-hidden', 'true'); el.innerHTML = '<i></i><i></i><i></i>'; document.body.appendChild(el); return el; };
-  const abajo = mk('szBlurAbajo'), arriba = mk('szBlurArriba');
-  let raf = 0;
-  const check = () => { raf = 0; const se = document.scrollingElement || document.documentElement;
-    abajo.classList.toggle('fin', se.scrollTop + innerHeight >= se.scrollHeight - 140);
-    arriba.classList.toggle('on', se.scrollTop > 60); };
-  addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(check); }, { passive:true });
-  addEventListener('resize', () => { if (!raf) raf = requestAnimationFrame(check); }, { passive:true });
-  check();
 })();

@@ -159,6 +159,8 @@ function copy(){
 
 /* ---- arranque ---- */
 async function boot(){
+  /* v3.7 · respeta Ajustes de SymphorIA: «Animaciones» y «Vidrio» (blurry) apagados */
+  try{ const c = JSON.parse(localStorage.getItem('synthz:cfg')) || {}; document.documentElement.classList.toggle('noanim', c.anim === false); document.documentElement.classList.toggle('noglass', c.glass === false); }catch(e){}
   const sc = document.documentElement.dataset.scheme;
   U.setScheme(sc === 'light' ? 'light' : 'dark');
   U.lang = U.detectLang();
@@ -169,6 +171,10 @@ async function boot(){
   $('#bNew').addEventListener('click', () => U.cancelAll(false));
   U.draw();
   document.documentElement.classList.add('ready');
+  /* v3.7 · si cambias el idioma en otra pestaña de SymphorIA, A.L.I.A.S. cambia al instante, sin recargar */
+  const follow = () => { const l = U.detectLang(); if (l === U.lang) return; U.lang = l; U.applyI18n(); U.draw(); window.dispatchEvent(new CustomEvent('alias:lang', { detail: { lang: U.lang } })); };
+  addEventListener('storage', e => { if (e.key === 'synthz:lang') follow(); });
+  addEventListener('pageshow', follow);
 }
 window.AliasUI.boot = boot;
 /* se espera un instante para que todas las piezas del archivo armado ya hayan corrido */

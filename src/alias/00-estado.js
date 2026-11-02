@@ -19,7 +19,9 @@ U.store = {
 };
 
 /* ---- idioma ---- */
+/* v3.7 · manda el idioma de todo SymphorIA (synthz:lang); el de A.L.I.A.S. solo queda de respaldo */
 U.detectLang = function(){
+  const g = U.store.get('synthz:lang'); if (LANGS.includes(g)) return g;
   const s = U.store.get(K_LANG);
   if (LANGS.includes(s)) return s;
   const list = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'es'];
@@ -42,7 +44,7 @@ U.loadTexts = async function(){
     U.dict = await r.json();
   }catch(e){ U.dict = {}; console.error('ALIAS: no se pudo leer ' + TEXTS_URL, e); }
 };
-U.saveLang = l => U.store.set(K_LANG, l);
+U.saveLang = l => { U.store.set(K_LANG, l); U.store.set('synthz:lang', l); };
 
 /* ---- estado ---- */
 U.fresh = function(){
