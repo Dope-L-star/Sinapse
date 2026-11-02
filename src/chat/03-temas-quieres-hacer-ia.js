@@ -139,7 +139,7 @@ function renderCPick(){
   const m = info(selId());
   b.style.setProperty('--vc', vendorColor(m.vendor));
   b.innerHTML = av(m) + '<b>' + esc(m.name) + '</b>' + (!st().pinned && m.id !== TRIAL_ID ? '<i class="sug">sugerida</i>' : '') + CARET;
-  $('#cCmp').hidden = trialOn;
+  $('#cCmp').hidden = true;   /* v3.7 · Comparar salió de la caja de escribir: ahora está en la barra («Comparar IAs») */
 }
 function renderMsgs(){
   parkComposer();

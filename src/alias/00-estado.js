@@ -26,7 +26,7 @@ U.detectLang = function(){
   if (LANGS.includes(s)) return s;
   const list = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'es'];
   for (const l of list){ const c = String(l).slice(0, 2).toLowerCase(); if (LANGS.includes(c)) return c; }
-  return 'es';
+  return 'en';   /* ni español ni inglés en el navegador: inglés (igual que el resto de SymphorIA) */
 };
 U.t = function(key, vars){
   const d = U.dict || {};

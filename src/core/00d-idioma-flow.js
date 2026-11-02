@@ -29,6 +29,7 @@ function trStr(s){
 const TR_DAYS = { lun:'Mon', mar:'Tue', 'mié':'Wed', jue:'Thu', vie:'Fri', 'sáb':'Sat', dom:'Sun' };
 /* v3.7 · Pulsem en inglés: frases con números (van ANTES del diccionario, para que no se traduzcan a medias) */
 const TR_PRE = [
+  /* v3.7 · selector de IA */ [/^(\d+) IA$/, (m, n) => n + (n === '1' ? ' AI' : ' AIs')], [/^(\d+) versi(?:ón|ones)$/, (m, n) => n + (n === '1' ? ' version' : ' versions')], [/^\+ (\d+) temas$/, '+ $1 topics'], [/^Menos temas$/, 'Fewer topics'],
   [/(\d+) mensajes en (?:los últimos )?(\d+) min\b/g, '$1 messages in the last $2 min'], [/(\d+) error(?:es)? en (\d+) min\b/g, (m, a, b) => a + (a === '1' ? ' error' : ' errors') + ' in ' + b + ' min'],
   [/(\d+) de (\d+) llaves activas/g, '$1 of $2 keys active'], [/(\d+) personas tuvieron dificultades en la última hora/g, '$1 people had trouble in the last hour'], [/\b1 persona tuvo dificultades en la última hora/g, '1 person had trouble in the last hour'],
   [/(\d+) personas\b/g, '$1 people'], [/\b1 persona\b/g, '1 person'], [/(\d+) nuevos\b/g, '$1 new'], [/(\d+) esperando\b/g, '$1 waiting'], [/(\d+) sin respuesta \+15 min/g, '$1 unanswered 15+ min'],

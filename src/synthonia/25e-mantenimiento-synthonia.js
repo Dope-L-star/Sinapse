@@ -44,7 +44,7 @@ function mtBurst(kind){
 function mtAdd(role, text, mood){
   const L = $('.mt-msgs', MT.el), d = document.createElement('div');
   d.className = 'mt-m ' + (role === 'user' ? 'me' : 'ia');
-  d.innerHTML = '<p></p>'; $('p', d).textContent = text; L.appendChild(d);
+  d.innerHTML = '<p></p>'; if (role === 'user') $('p', d).textContent = text; else $('p', d).innerHTML = synMd(text); L.appendChild(d);
   L.scrollTo({ top:L.scrollHeight, behavior:reduce ? 'auto' : 'smooth' });
   MT.hist.push({ role, content:text });
   if (role !== 'user'){

@@ -16,13 +16,14 @@
     batt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="16" height="9" rx="2.2"/><path d="M21 10.5v3"/><path d="M6 10.5v3M9 10.5v3" stroke-width="2.2"/></svg>',
     find:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg>',
     side:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M9.5 4.5v15"/></svg>',
+    cmp:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="7.5" height="14" rx="2"/><rect x="13.5" y="5" width="7.5" height="14" rx="2"/></svg>',
     chev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10l5 5 5-5"/></svg>'
   };
   const item = (k, ic, t, extra) => '<button type="button" class="sn-i" data-sn="' + k + '" style="--d:' + extra + '"><span class="sn-ic" aria-hidden="true">' + ic + '</span><span class="sn-t">' + t + '</span></button>';
   const nav = document.createElement('nav'); nav.className = 'snav'; nav.id = 'sNav'; nav.setAttribute('aria-label', 'Menú de SynthFlow');
   nav.innerHTML = '<div class="sn-top"><a class="sn-logo" href="index.html" aria-label="Volver a SymphorIA">' + SZ.flowWord() + '</a><button type="button" class="sn-x" data-sn="hide" aria-label="Cerrar la barra" data-tip="Cerrar la barra">' + I.side + '</button></div>'
-    + item('new', I.new, 'Crear', 0) + item('proj', I.proj, 'Proyectos', 1) + item('syn', I.syn, 'Sintéticos', 2) + item('cfg', I.cfg, 'Personalización', 3)
-    + '<button type="button" class="sn-i sn-more" data-sn="more" aria-expanded="false" aria-controls="snMore" style="--d:4"><span class="sn-ic" aria-hidden="true">' + I.more + '</span><span class="sn-t">Más</span><span class="sn-chev" aria-hidden="true">' + I.chev + '</span></button>'
+    + item('new', I.new, 'Crear', 0) + item('cmp', I.cmp, 'Comparar IAs', 1) + item('proj', I.proj, 'Proyectos', 2) + item('syn', I.syn, 'Sintéticos', 3) + item('cfg', I.cfg, 'Personalización', 4)
+    + '<button type="button" class="sn-i sn-more" data-sn="more" aria-expanded="false" aria-controls="snMore" style="--d:5"><span class="sn-ic" aria-hidden="true">' + I.more + '</span><span class="sn-t">Más</span><span class="sn-chev" aria-hidden="true">' + I.chev + '</span></button>'
     + '<div class="sn-sub" id="snMore" hidden>' + item('favs', I.star, 'Mensajes favoritos', 0) + item('energy', I.batt, 'Tu EnerX de hoy', 1) + item('guide', I.guide, 'Guía de SynthFlow', 2) + item('help', I.help, 'Centro de ayuda', 3) + '</div>';
   head.after(nav);
   const rh = document.createElement('p'); rh.className = 'sn-h'; rh.textContent = 'Recientes'; $('#thList').before(rh);
@@ -58,6 +59,7 @@
     if (k === 'more'){ moreOn(more.hidden); return; }
     if (k === 'hide'){ $('#chatsClose').click(); return; }
     if (k === 'new') newChat();
+    else if (k === 'cmp') cmpOpen(b);
     else if (k === 'proj') pjOpen('list');
     else if (k === 'syn') synOpen();
     else if (k === 'cfg') SZ.cfgModal();
@@ -70,10 +72,17 @@
   });
   /* el que está abierto se marca, como en Claude */
   const mark = () => {
-    const on = { proj:document.body.classList.contains('pjon'), syn:!$('#synv') || $('#synv').hidden ? false : true };
+    const on = { cmp:document.body.classList.contains('cmpm'), proj:document.body.classList.contains('pjon'), syn:!$('#synv') || $('#synv').hidden ? false : true };
     $$('.sn-i[data-sn]', nav).forEach(b => b.classList.toggle('on', !!on[b.dataset.sn]));
   };
   new MutationObserver(mark).observe(document.body, { attributes:true, attributeFilter:['class'] });
   const sv = $('#synv'); if (sv) new MutationObserver(mark).observe(sv, { attributes:true, attributeFilter:['hidden'] });
   mark();
+}
+/* v3.7 · «Comparar IAs», aparte del chat normal: marcas de 2 a 4 IA y responden la misma pregunta lado a lado.
+   Si ya estás comparando, te deja sumar otra (hasta 4). */
+function cmpOpen(anchor){
+  if (trialOn){ toast('La prueba guiada usa una sola IA. Para comparar, entra con tu cuenta o conecta Puter (es gratis).'); return; }
+  if (mode === 'cmp'){ if (st().cmp.length < CMP_MAX) openSide('add', anchor); else { toast('Ya estás comparando 4 IA, el máximo.'); inp.focus(); } return; }
+  openSide('cmp', anchor);
 }

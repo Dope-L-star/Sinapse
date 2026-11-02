@@ -10,17 +10,20 @@ const EXP = [
   ['math', 'matemáticas', /math|qwq|deepseek-r|\bo4\b|minerva|mathstral/i]
 ];
 const EXP_LABEL = Object.fromEntries(EXP.map(([k, l]) => [k, l]));
+/* v3.7 · en inglés la línea sale entera en inglés (antes: «Expert in código y think carefully…») */
+const EXP_EN = { code:'code', reason:'thinking carefully before answering', write:'writing', fast:'quick answers', vision:'images and PDFs', long:'very long texts', lang:'Spanish and other languages', math:'math' };
 function expertOf(m){
   if (!m) return { tags:[], line:'' };
   const hay = (m.id + ' ' + m.name + ' ' + (m.desc || '')).toLowerCase(), tags = [];
   EXP.forEach(([k, , re]) => {
     if (k === 'vision' ? m.vision : k === 'long' ? m.ctx >= 200000 : k === 'reason' ? (m.reasoning || re.test(hay)) : re.test(hay)) tags.push(k);
   });
-  if (!tags.length) return { tags, line:'Uso general' };          /* sin datos de especialidad: no inventamos una */
+  const en = LANG === 'en';
+  if (!tags.length) return { tags, line:en ? 'General use' : 'Uso general' };          /* sin datos de especialidad: no inventamos una */
   const order = ['code', 'reason', 'vision', 'math', 'write', 'long', 'fast', 'lang'];
   tags.sort((a, b) => order.indexOf(a) - order.indexOf(b));
-  const top = tags.slice(0, 2).map(k => EXP_LABEL[k]);
-  return { tags, line:'Experta en ' + (top.length > 1 ? top[0] + ' y ' + top[1] : top[0]) };
+  const top = tags.slice(0, 2).map(k => (en ? EXP_EN : EXP_LABEL)[k]);
+  return { tags, line:(en ? 'Expert in ' : 'Experta en ') + (top.length > 1 ? top[0] + (en ? ' and ' : ' y ') + top[1] : top[0]) };
 }
 /* ---------- encuesta: elige las IA que mejor te sirven ---------- */
 const SURVEY = [

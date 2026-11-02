@@ -107,8 +107,16 @@ const I18N = { es:{}, en:{} };
 const LANGS = [['es', 'Español'], ['en', 'English']];
 let LANG = (() => {
   try{ const s = localStorage.getItem('synthz:lang'); if (s === 'es' || s === 'en') return s; }catch(e){}
-  return /^en\b/i.test((navigator.languages && navigator.languages[0]) || navigator.language || '') ? 'en' : 'es';
+  return sysLang();
 })();
+/* v3.7 · primera visita: entra en el idioma del navegador o del computador (Sammuel, 2 nov).
+   Se recorre la lista de idiomas preferidos: el primero que sea español o inglés manda.
+   Si ninguno lo es (francés, alemán, japonés…), entra en inglés, que se entiende en más lugares. Lo que elijas a mano siempre se respeta. */
+function sysLang(){
+  const L = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'es'];
+  for (const l of L){ const c = String(l).slice(0, 2).toLowerCase(); if (c === 'es' || c === 'en') return c; }
+  return 'en';
+}
 document.documentElement.lang = LANG;
 const lang = () => LANG;
 function t(k, v){
@@ -873,6 +881,7 @@ function trStr(s){
 const TR_DAYS = { lun:'Mon', mar:'Tue', 'mié':'Wed', jue:'Thu', vie:'Fri', 'sáb':'Sat', dom:'Sun' };
 /* v3.7 · Pulsem en inglés: frases con números (van ANTES del diccionario, para que no se traduzcan a medias) */
 const TR_PRE = [
+  /* v3.7 · selector de IA */ [/^(\d+) IA$/, (m, n) => n + (n === '1' ? ' AI' : ' AIs')], [/^(\d+) versi(?:ón|ones)$/, (m, n) => n + (n === '1' ? ' version' : ' versions')], [/^\+ (\d+) temas$/, '+ $1 topics'], [/^Menos temas$/, 'Fewer topics'],
   [/(\d+) mensajes en (?:los últimos )?(\d+) min\b/g, '$1 messages in the last $2 min'], [/(\d+) error(?:es)? en (\d+) min\b/g, (m, a, b) => a + (a === '1' ? ' error' : ' errors') + ' in ' + b + ' min'],
   [/(\d+) de (\d+) llaves activas/g, '$1 of $2 keys active'], [/(\d+) personas tuvieron dificultades en la última hora/g, '$1 people had trouble in the last hour'], [/\b1 persona tuvo dificultades en la última hora/g, '1 person had trouble in the last hour'],
   [/(\d+) personas\b/g, '$1 people'], [/\b1 persona\b/g, '1 person'], [/(\d+) nuevos\b/g, '$1 new'], [/(\d+) esperando\b/g, '$1 waiting'], [/(\d+) sin respuesta \+15 min/g, '$1 unanswered 15+ min'],
@@ -3581,17 +3590,20 @@ const EXP = [
   ['math', 'matemáticas', /math|qwq|deepseek-r|\bo4\b|minerva|mathstral/i]
 ];
 const EXP_LABEL = Object.fromEntries(EXP.map(([k, l]) => [k, l]));
+/* v3.7 · en inglés la línea sale entera en inglés (antes: «Expert in código y think carefully…») */
+const EXP_EN = { code:'code', reason:'thinking carefully before answering', write:'writing', fast:'quick answers', vision:'images and PDFs', long:'very long texts', lang:'Spanish and other languages', math:'math' };
 function expertOf(m){
   if (!m) return { tags:[], line:'' };
   const hay = (m.id + ' ' + m.name + ' ' + (m.desc || '')).toLowerCase(), tags = [];
   EXP.forEach(([k, , re]) => {
     if (k === 'vision' ? m.vision : k === 'long' ? m.ctx >= 200000 : k === 'reason' ? (m.reasoning || re.test(hay)) : re.test(hay)) tags.push(k);
   });
-  if (!tags.length) return { tags, line:'Uso general' };          /* sin datos de especialidad: no inventamos una */
+  const en = LANG === 'en';
+  if (!tags.length) return { tags, line:en ? 'General use' : 'Uso general' };          /* sin datos de especialidad: no inventamos una */
   const order = ['code', 'reason', 'vision', 'math', 'write', 'long', 'fast', 'lang'];
   tags.sort((a, b) => order.indexOf(a) - order.indexOf(b));
-  const top = tags.slice(0, 2).map(k => EXP_LABEL[k]);
-  return { tags, line:'Experta en ' + (top.length > 1 ? top[0] + ' y ' + top[1] : top[0]) };
+  const top = tags.slice(0, 2).map(k => (en ? EXP_EN : EXP_LABEL)[k]);
+  return { tags, line:(en ? 'Expert in ' : 'Experta en ') + (top.length > 1 ? top[0] + (en ? ' and ' : ' y ') + top[1] : top[0]) };
 }
 /* ---------- encuesta: elige las IA que mejor te sirven ---------- */
 const SURVEY = [

@@ -16,7 +16,8 @@ try{ const u = JSON.parse(localStorage.getItem(UI_KEY)) || {}; ['free', 'fav', '
 const saveUI = () => { try{ localStorage.setItem(UI_KEY, JSON.stringify(ui)); }catch(e){} };
 
 let mode = params.get('mode') === 'cmp' ? 'cmp' : 'solo';
-let pickMode = 'set';            /* 'set' = cambiar la IA · 'add' = sumar otra IA para comparar */
+let pickMode = 'set';
+let pickCmp = false;             /* v3.7 · «Comparar IAs» (su propio lugar en la barra): marcas 2 a 4 y empiezas */            /* 'set' = cambiar la IA · 'add' = sumar otra IA para comparar */
 let cmpLast = null;              /* la última pregunta de Comparar: sus tarjetas siguen ahí aunque se repinte */
 const jobOwn = {};               /* qué trabajo es dueño de cada «pensando…» */
 const isMobile = () => matchMedia('(max-width:760px)').matches;
@@ -64,7 +65,7 @@ function tags(m, full){
   return h;
 }
 const exC = new Map();
-const expert = m => { let e = exC.get(m.id); if (!e){ e = SZ.expertOf(m); exC.set(m.id, e); } return e; };
+const expert = m => { const k = SZ.lang() + m.id; let e = exC.get(k); if (!e){ e = SZ.expertOf(m); exC.set(k, e); } return e; };
 const STAR = '<svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9 6.8 19.7l1-5.9L3.5 9.7l5.9-.8z"/></svg>';
 
 /* familia de cada IA, con el nombre que la gente conoce */
@@ -101,12 +102,12 @@ function itemHtml(m, i, q, anim){
   const pay = payOf(m.id), ok = connected(m.id), ck = pickSel.has(m.id);
   const badge = '<i class="mpay ' + pay[0] + (ok ? '' : ' lock') + '">' + esc(ok ? pay[2] : (/^pu:/.test(m.id) ? 'Conecta tu Puter' : /^sz:/.test(m.id) ? 'Descansando' : 'No disponible')) + '</i>';
   const why = (rec ? '<b class="pti">Para ' + esc(TOPIC[tk].l) + '</b> · ' : forMe().has(m.id) && ptab === 'forme' ? '<b class="pti">Para ti</b> · ' : '') + esc(expert(m).line);
-  const act = inCmp ? '<span class="mya">ya está</span>' : '<button type="button" class="btn sm' + (ok ? '' : ' ghost') + ' muse" data-use>' + (add ? (ok ? 'Sumar' : 'Conectar') : sel ? 'En uso' : ok ? 'Usar' : 'Conectar') + '</button>';
+  const act = pickCmp ? '' : inCmp ? '<span class="mya">ya está</span>' : '<button type="button" class="btn sm' + (ok ? '' : ' ghost') + ' muse" data-use>' + (add ? (ok ? 'Sumar' : 'Conectar') : sel ? 'En uso' : ok ? 'Usar' : 'Conectar') + '</button>';
   return '<div class="mi' + (sel ? ' sel' : '') + (on ? ' on' : '') + (fav ? ' fav' : '') + (ck ? ' ck' : '') + (inCmp ? ' cmpd' : '') + (busy[m.id] ? ' busy' : '') + (anim ? ' in' : '') + '" role="option" tabindex="' + (sel || (mode === 'cmp' && i === 0) ? 0 : -1) + '" data-hover data-id="' + esc(m.id) + '" aria-selected="' + (sel || on) + '" style="--vc:' + vendorColor(m.vendor) + ';--i:' + i + '">' +
     av(m).replace('<i class="n"></i>', '<i class="n">' + n + '</i>') +
     '<div class="mi-t"><div class="mi-name"><span>' + hl(m.name, q) + '</span>' + badge + spendTag(m) + '</div><div class="mi-ex">' + why + '</div></div>' +
     '<div class="mi-a"><button class="star" type="button" aria-label="' + (fav ? 'Quitar de favoritos' : 'Añadir a favoritos') + '" aria-pressed="' + fav + '">' + STAR + '</button>' +
-    (add ? '' : '<label class="ckb"><input type="checkbox" data-ck' + (ck ? ' checked' : '') + '><span>Comparar</span></label>') + act + '</div></div>';
+    (!pickCmp ? '' : '<label class="ckb"><input type="checkbox" data-ck' + (ck ? ' checked' : '') + '><span>Comparar</span></label>') + act + '</div></div>';
 }
 function paintProv(){
   $$('.pdot[data-pd]').forEach(d => d.classList.toggle('on', d.dataset.pd === 'sz' ? szOn() : d.dataset.pd === 'pu' ? puterOn() : d.dataset.pd === 'gq' ? gqOn() : orOn()));
@@ -294,6 +295,7 @@ listEl.addEventListener('click', e => {
   if (star){ toggleFav(star.closest('.mi'), star); return; }
   if (e.target.closest('.ckb')) return;                  /* la casilla «Comparar» se maneja en «change» */
   const mi = e.target.closest('.mi'); if (!mi || mi.classList.contains('cmpd')) return;
+  if (pickCmp){ const c = $('[data-ck]', mi); if (c){ c.checked = !c.checked; c.dispatchEvent(new Event('change', { bubbles:true })); } return; }
   pickModel(mi.dataset.id, mi);
 });
 /* marcar varias para compararlas (hasta 4; de OpenRouter, máximo 2) */
@@ -310,8 +312,10 @@ listEl.addEventListener('change', e => {
 });
 function paintPGo(){
   const b = $('#pGo'), n = pickSel.size;
-  b.hidden = pickMode === 'add' || n < 2;
-  if (!b.hidden){ b.textContent = 'Comparar estas ' + n + ' →'; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
+  b.hidden = !pickCmp;
+  b.disabled = n < 2;
+  b.textContent = n < 2 ? (n ? 'Marca una más' : 'Marca 2 a 4 IA') : 'Comparar estas ' + n + ' →';
+  if (n >= 2){ b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
 }
 $('#pGo').addEventListener('click', () => {
   const ids = [...pickSel]; if (ids.length < 2) return;
@@ -338,11 +342,12 @@ $('#pTopics').addEventListener('click', e => {
 function paintPNote(){
   const note = $('#pNote'), q = query.trim(), tq = ptopic || (q ? topicFor(q) : null);
   note.hidden = false; note.classList.toggle('warn', pickMode === 'add');
-  if (pickMode === 'add') note.innerHTML = (cmpLast && cmpLast.text ? 'La que sumes responde a tu última pregunta y aparece al lado, sin volver a enviarla. ' : 'Responde la misma pregunta que las demás y aparece al lado. ') + '<b>Ojo:</b> cada IA cuenta como un mensaje de tu límite de hoy. Puedes poner hasta 4 a la vez.';
-  else if (tq) note.innerHTML = 'Para <b>' + esc(TOPIC[tq].l) + '</b> te recomiendo estas. Marca dos para compararlas lado a lado.';
+  if (pickCmp) note.innerHTML = 'Marca de <b>2 a 4 IA</b> y toca «Comparar». Todas responden la misma pregunta, lado a lado. <b>Ojo:</b> cada una cuenta como un mensaje.';
+  else if (pickMode === 'add') note.innerHTML = (cmpLast && cmpLast.text ? 'La que sumes responde a tu última pregunta y aparece al lado, sin volver a enviarla. ' : 'Responde la misma pregunta que las demás y aparece al lado. ') + '<b>Ojo:</b> cada IA cuenta como un mensaje de tu límite de hoy. Puedes poner hasta 4 a la vez.';
+  else if (tq) note.innerHTML = 'Para <b>' + esc(TOPIC[tq].l) + '</b> te recomiendo estas.';
   else if (ptab === 'fav') note.innerHTML = st().fav.length ? 'Tus IA favoritas. Toca la estrella de cualquier IA para guardarla aquí.' : 'Aún no tienes favoritas: toca la ★ de una IA para guardarla aquí.';
-  else if (ptab === 'all') note.innerHTML = 'Todas las IA que puedes usar. Marca dos o más para compararlas.';
-  else note.innerHTML = 'Tus IA recomendadas van arriba ✦. Marca dos o más para compararlas lado a lado.';
+  else if (ptab === 'all') note.innerHTML = 'Todas las IA que puedes usar. Toca una para empezar.';
+  else note.innerHTML = 'Tus IA recomendadas van arriba ✦. Toca una para usarla.';
 }
 /* cambia un bloque con una transición suave de altura (para «+ temas») */
 function smoothSwap(box, paint){

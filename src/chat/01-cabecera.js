@@ -24,7 +24,7 @@ function renderTop(animate){
     row.classList.remove('n3', 'n4');
     const m = info(selId()), open = $('#side').classList.contains('open') && pickMode === 'set';
     row.innerHTML = '<button type="button" class="mchip" id="curChip" aria-haspopup="dialog" aria-expanded="' + open + '" title="Cambiar de IA" style="--vc:' + vendorColor(m.vendor) + '">' + av(m) + '<b id="curName"></b>' + CARET + '</button>'
-      + (trialOn ? '' : '<button type="button" class="addb" data-add aria-label="Agregar otra IA para comparar">' + PLUS + '<span>Agregar otra IA</span></button>')
+      /* v3.7 · «Agregar otra IA» ya no va aquí: Comparar tiene su propio lugar en la barra («Comparar IAs») */
       + '<span class="paym" id="payM"></span>';
     const h1 = $('#curName'); h1.setAttribute('aria-label', m.name);
     if (animate) retype(h1, m.name, { cps:70, max:.7 }); else h1.textContent = m.name;

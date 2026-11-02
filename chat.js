@@ -16,7 +16,8 @@ try{ const u = JSON.parse(localStorage.getItem(UI_KEY)) || {}; ['free', 'fav', '
 const saveUI = () => { try{ localStorage.setItem(UI_KEY, JSON.stringify(ui)); }catch(e){} };
 
 let mode = params.get('mode') === 'cmp' ? 'cmp' : 'solo';
-let pickMode = 'set';            /* 'set' = cambiar la IA · 'add' = sumar otra IA para comparar */
+let pickMode = 'set';
+let pickCmp = false;             /* v3.7 · «Comparar IAs» (su propio lugar en la barra): marcas 2 a 4 y empiezas */            /* 'set' = cambiar la IA · 'add' = sumar otra IA para comparar */
 let cmpLast = null;              /* la última pregunta de Comparar: sus tarjetas siguen ahí aunque se repinte */
 const jobOwn = {};               /* qué trabajo es dueño de cada «pensando…» */
 const isMobile = () => matchMedia('(max-width:760px)').matches;
@@ -64,7 +65,7 @@ function tags(m, full){
   return h;
 }
 const exC = new Map();
-const expert = m => { let e = exC.get(m.id); if (!e){ e = SZ.expertOf(m); exC.set(m.id, e); } return e; };
+const expert = m => { const k = SZ.lang() + m.id; let e = exC.get(k); if (!e){ e = SZ.expertOf(m); exC.set(k, e); } return e; };
 const STAR = '<svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9 6.8 19.7l1-5.9L3.5 9.7l5.9-.8z"/></svg>';
 
 /* familia de cada IA, con el nombre que la gente conoce */
@@ -101,12 +102,12 @@ function itemHtml(m, i, q, anim){
   const pay = payOf(m.id), ok = connected(m.id), ck = pickSel.has(m.id);
   const badge = '<i class="mpay ' + pay[0] + (ok ? '' : ' lock') + '">' + esc(ok ? pay[2] : (/^pu:/.test(m.id) ? 'Conecta tu Puter' : /^sz:/.test(m.id) ? 'Descansando' : 'No disponible')) + '</i>';
   const why = (rec ? '<b class="pti">Para ' + esc(TOPIC[tk].l) + '</b> · ' : forMe().has(m.id) && ptab === 'forme' ? '<b class="pti">Para ti</b> · ' : '') + esc(expert(m).line);
-  const act = inCmp ? '<span class="mya">ya está</span>' : '<button type="button" class="btn sm' + (ok ? '' : ' ghost') + ' muse" data-use>' + (add ? (ok ? 'Sumar' : 'Conectar') : sel ? 'En uso' : ok ? 'Usar' : 'Conectar') + '</button>';
+  const act = pickCmp ? '' : inCmp ? '<span class="mya">ya está</span>' : '<button type="button" class="btn sm' + (ok ? '' : ' ghost') + ' muse" data-use>' + (add ? (ok ? 'Sumar' : 'Conectar') : sel ? 'En uso' : ok ? 'Usar' : 'Conectar') + '</button>';
   return '<div class="mi' + (sel ? ' sel' : '') + (on ? ' on' : '') + (fav ? ' fav' : '') + (ck ? ' ck' : '') + (inCmp ? ' cmpd' : '') + (busy[m.id] ? ' busy' : '') + (anim ? ' in' : '') + '" role="option" tabindex="' + (sel || (mode === 'cmp' && i === 0) ? 0 : -1) + '" data-hover data-id="' + esc(m.id) + '" aria-selected="' + (sel || on) + '" style="--vc:' + vendorColor(m.vendor) + ';--i:' + i + '">' +
     av(m).replace('<i class="n"></i>', '<i class="n">' + n + '</i>') +
     '<div class="mi-t"><div class="mi-name"><span>' + hl(m.name, q) + '</span>' + badge + spendTag(m) + '</div><div class="mi-ex">' + why + '</div></div>' +
     '<div class="mi-a"><button class="star" type="button" aria-label="' + (fav ? 'Quitar de favoritos' : 'Añadir a favoritos') + '" aria-pressed="' + fav + '">' + STAR + '</button>' +
-    (add ? '' : '<label class="ckb"><input type="checkbox" data-ck' + (ck ? ' checked' : '') + '><span>Comparar</span></label>') + act + '</div></div>';
+    (!pickCmp ? '' : '<label class="ckb"><input type="checkbox" data-ck' + (ck ? ' checked' : '') + '><span>Comparar</span></label>') + act + '</div></div>';
 }
 function paintProv(){
   $$('.pdot[data-pd]').forEach(d => d.classList.toggle('on', d.dataset.pd === 'sz' ? szOn() : d.dataset.pd === 'pu' ? puterOn() : d.dataset.pd === 'gq' ? gqOn() : orOn()));
@@ -294,6 +295,7 @@ listEl.addEventListener('click', e => {
   if (star){ toggleFav(star.closest('.mi'), star); return; }
   if (e.target.closest('.ckb')) return;                  /* la casilla «Comparar» se maneja en «change» */
   const mi = e.target.closest('.mi'); if (!mi || mi.classList.contains('cmpd')) return;
+  if (pickCmp){ const c = $('[data-ck]', mi); if (c){ c.checked = !c.checked; c.dispatchEvent(new Event('change', { bubbles:true })); } return; }
   pickModel(mi.dataset.id, mi);
 });
 /* marcar varias para compararlas (hasta 4; de OpenRouter, máximo 2) */
@@ -310,8 +312,10 @@ listEl.addEventListener('change', e => {
 });
 function paintPGo(){
   const b = $('#pGo'), n = pickSel.size;
-  b.hidden = pickMode === 'add' || n < 2;
-  if (!b.hidden){ b.textContent = 'Comparar estas ' + n + ' →'; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
+  b.hidden = !pickCmp;
+  b.disabled = n < 2;
+  b.textContent = n < 2 ? (n ? 'Marca una más' : 'Marca 2 a 4 IA') : 'Comparar estas ' + n + ' →';
+  if (n >= 2){ b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
 }
 $('#pGo').addEventListener('click', () => {
   const ids = [...pickSel]; if (ids.length < 2) return;
@@ -338,11 +342,12 @@ $('#pTopics').addEventListener('click', e => {
 function paintPNote(){
   const note = $('#pNote'), q = query.trim(), tq = ptopic || (q ? topicFor(q) : null);
   note.hidden = false; note.classList.toggle('warn', pickMode === 'add');
-  if (pickMode === 'add') note.innerHTML = (cmpLast && cmpLast.text ? 'La que sumes responde a tu última pregunta y aparece al lado, sin volver a enviarla. ' : 'Responde la misma pregunta que las demás y aparece al lado. ') + '<b>Ojo:</b> cada IA cuenta como un mensaje de tu límite de hoy. Puedes poner hasta 4 a la vez.';
-  else if (tq) note.innerHTML = 'Para <b>' + esc(TOPIC[tq].l) + '</b> te recomiendo estas. Marca dos para compararlas lado a lado.';
+  if (pickCmp) note.innerHTML = 'Marca de <b>2 a 4 IA</b> y toca «Comparar». Todas responden la misma pregunta, lado a lado. <b>Ojo:</b> cada una cuenta como un mensaje.';
+  else if (pickMode === 'add') note.innerHTML = (cmpLast && cmpLast.text ? 'La que sumes responde a tu última pregunta y aparece al lado, sin volver a enviarla. ' : 'Responde la misma pregunta que las demás y aparece al lado. ') + '<b>Ojo:</b> cada IA cuenta como un mensaje de tu límite de hoy. Puedes poner hasta 4 a la vez.';
+  else if (tq) note.innerHTML = 'Para <b>' + esc(TOPIC[tq].l) + '</b> te recomiendo estas.';
   else if (ptab === 'fav') note.innerHTML = st().fav.length ? 'Tus IA favoritas. Toca la estrella de cualquier IA para guardarla aquí.' : 'Aún no tienes favoritas: toca la ★ de una IA para guardarla aquí.';
-  else if (ptab === 'all') note.innerHTML = 'Todas las IA que puedes usar. Marca dos o más para compararlas.';
-  else note.innerHTML = 'Tus IA recomendadas van arriba ✦. Marca dos o más para compararlas lado a lado.';
+  else if (ptab === 'all') note.innerHTML = 'Todas las IA que puedes usar. Toca una para empezar.';
+  else note.innerHTML = 'Tus IA recomendadas van arriba ✦. Toca una para usarla.';
 }
 /* cambia un bloque con una transición suave de altura (para «+ temas») */
 function smoothSwap(box, paint){
@@ -417,7 +422,7 @@ function renderTop(animate){
     row.classList.remove('n3', 'n4');
     const m = info(selId()), open = $('#side').classList.contains('open') && pickMode === 'set';
     row.innerHTML = '<button type="button" class="mchip" id="curChip" aria-haspopup="dialog" aria-expanded="' + open + '" title="Cambiar de IA" style="--vc:' + vendorColor(m.vendor) + '">' + av(m) + '<b id="curName"></b>' + CARET + '</button>'
-      + (trialOn ? '' : '<button type="button" class="addb" data-add aria-label="Agregar otra IA para comparar">' + PLUS + '<span>Agregar otra IA</span></button>')
+      /* v3.7 · «Agregar otra IA» ya no va aquí: Comparar tiene su propio lugar en la barra («Comparar IAs») */
       + '<span class="paym" id="payM"></span>';
     const h1 = $('#curName'); h1.setAttribute('aria-label', m.name);
     if (animate) retype(h1, m.name, { cps:70, max:.7 }); else h1.textContent = m.name;
@@ -1306,7 +1311,7 @@ function renderCPick(){
   const m = info(selId());
   b.style.setProperty('--vc', vendorColor(m.vendor));
   b.innerHTML = av(m) + '<b>' + esc(m.name) + '</b>' + (!st().pinned && m.id !== TRIAL_ID ? '<i class="sug">sugerida</i>' : '') + CARET;
-  $('#cCmp').hidden = trialOn;
+  $('#cCmp').hidden = true;   /* v3.7 · Comparar salió de la caja de escribir: ahora está en la barra («Comparar IAs») */
 }
 function renderMsgs(){
   parkComposer();
@@ -2656,38 +2661,46 @@ function setMode(m){
 }
 /* ---------- selector de IA flotante (computador) u hoja que sube (celular) ---------- */
 const side = $('#side'), scrim = $('#scrim');
-/* ---------- selector en dos paneles: «Filtros» (en el centro) y «Las IA» (se abre a la derecha) ---------- */
-const LUPA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>';
+/* ---------- v3.7 · selector de IA nuevo (Sammuel: «ese panel de escoger es muy confuso»)
+   Antes abría con una pantalla llena de filtros y había que pulsar «Ver las IA» para ver alguna.
+   Ahora abre directo en las IA: arriba buscas, al lado eliges Para ti / Todas / Favoritas y abajo tocas la que quieres.
+   Los filtros (temas, en qué son buenas, de dónde, orden) quedan detrás de «Personalizar búsqueda».
+   Comparar ya no se mezcla aquí: tiene su propio lugar en la barra («Comparar IAs»). ---------- */
+const TUNE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>';
 (function twoPanels(){
-  const L = document.createElement('div'); L.className = 'pf-l'; L.setAttribute('role', 'group'); L.setAttribute('aria-label', 'Filtros');
+  const L = document.createElement('div'); L.className = 'pf-l'; L.setAttribute('role', 'group'); L.setAttribute('aria-label', 'Personalizar búsqueda');
   const R = document.createElement('div'); R.className = 'pf-r'; R.setAttribute('role', 'group'); R.setAttribute('aria-label', 'Las IA');
   const head = $('.phead', side), fw = $('.fwrap', side) || $('#filters'), prov = $('#provSeg'), sortr = $('.sortrow', side), more = $('#pMore'), pfoot = $('.pfoot', side);
   const lbl = t => { const e = document.createElement('p'); e.className = 'plbl'; e.textContent = t; return e; };
-  head.insertAdjacentHTML('beforeend', '<button type="button" class="plupa" id="pLupa" aria-label="Buscar una IA" data-tip="Buscar una IA">' + LUPA + '</button>');
-  const go = document.createElement('div'); go.className = 'pl-go';
-  go.innerHTML = '<button type="button" class="btn sm flow" id="pSee">Ver las IA <span aria-hidden="true">→</span></button>';
-  L.append(head, lbl('Qué mostrar'), $('#pTabs'), lbl('¿Para qué la quieres?'), $('#pTopics'), lbl('En qué son buenas'), fw, lbl('De dónde'), prov, sortr, go);
-  const rh = document.createElement('div'); rh.className = 'pr-head';
-  rh.innerHTML = '<button type="button" class="pr-back" id="pBack" aria-label="Volver a los filtros"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg><span>Filtros</span></button><b>Las IA</b><span class="pr-n" id="prN"></span>';
-  R.append(rh, $('#searchBox'), $('#pNote'), $('#mlist'), pfoot);
+  head.insertAdjacentHTML('beforeend', '<span class="pr-n" id="prN"></span>');
+  head.appendChild($('#sideClose'));
+  const lh = document.createElement('div'); lh.className = 'pl-head';
+  lh.innerHTML = '<b>Personalizar búsqueda</b><button type="button" class="pr-back" id="pBack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>Listo</span></button>';
+  L.append(lh, lbl('¿Para qué la quieres?'), $('#pTopics'), lbl('En qué son buenas'), fw, lbl('De dónde'), prov, sortr);
+  const qr = document.createElement('div'); qr.className = 'pq';
+  qr.append($('#pTabs'));
+  qr.insertAdjacentHTML('beforeend', '<button type="button" class="pcust" id="pCust" aria-expanded="false" aria-controls="side">' + TUNE + '<span>Personalizar búsqueda</span><i class="pc-n" id="pCustN" hidden></i></button>');
+  R.append(head, $('#searchBox'), qr, $('#pNote'), $('#mlist'), pfoot);
   if (more) more.remove();
-  side.append(L, R); side.classList.add('two-p');
+  side.append(L, R); side.classList.add('two-p', 'v37', 'two');
 })();
 const sideL = $('.pf-l', side), sideR = $('.pf-r', side);
 const wide2 = () => matchMedia('(min-width:900px)').matches;
-function sideShift(){ const w = side.offsetWidth, lw = sideL.offsetWidth;   /* v1.8: medidas sin la animación de entrada (antes quedaba corrido a la izquierda) */ side.style.setProperty('--shift', Math.max(0, (w - lw) / 2).toFixed(0) + 'px'); }
-function sideStage(two, o = {}){
-  requestAnimationFrame(() => { try{ placePill($('#provSeg')); placePill($('#sortSeg')); placePill($('#pTabs')); }catch(e){} });
-  if (two === side.classList.contains('two')){ if (two && o.focus) setTimeout(() => $('#q').focus(), 50); return; }
-  sideShift(); side.classList.toggle('two', two); SZ.SND.expand && two && SZ.SND.expand();
-  if (two){ requestAnimationFrame(() => { V.hM = 0; renderList({ keep:true, animate:true }); }); if (o.focus) setTimeout(() => $('#q').focus(), wide2() ? 520 : 120); }
+function sideShift(){}
+/* cuántos filtros tienes puestos: se ve en el botón «Personalizar búsqueda» */
+function paintCust(){
+  const n = ['free', 'fav', 'reason', 'vision', 'long', 'forme', 'code', 'write', 'fast', 'math', 'newm'].filter(k => ui[k]).length + (ptopic ? 1 : 0) + (ui.prov !== 'all' ? 1 : 0);
+  const c = $('#pCustN'); if (c){ c.hidden = !n; c.textContent = n; }
 }
-addEventListener('resize', () => { if (side.classList.contains('open')) sideShift(); });
-$('#pLupa').addEventListener('click', () => sideStage(true, { focus:true }));
-$('#pSee').addEventListener('click', () => sideStage(true));
-$('#pBack').addEventListener('click', () => sideStage(false));
-/* elegir cualquier cosa en «Filtros» abre «Las IA» */
-sideL.addEventListener('click', e => { if (e.target.closest('[data-ptk],.fchip,#pTabs button,#provSeg button,#sortSeg button')) setTimeout(() => sideStage(true), 260); });
+function custOn(on){
+  side.classList.toggle('cust', on); $('#pCust').setAttribute('aria-expanded', String(on));
+  requestAnimationFrame(() => { try{ placePill($('#provSeg')); placePill($('#sortSeg')); placePill($('#pTabs')); }catch(e){} });
+  if (on && SZ.SND.expand) SZ.SND.expand();
+}
+function sideStage(two, o = {}){ custOn(!two); if (two && o.focus) setTimeout(() => $('#q').focus(), 60); }
+$('#pCust').addEventListener('click', () => custOn(!side.classList.contains('cust')));
+$('#pBack').addEventListener('click', () => { custOn(false); renderList({ keep:true, animate:true }); });
+sideL.addEventListener('click', e => { if (e.target.closest('[data-ptk],.fchip,#provSeg button,#sortSeg button')) setTimeout(() => { paintCust(); if (wide2()) renderList({ keep:true }); }, 60); });
 /* el selector se amplía desde donde lo tocaste hasta el centro, y al cerrarlo vuelve allí (animación al revés) */
 let sideFrom = null;
 function sideFlip(open){
@@ -2704,16 +2717,19 @@ function sideFlip(open){
 function placeSide(){}
 function openSide(kind, anchor){
   if (isLocked()){ lockNudge(); toast('Primero conecta Puter: es gratis y con un clic.'); return; }
-  if (agentOn() && mode === 'solo' && kind !== 'add'){ toast('Con SuperiorSynth la IA la elige él. Si quieres elegirla tú, vuelve a «Chats».'); return; }
+  if (agentOn() && mode === 'solo' && kind !== 'add' && kind !== 'cmp'){ toast('Con SuperiorSynth la IA la elige él. Si quieres elegirla tú, vuelve a «Chats».'); return; }
   pickMode = kind === 'add' || mode === 'cmp' ? 'add' : 'set';
-  $('#pTitle').textContent = pickMode === 'add' ? 'Suma otra IA a la mesa' : '¿Con quién fluyes hoy?';
+  pickCmp = kind === 'cmp' && mode !== 'cmp'; if (!pickCmp) pickSel.clear();
+  side.classList.toggle('pcmp', pickCmp);
+  $('#pTitle').textContent = pickCmp ? 'Compara IAs lado a lado' : pickMode === 'add' ? 'Suma otra IA a la mesa' : 'Elige tu IA';
   const a = anchor && anchor.isConnected ? anchor : $('#curChip') || $('#cPick') || $('#pickRow');
   sideFrom = a ? a.getBoundingClientRect() : null;
   if (pickMode === 'set' && !ptopic && curTopic) ptopic = curTopic;
   renderPTopics(); paintPNote(); paintPGo();
   const wasOpen = side.classList.contains('open');
-  if (!wasOpen) side.classList.toggle('two', !!(pickMode === 'add' && !wide2()));
-  side.classList.add('open'); { sideL.style.transition = 'none'; sideShift(); void sideL.offsetWidth; sideL.style.transition = ''; } requestAnimationFrame(sideShift);   /* v1.8: abre ya centrado, sin saltar desde la izquierda */ side.setAttribute('aria-hidden', 'false'); scrim.classList.add('on', 'pick');
+  if (!wasOpen) custOn(false);
+  paintCust();
+  side.classList.add('open'); side.setAttribute('aria-hidden', 'false'); scrim.classList.add('on', 'pick');
   $$('#pickRow .mchip').forEach(c => c.setAttribute('aria-expanded', String(pickMode === 'set')));
   setTab(isMobile() ? 'ia' : null);
   renderList({ keep:true });
@@ -3078,7 +3094,7 @@ async function runGuide(o = {}){
     gHud(3, 'La pantalla');
     await gWait(350);
     await gPoint(gAny('#cPick', '#curChip'), 'Aquí eliges con qué IA hablas. Tócalo y se abre su ventana, con temas, buscador y filtros.');
-    await gPoint(gAny('#cCmp', '#pickRow [data-add]'), 'Aquí sumas otra IA: hasta 4 a la vez. Todas responden la misma pregunta y las comparas. Ojo: cada una gasta lo suyo.');
+    await gPoint(gAny('#sNav [data-sn="cmp"]', '#pickRow [data-add]'), 'Aquí, aparte, comparas IAs: eliges hasta 4. Todas responden la misma pregunta y las comparas. Ojo: cada una gasta lo suyo.');
     await gPoint(gAny('#payPill', '#payL', '#payM'), 'Aquí ves cómo va tu límite gratis de hoy.', { pad:6 });
     await gPoint((gT('#thList', '#tabbar [data-tab="chats"]') || gT('#rail [data-r="chats"]', '#tabbar [data-tab="chats"]')), 'Tus chats y tus mensajes favoritos quedan aquí, en cualquier dispositivo si entras con tu cuenta.', { side:true });
     await gPoint(gT('.tchip[data-topic]', '.tchip[data-topic]'), 'Toca un tema cuando quieras y te recomiendo IA expertas en eso.');
@@ -3217,7 +3233,7 @@ const TOPIC_STEPS = {
   },
   comparar:async () => {
     if (agentOn()){ await gPoint(null, 'Comparar se usa sin SuperiorSynth: vuelve a «Chats» y verás el botón «Comparar con otra IA» abajo.'); return; }
-    await gPoint(gAny('#cCmp', '#pickRow [data-add]'), 'Aquí sumas otra IA, hasta 4. Todas responden la misma pregunta y aparecen lado a lado, en el orden en que llegan. Ojo: cada una gasta lo suyo.');
+    await gPoint(gAny('#sNav [data-sn="cmp"]', '#pickRow [data-add]'), 'Aquí, aparte, comparas IAs: eliges hasta 4. Todas responden la misma pregunta y aparecen lado a lado, en el orden en que llegan. Ojo: cada una gasta lo suyo.');
   },
   agente:async () => {
     await gPoint(gT('#cMode', '#cMode'), 'SuperiorSynth se elige aquí, en el botón de modo junto a la caja de escribir.');
@@ -4685,13 +4701,14 @@ function paintMode(){
     batt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="16" height="9" rx="2.2"/><path d="M21 10.5v3"/><path d="M6 10.5v3M9 10.5v3" stroke-width="2.2"/></svg>',
     find:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg>',
     side:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M9.5 4.5v15"/></svg>',
+    cmp:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="7.5" height="14" rx="2"/><rect x="13.5" y="5" width="7.5" height="14" rx="2"/></svg>',
     chev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10l5 5 5-5"/></svg>'
   };
   const item = (k, ic, t, extra) => '<button type="button" class="sn-i" data-sn="' + k + '" style="--d:' + extra + '"><span class="sn-ic" aria-hidden="true">' + ic + '</span><span class="sn-t">' + t + '</span></button>';
   const nav = document.createElement('nav'); nav.className = 'snav'; nav.id = 'sNav'; nav.setAttribute('aria-label', 'Menú de SynthFlow');
   nav.innerHTML = '<div class="sn-top"><a class="sn-logo" href="index.html" aria-label="Volver a SymphorIA">' + SZ.flowWord() + '</a><button type="button" class="sn-x" data-sn="hide" aria-label="Cerrar la barra" data-tip="Cerrar la barra">' + I.side + '</button></div>'
-    + item('new', I.new, 'Crear', 0) + item('proj', I.proj, 'Proyectos', 1) + item('syn', I.syn, 'Sintéticos', 2) + item('cfg', I.cfg, 'Personalización', 3)
-    + '<button type="button" class="sn-i sn-more" data-sn="more" aria-expanded="false" aria-controls="snMore" style="--d:4"><span class="sn-ic" aria-hidden="true">' + I.more + '</span><span class="sn-t">Más</span><span class="sn-chev" aria-hidden="true">' + I.chev + '</span></button>'
+    + item('new', I.new, 'Crear', 0) + item('cmp', I.cmp, 'Comparar IAs', 1) + item('proj', I.proj, 'Proyectos', 2) + item('syn', I.syn, 'Sintéticos', 3) + item('cfg', I.cfg, 'Personalización', 4)
+    + '<button type="button" class="sn-i sn-more" data-sn="more" aria-expanded="false" aria-controls="snMore" style="--d:5"><span class="sn-ic" aria-hidden="true">' + I.more + '</span><span class="sn-t">Más</span><span class="sn-chev" aria-hidden="true">' + I.chev + '</span></button>'
     + '<div class="sn-sub" id="snMore" hidden>' + item('favs', I.star, 'Mensajes favoritos', 0) + item('energy', I.batt, 'Tu EnerX de hoy', 1) + item('guide', I.guide, 'Guía de SynthFlow', 2) + item('help', I.help, 'Centro de ayuda', 3) + '</div>';
   head.after(nav);
   const rh = document.createElement('p'); rh.className = 'sn-h'; rh.textContent = 'Recientes'; $('#thList').before(rh);
@@ -4727,6 +4744,7 @@ function paintMode(){
     if (k === 'more'){ moreOn(more.hidden); return; }
     if (k === 'hide'){ $('#chatsClose').click(); return; }
     if (k === 'new') newChat();
+    else if (k === 'cmp') cmpOpen(b);
     else if (k === 'proj') pjOpen('list');
     else if (k === 'syn') synOpen();
     else if (k === 'cfg') SZ.cfgModal();
@@ -4739,12 +4757,19 @@ function paintMode(){
   });
   /* el que está abierto se marca, como en Claude */
   const mark = () => {
-    const on = { proj:document.body.classList.contains('pjon'), syn:!$('#synv') || $('#synv').hidden ? false : true };
+    const on = { cmp:document.body.classList.contains('cmpm'), proj:document.body.classList.contains('pjon'), syn:!$('#synv') || $('#synv').hidden ? false : true };
     $$('.sn-i[data-sn]', nav).forEach(b => b.classList.toggle('on', !!on[b.dataset.sn]));
   };
   new MutationObserver(mark).observe(document.body, { attributes:true, attributeFilter:['class'] });
   const sv = $('#synv'); if (sv) new MutationObserver(mark).observe(sv, { attributes:true, attributeFilter:['hidden'] });
   mark();
+}
+/* v3.7 · «Comparar IAs», aparte del chat normal: marcas de 2 a 4 IA y responden la misma pregunta lado a lado.
+   Si ya estás comparando, te deja sumar otra (hasta 4). */
+function cmpOpen(anchor){
+  if (trialOn){ toast('La prueba guiada usa una sola IA. Para comparar, entra con tu cuenta o conecta Puter (es gratis).'); return; }
+  if (mode === 'cmp'){ if (st().cmp.length < CMP_MAX) openSide('add', anchor); else { toast('Ya estás comparando 4 IA, el máximo.'); inp.focus(); } return; }
+  openSide('cmp', anchor);
 }
 /* ---------- arranque ---------- */
 const wantModel = params.get('model');

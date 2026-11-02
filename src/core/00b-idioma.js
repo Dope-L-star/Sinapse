@@ -7,8 +7,16 @@ const I18N = { es:{}, en:{} };
 const LANGS = [['es', 'Español'], ['en', 'English']];
 let LANG = (() => {
   try{ const s = localStorage.getItem('synthz:lang'); if (s === 'es' || s === 'en') return s; }catch(e){}
-  return /^en\b/i.test((navigator.languages && navigator.languages[0]) || navigator.language || '') ? 'en' : 'es';
+  return sysLang();
 })();
+/* v3.7 · primera visita: entra en el idioma del navegador o del computador (Sammuel, 2 nov).
+   Se recorre la lista de idiomas preferidos: el primero que sea español o inglés manda.
+   Si ninguno lo es (francés, alemán, japonés…), entra en inglés, que se entiende en más lugares. Lo que elijas a mano siempre se respeta. */
+function sysLang(){
+  const L = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'es'];
+  for (const l of L){ const c = String(l).slice(0, 2).toLowerCase(); if (c === 'es' || c === 'en') return c; }
+  return 'en';
+}
 document.documentElement.lang = LANG;
 const lang = () => LANG;
 function t(k, v){

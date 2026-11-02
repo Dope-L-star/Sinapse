@@ -1,0 +1,63 @@
+/* ===== v3.7 · selector de IA nuevo y Comparar aparte (pedido de Sammuel, 2 nov) =====
+   Abre directo en «Las IA»: buscas, eliges Para ti / Todas / Favoritas y tocas una.
+   Los filtros quedan detrás de «Personalizar búsqueda» (al lado en computador, encima en celular).
+   «Comparar IAs» vive en la barra; aquí solo aparecen las casillas cuando entras desde ahí. */
+
+/* Comparar ya no está en la caja de escribir */
+#cCmp{display:none !important}
+
+/* cabecera: título + cuántas hay + cerrar */
+#side.v37 .phead{display:flex;align-items:center;gap:10px}
+#side.v37 .phead #pTitle{flex:1;min-width:0;font-family:var(--serif);font-weight:400;font-size:clamp(24px,2.6vw,30px);line-height:1.05}
+#side.v37 .phead .pr-n{margin-left:0}
+#side.v37 .plupa,#side.v37 .pl-go,#side.v37 #sideDone{display:none !important}
+
+/* fila rápida: pestañas + «Personalizar búsqueda» */
+#side.v37 .pq{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:none}
+#side.v37 .pq #pTabs{flex:none}
+.pcust{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:0 14px 0 12px;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.14));background:rgba(255,255,255,.04);color:var(--soft,#c3c5ce);font-size:13px;cursor:pointer;transition:background .2s,border-color .2s,color .2s}
+.pcust svg{width:16px;height:16px}
+.pcust:hover{background:rgba(255,255,255,.08);color:var(--text,#fff)}
+.pcust[aria-expanded="true"]{border-color:var(--gold,#f2c46b);color:var(--text,#fff);background:color-mix(in srgb,var(--gold,#f2c46b) 14%,transparent)}
+.pc-n{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--gold,#f2c46b);color:#1a1206;font:700 11px/1 var(--mono,monospace);font-style:normal}
+
+/* panel de filtros */
+#side.v37 .pl-head{display:flex;align-items:center;gap:10px;flex:none}
+#side.v37 .pl-head b{flex:1;font-family:var(--serif);font-weight:400;font-size:22px;line-height:1.1}
+#side.v37 .pr-back{display:inline-flex !important}
+
+/* la nota corta, sin cajón grande */
+#side.v37 #pNote{flex:none}
+
+/* modo Comparar: casilla en cada IA y botón grande abajo */
+#side.v37.pcmp .mi{cursor:pointer}
+#side.v37.pcmp .mi.ck{border-color:color-mix(in srgb,var(--gold,#f2c46b) 60%,transparent);background:color-mix(in srgb,var(--gold,#f2c46b) 8%,transparent)}
+#side.v37 #pGo:disabled{opacity:.55;cursor:default;filter:saturate(.5)}
+#side.v37 .pfoot{display:flex;align-items:center}
+
+/* computador: una sola ventana; con «Personalizar» se abre el panel de filtros a su izquierda */
+@media (min-width:900px){
+  #side.side.two-p.v37{width:min(780px,calc(100vw - 48px)) !important;grid-template-columns:minmax(0,1fr) !important;transition:width .5s cubic-bezier(.22,1,.36,1)}
+  #side.side.two-p.v37.cust{width:min(1180px,calc(100vw - 48px)) !important;grid-template-columns:minmax(320px,380px) minmax(0,1fr) !important}
+  #side.two-p.v37 .pf-l{display:none;transform:none !important}
+  #side.two-p.v37.cust .pf-l{display:flex;animation:v37custIn .5s cubic-bezier(.22,1,.36,1) both}
+  #side.two-p.v37 .pf-r{clip-path:none !important;opacity:1 !important;visibility:visible;transform:none !important;filter:none !important;pointer-events:auto;transition:none !important}
+  #side.two-p.v37 .pf-r #searchBox{animation:none !important}
+}
+@keyframes v37custIn{from{opacity:0;transform:translateX(30px) scale(.97);filter:blur(6px)}}
+
+/* celular y tableta: «Las IA» siempre; «Personalizar búsqueda» entra por encima */
+@media (max-width:899px){
+  #side.two-p.v37:not(.cust) .pf-l{transform:translateX(-102%)}
+  #side.two-p.v37.cust .pf-l{transform:none}
+  #side.v37 .pq{flex-wrap:wrap}
+  #side.v37 .pq #pTabs{flex:1 1 100%;display:flex}
+  #side.v37 .pq #pTabs button{flex:1}
+  #side.v37 .pcust{flex:1 1 100%;justify-content:center}
+  #side.v37 .phead #pTitle{font-size:24px}
+}
+html.noanim #side.v37 .pf-l{animation:none !important}
+
+/* Simple y temas claros: usan sus propios colores */
+html.simple .pcust{border-color:var(--sline,var(--line));background:transparent;color:var(--stext,var(--text))}
+html.simple .pcust[aria-expanded="true"]{border-color:var(--sacc,var(--gold));background:color-mix(in srgb,var(--sacc,var(--gold)) 12%,transparent)}

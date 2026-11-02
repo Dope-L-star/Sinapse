@@ -3,7 +3,7 @@
    Además respeta tus Ajustes de SymphorIA: con «Animaciones» apagadas no se mueve y con «Vidrio» apagado no hay blurry. */
 (() => {
   const H = document.documentElement;
-  const want = () => { try{ const s = localStorage.getItem('synthz:lang'); if (s === 'es' || s === 'en') return s; }catch(e){} return /^en\b/i.test(navigator.language || '') ? 'en' : 'es'; };
+  const want = () => { try{ const s = localStorage.getItem('synthz:lang'); if (s === 'es' || s === 'en') return s; }catch(e){} const L0 = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'es']; for (const x of L0){ const c = String(x).slice(0, 2).toLowerCase(); if (c === 'es' || c === 'en') return c; } return 'en'; };
   let L = want();
   const set = l => {
     L = l; H.lang = l;
