@@ -1329,13 +1329,21 @@ html[data-scheme="light"] .sy-eq,html[data-scheme="light"] .sy-root h3,html[data
 .langdock:hover,.langdock:focus-visible{color:#fff;border-color:rgba(61,224,255,.6);background:rgba(61,224,255,.1);box-shadow:0 0 18px -4px rgba(61,224,255,.55)}
 .langdock:focus-visible{outline:2px solid rgba(61,224,255,.8);outline-offset:2px}
 html.rtr .langdock{background:#15122a}
-/* v3.7 · desenfoque progresivo abajo (referencia de Sammuel: neiden.framer.media, «Blurry bajando»).
-   Lo que va a entrar por abajo se ve desenfocado y se aclara al subir. Tres capas con más blur cuanto más abajo;
-   no se puede tocar (pointer-events:none) y se apaga cerca del final, con «Vidrio» apagado o en el modo rápido. */
-#szBlurAbajo{position:fixed;left:0;right:0;bottom:0;height:min(120px,16vh);z-index:40;pointer-events:none;transition:opacity .45s ease}
-#szBlurAbajo i{position:absolute;inset:0;display:block}
+/* v3.7 · desenfoque progresivo abajo y arriba (referencia de Sammuel: neiden.framer.media, «Blurry bajando»).
+   Lo que entra por abajo (o se va por arriba) se ve desenfocado y se aclara hacia el centro. Tres capas con más blur cuanto más al borde;
+   no se puede tocar (pointer-events:none). Abajo se apaga cerca del final; arriba solo aparece cuando ya bajaste (la portada empieza nítida).
+   Arriba va debajo del menú (z-index 50), así el menú siempre se lee. Con «Vidrio» apagado o en el modo rápido, no hay ninguno.
+   Pedido de Sammuel (2 nov): 2 px más alto abajo, y el mismo efecto también arriba. */
+.szBlur{position:fixed;left:0;right:0;height:calc(min(120px,16vh) + 2px);z-index:40;pointer-events:none;transition:opacity .45s ease}
+#szBlurAbajo{bottom:0}
+#szBlurArriba{top:0;opacity:0}
+.szBlur i{position:absolute;inset:0;display:block}
 #szBlurAbajo i:nth-child(1){-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);-webkit-mask-image:linear-gradient(to top,#000 0%,#000 40%,transparent 100%);mask-image:linear-gradient(to top,#000 0%,#000 40%,transparent 100%)}
 #szBlurAbajo i:nth-child(2){-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);-webkit-mask-image:linear-gradient(to top,#000 0%,#000 25%,transparent 70%);mask-image:linear-gradient(to top,#000 0%,#000 25%,transparent 70%)}
 #szBlurAbajo i:nth-child(3){-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);-webkit-mask-image:linear-gradient(to top,#000 0%,transparent 40%);mask-image:linear-gradient(to top,#000 0%,transparent 40%)}
-#szBlurAbajo.fin,html.noglass #szBlurAbajo,html.lock #szBlurAbajo{opacity:0}
-@media (max-width:760px){#szBlurAbajo{height:min(90px,13vh)}}
+#szBlurArriba i:nth-child(1){-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 40%,transparent 100%);mask-image:linear-gradient(to bottom,#000 0%,#000 40%,transparent 100%)}
+#szBlurArriba i:nth-child(2){-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 25%,transparent 70%);mask-image:linear-gradient(to bottom,#000 0%,#000 25%,transparent 70%)}
+#szBlurArriba i:nth-child(3){-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);-webkit-mask-image:linear-gradient(to bottom,#000 0%,transparent 40%);mask-image:linear-gradient(to bottom,#000 0%,transparent 40%)}
+#szBlurArriba.on{opacity:1}
+#szBlurAbajo.fin,html.noglass .szBlur,html.lock .szBlur{opacity:0 !important}
+@media (max-width:760px){.szBlur{height:calc(min(90px,13vh) + 2px)}}
