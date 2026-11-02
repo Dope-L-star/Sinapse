@@ -22,7 +22,7 @@ import PanelAdmin from '../../componentes/admin/PanelAdmin';
 
 - `api(path, { method, body, keep })` es la misma de `core.js`. El panel pide `health?panel=1` y `trial` al abrir, cada minuto y al volver a la pestaña (no recarga si estás escribiendo).
 - `onAuth(401|403)`: la puerta de entrada (iniciar sesión / solo el equipo) sigue siendo de la página, igual que hoy.
-- `lang` es opcional: si no se pasa, sigue a `<html lang>` al instante.
+- `lang` es opcional: si no se pasa, sigue a `<html lang>` al instante. El botón ES/EN de la cabecera llama a `onLang(l)` si se pasa; si no, a `window.SZ.setLang`.
 - `toast` es opcional: si no se pasa, el panel usa sus propios avisos.
 - Usa las mismas llamadas del servidor que el Pulsem de hoy (`trial`, `help`, `health`); no hace falta cambiar nada en `api/`.
 

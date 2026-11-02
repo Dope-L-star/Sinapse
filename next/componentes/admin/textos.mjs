@@ -3,7 +3,7 @@
 const es = {
   brand: 'Pulsem', team: 'Solo el equipo',
   live: 'en vivo', liveAgo: a => 'en vivo · ' + a, offline: 'sin conexión', connecting: 'conectando…',
-  refresh: 'Actualizar ahora', refreshed: 'Pulsem al día.', search: 'Buscar o hacer algo…', searchShort: 'Buscar', toChat: 'Ir a SynthFlow',
+  refresh: 'Actualizar ahora', langBtn: 'Change language to English', refreshed: 'Pulsem al día.', search: 'Buscar o hacer algo…', searchShort: 'Buscar', toChat: 'Ir a SynthFlow',
   loading: 'Leyendo cómo está SymphorIA…',
   views: {
     res: ['Resumen', 'Cómo está SymphorIA ahora mismo.'],
@@ -30,21 +30,21 @@ const es = {
   /* salud */
   healthTitle: '¿Cómo está SymphorIA?', healthSmall: 'salud de la página',
   lv: { ok: ['Funcionando bien', 'Todo responde con normalidad.'], busy: ['Con mucha carga', 'Responde, pero algo va lento o falla a ratos.'], down: ['A punto de caer', 'Muchas fallas ahora mismo: revisa las llaves y quién tiene problemas.'], off: ['IAs conectadas apagada', 'Agrega llaves para activarla para todos. Mientras tanto solo funciona Puter.'] },
-  whyKeys: (a, b) => a + ' de ' + b + ' llaves activas', whyNoKeys: 'Las IAs conectadas no tienen llaves', whyFail: n => n + ' mensajes sin respuesta hoy', whyErr: n => n + (n === 1 ? ' error' : ' errores') + ' en 10 min', whyLoad: n => n + ' mensajes en 5 min',
+  whyKeys: (a, b) => a + ' de ' + b + ' llaves activas', whyNoKeys: 'Las IAs conectadas no tienen llaves', whyFail: n => n + (n === 1 ? ' mensaje sin respuesta hoy' : ' mensajes sin respuesta hoy'), whyErr: n => n + (n === 1 ? ' error' : ' errores') + ' en 10 min', whyLoad: n => n + (n === 1 ? ' mensaje' : ' mensajes') + ' en 5 min',
   kOnline: 'en línea ahora', kMsgs: 'mensajes hoy', kCoins: 'SynXCoin gastadas hoy', kErr: 'errores de IA hoy', kSec: 'segundos por respuesta',
   showCoins: 'Mostrar saldo', hideCoins: 'Ocultar saldo',
   freeMonth: m => 'Lo gratis de este mes (' + m + ')', useVercel: 'Vercel · llamadas al servidor', useUpstash: 'Upstash · comandos de datos', of: 'de', useWarn: 'Ya pasaste el 70 %: al llegar al 100 % esa parte se detiene hasta el mes siguiente.',
   /* en línea */
   onlineTitle: 'En línea ahora', people: n => n + (n === 1 ? ' persona' : ' personas'), onlineLead: 'Arriba van los que tienen problemas.',
   onlyTrouble: 'Solo con problemas', filterPeople: 'Buscar persona…', nobody: 'No hay nadie en línea en este momento. ✨',
-  tNoAi: 'sin IA', tErr: n => n + (n === 1 ? ' error' : ' errores'), tLost: 'se ve perdido/a', tIdle: 'no ha usado la IA', tMsgs: n => n + ' mensajes', tConnected: 'IAs conectadas',
+  tNoAi: 'sin IA', tErr: n => n + (n === 1 ? ' error' : ' errores'), tLost: 'se ve perdido/a', tIdle: 'no ha usado la IA', tMsgs: n => n + (n === 1 ? ' mensaje' : ' mensajes'), tConnected: 'IAs conectadas',
   contact: 'Contactar',
   /* dificultades */
   troubleTitle: 'Dificultades', troubleSmall: 'última hora', troubleNone: 'Nadie tuvo dificultades en la última hora', nothing: 'Nada por aquí. 🎉',
   kinds: { error: 'Error de IA', jserror: 'La página falló', reload: 'Recargó la página', confused: 'Se ve perdido/a', noai: 'Sin IA', limit: 'Llegó al tope del día', puter_out: 'Sin créditos de Puter', slow: 'Va lento' },
   chips: { all: 'Todas', error: 'Errores', reload: 'Recargas', confused: 'Perdidos', noai: 'Sin IA', limit: 'Tope', puter_out: 'Sin Puter' },
   /* carga */
-  loadTitle: 'Carga', loadNow: n => n + ' mensajes en los últimos 5 min', loadLead: 'Mensajes por minuto (últimos 30 min) y por día (últimos 7 días).', ago30: 'hace 30 min', now: 'ahora',
+  loadTitle: 'Carga', loadNow: n => n + (n === 1 ? ' mensaje' : ' mensajes') + ' en los últimos 5 min', loadLead: 'Mensajes por minuto (últimos 30 min) y por día (últimos 7 días).', ago30: 'hace 30 min', now: 'ahora',
   days: ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'],
   /* llaves */
   keysTitle: 'Llaves de las IAs conectadas', keysN: (k, m) => k + (k === 1 ? ' llave' : ' llaves') + ' · ' + m + ' modelos gratis',
@@ -98,7 +98,7 @@ const es = {
 const en = {
   brand: 'Pulsem', team: 'Team only',
   live: 'live', liveAgo: a => 'live · ' + a, offline: 'offline', connecting: 'connecting…',
-  refresh: 'Refresh now', refreshed: 'Pulsem is up to date.', search: 'Search or do something…', searchShort: 'Search', toChat: 'Go to SynthFlow',
+  refresh: 'Refresh now', langBtn: 'Cambiar el idioma a español', refreshed: 'Pulsem is up to date.', search: 'Search or do something…', searchShort: 'Search', toChat: 'Go to SynthFlow',
   loading: 'Reading how SymphorIA is doing…',
   views: {
     res: ['Overview', 'How SymphorIA is doing right now.'],
@@ -123,18 +123,18 @@ const en = {
   go: 'View', answer: 'Reply', turnOff: 'Turn off',
   healthTitle: 'How is SymphorIA?', healthSmall: 'site health',
   lv: { ok: ['Running well', 'Everything responds normally.'], busy: ['Under heavy load', 'It responds, but something is slow or fails at times.'], down: ['About to go down', 'Lots of failures right now: check the keys and who is having trouble.'], off: ['Connected AIs off', 'Add keys to turn it on for everyone. Meanwhile only Puter works.'] },
-  whyKeys: (a, b) => a + ' of ' + b + ' keys active', whyNoKeys: 'The connected AIs have no keys', whyFail: n => n + ' unanswered messages today', whyErr: n => n + (n === 1 ? ' error' : ' errors') + ' in 10 min', whyLoad: n => n + ' messages in 5 min',
+  whyKeys: (a, b) => a + ' of ' + b + ' keys active', whyNoKeys: 'The connected AIs have no keys', whyFail: n => n + (n === 1 ? ' unanswered message today' : ' unanswered messages today'), whyErr: n => n + (n === 1 ? ' error' : ' errors') + ' in 10 min', whyLoad: n => n + (n === 1 ? ' message' : ' messages') + ' in 5 min',
   kOnline: 'online now', kMsgs: 'messages today', kCoins: 'SynXCoin spent today', kErr: 'AI errors today', kSec: 'seconds per answer',
   showCoins: 'Show balance', hideCoins: 'Hide balance',
   freeMonth: m => 'This month’s free tier (' + m + ')', useVercel: 'Vercel · server calls', useUpstash: 'Upstash · data commands', of: 'of', useWarn: 'Past 70 %: at 100 % that part stops until next month.',
   onlineTitle: 'Online now', people: n => n + (n === 1 ? ' person' : ' people'), onlineLead: 'People having trouble go first.',
   onlyTrouble: 'Only with trouble', filterPeople: 'Find a person…', nobody: 'Nobody is online right now. ✨',
-  tNoAi: 'no AI', tErr: n => n + (n === 1 ? ' error' : ' errors'), tLost: 'looks lost', tIdle: 'hasn’t used the AI', tMsgs: n => n + ' messages', tConnected: 'Connected AIs',
+  tNoAi: 'no AI', tErr: n => n + (n === 1 ? ' error' : ' errors'), tLost: 'looks lost', tIdle: 'hasn’t used the AI', tMsgs: n => n + (n === 1 ? ' message' : ' messages'), tConnected: 'Connected AIs',
   contact: 'Contact',
   troubleTitle: 'Trouble', troubleSmall: 'last hour', troubleNone: 'Nobody had trouble in the last hour', nothing: 'Nothing here. 🎉',
   kinds: { error: 'AI error', jserror: 'Page crashed', reload: 'Reloaded the page', confused: 'Looks lost', noai: 'No AI', limit: 'Hit the daily cap', puter_out: 'Out of Puter credits', slow: 'Running slow' },
   chips: { all: 'All', error: 'Errors', reload: 'Reloads', confused: 'Lost', noai: 'No AI', limit: 'Cap', puter_out: 'No Puter' },
-  loadTitle: 'Load', loadNow: n => n + ' messages in the last 5 min', loadLead: 'Messages per minute (last 30 min) and per day (last 7 days).', ago30: '30 min ago', now: 'now',
+  loadTitle: 'Load', loadNow: n => n + (n === 1 ? ' message' : ' messages') + ' in the last 5 min', loadLead: 'Messages per minute (last 30 min) and per day (last 7 days).', ago30: '30 min ago', now: 'now',
   days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
   keysTitle: 'Connected AI keys', keysN: (k, m) => k + (k === 1 ? ' key' : ' keys') + ' · ' + m + ' free models',
   keysLead: 'Free keys from Prime, ZFlow and Symmetrix are pooled and shared with everyone. They never leave the server and are never shown in full.',

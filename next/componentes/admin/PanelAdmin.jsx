@@ -51,7 +51,7 @@ function salud(P, t) {
   return { lv, why };
 }
 
-export default function PanelAdmin({ api, lang: langProp, onAuth, toast: toastProp, demo = false }) {
+export default function PanelAdmin({ api, lang: langProp, onAuth, onLang, toast: toastProp, demo = false }) {
   const lang = useLang(langProp), t = textos(lang), loc = lang === 'en' ? 'en-US' : 'es-CO';
   const nf = useMemo(() => new Intl.NumberFormat(loc), [loc]), fmt = n => nf.format(Math.round(n || 0));
   const ago = ms => t.ago(Math.max(0, Math.round((Date.now() - ms) / 1000)));
@@ -159,6 +159,7 @@ export default function PanelAdmin({ api, lang: langProp, onAuth, toast: toastPr
         <span className="pa-sp" />
         <button type="button" className="pa-find" onClick={() => setCmd(true)} aria-label={t.search}><I d={ICO.search} /><span>{t.searchShort}</span><kbd>{t.cmdHint}</kbd></button>
         <span className={'pa-live' + (err && P ? ' off' : '')} aria-live="polite"><i />{live}</span>
+        <button type="button" className="pa-ib pa-lang notr" onClick={() => { const n = lang === 'en' ? 'es' : 'en'; if (onLang) onLang(n); else if (typeof window !== 'undefined' && window.SZ && window.SZ.setLang) window.SZ.setLang(n); else document.documentElement.lang = n; }} aria-label={t.langBtn} title={t.langBtn} lang={lang === 'en' ? 'es' : 'en'}>{lang === 'en' ? 'ES' : 'EN'}</button>
         <button type="button" className={'pa-ib' + (busy ? ' spin' : '')} onClick={() => load(true)} aria-label={t.refresh} title={t.refresh}><I d={ICO.refresh} /></button>
         <a className="pa-ib" href="chat.html" aria-label={t.toChat} title={t.toChat}><I d={ICO.chat} /></a>
       </header>
