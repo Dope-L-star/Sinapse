@@ -3,7 +3,7 @@
 const es = {
   brand: 'Pulsem', team: 'Solo el equipo',
   live: 'en vivo', liveAgo: a => 'en vivo · ' + a, offline: 'sin conexión', connecting: 'conectando…',
-  refresh: 'Actualizar ahora', langBtn: 'Change language to English', refreshed: 'Pulsem al día.', search: 'Buscar o hacer algo…', searchShort: 'Buscar', toChat: 'Ir a SynthFlow',
+  refresh: 'Actualizar ahora', langBtn: 'Change language to English', gestion: 'Tablero de gestión', refreshed: 'Pulsem al día.', search: 'Buscar o hacer algo…', searchShort: 'Buscar', toChat: 'Ir a SynthFlow',
   loading: 'Leyendo cómo está SymphorIA…',
   views: {
     res: ['Resumen', 'Cómo está SymphorIA ahora mismo.'],
@@ -98,7 +98,7 @@ const es = {
 const en = {
   brand: 'Pulsem', team: 'Team only',
   live: 'live', liveAgo: a => 'live · ' + a, offline: 'offline', connecting: 'connecting…',
-  refresh: 'Refresh now', langBtn: 'Cambiar el idioma a español', refreshed: 'Pulsem is up to date.', search: 'Search or do something…', searchShort: 'Search', toChat: 'Go to SynthFlow',
+  refresh: 'Refresh now', langBtn: 'Cambiar el idioma a español', gestion: 'Management dashboard', refreshed: 'Pulsem is up to date.', search: 'Search or do something…', searchShort: 'Search', toChat: 'Go to SynthFlow',
   loading: 'Reading how SymphorIA is doing…',
   views: {
     res: ['Overview', 'How SymphorIA is doing right now.'],
