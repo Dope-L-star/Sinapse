@@ -9,7 +9,8 @@
     "test:clarity": "node --test tests/clarity-consent.test.mjs",
     "test:guide": "node --test tests/synthonIA-guide.test.mjs",
     "test:analytics": "node --test tests/cloudflare-analytics.test.mjs",
-    "test:temas": "node --test tests/vista-temas.test.mjs"
+    "test:temas": "node --test tests/vista-temas.test.mjs",
+    "test:panel": "node --test tests/panel-admin.test.mjs"
   },
   "dependencies": {
     "next": "16.4.2",
