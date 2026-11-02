@@ -8,6 +8,7 @@ import Cabecera from './Cabecera';
 import CajaEscribir from './CajaEscribir';
 import TabBar from './TabBar';
 import Selector from './Selector';
+import PuenteEfectos from './PuenteEfectos';
 
 export default function SynthFlow(){
   return (
@@ -27,6 +28,7 @@ export default function SynthFlow(){
         </div>
       </div>
       <Selector />
+      <PuenteEfectos />
     </>
   );
 }

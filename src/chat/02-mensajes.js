@@ -26,6 +26,9 @@ function thinkEl(mid){
   const m = info(mid), el = document.createElement('div'); el.className = 'm bot brand think-wrap'; el.style.cssText = brandVars(m);
   el.innerHTML = '<div class="who">' + av(m, 'xs') + '<b>' + esc(m.name) + '</b><span class="md">' + esc(m.vlabel || '') + '</span></div>';
   if (!works[mid]) works[mid] = SZ.workView({ model:m.name });
+  /* v3.8 · con SynthFlow en React, mientras la IA piensa sale la lluvia Matrix (#47) con su nombre; el detalle (segundos, pasos) queda debajo */
+  const fx = document.createElement('div'); fx.className = 'fxhost';
+  if (window.SZFx && window.SZFx.mount(fx, 'matrix', { lang:SZ.lang(), ia:SZ.lang() === 'en' && SZ.__syn && SZ.__syn.trStr ? SZ.__syn.trStr(m.name) : m.name })){ el.classList.add('fxm'); el.appendChild(fx); }
   el.appendChild(works[mid].el);
   return el;
 }

@@ -12,3 +12,9 @@
 html.noanim .send .pl{animation:none !important;transition:none !important}
 html.noanim .send.stop.fly svg{display:none}
 html.noanim .send.stop.fly::after{display:block}
+
+/* v3.8 · efectos React dentro de los mensajes (los monta next/componentes/synthflow/PuenteEfectos.jsx vía window.SZFx; estilos en core-css/25-v38-efectos.css) */
+.think-wrap.fxm .fxhost{margin:6px 0 8px;max-width:520px}
+.think-wrap.fxm .work .pxw{display:none}
+.agrun.fxr{padding:0;border:0;background:none;box-shadow:none}
+.agrun.fxr .fxhost{max-width:520px}
