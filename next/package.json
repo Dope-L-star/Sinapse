@@ -1,14 +1,16 @@
 {
   "name": "symphoria-next",
   "private": true,
-  "description": "SymphorIA en Next.js (export est\u00e1tico). Lo arma next/armar.mjs; ver next/LEEME.md.",
+  "description": "SymphorIA en Next.js (export estático). Lo arma next/armar.mjs; ver next/LEEME.md.",
   "scripts": {
     "build": "next build",
     "dev": "next dev",
     "test:migration": "node verificar-migracion.mjs",
     "test:clarity": "node --test tests/clarity-consent.test.mjs",
     "test:guide": "node --test tests/synthonIA-guide.test.mjs",
-    "test:analytics": "node --test tests/cloudflare-analytics.test.mjs"
+    "test:analytics": "node --test tests/cloudflare-analytics.test.mjs",
+    "test:temas": "node --test tests/vista-temas.test.mjs",
+    "test:panel": "node --test tests/panel-admin.test.mjs"
   },
   "dependencies": {
     "next": "16.4.2",

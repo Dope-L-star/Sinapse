@@ -1,6 +1,7 @@
 /* Root layout del sitio público. Las páginas son rutas React con export estático. */
 import ClarityConsent from '../../componentes/ClarityConsent';
 import AnalyticsConsent from '../../componentes/AnalyticsConsent';
+import PuenteVistaTemas from '../../componentes/ajustes/PuenteVistaTemas';
 export const metadata = {
   metadataBase: new URL('https://symphoria.pages.dev'),
   title: 'SymphorIA · Tu IA en una sola mesa',
@@ -34,7 +35,7 @@ export default function SiteLayout({ children }) {
         <link rel="stylesheet" href="/clarity-consent.css" />
         <link rel="stylesheet" href="/analytics-consent.css" />
       </head>
-      <body>{children}<AnalyticsConsent /><ClarityConsent /></body>
+      <body>{children}<AnalyticsConsent /><ClarityConsent /><PuenteVistaTemas /></body>
     </html>
   );
 }

@@ -40,3 +40,5 @@ jobs:
         run: node t/synthonia/personalidad.mjs
       - name: Contrato de A.L.I.A.S.
         run: node t/alias/contrato.mjs
+      - name: Vista previa de temas y panel admin nuevo (ES/EN)
+        run: node --test next/tests/vista-temas.test.mjs next/tests/panel-admin.test.mjs
