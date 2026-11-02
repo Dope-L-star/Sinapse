@@ -21,8 +21,8 @@ const clarityBuildAllowed = isClarityAllowed({
   privacyReviewed: process.env.NEXT_PUBLIC_CLARITY_PRIVACY_REVIEWED === 'true',
   projectId: process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID || CLARITY_PROJECT_ID_DEFAULT,
 });
-/* v3.8 · también vale el modo con pregunta de edad (NEXT_PUBLIC_CLARITY_AGE_GATE): solo 18+ pueden aceptar */
-if (clarityRequested && !clarityBuildAllowed && clarityModeFromEnv(process.env) !== 'age-gate') {
+/* v3.8 · también vale el modo de mapas de calor (NEXT_PUBLIC_CLARITY_HEATMAPS): aviso de cookies simple y página enmascarada */
+if (clarityRequested && !clarityBuildAllowed && clarityModeFromEnv(process.env) !== 'heatmaps') {
   throw new Error('Clarity está solicitado, pero faltan condiciones de release: audiencia 18+, versión adulta real, control de edad validado, privacidad revisada e ID de proyecto válido. No se ha publicado nada.');
 }
 const cfAnalyticsRequested = process.env.NEXT_PUBLIC_CF_WEB_ANALYTICS_ENABLED === 'true';

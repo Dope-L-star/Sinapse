@@ -183,27 +183,26 @@ test('la configuración admite las cinco condiciones completas para una futura b
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
 });
 
-/* v3.8 · modo con pregunta de edad (web abierta 13+): solo 18+ pueden aceptar, todo va enmascarado */
-import { clarityModeFromEnv, isClarityAgeGateAllowed, maskWholePage } from '../lib/clarity-client.mjs';
+/* v3.8 · modo de mapas de calor (web abierta): aviso de cookies simple, toda la página enmascarada */
+import { clarityModeFromEnv, isClarityHeatmapsAllowed, maskWholePage } from '../lib/clarity-client.mjs';
 
-test('el modo con pregunta de edad necesita su propia bandera, privacidad revisada e ID válido', () => {
-  const base = { NEXT_PUBLIC_CLARITY_ENABLED: 'true', NEXT_PUBLIC_CLARITY_AGE_GATE: 'true', NEXT_PUBLIC_CLARITY_PRIVACY_REVIEWED: 'true' };
+test('el modo de mapas de calor necesita su propia bandera, privacidad revisada e ID válido', () => {
+  const base = { NEXT_PUBLIC_CLARITY_ENABLED: 'true', NEXT_PUBLIC_CLARITY_HEATMAPS: 'true', NEXT_PUBLIC_CLARITY_PRIVACY_REVIEWED: 'true' };
   assert.equal(clarityModeFromEnv({}), null);
-  assert.equal(clarityModeFromEnv(base), 'age-gate');
+  assert.equal(clarityModeFromEnv(base), 'heatmaps');
   assert.equal(clarityModeFromEnv({ ...base, NEXT_PUBLIC_CLARITY_ENABLED: 'false' }), null);
-  assert.equal(clarityModeFromEnv({ ...base, NEXT_PUBLIC_CLARITY_AGE_GATE: 'false' }), null);
+  assert.equal(clarityModeFromEnv({ ...base, NEXT_PUBLIC_CLARITY_HEATMAPS: 'false' }), null);
   assert.equal(clarityModeFromEnv({ ...base, NEXT_PUBLIC_CLARITY_PRIVACY_REVIEWED: 'false' }), null);
   assert.equal(clarityModeFromEnv({ ...base, NEXT_PUBLIC_CLARITY_PROJECT_ID: 'https://evil.example/a' }), null);
-  assert.equal(isClarityAgeGateAllowed({ enabled: true, ageGate: true, privacyReviewed: true, projectId: CLARITY_PROJECT_ID_DEFAULT }), true);
+  assert.equal(isClarityHeatmapsAllowed({ enabled: true, heatmaps: true, privacyReviewed: true, projectId: CLARITY_PROJECT_ID_DEFAULT }), true);
   const adult = { NEXT_PUBLIC_CLARITY_ENABLED: 'true', NEXT_PUBLIC_CLARITY_AUDIENCE_18_PLUS: 'true', NEXT_PUBLIC_SYMPHORIA_ADULT_ONLY_RELEASE: 'true', NEXT_PUBLIC_SYMPHORIA_AGE_CONTROL_VERIFIED: 'true', NEXT_PUBLIC_CLARITY_PRIVACY_REVIEWED: 'true' };
   assert.equal(clarityModeFromEnv(adult), 'adult');
 });
 
-test('quien dice tener 13 a 17 queda guardado como menor y nunca cuenta como permiso', () => {
+test('una respuesta vieja de «menor» se sigue leyendo y nunca cuenta como permiso', () => {
   const storage = memoryStorage();
   assert.equal(writeClarityChoice(storage, 'minor'), true);
   assert.equal(readClarityChoice(storage), 'minor');
-  assert.notEqual(readClarityChoice(storage), 'granted');
   assert.equal(writeClarityChoice(storage, 'otra-cosa'), false);
 });
 
