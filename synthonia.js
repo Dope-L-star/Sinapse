@@ -1503,7 +1503,9 @@ function welcomeBack(opts){
 
 /* ===== v1.3: mientras corre una guía o un recorrido, solo se puede tocar la guía y «Saltar guía» ===== */
 (function guideLock(){
-  const OK = '#szgHud,#szgPanel,#szSay,#szHand,#ptour,#tour,.szm,#toast,#szChat,.tcard,[data-guide-ok]';
+  /* #szMaint: el aviso de mantenimiento queda encima de todo; si una guía quedaba corriendo debajo, este candado
+     bloqueaba los clics y el teclado del aviso y no se podía escribir la contraseña ni entrar con Google (2 nov) */
+  const OK = '#szgHud,#szgPanel,#szSay,#szHand,#ptour,#tour,.szm,#toast,#szChat,.tcard,[data-guide-ok],#szMaint';
   const on = () => root.classList.contains('guiding') || !!document.getElementById('ptour') || !!document.getElementById('tour');
   let warnT = 0;
   const stop = e => {
