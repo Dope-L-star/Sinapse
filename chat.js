@@ -4706,12 +4706,14 @@ function paintMode(){
     chev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10l5 5 5-5"/></svg>'
   };
   const item = (k, ic, t, extra) => '<button type="button" class="sn-i" data-sn="' + k + '" style="--d:' + extra + '"><span class="sn-ic" aria-hidden="true">' + ic + '</span><span class="sn-t">' + t + '</span></button>';
-  const nav = document.createElement('nav'); nav.className = 'snav'; nav.id = 'sNav'; nav.setAttribute('aria-label', 'Menú de SynthFlow');
+  /* v3.7 · en la versión React el menú lo pinta y lo maneja el componente BarraNav (usa window.SZFlow); aquí solo si no está */
+  const reactNav = !!document.getElementById('sNav');
+  const nav = reactNav ? document.getElementById('sNav') : document.createElement('nav'); if (!reactNav){ nav.className = 'snav'; nav.id = 'sNav'; nav.setAttribute('aria-label', 'Menú de SynthFlow');
   nav.innerHTML = '<div class="sn-top"><a class="sn-logo" href="index.html" aria-label="Volver a SymphorIA">' + SZ.flowWord() + '</a><button type="button" class="sn-x" data-sn="hide" aria-label="Cerrar la barra" data-tip="Cerrar la barra">' + I.side + '</button></div>'
     + item('new', I.new, 'Crear', 0) + item('cmp', I.cmp, 'Comparar IAs', 1) + item('proj', I.proj, 'Proyectos', 2) + item('syn', I.syn, 'Sintéticos', 3) + item('cfg', I.cfg, 'Personalización', 4)
     + '<button type="button" class="sn-i sn-more" data-sn="more" aria-expanded="false" aria-controls="snMore" style="--d:5"><span class="sn-ic" aria-hidden="true">' + I.more + '</span><span class="sn-t">Más</span><span class="sn-chev" aria-hidden="true">' + I.chev + '</span></button>'
     + '<div class="sn-sub" id="snMore" hidden>' + item('favs', I.star, 'Mensajes favoritos', 0) + item('energy', I.batt, 'Tu EnerX de hoy', 1) + item('guide', I.guide, 'Guía de SynthFlow', 2) + item('help', I.help, 'Centro de ayuda', 3) + '</div>';
-  head.after(nav);
+  head.after(nav); }
   const rh = document.createElement('p'); rh.className = 'sn-h'; rh.textContent = 'Recientes'; $('#thList').before(rh);
   const foot = document.createElement('div'); foot.className = 'sfoot'; foot.id = 'sFoot';
   foot.innerHTML = '<button type="button" class="sf-acc" id="sAcc"></button><button type="button" class="sf-find" id="sFind" aria-label="Buscar en tus chats" data-tip="Buscar en tus chats" aria-pressed="false">' + I.find + '</button>';
@@ -4737,6 +4739,7 @@ function paintMode(){
   $('#sFind').addEventListener('click', () => { const on = !cin.classList.contains('sfind'); if (!on && q.value){ q.value = ''; q.dispatchEvent(new Event('input', { bubbles:true })); } findOn(on); });
   q.addEventListener('keydown', e => { if (e.key === 'Escape' && root.classList.contains('simple') && !q.value) findOn(false); });
 
+  if (!reactNav){
   const more = $('#snMore'), mb = $('[data-sn="more"]', nav);
   const moreOn = on => { more.hidden = !on; mb.setAttribute('aria-expanded', String(on)); nav.classList.toggle('mopen', on); };
   nav.addEventListener('click', e => {
@@ -4764,6 +4767,7 @@ function paintMode(){
   new MutationObserver(mark).observe(document.body, { attributes:true, attributeFilter:['class'] });
   const sv = $('#synv'); if (sv) new MutationObserver(mark).observe(sv, { attributes:true, attributeFilter:['hidden'] });
   mark();
+  }
 }
 /* v3.7 · «Comparar IAs», aparte del chat normal: marcas de 2 a 4 IA y responden la misma pregunta lado a lado.
    Si ya estás comparando, te deja sumar otra (hasta 4). */
@@ -4772,6 +4776,26 @@ function cmpOpen(anchor){
   if (mode === 'cmp'){ if (st().cmp.length < CMP_MAX) openSide('add', anchor); else { toast('Ya estás comparando 4 IA, el máximo.'); inp.focus(); } return; }
   openSide('cmp', anchor);
 }
+/* ===== v3.7 · puente entre el motor de SynthFlow (este chat.js) y sus componentes React =====
+   Los componentes de next/componentes/synthflow/ llaman a estas funciones en vez de depender de IDs y clics simulados.
+   Se avisa con el evento «synthflow-ready» (y queda en window.SZFlow) para que React sepa que ya puede usarlas. */
+window.SZFlow = Object.freeze({
+  newChat:() => newChat(),
+  compare:anchor => cmpOpen(anchor),
+  projects:() => pjOpen('list'),
+  synthetics:() => synOpen(),
+  settings:() => SZ.cfgModal(),
+  favorites:() => showChats('favs'),
+  energy:() => coinModal('panel'),
+  guide:() => openGuide(),
+  help:() => { location.href = 'ayuda.html'; },
+  account:() => accModal(),
+  hideBar:() => { const c = $('#chatsClose'); if (c) c.click(); },
+  closeSheet:() => { if (isMobile()) closeChatsSheet(); },
+  mode:() => mode
+});
+{ const w = $('#sNav .snw'); if (w && !w.firstChild) w.innerHTML = SZ.flowWord(); }
+try{ dispatchEvent(new CustomEvent('synthflow-ready')); }catch(e){}
 /* ---------- arranque ---------- */
 const wantModel = params.get('model');
 if (wantModel && /^(pu|or):[\w.\/:@-]{2,120}$/.test(wantModel)){ st().model.openrouter = wantModel; save(); }

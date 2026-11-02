@@ -1,6 +1,8 @@
 /* SynthFlow en React · barra de chats (lista, búsqueda y pie)
    v3.7 · pasó de árbol JSON generado a componente JSX propio. Conserva IDs, clases y data-* porque el motor (chat.js) los usa.
    Para cambiar el marcado de SynthFlow se edita AQUÍ; chat.html queda solo para las pruebas viejas y build.mjs (verificar-migracion.mjs revisa que no se pierda ningún ID). */
+import BarraNav from './BarraNav';
+
 export default function Chats(){
   return (
     <>
@@ -21,6 +23,7 @@ export default function Chats(){
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
             </button>
           </div>
+          <BarraNav />
           <div className="cseg" id="cSeg" role="tablist" aria-label="Chats y favoritos" hidden>
             <span className="pill" aria-hidden="true" />
             <button role="tab" data-v="chats" aria-selected="true">Chats</button>
