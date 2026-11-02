@@ -1667,3 +1667,27 @@ html.noanim .br-o em{opacity:.8}
 @keyframes plIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
 html.noanim .pl-card{animation:none}
 @media (max-width:520px){.pl-grid{grid-template-columns:1fr 1fr;gap:8px}.pl-card{padding:11px 10px 10px}.pl-card ul{font-size:11.5px;padding-left:14px}.pl-card header b{font-size:15px}}
+/* v3.8 · Fase 3 · «Me interesa»: puerta falsa con chispas que brillan (recurso Uiverse #54), nada se cobra */
+.pl-quiero{position:relative;margin-top:auto;align-self:flex-start;padding:7px 14px;border-radius:999px;border:1px solid color-mix(in srgb,var(--pc) 60%,transparent);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--pc) 28%,transparent),rgba(255,255,255,.04));color:#fff;font:600 12.5px var(--sans,inherit);cursor:pointer;white-space:nowrap;max-width:100%;
+  width:auto;height:auto;min-height:32px;overflow:hidden;transition:transform .25s,box-shadow .3s,background .3s}
+.pl-quiero::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);transform:translateX(-120%);animation:plBrillo 3.2s ease-in-out infinite;animation-delay:calc(var(--i) * .4s)}
+.pl-quiero:hover{transform:translateY(-1px);box-shadow:0 8px 24px -10px var(--pc)}
+.pl-quiero.si{background:color-mix(in srgb,var(--pc) 85%,#000);color:#0b0820;border-color:transparent}
+.pl-quiero.si::after{display:none}
+.pl-n{font-size:11.5px;color:var(--pc);min-height:1em}
+.pl-correo{margin:10px 0 4px;padding:12px;border-radius:16px;border:1px dashed rgba(255,255,255,.18);background:rgba(255,255,255,.03);text-align:left}
+.pl-correo label{display:block;font-size:13px;margin-bottom:8px}
+.pl-correo div{display:flex;gap:8px}
+.pl-correo input{flex:1;min-width:0;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.25);color:#fff;font:inherit;font-size:14px}
+.pl-aviso{margin:6px 0 0;font-size:12.5px;color:#86efac;min-height:1em}
+@keyframes plBrillo{0%,60%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+html.noanim .pl-quiero::after{animation:none;display:none}
+@media (max-width:520px){.pl-quiero{padding:6px 10px;font-size:11.5px}.pl-correo div{flex-wrap:wrap}.pl-correo .btn{flex:1}}
+/* v3.8 · estrellitas de cuatro puntas que saltan de los botones de crear/empezar (recurso Uiverse #54) */
+.sz-chispa{position:fixed;z-index:2147483000;pointer-events:none;transform:translate(-50%,-50%) scale(0);
+  background:currentColor;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);
+  filter:drop-shadow(0 0 4px currentColor);animation:szChispa .95s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes szChispa{0%{transform:translate(-50%,-50%) scale(0) rotate(0)}30%{transform:translate(calc(-50% + var(--dx) * .4),calc(-50% + var(--dy) * .4)) scale(1) rotate(45deg);opacity:1}
+  100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.2) rotate(120deg);opacity:0}}
+html.noanim .sz-chispa{display:none}

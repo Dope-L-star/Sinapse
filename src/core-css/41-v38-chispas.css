@@ -1,0 +1,7 @@
+/* v3.8 · estrellitas de cuatro puntas que saltan de los botones de crear/empezar (recurso Uiverse #54) */
+.sz-chispa{position:fixed;z-index:2147483000;pointer-events:none;transform:translate(-50%,-50%) scale(0);
+  background:currentColor;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);
+  filter:drop-shadow(0 0 4px currentColor);animation:szChispa .95s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes szChispa{0%{transform:translate(-50%,-50%) scale(0) rotate(0)}30%{transform:translate(calc(-50% + var(--dx) * .4),calc(-50% + var(--dy) * .4)) scale(1) rotate(45deg);opacity:1}
+  100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.2) rotate(120deg);opacity:0}}
+html.noanim .sz-chispa{display:none}
