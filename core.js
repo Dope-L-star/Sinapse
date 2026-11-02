@@ -37,6 +37,8 @@ function cfgClasses(){ const r = document.documentElement; r.classList.toggle('n
   r.classList.toggle('simple', simple); if (simple){ r.classList.add('noglass', 'nobg'); } r.classList.toggle('navleft', chat && CFG.nav === 'left');
   /* v2.9.2 · tamaño de SynthFlow: compacto (por defecto) o normal; el CSS (chat-css 29) lo achica con zoom:var(--ui-z) */
   r.classList.toggle('compact', chat && CFG.size !== 'normal');
+  /* v3.9 · modo dictado (micrófono en la caja de escribir): función nueva, apagada hasta que la persona la encienda en Ajustes */
+  r.classList.toggle('dicta', chat && !!CFG.dictado);
   /* v3.2 · atajos de la lista de chats: ninguno (por defecto), solo Sintéticos, solo Proyectos o los dos; siempre siguen en la barrita de íconos */
   const lk = CFG.links || 'none'; r.classList.toggle('lk-proj', chat && (lk === 'proj' || lk === 'both')); r.classList.toggle('lk-syn', chat && (lk === 'syn' || lk === 'both'));
   if (chat && !simple && THEMES.some(t => t[0] === CFG.theme && !t[3])) r.dataset.theme = CFG.theme; else delete r.dataset.theme; }
@@ -3037,6 +3039,8 @@ const CFG_ROWS = [['cursor', 'Cursor ' + BRAND(), 'El cursor de vidrio con vient
 /* v2.2 · Ajustes con 2 pestañas: «Página» (cómo se ve y se siente) e «IAs y memoria» (cómo te responden y qué recuerdan de ti) */
 const CFG_PAGE = CFG_ROWS.filter(r => r[0] !== 'beginner');
 const CFG_IA = [['beginner', 'Modo principiante', 'Te responden con palabras sencillas, paso a paso y con ejemplos.'], ['autoWeb', 'Buscar en internet cuando haga falta', 'Si preguntas por algo de hoy (precios, noticias, el clima…), la IA busca sola y te muestra sus fuentes.'], ['saver', 'Respuestas cortas', 'Respuestas más breves: gastas menos de tu límite de hoy.'], ['review', 'Revisión de calidad', 'Otra IA revisa la lógica de cada respuesta y la corrige si encuentra errores. Tarda unos segundos más.']];
+/* v3.9 · modo dictado: nuevo, apagado para todos hasta que se enciende aquí (solo en SynthFlow) */
+const CFG_DIC = ['dictado', 'Modo dictado', 'Un micrófono en la caja de escribir: hablas y el texto aparece en vivo para que lo revises antes de enviar.'];
 const memSt0 = () => state.mem || (state.mem = { on:true, t:0, items:[] });
 function memTouch(){ const m = memSt0(); m.t = Date.now(); save(); try{ if (ACC.ready) accPush(); }catch(e){} }
 function memAddCore(text){
@@ -3090,6 +3094,7 @@ function cfgModal(tab){
     + '</section>'
     + '<section class="cfgpane" data-pane="ia"' + (ia ? '' : ' hidden') + '>'
     + '<div class="cfglbl">Cómo te responden</div>' + CFG_IA.map(row).join('')
+    + (document.getElementById('composer') ? '<div class="cfglbl">Dictado por voz</div>' + row(CFG_DIC) + '<p class="cnote">Funciona en Chrome, Edge y Safari. El micrófono solo se usa cuando tocas el botón. La voz la pasa a texto tu navegador: SymphorIA no la recibe ni la guarda.</p>' : '')
     + '<div class="cfglbl" id="cfgMemL">Lo que recuerdo de ti</div><div id="szMem" class="cfgmem"></div>'
     + (cfgLinks.length ? '<div class="cfglbl">Tus IAs</div><div class="cfglinks">' + cfgLinks.map(([l, , d], i) => '<button type="button" class="cfglk" data-lk="' + i + '"><b>' + esc(l) + '</b><small>' + esc(d || '') + '</small><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>').join('') + '</div>' : '')
     + '</section></div>'
@@ -3179,11 +3184,12 @@ const CFG_NAV_ICO = {
   play:'<circle cx="12" cy="12" r="9"/><path d="M10 8.5l5.5 3.5-5.5 3.5z"/>',
   chat:'<path d="M4 5h16v11H9l-5 4z"/>',
   brain:'<path d="M9 4a3 3 0 00-3 3 3 3 0 00-2 5 3 3 0 002 5 3 3 0 006 0V4.5A2.5 2.5 0 009 4zM15 4a3 3 0 013 3 3 3 0 012 5 3 3 0 01-2 5 3 3 0 01-6 0"/>',
+  mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/>',
   link:'<path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/>'
 };
 const cfgNavIco = txt => { const s = String(txt || '').toLowerCase();
   const k = /c[oó]mo se ve|look/.test(s) ? 'eye' : /estilo|style/.test(s) ? 'brush' : /idioma|language/.test(s) ? 'globe' : /tama|size/.test(s) ? 'size' : /atajo|shortcut/.test(s) ? 'bolt'
-    : /color|colou?r/.test(s) ? 'palette' : /celular|phone/.test(s) ? 'phone' : /intro/.test(s) ? 'play' : /responden|answer/.test(s) ? 'chat' : /recuerdo|remember|memor/.test(s) ? 'brain' : /tus ias|your ais/.test(s) ? 'link' : 'sliders';
+    : /color|colou?r/.test(s) ? 'palette' : /celular|phone/.test(s) ? 'phone' : /intro/.test(s) ? 'play' : /responden|answer/.test(s) ? 'chat' : /recuerdo|remember|memor/.test(s) ? 'brain' : /dictado|dictation/.test(s) ? 'mic' : /tus ias|your ais/.test(s) ? 'link' : 'sliders';
   return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + CFG_NAV_ICO[k] + '</svg>'; };
 function cfgSideMenu(o){
   const card = o && $('.cfgcard', o), body = card && $('.cfgbody', card), tabs = card && $('.cfgtabs', card); if (!card || !body || !tabs || $('.cfgnav', card)) return;

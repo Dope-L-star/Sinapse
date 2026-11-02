@@ -102,6 +102,8 @@ const CFG_ROWS = [['cursor', 'Cursor ' + BRAND(), 'El cursor de vidrio con vient
 /* v2.2 · Ajustes con 2 pestañas: «Página» (cómo se ve y se siente) e «IAs y memoria» (cómo te responden y qué recuerdan de ti) */
 const CFG_PAGE = CFG_ROWS.filter(r => r[0] !== 'beginner');
 const CFG_IA = [['beginner', 'Modo principiante', 'Te responden con palabras sencillas, paso a paso y con ejemplos.'], ['autoWeb', 'Buscar en internet cuando haga falta', 'Si preguntas por algo de hoy (precios, noticias, el clima…), la IA busca sola y te muestra sus fuentes.'], ['saver', 'Respuestas cortas', 'Respuestas más breves: gastas menos de tu límite de hoy.'], ['review', 'Revisión de calidad', 'Otra IA revisa la lógica de cada respuesta y la corrige si encuentra errores. Tarda unos segundos más.']];
+/* v3.9 · modo dictado: nuevo, apagado para todos hasta que se enciende aquí (solo en SynthFlow) */
+const CFG_DIC = ['dictado', 'Modo dictado', 'Un micrófono en la caja de escribir: hablas y el texto aparece en vivo para que lo revises antes de enviar.'];
 const memSt0 = () => state.mem || (state.mem = { on:true, t:0, items:[] });
 function memTouch(){ const m = memSt0(); m.t = Date.now(); save(); try{ if (ACC.ready) accPush(); }catch(e){} }
 function memAddCore(text){
@@ -155,6 +157,7 @@ function cfgModal(tab){
     + '</section>'
     + '<section class="cfgpane" data-pane="ia"' + (ia ? '' : ' hidden') + '>'
     + '<div class="cfglbl">Cómo te responden</div>' + CFG_IA.map(row).join('')
+    + (document.getElementById('composer') ? '<div class="cfglbl">Dictado por voz</div>' + row(CFG_DIC) + '<p class="cnote">Funciona en Chrome, Edge y Safari. El micrófono solo se usa cuando tocas el botón. La voz la pasa a texto tu navegador: SymphorIA no la recibe ni la guarda.</p>' : '')
     + '<div class="cfglbl" id="cfgMemL">Lo que recuerdo de ti</div><div id="szMem" class="cfgmem"></div>'
     + (cfgLinks.length ? '<div class="cfglbl">Tus IAs</div><div class="cfglinks">' + cfgLinks.map(([l, , d], i) => '<button type="button" class="cfglk" data-lk="' + i + '"><b>' + esc(l) + '</b><small>' + esc(d || '') + '</small><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>').join('') + '</div>' : '')
     + '</section></div>'

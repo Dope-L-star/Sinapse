@@ -2,9 +2,11 @@
    v3.7 · pasó de árbol JSON generado a componente JSX propio. Conserva IDs, clases y data-* porque el motor (chat.js) los usa.
    v3.7 · ya trae el «+», crear imagen, internet, «Respuestas cortas» y las bolitas (antes el motor los agregaba al arrancar).
    v3.8 · botón de enviar con avión de papel: sale volando cuando la IA empieza a responder y vuelve cuando termina (idea Uiverse #39).
+   v3.9 · micrófono del modo dictado (Dictado.jsx) justo antes de #sendBtn; solo se ve con «Modo dictado» encendido en Ajustes.
    Para cambiar el marcado de SynthFlow se edita AQUÍ; chat.html queda solo para las pruebas viejas y build.mjs (verificar-migracion.mjs revisa que no se pierda ningún ID). */
 'use client';
 import { useEffect } from 'react';
+import Dictado from './Dictado';
 
 /* el avión sale volando cuando el motor pone «.stop» (la IA empezó a responder, sea con el botón o con Enter)
    y vuelve a entrar cuando la respuesta termina; con «Animaciones» apagadas en Ajustes no se mueve (html.noanim) */
@@ -99,6 +101,7 @@ export default function CajaEscribir(){
               <span>Comparar con otra IA</span>
             </button>
           </div>
+          <Dictado />
           <button className="send" id="sendBtn" aria-label="Enviar">
             <svg className="pl" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14.5 21.2a.6.6 0 0 0 1.1-.05L21.9 3a.6.6 0 0 0-.8-.8L2.85 8.4a.6.6 0 0 0-.05 1.1l7.6 3.05a2 2 0 0 1 1.1 1.1z" /><path d="M21.6 2.4 10.9 13.1" /></svg>
           </button>
