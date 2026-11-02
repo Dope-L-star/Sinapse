@@ -14,7 +14,8 @@ window.SZFlow = Object.freeze({
   account:() => accModal(),
   hideBar:() => { const c = $('#chatsClose'); if (c) c.click(); },
   closeSheet:() => { if (isMobile()) closeChatsSheet(); },
-  mode:() => mode
+  mode:() => mode,
+  accInfo:() => accInfo
 });
 { const w = $('#sNav .snw'); if (w && !w.firstChild) w.innerHTML = SZ.flowWord(); }
 try{ dispatchEvent(new CustomEvent('synthflow-ready')); }catch(e){}

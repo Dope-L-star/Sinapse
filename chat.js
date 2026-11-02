@@ -4688,6 +4688,7 @@ function paintMode(){
    Arriba Crear, Proyectos, Sintéticos, Personalización y Más; en medio tus chats («Recientes»);
    abajo tu cuenta y una lupa para buscar. La barrita de íconos se esconde mientras la lista está abierta.
    v3.7 · ahora también en el estilo SynthFlow (con los colores del tema): una sola barra, más simple, para todos. */
+let accInfo = { ready:false, name:'Entrar', plan:'Gratis' };
 {
   const cin = $('#chats .cin'), head = $('#chats .chead');
   const I = {
@@ -4714,10 +4715,14 @@ function paintMode(){
     + '<button type="button" class="sn-i sn-more" data-sn="more" aria-expanded="false" aria-controls="snMore" style="--d:5"><span class="sn-ic" aria-hidden="true">' + I.more + '</span><span class="sn-t">Más</span><span class="sn-chev" aria-hidden="true">' + I.chev + '</span></button>'
     + '<div class="sn-sub" id="snMore" hidden>' + item('favs', I.star, 'Mensajes favoritos', 0) + item('energy', I.batt, 'Tu EnerX de hoy', 1) + item('guide', I.guide, 'Guía de SynthFlow', 2) + item('help', I.help, 'Centro de ayuda', 3) + '</div>';
   head.after(nav); }
-  const rh = document.createElement('p'); rh.className = 'sn-h'; rh.textContent = 'Recientes'; $('#thList').before(rh);
-  const foot = document.createElement('div'); foot.className = 'sfoot'; foot.id = 'sFoot';
-  foot.innerHTML = '<button type="button" class="sf-acc" id="sAcc"></button><button type="button" class="sf-find" id="sFind" aria-label="Buscar en tus chats" data-tip="Buscar en tus chats" aria-pressed="false">' + I.find + '</button>';
-  cin.appendChild(foot);
+  /* v3.7 · «Recientes» y el pie (tu cuenta + lupa) también los pinta React (PieBarra); aquí solo el motor de la cuenta */
+  const reactFoot = !!document.getElementById('sFoot');
+  if (!reactFoot){
+    const rh = document.createElement('p'); rh.className = 'sn-h'; rh.textContent = 'Recientes'; $('#thList').before(rh);
+    const foot = document.createElement('div'); foot.className = 'sfoot'; foot.id = 'sFoot';
+    foot.innerHTML = '<button type="button" class="sf-acc" id="sAcc"></button><button type="button" class="sf-find" id="sFind" aria-label="Buscar en tus chats" data-tip="Buscar en tus chats" aria-pressed="false">' + I.find + '</button>';
+    cin.appendChild(foot);
+  }
 
   /* tu cuenta: copia lo que muestra el botón de cuenta de la barrita (foto, nombre y plan) */
   const accPaint = () => {
@@ -4725,19 +4730,28 @@ function paintMode(){
     const plan = A.ready ? (SZ.ROLE_NAME && SZ.ROLE_NAME[u.role || 'user']) || 'Synther' : 'Gratis';
     const av = A.ready && SZ.myAvatar ? SZ.myAvatar() : '<span class="av-me" aria-hidden="true"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></span>';
     const nm = A.ready ? SZ.accName() : 'Entrar';
+    if (reactFoot){
+      /* React pinta nombre y plan; la foto (HTML del motor) va en su hueco */
+      const fa = $('#sAcc .sf-av'); if (fa) fa.innerHTML = av;
+      accInfo = { ready:!!A.ready, name:nm.slice(0, 22), plan:A.ready ? plan : 'Gratis' };
+      try{ dispatchEvent(new CustomEvent('synthflow-acc', { detail:accInfo })); }catch(e){}
+      return;
+    }
     sa.innerHTML = '<span class="sf-av">' + av + '</span><span class="sf-n"><b></b><small></small></span><span class="sf-chev" aria-hidden="true">' + I.chev + '</span>';
     $('.sf-n b', sa).textContent = nm.slice(0, 22); $('.sf-n small', sa).textContent = A.ready ? plan : 'Gratis';
     sa.setAttribute('aria-label', A.ready ? 'Tu cuenta: ' + nm : 'Entrar a tu cuenta');
   };
   accPaint();
   const ab = $('#accBtn'); if (ab) new MutationObserver(accPaint).observe(ab, { childList:true, subtree:true, attributes:true, attributeFilter:['class'] });
-  $('#sAcc').addEventListener('click', () => accModal());
 
-  /* la lupa muestra la búsqueda arriba de los chats (y la esconde si está vacía) */
-  const cs = $('#cSearch'), q = $('#thQ');
-  const findOn = on => { cin.classList.toggle('sfind', on); $('#sFind').setAttribute('aria-pressed', String(on)); if (on) setTimeout(() => q.focus(), 60); };
-  $('#sFind').addEventListener('click', () => { const on = !cin.classList.contains('sfind'); if (!on && q.value){ q.value = ''; q.dispatchEvent(new Event('input', { bubbles:true })); } findOn(on); });
-  q.addEventListener('keydown', e => { if (e.key === 'Escape' && root.classList.contains('simple') && !q.value) findOn(false); });
+  if (!reactFoot){
+    $('#sAcc').addEventListener('click', () => accModal());
+    /* la lupa muestra la búsqueda arriba de los chats (y la esconde si está vacía) */
+    const q = $('#thQ');
+    const findOn = on => { cin.classList.toggle('sfind', on); $('#sFind').setAttribute('aria-pressed', String(on)); if (on) setTimeout(() => q.focus(), 60); };
+    $('#sFind').addEventListener('click', () => { const on = !cin.classList.contains('sfind'); if (!on && q.value){ q.value = ''; q.dispatchEvent(new Event('input', { bubbles:true })); } findOn(on); });
+    q.addEventListener('keydown', e => { if (e.key === 'Escape' && root.classList.contains('simple') && !q.value) findOn(false); });
+  }
 
   if (!reactNav){
   const more = $('#snMore'), mb = $('[data-sn="more"]', nav);
@@ -4792,7 +4806,8 @@ window.SZFlow = Object.freeze({
   account:() => accModal(),
   hideBar:() => { const c = $('#chatsClose'); if (c) c.click(); },
   closeSheet:() => { if (isMobile()) closeChatsSheet(); },
-  mode:() => mode
+  mode:() => mode,
+  accInfo:() => accInfo
 });
 { const w = $('#sNav .snw'); if (w && !w.firstChild) w.innerHTML = SZ.flowWord(); }
 try{ dispatchEvent(new CustomEvent('synthflow-ready')); }catch(e){}

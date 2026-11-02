@@ -2,6 +2,7 @@
    v3.7 · pasó de árbol JSON generado a componente JSX propio. Conserva IDs, clases y data-* porque el motor (chat.js) los usa.
    Para cambiar el marcado de SynthFlow se edita AQUÍ; chat.html queda solo para las pruebas viejas y build.mjs (verificar-migracion.mjs revisa que no se pierda ningún ID). */
 import BarraNav from './BarraNav';
+import PieBarra from './PieBarra';
 
 export default function Chats(){
   return (
@@ -38,8 +39,10 @@ export default function Chats(){
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
             <input id="thQ" type="search" placeholder="Buscar en mis chats…" autoComplete="off" spellCheck="false" aria-label="Buscar en mis chats" />
           </label>
+          <p className="sn-h">Recientes</p>
           <div className="thlist" id="thList" data-clarity-mask="true" />
           <div className="side-foot" id="sideFoot" data-clarity-mask="true" />
+          <PieBarra />
         </div>
       </aside>
     </>
