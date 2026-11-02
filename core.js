@@ -883,6 +883,7 @@ function trStr(s){
 const TR_DAYS = { lun:'Mon', mar:'Tue', 'mié':'Wed', jue:'Thu', vie:'Fri', 'sáb':'Sat', dom:'Sun' };
 /* v3.7 · Pulsem en inglés: frases con números (van ANTES del diccionario, para que no se traduzcan a medias) */
 const TR_PRE = [
+  /* v3.8 · planes como puerta falsa */ [/^(\d+) personas lo quieren$/, '$1 people want it'], [/^¿Te escribimos cuando abra (.+)\? \(opcional\)$/, 'Want us to write when $1 opens? (optional)'],
   /* v3.7 · selector de IA */ [/^(\d+) IA$/, (m, n) => n + (n === '1' ? ' AI' : ' AIs')], [/^(\d+) versi(?:ón|ones)$/, (m, n) => n + (n === '1' ? ' version' : ' versions')], [/^\+ (\d+) temas$/, '+ $1 topics'], [/^Menos temas$/, 'Fewer topics'],
   /* v3.8 · SynthFlow: «3 fuentes», la IA «pensando»/«escribiendo» arriba y el «Ej.:» de la caja */ [/^(\d+) fuentes?$/, (m, n) => n + (n === '1' ? ' source' : ' sources')], [/^pensando$/, 'thinking'], [/^escribiendo$/, 'writing'], [/^Ej\.: /, 'E.g.: '],
   /* v3.7 · foto con una IA que no ve: responde otra solo esa vez */ [/^(.+) no ve fotos: esta vez te responde (.+), que sí las ve\. Después sigues con (.+)\.$/, "$1 can't see photos: this time $2 answers, since it can. After that you're back with $3."],
@@ -4429,16 +4430,81 @@ function plansModal(){
   if ($('#szPlans')) return;
   const me = planOf(), o = document.createElement('div'); o.id = 'szPlans'; o.className = 'szm';
   o.innerHTML = '<div class="tcard plans" role="dialog" aria-modal="true" aria-label="Planes de SymphorIA"><div class="word">' + zWord('Synth') + '</div><div class="tn">PLANES</div><div class="tb">'
-    + '<h3>Elige cómo FlowIAr</h3><p>Las IAs gratis siempre van a estar. Los planes de pago llegan pronto: hoy nadie puede pagar y no se cobra nada.</p>'
+    + '<h3>Elige cómo FlowIAr</h3><p>Las IAs gratis siempre van a estar. Los planes de pago llegan pronto: hoy nadie puede pagar y no se cobra nada. Toca «Me interesa» en el que quieras y sabremos cuál abrir primero.</p>'
     + '<div class="pl-grid">' + PLANS.map((P, i) => '<article class="pl-card' + (P.id === me ? ' me' : '') + '" style="--pc:' + P.c + ';--i:' + i + '"><header><b>' + esc(P.n) + '</b>' + (P.id === me ? '<em>Tu plan</em>' : '') + '</header><span class="pl-p">' + esc(P.p) + '</span><ul>' + P.L.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>'
-      + (P.id === me ? '<span class="pl-on">Activo</span>' : P.id === 'chispa' ? '' : '<button type="button" class="btn sm ghost" disabled aria-disabled="true">Pronto</button>') + '</article>').join('') + '</div>'
+      + (P.id === me ? '<span class="pl-on">Activo</span>' : P.id === 'chispa' ? '' : '<button type="button" class="pl-quiero" data-plan="' + P.id + '"></button><small class="pl-n" data-plan="' + P.id + '"></small>') + '</article>').join('') + '</div>'
+    + '<form class="pl-correo" hidden novalidate><label for="plMail"></label><div><input id="plMail" type="email" autocomplete="email" inputmode="email" placeholder="Tu correo"><button type="submit" class="btn sm">Avísame</button></div><p class="pl-aviso" role="status"></p></form>'
     + '<p class="cnote">' + (me === 'orquesta' ? 'Eres del equipo: tienes todo como en Orquesta para probar la página: sin límite de EnerX, imágenes y búsquedas sin tope propio, A.L.I.A.S. (menú «⋯») y los colores Aurora y Oro negro.' : 'Cuando lleguen los pagos verás aquí cuánto te queda de cada cosa, y podrás cancelar con un clic.') + '</p>'
     + '<div class="tbtn"><button class="btn sm" type="button" data-close>Listo</button></div></div></div>';
   document.body.appendChild(o); requestAnimationFrame(() => o.classList.add('on'));
   const close = () => { o.classList.remove('on'); setTimeout(() => o.remove(), 420); };
+  plansDoor(o);
   $('[data-close]', o).addEventListener('click', close); o.addEventListener('pointerdown', e => { if (e.target === o) close(); });
   addEventListener('keydown', function k(e){ if (e.key === 'Escape'){ close(); removeEventListener('keydown', k); } });
 }
+
+/* v3.8 · Fase 3 · los planes de pago son una puerta falsa: «Me interesa» cuenta el interés (y deja un correo opcional)
+   en el mismo lugar que los votos de «El laboratorio» de la portada (api/config.js › puertas). Nunca se cobra nada. */
+const PL_VK = 'synthz:puertas';
+let plCuentas = {};
+function plansDoor(o){
+  let votos = {}; try{ votos = JSON.parse(localStorage.getItem(PL_VK) || '{}') || {}; }catch(e){}
+  let ultimo = '';
+  const nom = id => (PLANS.find(P => P.id === id) || {}).n || '';
+  const pinta = () => {
+    $$('.pl-quiero', o).forEach(b => { const k = 'plan-' + b.dataset.plan, si = !!votos[k];
+      b.textContent = si ? '✓ Te avisamos' : '✦ Me interesa'; b.classList.toggle('si', si); b.setAttribute('aria-pressed', si); });
+    $$('.pl-n', o).forEach(s => { const n = plCuentas['plan-' + s.dataset.plan] || 0; s.textContent = n ? (n === 1 ? '1 persona lo quiere' : n + ' personas lo quieren') : ''; });
+  };
+  pinta();
+  fetch('/api/config?puertas=1').then(r => r.ok ? r.json() : null).then(d => { if (d && d.puertas){ plCuentas = d.puertas; pinta(); } }).catch(() => {});
+  const manda = (id, email) => fetch('/api/config', { method:'POST', headers:{ 'content-type':'application/json' }, body:JSON.stringify({ action:'puerta', id, email:email || undefined, lang:(window.SZ && SZ.lang && SZ.lang()) || 'es' }) })
+    .then(r => r.ok ? r.json() : Promise.reject()).then(d => { if (d && typeof d.n === 'number'){ plCuentas[id] = Math.max(d.n, plCuentas[id] || 0); pinta(); } return true; });
+  const f = $('.pl-correo', o), av = $('.pl-aviso', f);
+  o.addEventListener('click', e => {
+    const b = e.target.closest('.pl-quiero'); if (!b) return;
+    const id = 'plan-' + b.dataset.plan; ultimo = id;
+    if (!votos[id]){
+      votos[id] = Date.now(); try{ localStorage.setItem(PL_VK, JSON.stringify(votos)); }catch(er){}
+      plCuentas[id] = (plCuentas[id] || 0) + 1; pinta();
+      const r = b.getBoundingClientRect(); try{ if (!document.documentElement.classList.contains('noanim')) burst(r.left + r.width / 2, r.top + r.height / 2, ['#ffd27a', '#9fffd6', '#a98bff', '#ff3d9a'], 22); }catch(er){}
+      manda(id).catch(() => {});
+    }
+    $('label', f).textContent = '¿Te escribimos cuando abra ' + nom(b.dataset.plan) + '? (opcional)';
+    av.textContent = ''; f.hidden = false; $('input', f).focus({ preventScroll:true });
+  });
+  f.addEventListener('submit', e => {
+    e.preventDefault(); const c = $('input', f).value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(c)){ av.textContent = 'Ese correo no parece válido.'; return; }
+    av.textContent = '…';
+    manda(ultimo, c).then(() => { av.textContent = 'Listo: te escribimos solo cuando abra. Nada se cobra.'; $('input', f).value = ''; }).catch(() => { av.textContent = 'No pudimos guardarlo ahora. Intenta más tarde.'; });
+  });
+}
+/* ---------- v3.8 · CTAs que chispean (recurso de estilo Uiverse #54, «Generate Site» con partículas) ----------
+   Solo en los botones de CREAR o EMPEZAR algo: al pasar el mouse (o tocar) saltan estrellitas de cuatro puntas que suben y se apagan.
+   No cambia lo que hace el botón. Con Animaciones apagado no sale nada. Para sumar un botón: agrega su selector a CHISPA_SEL. */
+const CHISPA_SEL = '#startBtn,.flowbtn,.pl-quiero,.pj-form .btn[type=submit],#imgBtn,.chispea';
+const CHISPA_COL = ['#ffd27a', '#9fffd6', '#b48cff', '#ff7ac0', '#7fe3ff'];
+const chispaQuieto = () => document.documentElement.classList.contains('noanim') || (typeof reduce !== 'undefined' && reduce);
+function chispas(el, n = 9){
+  if (chispaQuieto() || !el.isConnected) return;
+  const r = el.getBoundingClientRect(); if (!r.width) return;
+  for (let i = 0; i < n; i++){
+    const s = document.createElement('i'); s.className = 'sz-chispa'; s.setAttribute('aria-hidden', 'true');
+    const x = r.left + Math.random() * r.width, y = r.top + r.height * (.2 + Math.random() * .6), z = 9 + Math.random() * 8;
+    s.style.cssText = 'left:' + x.toFixed(1) + 'px;top:' + y.toFixed(1) + 'px;width:' + z.toFixed(1) + 'px;height:' + z.toFixed(1) + 'px;color:' + CHISPA_COL[i % CHISPA_COL.length]
+      + ';--dx:' + (Math.random() * 40 - 20).toFixed(1) + 'px;--dy:' + (-20 - Math.random() * 34).toFixed(1) + 'px;animation-delay:' + (i * 45) + 'ms';
+    document.body.appendChild(s); setTimeout(() => s.remove(), 1100 + i * 45);
+  }
+}
+let chispaUlt = null, chispaT = 0;
+addEventListener('pointerover', e => {
+  const b = e.target.closest && e.target.closest(CHISPA_SEL); if (!b || b === chispaUlt) return;
+  chispaUlt = b; const now = Date.now(); if (now - chispaT < 350) return; chispaT = now; chispas(b);
+}, { passive:true });
+addEventListener('pointerout', e => { if (chispaUlt && !chispaUlt.contains(e.relatedTarget)) chispaUlt = null; }, { passive:true });
+addEventListener('click', e => { const b = e.target.closest && e.target.closest(CHISPA_SEL); if (b) chispas(b, 10); }, true);
+addEventListener('focusin', e => { const b = e.target.closest && e.target.closest(CHISPA_SEL); if (b && b.matches(':focus-visible')) chispas(b, 5); });
 window.SZ = { I18N, LANGS, t, lang, setLang, onLang, i18nApply, root, $, $$, clamp, fmt, reduce, today, sleepRaw, esc, est, Z_PATH, ICONS, ico, zWord, API, MANUAL, ALL, byId,
   get state(){ return state; }, set state(v){ state = v; normalize(); },
   normalize, cleanUsage, cleanChats, cleanStrMap, save, total, addUsage, resetUsage, estAll, todayEst, todayReq, providerBalance, balanceHtml, splitHtml, syncNote, helpGuide, smoothDetails, szPrompt, swapDir, swapDir, get face(){ return face; }, get FACE_GOOD(){ return FACE_GOOD; }, get randomGoodFace(){ return randomGoodFace; }, get welcomeBack(){ return welcomeBack; }, get wasAway(){ return wasAway; }, accSignOutAll, accClaim, ROLE_NAME, trialGet, trialSet, trialStart, legacyRow, cleanLedger, mergeLedger, DEV, hooks, toast, hydrateIcons, md, countTo,

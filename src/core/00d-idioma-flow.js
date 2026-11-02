@@ -29,6 +29,7 @@ function trStr(s){
 const TR_DAYS = { lun:'Mon', mar:'Tue', 'mié':'Wed', jue:'Thu', vie:'Fri', 'sáb':'Sat', dom:'Sun' };
 /* v3.7 · Pulsem en inglés: frases con números (van ANTES del diccionario, para que no se traduzcan a medias) */
 const TR_PRE = [
+  /* v3.8 · planes como puerta falsa */ [/^(\d+) personas lo quieren$/, '$1 people want it'], [/^¿Te escribimos cuando abra (.+)\? \(opcional\)$/, 'Want us to write when $1 opens? (optional)'],
   /* v3.7 · selector de IA */ [/^(\d+) IA$/, (m, n) => n + (n === '1' ? ' AI' : ' AIs')], [/^(\d+) versi(?:ón|ones)$/, (m, n) => n + (n === '1' ? ' version' : ' versions')], [/^\+ (\d+) temas$/, '+ $1 topics'], [/^Menos temas$/, 'Fewer topics'],
   /* v3.8 · SynthFlow: «3 fuentes», la IA «pensando»/«escribiendo» arriba y el «Ej.:» de la caja */ [/^(\d+) fuentes?$/, (m, n) => n + (n === '1' ? ' source' : ' sources')], [/^pensando$/, 'thinking'], [/^escribiendo$/, 'writing'], [/^Ej\.: /, 'E.g.: '],
   /* v3.7 · foto con una IA que no ve: responde otra solo esa vez */ [/^(.+) no ve fotos: esta vez te responde (.+), que sí las ve\. Después sigues con (.+)\.$/, "$1 can't see photos: this time $2 answers, since it can. After that you're back with $3."],

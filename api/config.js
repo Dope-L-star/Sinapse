@@ -12,7 +12,7 @@ async function maint(){ try{ const c = await getJ('cfg:maint'); return c && c.on
 /* Puertas falsas de la portada (v3.8: pestañas con candado de la demo y «El laboratorio»): votos y correo opcional para avisar.
    No cobra nada (pagos apagados). GET ?puertas=1 → { puertas:{ id:n } } · POST { action:'puerta', id, email? } → { ok, n }
    Un voto por IP y función (la IP se guarda como hash). El correo va cifrado; solo el equipo lo puede leer. */
-export const PUERTAS = ['voz', 'grupo', 'agenda', 'extension', 'escritorio'];
+export const PUERTAS = ['voz', 'grupo', 'agenda', 'extension', 'escritorio', 'plan-syntonia', 'plan-timeless', 'plan-orquesta'];
 async function puertasGet(){
   if (missing().length) return json({ puertas:{} });
   const n = await pipe(PUERTAS.map(id => ['GET', 'fd:n:' + id])).catch(() => []);
