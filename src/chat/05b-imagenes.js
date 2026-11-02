@@ -10,10 +10,11 @@ const imgDB = (() => {
   return { put:(id, blob) => tx('readwrite', s => s.put(blob, id)), get:id => tx('readonly', s => s.get(id)) };
 })();
 /* botón «Crear imagen» junto al clip */
-const imgBtn = document.createElement('button');
-imgBtn.type = 'button'; imgBtn.className = 'attach imgb'; imgBtn.id = 'imgBtn'; imgBtn.setAttribute('aria-pressed', 'false'); imgBtn.setAttribute('aria-label', 'Crear una imagen'); imgBtn.dataset.tip = 'Crear una imagen';
+/* v3.7 · en la versión React el botón ya viene en CajaEscribir.jsx; aquí solo si falta */
+const imgBtn = $('#imgBtn') || document.createElement('button');
+if (!imgBtn.isConnected){ imgBtn.type = 'button'; imgBtn.className = 'attach imgb'; imgBtn.id = 'imgBtn'; imgBtn.setAttribute('aria-pressed', 'false'); imgBtn.setAttribute('aria-label', 'Crear una imagen'); imgBtn.dataset.tip = 'Crear una imagen';
 imgBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 9"/></svg>';
-{ const ab = $('#attachBtn'); if (ab) ab.after(imgBtn); }
+{ const ab = $('#attachBtn'); if (ab) ab.after(imgBtn); } }
 function setImgMode(on){
   if (on && !SZ.ACC.ready){ toast('Para crear imágenes entra a tu cuenta (es gratis).'); SZ.guestGate({ mode:'signup' }); return; }
   imgMode = !!on; imgBtn.setAttribute('aria-pressed', String(imgMode)); document.body.classList.toggle('imaging', imgMode);

@@ -2896,9 +2896,26 @@ html.simple .pj-sh{color:var(--smute)}
   #side.v37 .pq #pTabs button{flex:1}
   #side.v37 .pcust{flex:1 1 100%;justify-content:center}
   #side.v37 .phead #pTitle{font-size:24px}
+  /* «Las IA» es la misma hoja en celular: sin caja de vidrio adentro de otra (se veía un borde pegado al título) */
+  html #side.two-p.v37 .pf-r{background:none !important;border:0 !important;box-shadow:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;border-radius:0 !important}
+  html #side.two-p.v37 .pf-r::before,html #side.two-p.v37 .pf-r::after{content:none !important}
 }
 html.noanim #side.v37 .pf-l{animation:none !important}
 
 /* Simple y temas claros: usan sus propios colores */
 html.simple .pcust{border-color:var(--sline,var(--line));background:transparent;color:var(--stext,var(--text))}
 html.simple .pcust[aria-expanded="true"]{border-color:var(--sacc,var(--gold));background:color-mix(in srgb,var(--sacc,var(--gold)) 12%,transparent)}
+/* v3.8 · botón de enviar con avión de papel (SynthFlow en React, idea Uiverse #39 adaptada a cada tema).
+   El avión despega cuando la IA empieza a responder; después aparece el cuadradito para detener y, al terminar, el avión vuelve. */
+.send{overflow:hidden}
+.send .pl{transform:translate(-1px,1px);transition:transform .25s cubic-bezier(.3,.7,.4,1)}
+.send:not(.stop):not([disabled]):hover .pl{transform:translate(1px,-1px) rotate(-10deg)}
+.send.stop.fly svg{display:block}
+.send.stop.fly::after{display:none}
+.send.fly .pl{animation:szPlaneFly .62s linear forwards}
+.send.back .pl{animation:szPlaneBack .46s cubic-bezier(.2,.8,.3,1)}
+@keyframes szPlaneFly{0%{transform:translate(-1px,1px);animation-timing-function:ease-out}22%{transform:translate(-4px,4px) rotate(-6deg) scale(.94);animation-timing-function:cubic-bezier(.4,0,1,1)}100%{transform:translate(30px,-30px) rotate(8deg) scale(.55);opacity:0}}
+@keyframes szPlaneBack{0%{transform:translate(-24px,24px) scale(.55);opacity:0}70%{opacity:1}100%{transform:translate(-1px,1px);opacity:1}}
+html.noanim .send .pl{animation:none !important;transition:none !important}
+html.noanim .send.stop.fly svg{display:none}
+html.noanim .send.stop.fly::after{display:block}

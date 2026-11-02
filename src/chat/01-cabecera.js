@@ -64,7 +64,7 @@ function paintPay(){
   if (P){ P.className = 'payl ' + c; P.innerHTML = '<i aria-hidden="true"></i>' + esc(l) + (ex ? '<button type="button" class="lnk" data-tx="exit">Salir</button>' : ''); }
   if (M){
     const bar = !document.body.classList.contains('fresh') && mode !== 'cmp' && !trialOn && (c === 'sz' || agentOn());
-    if (bar){ const k = Math.max(0, 1 - SZ.limPct()), pc = Math.round(k * 100), lv = SZ.limLvl();
+    if (bar){ const pc = SZ.battPct(), lv = SZ.limLvl();
       M.className = 'paym tlim ' + lv; M.setAttribute('role', 'img'); M.setAttribute('aria-label', SZ.isGuestQ() ? SZ.limTxt() : 'Tu EnerX de hoy: ' + SZ.battPct() + ' %');
       M.innerHTML = '<span class="tl-l">Hoy</span>' + SZ.limRing(16) + '<em>' + pc + ' %</em>'; }
     else { M.className = 'paym ' + c; M.removeAttribute('role'); M.removeAttribute('aria-label'); M.innerHTML = '<i aria-hidden="true"></i>' + esc(s); }
