@@ -462,7 +462,7 @@ function paintPay(){
   if (P){ P.className = 'payl ' + c; P.innerHTML = '<i aria-hidden="true"></i>' + esc(l) + (ex ? '<button type="button" class="lnk" data-tx="exit">Salir</button>' : ''); }
   if (M){
     const bar = !document.body.classList.contains('fresh') && mode !== 'cmp' && !trialOn && (c === 'sz' || agentOn());
-    if (bar){ const k = Math.max(0, 1 - SZ.limPct()), pc = Math.round(k * 100), lv = SZ.limLvl();
+    if (bar){ const pc = SZ.battPct(), lv = SZ.limLvl();
       M.className = 'paym tlim ' + lv; M.setAttribute('role', 'img'); M.setAttribute('aria-label', SZ.isGuestQ() ? SZ.limTxt() : 'Tu EnerX de hoy: ' + SZ.battPct() + ' %');
       M.innerHTML = '<span class="tl-l">Hoy</span>' + SZ.limRing(16) + '<em>' + pc + ' %</em>'; }
     else { M.className = 'paym ' + c; M.removeAttribute('role'); M.removeAttribute('aria-label'); M.innerHTML = '<i aria-hidden="true"></i>' + esc(s); }
@@ -2668,6 +2668,8 @@ const side = $('#side'), scrim = $('#scrim');
    Comparar ya no se mezcla aquí: tiene su propio lugar en la barra («Comparar IAs»). ---------- */
 const TUNE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>';
 (function twoPanels(){
+  /* v3.7 · la versión React (Selector.jsx) ya trae las dos columnas: no se mueve nada */
+  if ($('.pf-l', side)) return;
   const L = document.createElement('div'); L.className = 'pf-l'; L.setAttribute('role', 'group'); L.setAttribute('aria-label', 'Personalizar búsqueda');
   const R = document.createElement('div'); R.className = 'pf-r'; R.setAttribute('role', 'group'); R.setAttribute('aria-label', 'Las IA');
   const head = $('.phead', side), fw = $('.fwrap', side) || $('#filters'), prov = $('#provSeg'), sortr = $('.sortrow', side), more = $('#pMore'), pfoot = $('.pfoot', side);
@@ -2836,6 +2838,7 @@ addEventListener('pageshow', e => { if (e.persisted){ root.classList.remove('bye
 SZ.hooks.usage = () => { renderFoot(); coinWatch(); };
 SZ.hooks.md = () => { if (!Object.keys(busy).length && mode === 'solo' && chatArr().length) renderMsgs(); };
 SZ.onLang(() => { if (!Object.keys(busy).length && mode === 'solo') renderMsgs(); });   /* v3.0 · el saludo cambia de idioma al momento */
+SZ.onLang(() => { try{ renderList({ keep:true }); }catch(e){} });   /* v3.7 · la lista de IA (y su «Experta en…») también cambia de idioma al momento */
 
 /* ---------- tutorial, mejor IA gratis y menú contextual ---------- */
 const APODEX_NAME = 'Automática';
@@ -4687,6 +4690,7 @@ function paintMode(){
    Arriba Crear, Proyectos, Sintéticos, Personalización y Más; en medio tus chats («Recientes»);
    abajo tu cuenta y una lupa para buscar. La barrita de íconos se esconde mientras la lista está abierta.
    v3.7 · ahora también en el estilo SynthFlow (con los colores del tema): una sola barra, más simple, para todos. */
+let accInfo = { ready:false, name:'Entrar', plan:'Gratis' };
 {
   const cin = $('#chats .cin'), head = $('#chats .chead');
   const I = {
@@ -4705,16 +4709,22 @@ function paintMode(){
     chev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10l5 5 5-5"/></svg>'
   };
   const item = (k, ic, t, extra) => '<button type="button" class="sn-i" data-sn="' + k + '" style="--d:' + extra + '"><span class="sn-ic" aria-hidden="true">' + ic + '</span><span class="sn-t">' + t + '</span></button>';
-  const nav = document.createElement('nav'); nav.className = 'snav'; nav.id = 'sNav'; nav.setAttribute('aria-label', 'Menú de SynthFlow');
+  /* v3.7 · en la versión React el menú lo pinta y lo maneja el componente BarraNav (usa window.SZFlow); aquí solo si no está */
+  const reactNav = !!document.getElementById('sNav');
+  const nav = reactNav ? document.getElementById('sNav') : document.createElement('nav'); if (!reactNav){ nav.className = 'snav'; nav.id = 'sNav'; nav.setAttribute('aria-label', 'Menú de SynthFlow');
   nav.innerHTML = '<div class="sn-top"><a class="sn-logo" href="index.html" aria-label="Volver a SymphorIA">' + SZ.flowWord() + '</a><button type="button" class="sn-x" data-sn="hide" aria-label="Cerrar la barra" data-tip="Cerrar la barra">' + I.side + '</button></div>'
     + item('new', I.new, 'Crear', 0) + item('cmp', I.cmp, 'Comparar IAs', 1) + item('proj', I.proj, 'Proyectos', 2) + item('syn', I.syn, 'Sintéticos', 3) + item('cfg', I.cfg, 'Personalización', 4)
     + '<button type="button" class="sn-i sn-more" data-sn="more" aria-expanded="false" aria-controls="snMore" style="--d:5"><span class="sn-ic" aria-hidden="true">' + I.more + '</span><span class="sn-t">Más</span><span class="sn-chev" aria-hidden="true">' + I.chev + '</span></button>'
     + '<div class="sn-sub" id="snMore" hidden>' + item('favs', I.star, 'Mensajes favoritos', 0) + item('energy', I.batt, 'Tu EnerX de hoy', 1) + item('guide', I.guide, 'Guía de SynthFlow', 2) + item('help', I.help, 'Centro de ayuda', 3) + '</div>';
-  head.after(nav);
-  const rh = document.createElement('p'); rh.className = 'sn-h'; rh.textContent = 'Recientes'; $('#thList').before(rh);
-  const foot = document.createElement('div'); foot.className = 'sfoot'; foot.id = 'sFoot';
-  foot.innerHTML = '<button type="button" class="sf-acc" id="sAcc"></button><button type="button" class="sf-find" id="sFind" aria-label="Buscar en tus chats" data-tip="Buscar en tus chats" aria-pressed="false">' + I.find + '</button>';
-  cin.appendChild(foot);
+  head.after(nav); }
+  /* v3.7 · «Recientes» y el pie (tu cuenta + lupa) también los pinta React (PieBarra); aquí solo el motor de la cuenta */
+  const reactFoot = !!document.getElementById('sFoot');
+  if (!reactFoot){
+    const rh = document.createElement('p'); rh.className = 'sn-h'; rh.textContent = 'Recientes'; $('#thList').before(rh);
+    const foot = document.createElement('div'); foot.className = 'sfoot'; foot.id = 'sFoot';
+    foot.innerHTML = '<button type="button" class="sf-acc" id="sAcc"></button><button type="button" class="sf-find" id="sFind" aria-label="Buscar en tus chats" data-tip="Buscar en tus chats" aria-pressed="false">' + I.find + '</button>';
+    cin.appendChild(foot);
+  }
 
   /* tu cuenta: copia lo que muestra el botón de cuenta de la barrita (foto, nombre y plan) */
   const accPaint = () => {
@@ -4722,20 +4732,30 @@ function paintMode(){
     const plan = A.ready ? (SZ.ROLE_NAME && SZ.ROLE_NAME[u.role || 'user']) || 'Synther' : 'Gratis';
     const av = A.ready && SZ.myAvatar ? SZ.myAvatar() : '<span class="av-me" aria-hidden="true"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></span>';
     const nm = A.ready ? SZ.accName() : 'Entrar';
+    if (reactFoot){
+      /* React pinta nombre y plan; la foto (HTML del motor) va en su hueco */
+      const fa = $('#sAcc .sf-av'); if (fa) fa.innerHTML = av;
+      accInfo = { ready:!!A.ready, name:nm.slice(0, 22), plan:A.ready ? plan : 'Gratis' };
+      try{ dispatchEvent(new CustomEvent('synthflow-acc', { detail:accInfo })); }catch(e){}
+      return;
+    }
     sa.innerHTML = '<span class="sf-av">' + av + '</span><span class="sf-n"><b></b><small></small></span><span class="sf-chev" aria-hidden="true">' + I.chev + '</span>';
     $('.sf-n b', sa).textContent = nm.slice(0, 22); $('.sf-n small', sa).textContent = A.ready ? plan : 'Gratis';
     sa.setAttribute('aria-label', A.ready ? 'Tu cuenta: ' + nm : 'Entrar a tu cuenta');
   };
   accPaint();
   const ab = $('#accBtn'); if (ab) new MutationObserver(accPaint).observe(ab, { childList:true, subtree:true, attributes:true, attributeFilter:['class'] });
-  $('#sAcc').addEventListener('click', () => accModal());
 
-  /* la lupa muestra la búsqueda arriba de los chats (y la esconde si está vacía) */
-  const cs = $('#cSearch'), q = $('#thQ');
-  const findOn = on => { cin.classList.toggle('sfind', on); $('#sFind').setAttribute('aria-pressed', String(on)); if (on) setTimeout(() => q.focus(), 60); };
-  $('#sFind').addEventListener('click', () => { const on = !cin.classList.contains('sfind'); if (!on && q.value){ q.value = ''; q.dispatchEvent(new Event('input', { bubbles:true })); } findOn(on); });
-  q.addEventListener('keydown', e => { if (e.key === 'Escape' && root.classList.contains('simple') && !q.value) findOn(false); });
+  if (!reactFoot){
+    $('#sAcc').addEventListener('click', () => accModal());
+    /* la lupa muestra la búsqueda arriba de los chats (y la esconde si está vacía) */
+    const q = $('#thQ');
+    const findOn = on => { cin.classList.toggle('sfind', on); $('#sFind').setAttribute('aria-pressed', String(on)); if (on) setTimeout(() => q.focus(), 60); };
+    $('#sFind').addEventListener('click', () => { const on = !cin.classList.contains('sfind'); if (!on && q.value){ q.value = ''; q.dispatchEvent(new Event('input', { bubbles:true })); } findOn(on); });
+    q.addEventListener('keydown', e => { if (e.key === 'Escape' && root.classList.contains('simple') && !q.value) findOn(false); });
+  }
 
+  if (!reactNav){
   const more = $('#snMore'), mb = $('[data-sn="more"]', nav);
   const moreOn = on => { more.hidden = !on; mb.setAttribute('aria-expanded', String(on)); nav.classList.toggle('mopen', on); };
   nav.addEventListener('click', e => {
@@ -4763,6 +4783,7 @@ function paintMode(){
   new MutationObserver(mark).observe(document.body, { attributes:true, attributeFilter:['class'] });
   const sv = $('#synv'); if (sv) new MutationObserver(mark).observe(sv, { attributes:true, attributeFilter:['hidden'] });
   mark();
+  }
 }
 /* v3.7 · «Comparar IAs», aparte del chat normal: marcas de 2 a 4 IA y responden la misma pregunta lado a lado.
    Si ya estás comparando, te deja sumar otra (hasta 4). */
@@ -4771,6 +4792,27 @@ function cmpOpen(anchor){
   if (mode === 'cmp'){ if (st().cmp.length < CMP_MAX) openSide('add', anchor); else { toast('Ya estás comparando 4 IA, el máximo.'); inp.focus(); } return; }
   openSide('cmp', anchor);
 }
+/* ===== v3.7 · puente entre el motor de SynthFlow (este chat.js) y sus componentes React =====
+   Los componentes de next/componentes/synthflow/ llaman a estas funciones en vez de depender de IDs y clics simulados.
+   Se avisa con el evento «synthflow-ready» (y queda en window.SZFlow) para que React sepa que ya puede usarlas. */
+window.SZFlow = Object.freeze({
+  newChat:() => newChat(),
+  compare:anchor => cmpOpen(anchor),
+  projects:() => pjOpen('list'),
+  synthetics:() => synOpen(),
+  settings:() => SZ.cfgModal(),
+  favorites:() => showChats('favs'),
+  energy:() => coinModal('panel'),
+  guide:() => openGuide(),
+  help:() => { location.href = 'ayuda.html'; },
+  account:() => accModal(),
+  hideBar:() => { const c = $('#chatsClose'); if (c) c.click(); },
+  closeSheet:() => { if (isMobile()) closeChatsSheet(); },
+  mode:() => mode,
+  accInfo:() => accInfo
+});
+{ const w = $('#sNav .snw'); if (w && !w.firstChild) w.innerHTML = SZ.flowWord(); }
+try{ dispatchEvent(new CustomEvent('synthflow-ready')); }catch(e){}
 /* ---------- arranque ---------- */
 const wantModel = params.get('model');
 if (wantModel && /^(pu|or):[\w.\/:@-]{2,120}$/.test(wantModel)){ st().model.openrouter = wantModel; save(); }

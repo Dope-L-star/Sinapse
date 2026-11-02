@@ -1,6 +1,6 @@
 /* Contenido de Términos (antes terminos.html). Cada bloque es una tarjeta. */
 export const titulo = "Términos";
-export const bajada = "Las reglas para usar SymphorIA, en palabras sencillas. Última actualización: 29 de octubre de 2026.";
+export const bajada = "Las reglas para usar SymphorIA, en palabras sencillas. Última actualización: 2 de noviembre de 2026.";
 const ADULT_ONLY_RELEASE = process.env.NEXT_PUBLIC_SYMPHORIA_ADULT_ONLY_RELEASE === 'true' && process.env.NEXT_PUBLIC_SYMPHORIA_AGE_CONTROL_VERIFIED === 'true';
 
 export default function Contenido(){
@@ -25,6 +25,36 @@ export default function Contenido(){
       <section className="card"><h2>Cambios</h2><p>Podemos actualizar estos términos. Si el cambio es importante, te avisaremos en la página. Si sigues usando SymphorIA, aceptas la versión nueva.</p></section>
       <section className="card"><h2>Ley que aplica</h2><p>Estos términos se rigen por las leyes de Colombia.</p></section>
       <section className="card"><h2>Contacto</h2><p>Escríbenos desde la página con «Hablar con el equipo» o «Cuéntanos qué mejorar».</p></section>
+    </>
+  );
+}
+
+/* v3.7 · la misma página en inglés: Legal muestra la que va con tu idioma y cambia sola, sin recargar (ayuda.js) */
+export const tituloEn = "Terms";
+export const bajadaEn = "The rules for using SymphorIA, in plain words. Last updated: November 2, 2026.";
+
+export function ContenidoEn(){
+  return (
+    <>
+      <section className="card tldr"><h2>In short</h2><ul>{ADULT_ONLY_RELEASE ? <li>This edition is only for people 18 or older.</li> : null}<li>SymphorIA is free and in testing (beta).</li><li>Without an account you can try 5 messages a day. To keep FlowIAing, create your free account: no email or card needed.</li><li>AIs can make mistakes: double-check what matters.</li><li>Don't use SymphorIA to cause harm.</li><li>Today we don't charge anything.</li><li>What you create with AI is yours, and so is the responsibility for how you use it.</li></ul></section>
+      <section className="card"><h2>What SymphorIA is</h2><p>SymphorIA (with its chat, SynthFlow) lets you talk for free with several artificial intelligences from one place, compare them and save your chats.</p></section>
+      <section className="card"><h2>It's free and in testing</h2><p>SymphorIA is in beta: it may change, have errors or be unavailable for a while. There is a free daily usage limit that may change. Today we don't charge anything; if there are ever paid options, we'll tell you first and nothing will be charged without your consent.</p></section>
+      <section className="card"><h2>Without and with an account</h2><p>Without an account you can try the connected AIs with <b>5 messages a day</b>. A message is what you write once, even if you compare several AIs or use agent mode. When they run out, to keep FlowIAing you need to sign in or create your account, which is free and gives you a much higher daily limit. If you connect your own Puter, its AIs use your Puter limit.</p><p>We may change these numbers so there's enough for everyone. If they change, the page will say so.</p></section>
+      <section className="card"><h2>Age</h2>{ADULT_ONLY_RELEASE ? <p>This edition of SymphorIA is only available to people 18 or older. If you are under 18, you can't create an account or use it. This condition must be backed by effective eligibility and access measures before the adult edition is published.</p> : <p>SymphorIA is not meant for children under 13. If you are under 18, use it with permission from your parents or a responsible adult.</p>}</section>
+      <section className="card"><h2>AIs can make mistakes</h2><p>The answers are written by artificial intelligences from other companies. They may be wrong, incomplete or made up. Don't use them as medical, legal or financial advice without checking with an expert.</p></section>
+      <section className="card"><h2>What's not allowed</h2><ul><li>Using SymphorIA to deceive, harass, scam or harm other people.</li><li>Trying to break the page, get around the limits or get into other people's accounts.</li><li>Asking for or sharing illegal content.</li><li>Using the page automatically (bots) to use up the free limit.</li></ul><p>If that happens, we may suspend the account.</p></section>
+      <section className="card"><h2>Your account</h2><p>You are responsible for keeping your password and recovery code safe. You can delete your account whenever you want.</p></section>
+      <section className="card"><h2>What you write is yours</h2><p>What you write and what the AI answers is for you. We only use it so SymphorIA works, as the <a href="privacidad.html">Privacy</a> page explains.</p></section>
+      <section className="card"><h2>What you create with AI</h2><p>You can use the texts, code and ideas the AIs give you. You are responsible for how you use them: check that they're correct and that they don't copy something someone owns (for example a song, a logo or a famous text) before publishing or selling them. The AI may give a similar answer to someone else.</p></section>
+      <section className="card"><h2>The SymphorIA brand</h2><p>The names SymphorIA, SynthFlow, SynthonIA and Pulsem, their logos, design, animations and the page's code belong to their creator. Don't copy them or use them as your own without permission.</p></section>
+      <section className="card"><h2>Other companies' services</h2><p>Puter, Google and the AI companies have their own rules. If you use them from SymphorIA, their terms apply too.</p></section>
+      <section className="card"><h2>No guarantees</h2><p>We do our best for SymphorIA to work well, but it's offered "as is", without guarantees. We're not liable for damage or losses that come from using the page or from what the AIs say. Keep a copy of what matters: in «Your usage › Export data» you can download your chats.</p></section>
+      <section className="card"><h2>Suspension</h2><p>If someone breaks these rules or puts the page or other people at risk, we may limit or suspend their access or account, sometimes without notice. If you think it was a mistake, write to us.</p></section>
+      <section className="card"><h2>Special features</h2><p>Events, achievements, SynthonIA and other surprises may change, come and go over time.</p></section>
+      <section className="card"><h2>Achievements and discounts</h2><p>Some achievements say you'll be considered for future discounts. It's a benefit we may give once payments exist; it's not a promise of a price or percentage.</p></section>
+      <section className="card"><h2>Changes</h2><p>We may update these terms. If the change is important, we'll let you know on the page. If you keep using SymphorIA, you accept the new version.</p></section>
+      <section className="card"><h2>Governing law</h2><p>These terms are governed by the laws of Colombia.</p></section>
+      <section className="card"><h2>Contact</h2><p>Write to us from the page with «Talk to the team» or «Tell us what to improve».</p></section>
     </>
   );
 }

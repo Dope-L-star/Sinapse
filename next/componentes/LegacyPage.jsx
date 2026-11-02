@@ -14,12 +14,13 @@ export default function LegacyPage({
   inlineStyle = '',
   scripts = [],
   puter = false,
+  children = null,
 }) {
   return (
     <>
       {stylesheets.map((href) => <link rel="stylesheet" href={`/${href}`} precedence="default" key={href} />)}
       {inlineStyle ? <style data-page-style={page} dangerouslySetInnerHTML={{ __html: inlineStyle }} /> : null}
-      {tree ? <ReactTree nodes={tree} /> : null}
+      {tree ? <ReactTree nodes={tree} /> : children}
       {page === 'chat' ? <SynthonIAHost /> : null}
       <LegacyRuntime page={page} scripts={scripts} puter={puter} />
     </>

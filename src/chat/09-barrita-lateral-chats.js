@@ -61,6 +61,7 @@ addEventListener('pageshow', e => { if (e.persisted){ root.classList.remove('bye
 SZ.hooks.usage = () => { renderFoot(); coinWatch(); };
 SZ.hooks.md = () => { if (!Object.keys(busy).length && mode === 'solo' && chatArr().length) renderMsgs(); };
 SZ.onLang(() => { if (!Object.keys(busy).length && mode === 'solo') renderMsgs(); });   /* v3.0 · el saludo cambia de idioma al momento */
+SZ.onLang(() => { try{ renderList({ keep:true }); }catch(e){} });   /* v3.7 · la lista de IA (y su «Experta en…») también cambia de idioma al momento */
 
 /* ---------- tutorial, mejor IA gratis y menú contextual ---------- */
 const APODEX_NAME = 'Automática';

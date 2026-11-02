@@ -165,6 +165,7 @@ Object.assign(I18N.es, {
   'enerx.of': 'de {enerx} · se carga a medianoche',
   'enerx.ofEmpty': 'sin {enerx} · se carga a medianoche',
   'enerx.used': ' · usó {u} % de tu {enerx} · te queda {n} %',
+  'enerx.usedGuest': ' · sin cuenta: te quedan {n} mensajes de prueba hoy',
   'enerx.small': 'Gratis. Tu {enerx} (tu batería) baja un poco con cada mensaje (lo que escribes y lo que te responde). A medianoche se carga al 100 %.',
   'enerx.hint': 'Tu {enerx} de hoy (tu batería): toca para ver el detalle',
   'enerx.guestLeft': 'Te quedan {n} mensajes de prueba',
@@ -197,6 +198,7 @@ Object.assign(I18N.en, {
   'enerx.of': '{enerx} · recharges at midnight',
   'enerx.ofEmpty': 'no {enerx} · recharges at midnight',
   'enerx.used': ' · used {u} % of your {enerx} · {n} % left',
+  'enerx.usedGuest': ' · without an account: {n} trial messages left today',
   'enerx.small': 'Free. Your {enerx} (your battery) drops a little with each message (what you write and what you get back). At midnight it recharges to 100 %.',
   'enerx.hint': "Today's {enerx} (your battery): tap for details",
   'enerx.guestLeft': '{n} trial messages left',
@@ -1918,7 +1920,11 @@ const groqName = id => String(id).replace(/^[^/]+\//, '').split(/[-_]/).map(w =>
 /* ===== IA de SymphorIA: modelos gratis compartidos, con un tope diario por persona ===== */
 const DEVH = (/^[\w-]{12,48}$/.test(DEV) ? DEV : (String(DEV).replace(/[^\w-]/g, '') + 'synthzdevice').slice(0, 24));
 const SZQ = { on:null, used:0, limit:20000, n:0, t:0, guest:null };
-function szqSet(o){ Object.assign(SZQ, o); try{ dispatchEvent(new CustomEvent('synthz-szq', { detail:SZQ })); }catch(e){} }
+function szqSet(o){
+  /* v3.7 · la pila nunca «sube» sola en el día: si llegan dos respuestas a la vez (Comparar, revisión), la que trae un número viejo no la devuelve hacia arriba.
+     Solo se acepta que baje el gasto cuando de verdad se renovó (medianoche: vuelve a casi cero) */
+  if (o && typeof o.used === 'number' && typeof SZQ.used === 'number' && o.used < SZQ.used && o.used > SZQ.used * .5 && !o.reset){ o = Object.assign({}, o); delete o.used; }
+  Object.assign(SZQ, o); try{ dispatchEvent(new CustomEvent('synthz-szq', { detail:SZQ })); }catch(e){} }
 const szHeaders = () => { const h = { 'content-type':'application/json', 'x-sz-device':DEVH }; if (SESS) h.authorization = 'Bearer ' + SESS; return h; };
 const SZ_VEND = [[/llama|meta/i, 'meta-llama'], [/gemma|gemini/i, 'google'], [/mistral|mixtral|codestral|ministral|magistral|devstral|pixtral|open-mi/i, 'mistralai'], [/qwen|qwq/i, 'qwen'], [/deepseek/i, 'deepseek'], [/gpt-oss|openai/i, 'openai'], [/kimi|moonshot/i, 'moonshotai'], [/glm|z-ai/i, 'z-ai'], [/nemotron|nvidia/i, 'nvidia'], [/phi-|microsoft/i, 'microsoft'], [/granite|ibm/i, 'ibm'], [/hermes|nous/i, 'nousresearch']];
 const szVendor = (mid, prov) => (SZ_VEND.find(([rx]) => rx.test(mid)) || [0, prov])[1];
@@ -1941,8 +1947,12 @@ const coinsTotal = () => coinsOf(SZQ.limit || 25000);
 const coinsFmt = n => Math.round(n).toLocaleString('es');
 const coinsShort = n => n >= 10000 ? (Math.floor(n / 100) / 10).toLocaleString('es') + ' mil' : coinsFmt(n);
 /* v3.0 · batería en vez de palabras (Sammuel, 27 oct): el límite del día se ve como una pila que se descarga y se carga a medianoche */
-const battPct = () => Math.round((1 - limPct()) * 100);
-const coinNote = (mid, r) => /^sz:/.test(String(mid)) && r && !r.cached && ((r.prompt || 0) + (r.completion || 0)) > 0 ? t('enerx.used', { u:Math.max(1, Math.round(((r.prompt || 0) + (r.completion || 0)) / (SZQ.limit || 25000) * 100)), n:battPct() }) : '';
+/* v3.7 · EnerX de verdad (Sammuel, 2 nov): cada respuesta dice cuánto gastó de verdad (con decimales si es poquito, ya no «1 %» fijo)
+   y la batería muestra el mismo número, así lo que dice la respuesta y lo que baja la pila siempre cuadran. */
+const pctFmt = x => { x = Math.max(0, Math.min(100, x)); const d = x >= 99.95 || x <= 0 || Number.isInteger(Math.round(x * 10) / 10) && Math.round(x * 10) % 10 === 0 ? 0 : 1; return (Math.round(x * 10) / 10).toFixed(d).replace('.', LANG === 'en' ? '.' : ','); };
+const battPct = () => pctFmt((1 - limPct()) * 100);
+const spentPct = tok => { const x = (+tok || 0) / (SZQ.limit || 25000) * 100; return x > 0 && x < .1 ? (LANG === 'en' ? 'less than 0.1' : 'menos de 0,1') : pctFmt(x); };
+const coinNote = (mid, r) => /^sz:/.test(String(mid)) && r && !r.cached && ((r.prompt || 0) + (r.completion || 0)) > 0 ? (isGuestQ() ? t('enerx.usedGuest', { n:guestLeft() }) : t('enerx.used', { u:spentPct((r.prompt || 0) + (r.completion || 0)), n:battPct() })) : '';
 const guestLeft = () => Math.max(0, (SZQ.guest.max || 5) - (SZQ.guest.used || 0));
 const limTxt = () => SZQ.on === false ? t('enerx.rest') : guestFull() ? t('enerx.signin') : isGuestQ() ? t('enerx.guestLeft', { n:guestLeft() }) : limPct() >= 1 ? t('enerx.empty') : t('enerx.left', { n:battPct() });
 const limShort = () => SZQ.on === false ? t('enerx.restShort') : guestFull() ? t('enerx.signinShort') : isGuestQ() ? t('enerx.guestShort', { n:guestLeft() }) : limPct() >= 1 ? t('enerx.emptyShort') : battPct() + ' %';
@@ -3319,7 +3329,7 @@ async function askStream(p, messages, opts = {}, onDelta){
         if (!line.startsWith('data:')) continue;
         const d = line.slice(5).trim(); if (d === '[DONE]') continue;
         let j; try{ j = JSON.parse(d); }catch(e){ continue; }
-        if (j.sz){ szqSet({ used:+j.sz.used || SZQ.used, limit:+j.sz.limit || SZQ.limit }); if (!usage && j.sz.spent) usage = { prompt_tokens:Math.ceil(inChars / 4), completion_tokens:Math.max(0, j.sz.spent - Math.ceil(inChars / 4)) }; continue; }
+        if (j.sz){ szqSet({ used:+j.sz.used || SZQ.used, limit:+j.sz.limit || SZQ.limit }); if (j.sz.spent){ const pp = Math.min(+j.sz.spent, Math.ceil(inChars / 4)); usage = { prompt_tokens:pp, completion_tokens:+j.sz.spent - pp }; }   /* v3.7 · lo que descontó el servidor es lo que se muestra: así «usó X %» y la pila cuadran */ continue; }
         if (j.error){ if (acc){ cut = String(j.error.message || 'error'); return done(false); } const raw = String(j.error.message || ''); throw Object.assign(new Error(friendly(+j.error.code || 502, j, p)), { status:+j.error.code || 502, raw, gone:modelGone(+j.error.code || 502, raw) }); }
         if (j.usage) usage = j.usage; else if (j.x_groq && j.x_groq.usage) usage = j.x_groq.usage;
         const ch = (j.choices || [])[0]; if (ch && ch.delta){ pushR(ch.delta.reasoning); pushR(ch.delta.reasoning_content); if (typeof ch.delta.content === 'string') push(ch.delta.content); }
