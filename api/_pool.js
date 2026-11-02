@@ -175,7 +175,7 @@ async function plan(model){
   const alts = [];
   for (const p of ORDER){ const m = PROV[p].best.map(b => cat.list.find(x => x.prov === p && x.mid === b)).find(Boolean) || cat.list.find(x => x.prov === p); if (m) alts.push(m); }
   if (model && model !== 'sz:auto' && !want) throw err(400, 'Ese modelo no es de los gratis de SymphorIA.', 'sz_model');
-  return want ? [want, ...alts.filter(a => a.prov !== want.prov)].slice(0, 3) : alts.slice(0, 3);
+  return want ? [want, ...alts.filter(a => a.prov !== want.prov)].slice(0, 4) : alts.slice(0, 4);   /* v3.7 · un respaldo más: si fallan 3 proveedores, prueba un cuarto */
 }
 
 /* ---------- cuota de cada persona ---------- */
@@ -221,7 +221,7 @@ async function visionPlan(model){
     if (m) alts.push(m);
   }
   const first = want && VIS_ORDER.includes(want.prov) && VISION_RX.test(want.mid) ? want : null;
-  return first ? [first, ...alts.filter(a => a.prov !== first.prov)].slice(0, 3) : alts.slice(0, 3);
+  return first ? [first, ...alts.filter(a => a.prov !== first.prov)].slice(0, 4) : alts.slice(0, 4);
 }
 /* v3.4 · la IA que revisa las respuestas: la que mejor razona entre las gratis (con fotos, una que ve) */
 const REVIEW_PREF = ['google:gemini-flash-latest', 'google:gemini-2.5-flash', 'groq:llama-3.3-70b-versatile', 'mistral:mistral-small-latest', 'groq:openai/gpt-oss-20b'];   /* v3.7 · sin modelos de alto consumo */
@@ -292,7 +292,7 @@ export async function chat({ who, ipKey, messages, model, maxTokens, system, str
         if (onDone) try{ await onDone(total); }catch(e){}
         return total;
       };
-      const meta = { prov:m.prov, provName:PROV[m.prov].name, model:m.id, name:m.name, fallback:m.id !== (steps[0] || {}).id };
+      const meta = { prov:m.prov, provName:PROV[m.prov].name, model:m.id, name:m.name, fallback:!!(model && model !== 'sz:auto' && m.id !== model) };   /* v3.7 · la que elegiste no respondió (o no ve fotos): respondió otra */
       if (!stream){
         const j = await up.json().catch(() => ({})); clearTimeout(up._tm); const text = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
         if (typeof text !== 'string' || !text.trim()) continue;
