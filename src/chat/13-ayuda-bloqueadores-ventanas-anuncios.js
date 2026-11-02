@@ -8,6 +8,7 @@ const ICO = {
 };
 let blkEl = null;
 function showBlockHelp(kind){
+  if (kind === 'popup') window.__popupBlocked = true;   /* recuerda que de verdad hubo una ventanita bloqueada */
   if (blkEl) return;
   const br = browserName(), pop = kind === 'popup', brave = br === 'Brave';
   const steps = pop

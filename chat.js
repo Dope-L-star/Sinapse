@@ -3591,7 +3591,7 @@ function needsConn(){ return (mode === 'cmp' ? st().cmp : [selId()]).some(id => 
 async function puterSignIn(opts){
   if (!window.puter){ showBlockHelp(window.__puterBlocked ? 'script' : 'script'); throw Object.assign(new Error('sin puter'), { shown:true }); }
   try{ return await puter.auth.signIn(opts || {}); }
-  catch(e){ if (e && (e.error === 'popup_blocked' || e.code === 'popup_blocked')){ showBlockHelp('popup'); throw Object.assign(new Error('popup'), { shown:true }); } throw e; }
+  catch(e){ if (e && (e.error === 'popup_blocked' || e.code === 'popup_blocked')){ window.__popupBlocked = true; showBlockHelp('popup'); throw Object.assign(new Error('popup'), { shown:true }); } throw e; }
 }
 function mScore(m){ const b = (m.id.match(/(\d{2,3})b/i) || [])[1]; return (b ? +b : 20) + (m.reasoning ? 25 : 0) + Math.min(m.ctx, 262144) / 8000 + (/gpt-oss|deepseek|qwen|llama-3\.3|gemini|kimi|glm/i.test(m.id) ? 15 : 0) + (/^pu:/.test(m.id) && /gpt-5|gemini-3|claude|deepseek/i.test(m.id) ? 40 : 0) - (/nano|lite|mini/i.test(m.id) ? 10 : 0) + (/gpt-5\.6-luna$/i.test(m.id) ? 30 : 0) + (/^or:openrouter\/free$/.test(m.id) ? 20 : 0) + (/^gq:/.test(m.id) && gqOn() ? 60 : 0) + (m.id === 'sz:auto' ? 140 : /^sz:/.test(m.id) ? 10 : 0) - (/allam/i.test(m.id) ? 999 : 0) - (SZ.isBad(m.id) ? 999 : 0); }
 function bestOf(prefix){ const l = cat.list.filter(m => m.id.startsWith(prefix + ':') && (m.free || prefix === 'pu')); if (prefix === 'sz' || prefix === 'or'){ const ap = l.find(m => m.id === APODEX); if (ap) return ap; } return l.length ? l.slice().sort((a, b) => mScore(b) - mScore(a))[0] : null; }
@@ -3682,6 +3682,7 @@ const ICO = {
 };
 let blkEl = null;
 function showBlockHelp(kind){
+  if (kind === 'popup') window.__popupBlocked = true;   /* recuerda que de verdad hubo una ventanita bloqueada */
   if (blkEl) return;
   const br = browserName(), pop = kind === 'popup', brave = br === 'Brave';
   const steps = pop
@@ -4298,12 +4299,19 @@ function mmOpen(){
   const L = [{ label:'Nuevo chat', ico:'new', fn:() => newChat() }];
   if (mode === 'solo') L.push({ label:'Copiar la conversación', ico:'copy', fn:() => { copyText(chatMd()); toast('Conversación copiada.'); } }, { label:'Descargar como texto', ico:'down', fn:exportMd });
   else L.push({ label:'Empezar otra comparación', ico:'cmp', fn:() => clearChat() }, { label:'Volver a una sola IA', ico:'exit', fn:() => removeCmp(st().cmp[st().cmp.length - 1]) });
-  L.push('—', { label:'Lo que recuerdo de ti', ico:'brain', fn:() => SZ.cfgModal('mem') }, { label:'Ajustes', ico:'cog', fn:() => SZ.cfgModal() }, { label:'Planes', ico:'trophy', fn:() => SZ.plansModal() }, ...(SZ.planOf() === 'orquesta' ? [{ label:'A.L.I.A.S. · equipo', ico:'ai', fn:() => { location.href = 'alias.html'; } }] : []), { label:SZ.lang() === 'en' ? 'Español' : 'English', ico:'globe', fn:() => SZ.setLang(SZ.lang() === 'en' ? 'es' : 'en') }, { label:'Ayuda: algo no carga', ico:'help', fn:() => showBlockHelp(window.__puterBlocked ? 'script' : 'popup') });
+  L.push('—', { label:'Lo que recuerdo de ti', ico:'brain', fn:() => SZ.cfgModal('mem') }, { label:'Ajustes', ico:'cog', fn:() => SZ.cfgModal() }, { label:'Planes', ico:'trophy', fn:() => SZ.plansModal() }, ...(SZ.planOf() === 'orquesta' ? [{ label:'A.L.I.A.S. · equipo', ico:'ai', fn:() => { location.href = 'alias.html'; } }] : []), { label:SZ.lang() === 'en' ? 'Español' : 'English', ico:'globe', fn:() => SZ.setLang(SZ.lang() === 'en' ? 'es' : 'en') }, { label:'Ayuda: algo no carga', ico:'help', fn:helpLoad });
   if (trialOn) L.push({ label:'Salir de la prueba guiada', ico:'exit', fn:() => exitTrial() });
   if (mode === 'solo') L.push('—', { label:'Borrar este chat', ico:'trash', danger:true, fn:() => clearChat(true) });
   const r = mb.getBoundingClientRect(), m = SZ.menuOpen(L, 0, r.bottom + 8, 'mm');
   m.style.left = Math.max(10, Math.min(r.right - m.offsetWidth, innerWidth - m.offsetWidth - 10)) + 'px';
   mb.setAttribute('aria-expanded', 'true'); const f = $('button', m); if (f) f.focus();
+}
+/* v3.7 · «Ayuda: algo no carga» revisa primero qué pasa de verdad: antes mostraba siempre el aviso de la ventanita de Puter,
+   aunque nada estuviera bloqueado (Sammuel lo vio al tocar el menú «⋯»). Ahora solo sale el aviso que corresponde. */
+function helpLoad(){
+  if (window.__puterBlocked || !window.puter) return showBlockHelp('script');
+  if (window.__popupBlocked) return showBlockHelp('popup');
+  toast('Todo está cargando bien. Si algo no funciona, pregúntale a SynthonIA o abre la Ayuda.');
 }
 $('#moreBtn').dataset.menuOwner = '1'; $('#moreBtn').setAttribute('aria-expanded', 'false');
 $('#moreBtn').addEventListener('click', mmOpen);
