@@ -1,6 +1,5 @@
-import LegacyPage from '../../../componentes/LegacyPage';
-import { inlineStyle } from '../../../contenido/legado/pulsem';
-import reactTree from '../../../contenido/arboles-react/pulsem.json';
+import LegacyRuntime from '../../../componentes/LegacyRuntime';
+import PulsemApp from '../../../componentes/pulsem/PulsemApp';
 
 export const metadata = {
   title: 'Pulsem · SymphorIA',
@@ -8,6 +7,14 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
+/* v3.8 · Pulsem ya es React de verdad (next/componentes/pulsem/*). pulsem.js ya no se carga aquí:
+   solo core.js (cuenta, servidor, SynthonIA, mantenimiento) y la capa de animaciones. */
 export default function Pulsem() {
-  return <LegacyPage page="pulsem" tree={reactTree.nodes} inlineStyle={inlineStyle} stylesheets={['pulsem.css', 'core.css', 'movimiento.css']} scripts={['core.js', 'pulsem.js', 'movimiento.js']} />;
+  return (
+    <>
+      {['pulsem.css', 'core.css', 'movimiento.css'].map((href) => <link rel="stylesheet" href={`/${href}`} precedence="default" key={href} />)}
+      <PulsemApp />
+      <LegacyRuntime page="pulsem" scripts={['core.js', 'movimiento.js']} />
+    </>
+  );
 }

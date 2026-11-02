@@ -11,7 +11,7 @@ Estas rutas salen de `app/` como páginas React (Next App Router):
 | `/alias.html` (A.L.I.A.S.) | `app/(site)/alias/page.jsx` |
 | `/ayuda.html` | `app/(site)/ayuda/page.jsx` |
 | `/offline.html` | `app/(site)/offline/page.jsx` |
-| `/pulsem.html` | `app/(panel)/pulsem/page.jsx` |
+| `/pulsem.html` | `app/(panel)/pulsem/page.jsx` → **React de verdad** (`componentes/pulsem/*`, v3.8) |
 | `/privacidad.html` y `/terminos.html` | componentes React propios |
 
 Las páginas principales tienen su estructura renderizada como elementos de React mediante `ReactTree.jsx`; ya no dependen de `dangerouslySetInnerHTML` para inyectar todo el cuerpo de la página. Los árboles JSON versionados están en `contenido/arboles-react/` y conservan los IDs/clases/data-attributes que consumen los módulos existentes. Se generaron desde las páginas fuente con `python next/generar-arboles-react.py` (requiere `beautifulsoup4`, solo para desarrollo).
@@ -19,6 +19,10 @@ Las páginas principales tienen su estructura renderizada como elementos de Reac
 `LegacyRuntime` sigue cargando en orden los motores JS actuales —`core.js`, `chat.js`, `index.js`, `alias.js`, `pulsem.js` y módulos auxiliares— para preservar autenticación, streaming, historial, Puter/OpenRouter, adjuntos, comparación y herramientas. Eso es un puente de compatibilidad, no una reescritura terminada de cada módulo a hooks. La migración de estado y efectos internos a React hooks debe hacerse módulo por módulo y no eliminarse este puente hasta que sus flujos pasen pruebas de navegador.
 
 `/sintetico.html` queda deliberadamente como documento aislado con una CSP `sandbox` y un protocolo `postMessage` específico. No se debe colocar en el mismo árbol React que ejecuta la app: la separación evita que el HTML generado por una IA comparta el entorno privilegiado de SynthFlow.
+
+## Pulsem ya es React (v3.8)
+
+`componentes/pulsem/` reemplaza a `pulsem.js` en la versión publicada: `PulsemApp.jsx` (cabecera, puerta, menú, datos cada minuto), `Resumen.jsx`, `Llaves.jsx`, `Ajustes.jsx`, `Bandejas.jsx` (comentarios, ayuda, contactar) y `textos.js` (todo en ES/EN; cambia al instante con `<html lang>`). De `core.js` solo usa lo compartido (cuenta, `SZ.api`, avisos, íconos, SynthonIA, mantenimiento). Un cambio de Pulsem se hace en estos componentes; `src/pulsem/` queda solo para el `pulsem.html` estático (pruebas de humo y Vercel). El rediseño del panel (`componentes/admin/*`) se monta dentro de `PulsemApp` por sección.
 
 ## Pruebas de estructura
 
