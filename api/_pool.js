@@ -17,9 +17,9 @@ export const PROV = {
   /* v2.0 · Google AI Studio: SOLO los modelos de la capa gratis (Flash, Flash-Lite y Gemma). Ojo: la llave debe ser de un proyecto SIN facturación */
   google:{ name:'Google AI Studio', base:() => process.env.POOL_GOOGLE_URL || 'https://generativelanguage.googleapis.com/v1beta/openai', cap:+process.env.POOL_CAP_GOOGLE || 900,
     best:['gemini-flash-latest', 'gemini-flash-lite-latest', 'gemma-3-27b-it'] },
-  /* Ollama (nube): plan gratis con límites por sesión/semana; no cobra por uso */
+  /* Ollama (nube): desde el 9-nov-2026 varios modelos piden créditos; esos se quitan (ver OLLAMA_PAID) y solo quedan los sin costo */
   ollama:{ name:'Ollama', base:() => process.env.POOL_OLLAMA_URL || 'https://ollama.com/v1', cap:+process.env.POOL_CAP_OLLAMA || 300,
-    best:['gpt-oss:120b', 'gpt-oss:20b', 'qwen3-coder:480b', 'deepseek-v3.1:671b'] },
+    best:['qwen3-coder:480b', 'deepseek-v3.1:671b'] },
   /* SiliconFlow (.com): SOLO la lista de modelos gratis; los de pago se rechazan aunque haya saldo */
   siliconflow:{ name:'SiliconFlow', base:() => process.env.POOL_SF_URL || 'https://api.siliconflow.com/v1', cap:+process.env.POOL_CAP_SF || 500,
     best:['Qwen/Qwen3-8B', 'THUDM/GLM-4-9B-0414', 'Qwen/Qwen2.5-7B-Instruct'] }
@@ -114,6 +114,8 @@ const GOOGLE_FREE = /^(gemini-[\d.]+-flash(-lite)?(-\d{3})?|gemini-flash(-lite)?
 const gVer = id => /latest/.test(id) ? 99 : +((id.match(/(\d+(?:\.\d+)?)/) || [])[1] || 0);
 const gSort = (a, b) => (/^gemma/.test(a.id) - /^gemma/.test(b.id)) || (gVer(b.id) - gVer(a.id)) || (/lite/.test(a.id) - /lite/.test(b.id));
 const SF_FREE = /(^|\/)(qwen3-8b|qwen2\.5-7b-instruct|qwen3\.5-4b|glm-4-9b-0414|glm-z1-9b-0414|deepseek-r1-0528-qwen3-8b|hunyuan-mt-7b)$/i;
+/* modelos de la nube de Ollama que piden créditos desde el 9-nov-2026: nunca se listan ni se usan */
+const OLLAMA_PAID = /^(gemma4:31b|gpt-oss:(120b|20b)|nemotron-3-(super|ultra|nano:30b))(-cloud)?$/i;
 const DROP = /whisper|guard|tts|orpheus|safeguard|allam|compound|distil|playai|embed|moderation|ocr|voxtral|transcri|lora|vision-preview|lyria|music|audio|image|flux|stable|dall/i;
 async function listFor(prov, k){
   const base = await baseOf(k), H = { Authorization:'Bearer ' + k.key };
@@ -131,6 +133,7 @@ async function listFor(prov, k){
   const d = await (await fetch(base + '/models', { headers:H, signal:AbortSignal.timeout(10000) })).json();
   let L = (d.data || d.models || []).map(m => m && (m.id || m.name) ? Object.assign({}, m, { id:String(m.id || m.name).replace(/^models\//, '') }) : null).filter(m => m && m.active !== false && !DROP.test(m.id));
   if (prov === 'google') L = L.filter(m => GOOGLE_FREE.test(m.id)).sort(gSort);
+  if (prov === 'ollama') L = L.filter(m => !OLLAMA_PAID.test(m.id));
   if (prov === 'siliconflow') L = L.filter(m => SF_FREE.test(m.id) && !/^pro\//i.test(m.id));
   if (prov === 'mistral') L = L.filter(m => !m.capabilities || m.capabilities.completion_chat !== false).filter(m => !m.deprecation && (/-latest$/.test(m.id) || /nemo/.test(m.id)));
   return L.map(m => ({ mid:m.id, name:m.id, ctx:+m.context_window || +m.max_context_length || 0 }));
@@ -216,7 +219,7 @@ async function visionPlan(model){
   return first ? [first, ...alts.filter(a => a.prov !== first.prov)].slice(0, 3) : alts.slice(0, 3);
 }
 /* v3.4 · la IA que revisa las respuestas: la que mejor razona entre las gratis (con fotos, una que ve) */
-const REVIEW_PREF = ['groq:openai/gpt-oss-120b', 'google:gemini-flash-latest', 'google:gemini-2.5-flash', 'ollama:gpt-oss:120b', 'groq:llama-3.3-70b-versatile', 'mistral:mistral-medium-latest', 'groq:qwen/qwen3-32b'];
+const REVIEW_PREF = ['groq:openai/gpt-oss-120b', 'google:gemini-flash-latest', 'google:gemini-2.5-flash', 'groq:llama-3.3-70b-versatile', 'mistral:mistral-medium-latest', 'groq:qwen/qwen3-32b'];
 export async function reviewerModel(withImg){
   const cat = await models(false);
   if (withImg){ const v = await visionPlan(''); return v[0] ? v[0].id : ''; }
