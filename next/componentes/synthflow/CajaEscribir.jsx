@@ -1,7 +1,31 @@
 /* SynthFlow en React · caja de escribir
    v3.7 · pasó de árbol JSON generado a componente JSX propio. Conserva IDs, clases y data-* porque el motor (chat.js) los usa.
+   v3.7 · ya trae el «+», crear imagen, internet, «Respuestas cortas» y las bolitas (antes el motor los agregaba al arrancar).
+   v3.8 · botón de enviar con avión de papel: sale volando cuando la IA empieza a responder y vuelve cuando termina (idea Uiverse #39).
    Para cambiar el marcado de SynthFlow se edita AQUÍ; chat.html queda solo para las pruebas viejas y build.mjs (verificar-migracion.mjs revisa que no se pierda ningún ID). */
+'use client';
+import { useEffect } from 'react';
+
+/* el avión sale volando cuando el motor pone «.stop» (la IA empezó a responder, sea con el botón o con Enter)
+   y vuelve a entrar cuando la respuesta termina; con «Animaciones» apagadas en Ajustes no se mueve (html.noanim) */
+function usePlane(){
+  useEffect(() => {
+    const b = document.getElementById('sendBtn');
+    if (!b) return;
+    let was = b.classList.contains('stop'), tm = 0;
+    const play = c => { clearTimeout(tm); b.classList.remove('fly', 'back'); void b.offsetWidth; b.classList.add(c); tm = setTimeout(() => b.classList.remove(c), c === 'fly' ? 640 : 480); };
+    const mo = new MutationObserver(() => {
+      const now = b.classList.contains('stop');
+      if (now === was) return;
+      was = now; play(now ? 'fly' : 'back');
+    });
+    mo.observe(b, { attributes: true, attributeFilter: ['class'] });
+    return () => { mo.disconnect(); clearTimeout(tm); };
+  }, []);
+}
+
 export default function CajaEscribir(){
+  usePlane();
   return (
     <>
       <footer className="composer" id="composer">
@@ -24,10 +48,14 @@ export default function CajaEscribir(){
         </div>
         <div className="comp-in">
           <div className="attw">
-            <button className="attach" id="attachBtn" type="button" aria-label="Adjuntar" aria-haspopup="menu" aria-expanded="false">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 11.5l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.9-8.9a3.7 3.7 0 0 1 5.2 5.2l-8.9 8.9a1.8 1.8 0 0 1-2.6-2.6l8.1-8.1" />
-              </svg>
+            <button className="attach" id="attachBtn" type="button" aria-label="Agregar: archivos, imagen, internet…" data-tip="Archivos, crear imagen, buscar en internet…" aria-haspopup="menu" aria-expanded="false">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+            </button>
+            <button type="button" className="attach imgb" id="imgBtn" aria-pressed="false" aria-label="Crear una imagen" data-tip="Crear una imagen">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="3" /><circle cx="9" cy="10" r="1.8" /><path d="M21 16l-5-5-8 9" /></svg>
+            </button>
+            <button type="button" className="attach webb" id="webBtn" aria-pressed="false" aria-label="Buscar en internet" data-tip="Buscar en internet">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.6 2.8 3.8 5.8 3.8 9s-1.2 6.2-3.8 9c-2.6-2.8-3.8-5.8-3.8-9S9.4 5.8 12 3z" /></svg>
             </button>
             <div className="amenu" id="attMenu" role="menu" hidden>
               <button type="button" role="menuitem" data-att="file"><i aria-hidden="true">📄</i><span><b>Archivo o PDF</b><small>Documentos, código y textos</small></span></button>
@@ -36,13 +64,15 @@ export default function CajaEscribir(){
                 <span><b>Imagen</b><small>Solo las IA que «ven fotos» pueden mirarla</small></span>
               </button>
               <button type="button" role="menuitem" data-att="cam" className="only-touch"><i aria-hidden="true">📷</i><span><b>Tomar una foto</b><small>Con la cámara del celular</small></span></button>
-              <button type="button" role="menuitem" data-att="mkimg" className="only-small"><i aria-hidden="true">🎨</i><span><b>Crear una imagen</b><small>La IA la dibuja (con tu cuenta)</small></span></button>
-              <button type="button" role="menuitem" data-att="web" className="only-small">
+              <button type="button" role="menuitem" data-att="mkimg"><i aria-hidden="true">🎨</i><span><b>Crear una imagen</b><small>La IA la dibuja (con tu cuenta)</small></span></button>
+              <button type="button" role="menuitem" data-att="web">
                 <i aria-hidden="true">🌐</i>
                 <span><b>Buscar en internet</b><small>Responde con datos de hoy y sus fuentes</small></span>
               </button>
+              <button type="button" role="menuitemcheckbox" data-att="saver" aria-checked="false"><i aria-hidden="true">🍃</i><span><b>Respuestas cortas</b><small>Gastas menos de tu límite de hoy</small></span><em className="mck" aria-hidden="true" /></button>
               <p className="ahint">También puedes arrastrar archivos aquí o pegarlos con Ctrl+V.</p>
             </div>
+            <div className="onchips" id="onChips" />
           </div>
           <input type="file" id="fileIn" multiple hidden accept="image/*,.pdf,.docx,.xlsx,.pptx,.odt,.ods,.odp,.txt,.md,.csv,.tsv,.json,.jsonl,.xml,.html,.htm,.css,.scss,.js,.mjs,.ts,.jsx,.tsx,.py,.ipynb,.java,.c,.h,.cpp,.cs,.go,.rs,.php,.rb,.sh,.sql,.yml,.yaml,.toml,.ini,.log,.tex,.swift,.kt,.dart,.lua,.vue,.svelte,.srt,.vtt,.rtf,.svg" />
           <input type="file" id="imgIn" multiple hidden accept="image/*" />
@@ -70,7 +100,7 @@ export default function CajaEscribir(){
             </button>
           </div>
           <button className="send" id="sendBtn" aria-label="Enviar">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+            <svg className="pl" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14.5 21.2a.6.6 0 0 0 1.1-.05L21.9 3a.6.6 0 0 0-.8-.8L2.85 8.4a.6.6 0 0 0-.05 1.1l7.6 3.05a2 2 0 0 1 1.1 1.1z" /><path d="M21.6 2.4 10.9 13.1" /></svg>
           </button>
         </div>
         <div className="hintline">

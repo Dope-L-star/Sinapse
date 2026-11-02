@@ -11,13 +11,17 @@ addEventListener('synthz-saver', () => { $$('#sxSw, #saverBtn').forEach(x => x.s
 /* el «+» trae todo: archivos, crear imagen, buscar en internet y respuestas cortas */
 {
   const am = $('#attMenu'), ab = $('#attachBtn');
-  if (ab){ ab.setAttribute('aria-label', 'Agregar: archivos, imagen, internet…'); ab.dataset.tip = 'Archivos, crear imagen, buscar en internet…'; ab.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'; }
+  const reactBox = !!(am && $('[data-att="saver"]', am));   /* v3.7 · React ya pinta el «+», «Respuestas cortas» y las bolitas */
+  if (ab && !reactBox){ ab.setAttribute('aria-label', 'Agregar: archivos, imagen, internet…'); ab.dataset.tip = 'Archivos, crear imagen, buscar en internet…'; ab.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'; }
   if (am){
-    $$('.only-small', am).forEach(x => x.classList.remove('only-small'));
-    const hint = $('.ahint', am), sv = document.createElement('button');
-    sv.type = 'button'; sv.setAttribute('role', 'menuitemcheckbox'); sv.dataset.att = 'saver';
-    sv.innerHTML = '<i aria-hidden="true">🍃</i><span><b>Respuestas cortas</b><small>Gastas menos de tu límite de hoy</small></span><em class="mck" aria-hidden="true"></em>';
-    am.insertBefore(sv, hint);
+    let sv = $('[data-att="saver"]', am);
+    if (!sv){
+      $$('.only-small', am).forEach(x => x.classList.remove('only-small'));
+      const hint = $('.ahint', am); sv = document.createElement('button');
+      sv.type = 'button'; sv.setAttribute('role', 'menuitemcheckbox'); sv.dataset.att = 'saver';
+      sv.innerHTML = '<i aria-hidden="true">🍃</i><span><b>Respuestas cortas</b><small>Gastas menos de tu límite de hoy</small></span><em class="mck" aria-hidden="true"></em>';
+      am.insertBefore(sv, hint);
+    }
     const paint = () => { const on = !!st().sx.saver; sv.setAttribute('aria-checked', String(on)); $('.mck', sv).textContent = on ? '✓' : ''; };
     paint(); addEventListener('synthz-saver', paint);
     sv.addEventListener('click', e => { e.stopPropagation(); setSaver(!st().sx.saver); paint(); attClose(); }, true);
@@ -29,8 +33,8 @@ addEventListener('synthz-saver', () => { $$('#sxSw, #saverBtn').forEach(x => x.s
 /* chips de lo que está encendido (imagen, internet, cortas): se apagan con un toque.
    v3.2 (Sammuel, 28 oct): ya no van en una fila aparte debajo de la caja; son bolitas junto al «+» que muestran su nombre al pasar el puntero. */
 {
-  const host = document.createElement('div'); host.className = 'onchips'; host.id = 'onChips';
-  const aw = $('.comp-in .attw'); if (aw) aw.appendChild(host); else { const ci = $('.comp-in'); if (ci) ci.appendChild(host); }
+  const host = $('#onChips') || document.createElement('div');
+  if (!host.isConnected){ host.className = 'onchips'; host.id = 'onChips'; const aw = $('.comp-in .attw'); if (aw) aw.appendChild(host); else { const ci = $('.comp-in'); if (ci) ci.appendChild(host); } }
   const paint = () => {
     const L = [];
     if (imgMode) L.push(['img', '🎨', 'Crear imagen']);

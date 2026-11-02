@@ -1779,10 +1779,11 @@ const imgDB = (() => {
   return { put:(id, blob) => tx('readwrite', s => s.put(blob, id)), get:id => tx('readonly', s => s.get(id)) };
 })();
 /* botón «Crear imagen» junto al clip */
-const imgBtn = document.createElement('button');
-imgBtn.type = 'button'; imgBtn.className = 'attach imgb'; imgBtn.id = 'imgBtn'; imgBtn.setAttribute('aria-pressed', 'false'); imgBtn.setAttribute('aria-label', 'Crear una imagen'); imgBtn.dataset.tip = 'Crear una imagen';
+/* v3.7 · en la versión React el botón ya viene en CajaEscribir.jsx; aquí solo si falta */
+const imgBtn = $('#imgBtn') || document.createElement('button');
+if (!imgBtn.isConnected){ imgBtn.type = 'button'; imgBtn.className = 'attach imgb'; imgBtn.id = 'imgBtn'; imgBtn.setAttribute('aria-pressed', 'false'); imgBtn.setAttribute('aria-label', 'Crear una imagen'); imgBtn.dataset.tip = 'Crear una imagen';
 imgBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 9"/></svg>';
-{ const ab = $('#attachBtn'); if (ab) ab.after(imgBtn); }
+{ const ab = $('#attachBtn'); if (ab) ab.after(imgBtn); } }
 function setImgMode(on){
   if (on && !SZ.ACC.ready){ toast('Para crear imágenes entra a tu cuenta (es gratis).'); SZ.guestGate({ mode:'signup' }); return; }
   imgMode = !!on; imgBtn.setAttribute('aria-pressed', String(imgMode)); document.body.classList.toggle('imaging', imgMode);
@@ -1877,10 +1878,10 @@ addEventListener('pagehide', vozParar);
    Se activa con el botón del globo, sola cuando la pregunta lo pide (hoy, precio, noticias…) o cuando el agente lo decide. */
 const WEB_RX = /\b(hoy|ahora mismo|actualmente|actual(es)?|[uú]ltim[oa]s?|esta semana|este mes|este a[ñn]o|noticias?|precio|cu[aá]nto (cuesta|vale)|cotizaci[oó]n|d[oó]lar|clima|resultado|qui[eé]n gan[oó]|en vivo|202[5-9]|busca(r|me)? en (internet|google|la web)|seg[uú]n internet|fuentes?)\b/i;
 let webOn = false;
-const webBtn = document.createElement('button');
-webBtn.type = 'button'; webBtn.className = 'attach webb'; webBtn.id = 'webBtn'; webBtn.setAttribute('aria-pressed', 'false'); webBtn.setAttribute('aria-label', 'Buscar en internet'); webBtn.dataset.tip = 'Buscar en internet';
+const webBtn = $('#webBtn') || document.createElement('button');
+if (!webBtn.isConnected){ webBtn.type = 'button'; webBtn.className = 'attach webb'; webBtn.id = 'webBtn'; webBtn.setAttribute('aria-pressed', 'false'); webBtn.setAttribute('aria-label', 'Buscar en internet'); webBtn.dataset.tip = 'Buscar en internet';
 webBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.8 3.8 5.8 3.8 9s-1.2 6.2-3.8 9c-2.6-2.8-3.8-5.8-3.8-9S9.4 5.8 12 3z"/></svg>';
-{ const ib = $('#imgBtn') || $('#attachBtn'); if (ib) ib.after(webBtn); }
+{ const ib = $('#imgBtn') || $('#attachBtn'); if (ib) ib.after(webBtn); } }
 function setWeb(on){ webOn = !!on; webBtn.setAttribute('aria-pressed', String(webOn)); document.body.classList.toggle('webbing', webOn); if (webOn) toast('Buscar en internet: tu próximo mensaje se responde con información de hoy y sus fuentes.'); }
 webBtn.addEventListener('click', () => { if (imgMode) setImgMode(false); setWeb(!webOn); });
 const needsWeb = text => webOn || (SZ.CFG.autoWeb !== false && WEB_RX.test(text));
@@ -2219,12 +2220,13 @@ async function send(){
   /* si la ventanita de Puter tardó o cambiaste de chat o de IA mientras tanto, no envío solo: tu texto sigue en la caja */
   if (needed && (ckey() !== th0 || selId() !== m0 || Date.now() - at0 > 15000 || inp.value.trim() !== text)){ toast('¡Listo! Revisa tu mensaje y toca enviar.'); inp.focus(); return; }
   /* v3.4 · si la IA elegida no ve fotos, ya no te bloquea: esta respuesta la da una que sí ve (antes salía «Este modelo no ve imágenes» y no podías enviar) */
+  /* v3.7 · y solo por esta respuesta: tu IA elegida se queda elegida (antes te la cambiaba para siempre al adjuntar una foto) */
+  let oneModel = null;
   if (ready.some(f => f.kind === 'img') && !info(selId()).vision){
     const v = visionPick();
     if (!v){ toast('Ninguna de tus IAs conectadas ve fotos ahora. Conecta Puter o envía tu pregunta sin la imagen.'); return; }
-    const was = info(selId()).name;
-    st().model.openrouter = v.id; save(); paintSel(); renderTop(false); paintAccent();
-    toast(was + ' no ve fotos: te responde ' + v.name + ', que sí las ve.');
+    oneModel = v.id;
+    toast(info(selId()).name + ' no ve fotos: esta vez te responde ' + v.name + ', que sí las ve. Después sigues con ' + info(selId()).name + '.');
   }
   try{ localStorage.setItem('synthz:sent', String(sentN() + 1)); }catch(e){}
   try{ frustration(text, false); }catch(e){}
@@ -2238,7 +2240,7 @@ async function send(){
   chat.push(msg); touchThread(); save();
   if (text && needsWeb(text)){ renderMsgs(); await webPrep(msg, text); save(); }
   let okSent = true;
-  await runSolo(err => { okSent = false; chat.pop(); save(); renderMsgs(); showErr(err); inp.value = text; files.push(...sent); autoGrow(); updateHint(); renderTray(); });
+  await runSolo(err => { okSent = false; chat.pop(); save(); renderMsgs(); showErr(err); inp.value = text; files.push(...sent); autoGrow(); updateHint(); renderTray(); }, oneModel ? { model:oneModel } : {});
   if (okSent && text && MEM_RX.test(text)) memOffer(text);
 }
 
@@ -2280,7 +2282,7 @@ function frustration(text, regen){
   SZ.BOT.offer('Mmm… parece que ' + info(mid).name + ' no tiene el flow para esto. ' + alt.name + ' tiene más flow 😎 ¿Probamos con ella?', 'guino', 'Cambiar a ' + alt.name, () => { pickModel(alt.id, null); toast('Ahora hablas con ' + alt.name + '. Vuelve a enviar tu mensaje o escribe uno nuevo.'); inp.focus(); });
 }
 async function runSolo(onFail, o = {}){
-  const mid = selId(), chat = chatArr(), g = gen, vis = info(mid).vision, saver = st().sx.saver;
+  const mid = o.model || selId(), chat = chatArr(), g = gen, vis = info(mid).vision, saver = st().sx.saver;
   const slowT = setTimeout(() => { if (busy[mid] === 'think' && SZ.BOT.react) SZ.BOT.react('slow', { auto:mid === 'sz:auto' }); }, 14000);
   const sent = apiMsgs(chat, vis), naive = apiMsgs(chat, vis, { naive:true }), ck = hashStr(mid + '|' + saver + '|' + effKey() + '|' + JSON.stringify(sent));
   const canCache = !sent.some(m => Array.isArray(m.content));
@@ -4536,13 +4538,17 @@ addEventListener('synthz-saver', () => { $$('#sxSw, #saverBtn').forEach(x => x.s
 /* el «+» trae todo: archivos, crear imagen, buscar en internet y respuestas cortas */
 {
   const am = $('#attMenu'), ab = $('#attachBtn');
-  if (ab){ ab.setAttribute('aria-label', 'Agregar: archivos, imagen, internet…'); ab.dataset.tip = 'Archivos, crear imagen, buscar en internet…'; ab.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'; }
+  const reactBox = !!(am && $('[data-att="saver"]', am));   /* v3.7 · React ya pinta el «+», «Respuestas cortas» y las bolitas */
+  if (ab && !reactBox){ ab.setAttribute('aria-label', 'Agregar: archivos, imagen, internet…'); ab.dataset.tip = 'Archivos, crear imagen, buscar en internet…'; ab.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'; }
   if (am){
-    $$('.only-small', am).forEach(x => x.classList.remove('only-small'));
-    const hint = $('.ahint', am), sv = document.createElement('button');
-    sv.type = 'button'; sv.setAttribute('role', 'menuitemcheckbox'); sv.dataset.att = 'saver';
-    sv.innerHTML = '<i aria-hidden="true">🍃</i><span><b>Respuestas cortas</b><small>Gastas menos de tu límite de hoy</small></span><em class="mck" aria-hidden="true"></em>';
-    am.insertBefore(sv, hint);
+    let sv = $('[data-att="saver"]', am);
+    if (!sv){
+      $$('.only-small', am).forEach(x => x.classList.remove('only-small'));
+      const hint = $('.ahint', am); sv = document.createElement('button');
+      sv.type = 'button'; sv.setAttribute('role', 'menuitemcheckbox'); sv.dataset.att = 'saver';
+      sv.innerHTML = '<i aria-hidden="true">🍃</i><span><b>Respuestas cortas</b><small>Gastas menos de tu límite de hoy</small></span><em class="mck" aria-hidden="true"></em>';
+      am.insertBefore(sv, hint);
+    }
     const paint = () => { const on = !!st().sx.saver; sv.setAttribute('aria-checked', String(on)); $('.mck', sv).textContent = on ? '✓' : ''; };
     paint(); addEventListener('synthz-saver', paint);
     sv.addEventListener('click', e => { e.stopPropagation(); setSaver(!st().sx.saver); paint(); attClose(); }, true);
@@ -4554,8 +4560,8 @@ addEventListener('synthz-saver', () => { $$('#sxSw, #saverBtn').forEach(x => x.s
 /* chips de lo que está encendido (imagen, internet, cortas): se apagan con un toque.
    v3.2 (Sammuel, 28 oct): ya no van en una fila aparte debajo de la caja; son bolitas junto al «+» que muestran su nombre al pasar el puntero. */
 {
-  const host = document.createElement('div'); host.className = 'onchips'; host.id = 'onChips';
-  const aw = $('.comp-in .attw'); if (aw) aw.appendChild(host); else { const ci = $('.comp-in'); if (ci) ci.appendChild(host); }
+  const host = $('#onChips') || document.createElement('div');
+  if (!host.isConnected){ host.className = 'onchips'; host.id = 'onChips'; const aw = $('.comp-in .attw'); if (aw) aw.appendChild(host); else { const ci = $('.comp-in'); if (ci) ci.appendChild(host); } }
   const paint = () => {
     const L = [];
     if (imgMode) L.push(['img', '🎨', 'Crear imagen']);

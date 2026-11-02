@@ -884,6 +884,7 @@ const TR_DAYS = { lun:'Mon', mar:'Tue', 'mié':'Wed', jue:'Thu', vie:'Fri', 'sá
 /* v3.7 · Pulsem en inglés: frases con números (van ANTES del diccionario, para que no se traduzcan a medias) */
 const TR_PRE = [
   /* v3.7 · selector de IA */ [/^(\d+) IA$/, (m, n) => n + (n === '1' ? ' AI' : ' AIs')], [/^(\d+) versi(?:ón|ones)$/, (m, n) => n + (n === '1' ? ' version' : ' versions')], [/^\+ (\d+) temas$/, '+ $1 topics'], [/^Menos temas$/, 'Fewer topics'],
+  /* v3.7 · foto con una IA que no ve: responde otra solo esa vez */ [/^(.+) no ve fotos: esta vez te responde (.+), que sí las ve\. Después sigues con (.+)\.$/, "$1 can't see photos: this time $2 answers, since it can. After that you're back with $3."],
   [/(\d+) mensajes en (?:los últimos )?(\d+) min\b/g, '$1 messages in the last $2 min'], [/(\d+) error(?:es)? en (\d+) min\b/g, (m, a, b) => a + (a === '1' ? ' error' : ' errors') + ' in ' + b + ' min'],
   [/(\d+) de (\d+) llaves activas/g, '$1 of $2 keys active'], [/(\d+) personas tuvieron dificultades en la última hora/g, '$1 people had trouble in the last hour'], [/\b1 persona tuvo dificultades en la última hora/g, '1 person had trouble in the last hour'],
   [/(\d+) personas\b/g, '$1 people'], [/\b1 persona\b/g, '1 person'], [/(\d+) nuevos\b/g, '$1 new'], [/(\d+) esperando\b/g, '$1 waiting'], [/(\d+) sin respuesta \+15 min/g, '$1 unanswered 15+ min'],
@@ -2422,7 +2423,12 @@ let lockOff = null;
 function portalLock(on){
   if (lockOff){ lockOff(); lockOff = null; }
   if (!on) return;
-  const stop = e => { if (e.key === 'F5' || (e.key === 'r' && (e.ctrlKey || e.metaKey))) return; e.preventDefault(); e.stopPropagation(); };
+  const stop = e => {
+    if (e.key === 'F5' || (e.key === 'r' && (e.ctrlKey || e.metaKey))) return;
+    /* el aviso de mantenimiento (encima de todo) siempre se puede usar */
+    const m = document.getElementById('szMaint'); if (m && (m.contains(e.target) || m.contains(document.activeElement))) return;
+    e.preventDefault(); e.stopPropagation();
+  };
   const ev = ['keydown', 'keypress', 'wheel', 'touchmove', 'mousedown', 'click', 'pointerdown'];
   ev.forEach(t => addEventListener(t, stop, { capture:true, passive:false }));
   lockOff = () => ev.forEach(t => removeEventListener(t, stop, { capture:true }));

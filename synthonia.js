@@ -132,10 +132,10 @@ const SG_IDLE = [40, 280, 8, 'open'];
 const SPOSE = {
   idle:     { L:SG_IDLE, R:SG_IDLE },
   saluda:   { L:SG_IDLE, R:[18, 148, 165, 'wave'], wave:'r' },
-  senala:   { L:SG_IDLE, R:[10, 206, 90, 'point'] },
-  senalaL:  { L:[10, 206, 90, 'point'], R:SG_IDLE },
+  senala:   { L:SG_IDLE, R:[34, 206, 90, 'point'] },   /* v3.7 · más adentro: el índice ya no se corta en el borde */
+  senalaL:  { L:[34, 206, 90, 'point'], R:SG_IDLE },
   celebra:  { L:[22, 130, 158, 'wave'], R:[22, 130, 158, 'wave'] },
-  piensa:   { L:SG_IDLE, R:[102, 332, 176, 'point'] },
+  piensa:   { L:SG_IDLE, R:[126, 320, 176, 'point'] },   /* v3.7 · el índice toca la barbilla (antes quedaba lejos, abajo) */
   escucha:  { L:SG_IDLE, R:[14, 172, 150, 'open'] },
   presenta: { L:SG_IDLE, R:[12, 250, 66, 'wave'] },
   sorpresa: { L:[26, 188, 168, 'wave'], R:[26, 188, 168, 'wave'] },
@@ -145,13 +145,15 @@ const SPOSE = {
 /* una pieza de vidrio: relleno casi transparente, luz que se junta abajo, borde iridiscente y filo blanco */
 const sgPiece = (d, rim) => '<path d="' + d + '" fill="url(#sgGlass)"/><path d="' + d + '" fill="url(#sgCaus)"/>'
   + '<path d="' + d + '" fill="none" stroke="url(#sgIri)" stroke-width="' + (rim || 1.6) + '" stroke-opacity=".85"/><path d="' + d + '" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width=".7"/>';
-/* v2.9 · manos de verdad: palma de vidrio, tres dedos con nudillos y pulgar (antes era una manopla).
+/* v3.7 · el pulgar nace a media palma (antes salía pegado a la muñeca y se veía raro) y en «point» los dedos se doblan de verdad.
+   v2.9 · manos de verdad: palma de vidrio, tres dedos con nudillos y pulgar (antes era una manopla).
    Cada dedo: [x de la base, giro, doblez de la punta, largo 1, largo 2]; el pulgar además dice dónde nace.
    open = relajada, wave = abierta para saludar o celebrar, point = puño con el índice estirado */
 const SG_HANDS = {
-  open:  { f:[[-7, 9, 6, 8, 6.5], [0, 0, 4, 8.8, 7], [7, -7, 4, 8.4, 6.8]], t:[10, 7, -60, 20, 7, 5.5] },
-  wave:  { f:[[-7, 24, -4, 8, 6.5], [0, 4, 0, 9, 7], [7, -16, 2, 8.6, 6.8]], t:[10, 7, -84, 8, 7.4, 5.8] },
-  point: { f:[[-7, 5, 0, 5.2, 0], [0, 2, 0, 5.6, 0], [7, -3, 0, 9.6, 8]], t:[9, 11, 76, 8, 7, 5] }
+  open:  { f:[[-7, 9, 6, 8, 6.5], [0, 0, 4, 8.8, 7], [7, -7, 4, 8.4, 6.8]], t:[9.4, 11.5, -40, 16, 6.6, 5.4] },
+  wave:  { f:[[-7, 22, -4, 8, 6.5], [0, 4, 0, 9, 7], [7, -14, 2, 8.6, 6.8]], t:[9.4, 11, -54, 12, 7.2, 5.6] },
+  /* índice estirado y los otros dos doblados hacia la palma (se ven los nudillos, no palitos sueltos); el pulgar los cruza */
+  point: { f:[[-7, 4, 178, 3, 3.8], [0, 1, 178, 3.2, 4], [7, -3, 0, 9.6, 8]], t:[8.6, 13.2, 64, 22, 6, 4.6] }
 };
 const sgSeg = (L, w) => '<rect x="' + (-w / 2) + '" y="0" width="' + w + '" height="' + L + '" rx="' + (w / 2) + '" fill="url(#sgArm)" stroke="url(#sgIri)" stroke-width=".9"/>';
 const sgKnuckle = (y, r) => '<circle cy="' + y + '" r="' + r + '" fill="#c9566c" stroke="#e6b65f" stroke-opacity=".8" stroke-width=".6"/>';
@@ -1503,7 +1505,9 @@ function welcomeBack(opts){
 
 /* ===== v1.3: mientras corre una guía o un recorrido, solo se puede tocar la guía y «Saltar guía» ===== */
 (function guideLock(){
-  const OK = '#szgHud,#szgPanel,#szSay,#szHand,#ptour,#tour,.szm,#toast,#szChat,.tcard,[data-guide-ok]';
+  /* #szMaint: el aviso de mantenimiento queda encima de todo; si una guía quedaba corriendo debajo, este candado
+     bloqueaba los clics y el teclado del aviso y no se podía escribir la contraseña ni entrar con Google (2 nov) */
+  const OK = '#szgHud,#szgPanel,#szSay,#szHand,#ptour,#tour,.szm,#toast,#szChat,.tcard,[data-guide-ok],#szMaint';
   const on = () => root.classList.contains('guiding') || !!document.getElementById('ptour') || !!document.getElementById('tour');
   let warnT = 0;
   const stop = e => {
