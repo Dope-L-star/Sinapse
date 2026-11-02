@@ -22,7 +22,7 @@ Las páginas principales tienen su estructura renderizada como elementos de Reac
 
 ## Pulsem ya es React (v3.8)
 
-`componentes/pulsem/` reemplaza a `pulsem.js` en la versión publicada: `PulsemApp.jsx` (cabecera, puerta, menú, datos cada minuto), `Resumen.jsx`, `Llaves.jsx`, `Ajustes.jsx`, `Bandejas.jsx` (comentarios, ayuda, contactar) y `textos.js` (todo en ES/EN; cambia al instante con `<html lang>`). De `core.js` solo usa lo compartido (cuenta, `SZ.api`, avisos, íconos, SynthonIA, mantenimiento). Un cambio de Pulsem se hace en estos componentes; `src/pulsem/` queda solo para el `pulsem.html` estático (pruebas de humo y Vercel). El rediseño del panel (`componentes/admin/*`) se monta dentro de `PulsemApp` por sección.
+`componentes/pulsem/PulsemApp.jsx` reemplaza a `pulsem.js` en la versión publicada: hace la puerta (iniciar sesión / solo el equipo, con su cabecera y botón ES/EN) y, si la cuenta es del equipo, monta el panel nuevo `componentes/admin/PanelAdmin.jsx` (`api={SZ.api}`, `toast={SZ.toast}`, `onAuth` vuelve a la puerta). Textos de la puerta en `componentes/pulsem/textos.js`; los del panel en `componentes/admin/textos.mjs`. `src/pulsem/` queda solo para el `pulsem.html` estático (pruebas de humo y Vercel).
 
 ## A.L.I.A.S. ya es React (v3.8)
 

@@ -1,28 +1,17 @@
 'use client';
 /* ===== Pulsem en React (v3.8) =====
    Antes: pulsem.html + pulsem.js armaban el panel con innerHTML. Ahora cada parte es un componente React:
-   · PulsemApp (este archivo): cabecera, puerta (solo el equipo), menú de secciones, datos y actualización cada minuto.
-   · Resumen.jsx (salud, en línea, dificultades, carga) · Llaves.jsx · Ajustes.jsx · Bandejas.jsx (comentarios, ayuda, contactar).
-   · textos.js: todos los textos en español e inglés; cambia al instante al cambiar el idioma.
-   De core.js se sigue usando lo compartido con el resto del sitio (cuenta, llamadas al servidor, avisos, íconos, SynthonIA).
-   El rediseño del panel (next/componentes/admin/*) se monta aquí cuando esté listo: cada sección ya es un componente aparte. */
+   · PulsemApp (este archivo): la puerta (iniciar sesión / solo el equipo) con su cabecera.
+   · Cuando la cuenta es del equipo, se monta el panel nuevo: next/componentes/admin/PanelAdmin.jsx
+     (Resumen, Llaves, Ajustes, Comentarios, Ayuda, «Para atender ahora», Ctrl+K), que se actualiza solo cada minuto.
+   · textos.js: los textos de la puerta y la cabecera en español e inglés; cambian al instante al cambiar el idioma.
+   De core.js se sigue usando lo compartido con el resto del sitio (cuenta, llamadas al servidor, avisos, íconos, SynthonIA). */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { tx } from './textos';
 import { useSZ, useLang, useReloj, still } from './usos';
 import { Html, rc } from './comunes';
-import { Alerta, Salud, EnLinea, Dificultades, Carga, conProblemas } from './Resumen';
-import Llaves from './Llaves';
-import Ajustes from './Ajustes';
-import { Comentarios, Ayuda, Contactar, nuevos, esperando } from './Bandejas';
+import PanelAdmin from '../admin/PanelAdmin';
 
-const I = (d) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" dangerouslySetInnerHTML={{ __html: d }} />;
-const VISTAS = [
-  ['res', '<path d="M4 13h4l2-5 4 10 2-5h4"/>'],
-  ['keys', '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M15 8l2 2"/>'],
-  ['set', '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>'],
-  ['fb', '<path d="M5 5h14v10H9l-4 4z"/>'],
-  ['help', '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5M12 17h.01"/>'],
-];
 const EKG = 'M3 17h13l4-10 6 18 5-13 4 5h26';
 
 /* ---------- puerta: solo Prime, ZFlow y Symmetrix ---------- */
@@ -94,47 +83,25 @@ function Cabecera({ SZ, t, P, live, spin, onRefresh }) {
   );
 }
 
-/* ---------- menú de la izquierda (una sección a la vez) ---------- */
-function Menu({ t, view, setView, badges }) {
-  return (
-    <nav className="dnav" id="dNav" aria-label={t.navAria}>
-      <p className="dn-l">Pulsem</p>
-      {VISTAS.map(([k, ic]) => (
-        <button key={k} type="button" className="dn-i" data-v={k} aria-current={view === k} onClick={() => setView(k)}>
-          {I(ic)}<span>{t.views[k][0]}</span>
-          {badges[k] ? <i className={'dn-b' + (k === 'res' ? ' warn' : '')}>{badges[k]}</i> : null}
-        </button>
-      ))}
-      <a className="dn-i dn-x" href="chat.html">{I('<path d="M4 5h11a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H9l-4 4V7a2 2 0 0 1 2-2z"/>')}<span>{t.toFlow}</span></a>
-    </nav>
-  );
-}
-
 export default function PulsemApp() {
   const SZ = useSZ();
   const lang = useLang();
   const t = useMemo(() => tx(lang), [lang]);
   const [P, setP] = useState(null);
-  const [T, setT] = useState(null);
   const [gate, setGate] = useState({ kind: 'loading' });
   const [live, setLive] = useState({ ok: 0, off: false });
   const [spin, setSpin] = useState(false);
-  const [view, setViewRaw] = useState('res');
-  const [reach, setReach] = useState(null);
-  const [helpCur, setHelpCur] = useState(null);
   const Pref = useRef(null); Pref.current = P;
-  const timer = useRef(0);
+  const timer = useRef(0), panelOn = useRef(false);
 
-  const post = useCallback((path, body) => SZ.api(path, { method: 'POST', body, keep: true }), [SZ]);
-  const reloadT = useCallback(async () => { try { setT(await SZ.api('trial', { keep: true })); } catch (e) { /* se queda lo de antes */ } }, [SZ]);
 
   const load = useCallback(async (manual) => {
     if (!SZ) return;
     setSpin(true);
     try {
       if (!SZ.SESS_get()) { setGate({ kind: 'login' }); return; }
-      const [p, tr] = await Promise.all([SZ.api('health?panel=1', { keep: true }), SZ.api('trial', { keep: true }).catch(() => null)]);
-      setP(p); setT(tr); setLive({ ok: Date.now(), off: false }); setGate(null);
+      const p = await SZ.api('health?panel=1', { keep: true });
+      setP(p); setLive({ ok: Date.now(), off: false }); setGate(null); panelOn.current = true;
       if (manual) SZ.toast(tx(document.documentElement.lang === 'en' ? 'en' : 'es').upToDate);
     } catch (e) {
       if (e.status === 401) setGate({ kind: 'login' });
@@ -145,6 +112,7 @@ export default function PulsemApp() {
       setSpin(false);
       /* cada minuto, salvo con la pestaña escondida o mientras alguien escribe en un ajuste */
       clearTimeout(timer.current);
+      if (panelOn.current) return;   /* el panel ya se actualiza solo cada minuto */
       const again = () => {
         timer.current = setTimeout(() => {
           const a = document.activeElement, busy = !!(a && a.closest && a.closest('.mk, .set, .hform, .szm') && a.value);
@@ -162,13 +130,7 @@ export default function PulsemApp() {
     return () => document.removeEventListener('visibilitychange', vis);
   }, [load, live.ok]);
 
-  /* la sección elegida se recuerda (como antes) */
-  useEffect(() => { try { const k = localStorage.getItem('synthz:pulsemView'); if (VISTAS.some((v) => v[0] === k)) setViewRaw(k); } catch (e) { /* sin guardado */ } }, []);
-  const setView = (k) => { setViewRaw(k); try { localStorage.setItem('synthz:pulsemView', k); } catch (e) { /* sin guardado */ } window.scrollTo({ top: 0, behavior: still() ? 'auto' : 'smooth' }); };
 
-  const badges = P ? { res: conProblemas(P), fb: nuevos(P), help: esperando(P) } : {};
-  const onReach = (sub, name) => setReach({ sub, name });
-  const shared = { P, T, t, SZ };
 
   return (
     <>
@@ -179,41 +141,11 @@ export default function PulsemApp() {
     <div className="aurora"><i /><i /><i /></div>
     <div className="grain" />
     <div className="pz notr" data-react="pulsem">
-      <Cabecera SZ={SZ} t={t} P={P} live={live} spin={spin} onRefresh={() => load(true)} />
+      {gate ? <Cabecera SZ={SZ} t={t} P={P} live={live} spin={spin} onRefresh={() => load(true)} /> : null}
       {gate ? <Puerta kind={gate.kind} msg={gate.msg} SZ={SZ} t={t} onRetry={() => load()} onLogin={() => load()} /> : null}
       {!gate && P ? (
-        <main id="app">
-          <Menu t={t} view={view} setView={setView} badges={badges} />
-          <div className="dmain">
-            <div className="dhead"><h1 id="dTitle">{t.views[view][0]}</h1><p id="dSub">{t.views[view][1]}</p></div>
-            <Alerta P={P} t={t} />
-            <div className="grid" key={view}>
-              {view === 'res' ? <>
-                <Salud {...shared} i={0} />
-                <EnLinea {...shared} i={1} onReach={onReach} />
-                <Dificultades {...shared} i={2} onReach={onReach} />
-                <Carga {...shared} i={3} />
-              </> : null}
-              {view === 'keys' ? <Llaves {...shared}
-                keysPost={async (body) => {
-                  try {
-                    const d = await post('trial', body), res = d.keys || [], ok = res.filter((k) => k.ok).length;
-                    SZ.toast(t.keysResult(ok, res.length, res.some((k) => !k.ok)));
-                    await reloadT(); return true;
-                  } catch (e) { SZ.toast(e.message); return false; }
-                }}
-                delKey={async (id, name, own) => {
-                  if (!(await SZ.szConfirm(SZ.t('pm.delQ', { n: name }), SZ.t(own ? 'pm.delP' : 'pm.delPo'), SZ.t('pm.del'), true))) return;
-                  try { await post('trial', { action: 'delkey', id }); SZ.toast(SZ.t('pm.deled', { n: name })); await reloadT(); } catch (e) { SZ.toast(e.message); }
-                }} /> : null}
-              {view === 'set' ? <Ajustes {...shared} post={post} setP={setP} setT={setT} reloadT={reloadT} /> : null}
-              {view === 'fb' ? <Comentarios {...shared} post={post} setP={setP} onReach={onReach} /> : null}
-              {view === 'help' ? <Ayuda {...shared} post={post} reload={() => load()} helpCur={helpCur} setHelpCur={setHelpCur} /> : null}
-            </div>
-          </div>
-        </main>
+        <PanelAdmin api={SZ.api} toast={SZ.toast} onAuth={(st) => setGate({ kind: st === 401 ? 'login' : 'team' })} />
       ) : null}
-      {reach && P ? <Contactar who={reach} P={P} t={t} SZ={SZ} post={post} onClose={() => setReach(null)} onSent={(item) => { setHelpCur(item); load(); }} /> : null}
       {SZ ? <Html as="div" className="corner" id="pCorner" role="img" aria-label="Claude" style={{ position: 'fixed', bottom: 8, right: 10, width: 15, height: 15, opacity: 0.55 }} html={'<svg viewBox="0 0 24 24">' + SZ.ICONS.claude('#d9805f', '#d9805f') + '</svg>'} /> : null}
     </div>
     </>
