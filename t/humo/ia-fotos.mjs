@@ -67,7 +67,7 @@ calls.length = 0; reply = 'OK';
 r = await post({ action:'review', q:'¿Cuánto es 12 × 12?', draft:'12 × 12 = 144. Se multiplica 12 por 10 (120) y se suman 12 × 2 (24).' });
 let d = await r.json().catch(() => ({}));
 check('revisión: respuesta buena → ok', r.status === 200 && d.verdict === 'ok', r.status + ' ' + JSON.stringify(d));
-check('revisión usa la IA que mejor razona (gpt-oss-120b) y temperatura baja', calls[0] && calls[0].model === 'openai/gpt-oss-120b' && calls[0].temperature <= .3 && calls[0].stream === false, JSON.stringify(calls[0] || {}).slice(0, 200));
+check('revisión usa la primera IA ligera de la lista (Gemini Flash; gpt-oss-120b ya no: alto consumo) y temperatura baja', calls[0] && calls[0].model === 'gemini-flash-latest' && calls[0].temperature <= .3 && calls[0].stream === false, JSON.stringify(calls[0] || {}).slice(0, 200));
 check('revisión manda sus instrucciones como sistema', calls[0] && calls[0].msgs[0].role === 'system' && /revisor de calidad/.test(calls[0].msgs[0].content));
 
 /* 4) revisión: corrige */
