@@ -70,7 +70,7 @@ function health(){
     if (fail >= 5 && fr > .3) up('down'); else if (fail >= 3 && fr > .1) up('busy');
     if (fail) why.push(fail + ' mensajes sin respuesta hoy');
     if (errs >= 15) up('down'); else if (errs >= 5) up('busy');
-    if (errs) why.push(errs + ' errores en 10 min');
+    if (errs) why.push(errs + (errs === 1 ? ' error' : ' errores') + ' en 10 min');
     if (load5 >= 120) up('busy');
     why.push(load5 + ' mensajes en 5 min');
   }
@@ -217,7 +217,7 @@ function renderSettings(){
   const nw = (T && T.now) || null;
   $('#setG').insertAdjacentHTML('afterbegin', '<div class="set setnow"><b>Qué estamos arreglando ahora' + (nw ? ' <span class="mtlive">● SynthonIA lo cuenta</span>' : '') + '</b><p>Escríbelo en una o dos frases. Si alguien le pregunta a SynthonIA qué se está arreglando, o reporta algo de esto, ella lo responde con sus palabras (en español o inglés). Déjalo vacío para que no diga nada.</p>'
     + '<label class="field"><textarea id="sNow" rows="2" maxlength="300" placeholder="Ej.: Estamos arreglando que las fotos tarden en subir en el celular.">' + esc(nw ? nw.text : '') + '</textarea></label>'
-    + '<div class="acts" style="margin-top:8px"><button class="btn sm" type="button" data-set="now">Guardar</button>' + (nw ? '<button class="btn sm ghost" type="button" data-set="now" data-clear="1">Borrar</button><small style="color:var(--mute)">' + esc(nw.by || 'equipo') + ' · ' + new Date(nw.t).toLocaleString('es-CO', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) + '</small>' : '') + '</div></div>');
+    + '<div class="acts" style="margin-top:8px"><button class="btn sm" type="button" data-set="now">Guardar</button>' + (nw ? '<button class="btn sm ghost" type="button" data-set="now" data-clear="1">Borrar</button><small style="color:var(--mute)">' + esc(nw.by || 'equipo') + ' · ' + new Date(nw.t).toLocaleString(document.documentElement.lang === 'en' ? 'en-US' : 'es-CO', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) + '</small>' : '') + '</div></div>');
   $('#setNote').hidden = can;
 }
 $('#setG').addEventListener('click', async e => {
@@ -235,9 +235,11 @@ $('#setG').addEventListener('click', async e => {
 
 /* ---------- ayuda: bandeja, conversación y «Contactar» ---------- */
 function renderHelp(){
-  const H = P.help || [];
-  $('#hN').textContent = H.filter(r => r.status === 'open').length + ' esperando';
-  $('#hList').innerHTML = H.length ? H.map((r, i) => '<div class="row" style="--i:' + i + '"><span class="av r-' + rc(r.user && r.user.rank) + '">' + ini(r.user && (r.user.username || r.user.name)) + '</span><div class="tx"><b>@' + esc(r.user ? r.user.username || r.user.name : '') + '</b><small>' + esc(r.text) + ' · ' + ago(r.t) + '</small></div><div class="tags">' + (r.status === 'open' ? '<span class="tag ' + (r.urgent ? 'bad' : 'warn') + '">' + (r.urgent ? '⏰ +15 min' : 'nuevo') + '</span>' : '<span class="tag ok">con ' + esc((r.by || {}).name || '') + '</span>') + '<button class="mini gold" type="button" data-open="' + esc(r.id) + '">Abrir</button></div></div>').join('') : '<div class="empty">No hay pedidos de ayuda abiertos. ✨</div>';
+  /* v3.7 · primero los que llevan +15 min sin respuesta, luego los nuevos y al final los que ya atiende alguien */
+  const w = r => r.status === 'open' ? (r.urgent ? 0 : 1) : 2;
+  const H = (P.help || []).slice().sort((a, b) => w(a) - w(b) || a.t - b.t), late = H.filter(r => r.urgent).length;
+  $('#hN').textContent = H.filter(r => r.status === 'open').length + ' esperando' + (late ? ' · ' + late + ' sin respuesta +15 min' : '');
+  $('#hList').innerHTML = H.length ? H.map((r, i) => '<div class="row' + (r.urgent ? ' urg' : '') + '" style="--i:' + i + '"><span class="av r-' + rc(r.user && r.user.rank) + '">' + ini(r.user && (r.user.username || r.user.name)) + '</span><div class="tx"><b>@' + esc(r.user ? r.user.username || r.user.name : '') + '</b><small>' + esc(r.text) + ' · ' + ago(r.t) + '</small></div><div class="tags">' + (r.status === 'open' ? '<span class="tag ' + (r.urgent ? 'bad' : 'warn') + '">' + (r.urgent ? '⏰ +15 min' : 'nuevo') + '</span>' : '<span class="tag ok">con ' + esc((r.by || {}).name || '') + '</span>') + '<button class="mini gold" type="button" data-open="' + esc(r.id) + '">Abrir</button></div></div>').join('') : '<div class="empty">No hay pedidos de ayuda abiertos. ✨</div>';
   if (helpCur) openHelp(helpCur.id, true);
 }
 async function openHelp(id, quiet){
