@@ -28,6 +28,8 @@ Las páginas principales tienen su estructura renderizada como elementos de Reac
 
 `componentes/alias/` reemplaza a `alias.js` en la versión publicada: `AliasApp.jsx` (idioma, tema, inicio, plan, controles y el recorrido paso a paso), `Pasos.jsx`, `Resultado.jsx` (texto, Síntesis, descargas .pptx/archivos, fuentes) e `iconos.jsx`. El motor sigue igual: `alias-tools.js` (`window.ALIAS`). Textos en `alias-textos.json`. Se conservan IDs y `data-alias`; la suite de siempre corre contra la versión React con `ALIAS_UI_ROOT=next/out node t/alias/ui.mjs` (después de `node next/armar.mjs`).
 
+**v3.9 · diseño de Sammuel («Mission workspace», `ALIAS_VISUAL_CONCEPT`):** barra lateral (Nueva misión · Misión actual · Mis misiones · Agentes), inicio con orbe, rutas rápidas, misiones recientes y equipo de agentes; la misión muestra la ruta de pasos y la «orquesta» (qué herramienta trabaja ahora). Solo tema oscuro (pedido de Sammuel). Estilos en `alias-mision.css` (todo bajo `.am`, encima de `alias.css`; la página estática `alias.html` no cambia). Del prototipo no se copió lo inventado: las misiones recientes son reales (solo en este navegador, `localStorage` `alias:misiones`) y los agentes son las herramientas del motor (search, memory, think, image, file).
+
 ## Pruebas de estructura
 
 ```bash

@@ -12,7 +12,7 @@ export const metadata = {
 export default function AliasPage() {
   return (
     <>
-      {['alias.css', 'movimiento.css'].map((href) => <link rel="stylesheet" href={`/${href}`} precedence="default" key={href} />)}
+      {['alias.css', 'alias-mision.css', 'movimiento.css'].map((href) => <link rel="stylesheet" href={`/${href}`} precedence="default" key={href} />)}
       <AliasApp />
       <LegacyRuntime page="alias" scripts={['alias-tools.js', 'movimiento.js']} />
     </>
