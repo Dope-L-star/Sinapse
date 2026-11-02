@@ -2925,3 +2925,96 @@ html.noanim .send.stop.fly::after{display:block}
 .think-wrap.fxm .work .pxw{display:none}
 .agrun.fxr{padding:0;border:0;background:none;box-shadow:none}
 .agrun.fxr .fxhost{max-width:520px}
+/* v3.9 · modo dictado (next/componentes/synthflow/Dictado.jsx). Apagado por defecto: solo se ve con html.dicta (Ajustes › Modo dictado).
+   El micrófono va entre los botones de abajo y el avión de enviar; arriba de la caja sale el panel «Te escucho» con las ondas,
+   el reloj, Cancelar / Pausa / Listo y lo que vas diciendo. Usa los colores del tema activo (--gold, --wine) y respeta «Animaciones». */
+.dic-mic{display:none}
+html.dicta .dic-mic:not([hidden]){display:grid}
+html.dicta .composer .comp-in{grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-areas:"c c c c" "f f f f" "a p m s"}
+html.dicta .composer.big .comp-in{grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-areas:"f f f f" "a p m s"}
+.composer .comp-in{position:relative}
+.composer .comp-in:has(.dic-card,.dic-pane){z-index:40}
+.composer .dic-mic{grid-area:m;position:relative;width:36px;height:36px;border-radius:12px;overflow:visible}
+.dic-mic svg{width:18px;height:18px;position:relative;z-index:1}
+.dic-mic.nosr{opacity:.55}
+/* sin IA disponible la caja está bloqueada (no se puede escribir): tampoco se dicta */
+body.locked .composer .dic-mic{display:none !important}
+/* gana al vidrio de los botones (chat-css 36) solo mientras dicta */
+html:not(.x):not(.y) .composer .attach.dic-mic.on{color:#fff !important;border-color:transparent !important;background:none !important;background-image:linear-gradient(135deg,rgba(var(--wine-rgb),.95),rgba(var(--gold-rgb),.85)) !important}
+html:not(.x):not(.y) .composer .attach.dic-mic.on.paused{background-image:none !important;background:rgba(var(--gold-rgb),.18) !important;color:var(--gold) !important;border-color:rgba(var(--gold-rgb),.45) !important}
+.dic-ring{position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;opacity:0}
+.dic-mic.on:not(.paused) .dic-ring{opacity:1;box-shadow:0 0 0 0 rgba(var(--wine-rgb),.55);animation:dicRing 1.6s cubic-bezier(.2,.7,.3,1) infinite}
+.dic-mic.on.talk:not(.paused) .dic-ring{animation-duration:.9s}
+@keyframes dicRing{0%{box-shadow:0 0 0 0 rgba(var(--wine-rgb),.55)}100%{box-shadow:0 0 0 12px rgba(var(--wine-rgb),0)}}
+
+/* panel arriba de la caja */
+.dic-pane{position:absolute;left:50%;bottom:calc(100% + 10px);translate:-50% 0;width:min(100%,600px);z-index:30;padding:12px 14px 10px;border-radius:20px;
+  border:1px solid rgba(var(--gold-rgb),.28);background:rgba(22,20,30,.86);backdrop-filter:blur(22px) saturate(1.4);-webkit-backdrop-filter:blur(22px) saturate(1.4);
+  box-shadow:0 24px 60px -26px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.04) inset,0 0 50px -24px rgba(var(--wine-rgb),.6);color:var(--text);text-align:left;
+  animation:dicIn .42s cubic-bezier(.22,1,.36,1)}
+@keyframes dicIn{from{opacity:0;transform:translateY(10px) scale(.97);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+html.noglass .dic-pane{background:rgb(24,22,32);backdrop-filter:none;-webkit-backdrop-filter:none}
+.dic-top{display:flex;align-items:center;gap:10px;min-width:0}
+.dic-st{font-weight:650;font-size:14px;white-space:nowrap}
+.dic-dots i{font-style:normal;animation:dicDot 1.2s infinite}
+.dic-dots i:nth-child(2){animation-delay:.2s}.dic-dots i:nth-child(3){animation-delay:.4s}
+.dic-pane.paused .dic-dots{display:none}
+@keyframes dicDot{0%,60%,100%{opacity:.2}30%{opacity:1}}
+.dic-t{font-style:normal;font:500 12.5px 'IBM Plex Mono',ui-monospace,monospace;color:var(--mute);font-variant-numeric:tabular-nums}
+.dic-b{margin-left:auto;display:flex;gap:6px;flex:none}
+.dic-b button{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--soft);font-size:13px;font-weight:600;transition:background .2s,border-color .2s,color .2s,transform .15s}
+.dic-b button:hover{background:rgba(255,255,255,.1);color:var(--text)}
+.dic-b button:active{transform:scale(.95)}
+.dic-b svg{width:14px;height:14px;flex:none}
+.dic-b .dic-ok{background:var(--text);color:var(--bg,#111);border-color:transparent}
+.dic-b .dic-ok:hover{background:#fff;color:#111}
+
+/* ondas: se mueven suave mientras escucha y más fuerte cuando hay voz */
+.dic-wave{display:inline-flex;align-items:center;gap:3px;height:22px;flex:none}
+.dic-wave i{width:3px;height:6px;border-radius:2px;background:linear-gradient(var(--gold),var(--wine));animation:dicWave 1.4s ease-in-out infinite;animation-delay:calc(var(--i) * -.17s)}
+.dic-pane.talk .dic-wave i{animation-duration:.55s}
+.dic-pane.talk .dic-wave i:nth-child(odd){animation-name:dicWaveB}
+.dic-pane.paused .dic-wave i{animation:none;height:4px;opacity:.5}
+@keyframes dicWave{0%,100%{height:5px}50%{height:12px}}
+@keyframes dicWaveB{0%,100%{height:7px}50%{height:21px}}
+
+/* lo que vas diciendo: lo fijo normal, lo que todavía está entendiendo más suave. Blurry arriba y abajo al desplazarse */
+.dic-tx{margin-top:8px;max-height:96px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;padding:4px 0;
+  -webkit-mask-image:linear-gradient(transparent,#000 12px,#000 calc(100% - 12px),transparent);mask-image:linear-gradient(transparent,#000 12px,#000 calc(100% - 12px),transparent)}
+.dic-tx::-webkit-scrollbar{display:none}
+.dic-tx p{margin:0;font-size:15px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+.dic-mid{color:var(--mute);font-style:italic}
+.dic-ph{color:var(--mute)}
+.dic-hint{margin:6px 0 0;font-size:11.5px;color:var(--mute)}
+
+/* aviso antes de pedir el micrófono / navegador sin dictado / errores */
+.dic-card{position:absolute;right:0;bottom:calc(100% + 10px);z-index:31;width:min(100%,380px);padding:16px 16px 12px;border-radius:18px;
+  border:1px solid rgba(var(--gold-rgb),.3);background:rgba(22,20,30,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  box-shadow:0 24px 60px -24px rgba(0,0,0,.95);color:var(--text);text-align:left;animation:dicIn .38s cubic-bezier(.22,1,.36,1)}
+.dic-card b{display:block;font-size:15px;margin:2px 0 6px}
+.dic-card p{margin:0;font-size:13.5px;line-height:1.5;color:var(--soft)}
+.dic-ci{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;margin-bottom:8px;color:#fff;background:linear-gradient(135deg,rgba(var(--wine-rgb),.95),rgba(var(--gold-rgb),.85))}
+.dic-ci svg{width:18px;height:18px}
+.dic-cb{display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:12px;flex-wrap:wrap}
+.dic-cb a.lnk{margin-right:auto;font-size:13px}
+.dic-live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Simple: sin vidrio ni brillo, con sus propios colores */
+html.simple .dic-pane,html.simple .dic-card{background:var(--sbg,#1d1c21);backdrop-filter:none;-webkit-backdrop-filter:none;border-color:var(--sline);box-shadow:0 18px 40px -24px rgba(0,0,0,.8)}
+html.simple:not(.x) .composer .attach.dic-mic.on:not(.paused){background-image:none !important;background:var(--gold) !important;color:#1b1b1b !important}
+
+/* celular: el panel ocupa el ancho y los botones quedan solo con su ícono, menos «Listo» */
+@media (max-width:620px){
+  .dic-pane{width:100%;padding:10px 12px 9px;border-radius:18px}
+  .dic-b button:not(.dic-ok){width:32px;padding:0;justify-content:center}
+  .dic-b button:not(.dic-ok) span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .dic-hint{display:none}
+  .dic-card{width:100%}
+}
+
+/* «Animaciones» apagadas en Ajustes: todo quieto, igual de claro */
+html.noanim .dic-pane,html.noanim .dic-card{animation:none}
+html.noanim .dic-ring,html.noanim .dic-dots i{animation:none !important}
+html.noanim .dic-mic.on:not(.paused) .dic-ring{box-shadow:0 0 0 3px rgba(var(--wine-rgb),.45)}
+html.noanim .dic-wave i{animation:none !important;height:8px}
+html.noanim .dic-pane.talk .dic-wave i:nth-child(odd){height:16px}
