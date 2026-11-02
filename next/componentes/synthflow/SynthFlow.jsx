@@ -18,7 +18,7 @@ export default function SynthFlow(){
         <Chats />
         <div className="main">
           <Cabecera />
-          <div className="msgs" id="msgs" data-clarity-mask="true" role="log" aria-live="polite" aria-relevant="additions" aria-label="Conversaci\u00f3n"><div className="lane" id="lane" /></div>
+          <div className="msgs" id="msgs" data-clarity-mask="true" role="log" aria-live="polite" aria-relevant="additions" aria-label="Conversación"><div className="lane" id="lane" /></div>
           <button className="tobottom" id="toBottom" aria-label="Ir al final">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12l7 7 7-7" /></svg>
         </button>

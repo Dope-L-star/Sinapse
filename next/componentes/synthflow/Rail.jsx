@@ -39,7 +39,7 @@ export default function Rail(){
           </div>
           <span className="rsp" />
           <div className="rgrp rbot">
-            <button className="rbtn rcoin" type="button" id="railCoin" data-tip="Tu l\u00edmite de hoy" style={{"--i":"4"}} />
+            <button className="rbtn rcoin" type="button" id="railCoin" data-tip="Tu límite de hoy" style={{"--i":"4"}} />
             <a className="rbtn rpulse" href="pulsem.html" id="railPulse" data-tip="Pulsem (equipo)" style={{"--i":"4"}} hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12h4l2.5-6 4 12 3-8 1.5 2H22" /></svg>
               <span className="rl">Pulsem (equipo)</span>

@@ -11,7 +11,7 @@ export default function Selector(){
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
           </button>
         </div>
-        <div className="seg ptabs" id="pTabs" role="tablist" aria-label="Qu\u00e9 IA ver">
+        <div className="seg ptabs" id="pTabs" role="tablist" aria-label="Qué IA ver">
           <span className="pill" />
           <button role="tab" data-pt="forme" aria-selected="true">✦ Para ti</button>
           <button role="tab" data-pt="all" aria-selected="false">Todas</button>
@@ -19,9 +19,9 @@ export default function Selector(){
         </div>
         <label className="field search" id="searchBox">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
-          <input id="q" type="text" placeholder="Busca una IA\u2026 o escribe lo que quieres hacer" autoComplete="off" spellCheck="false" aria-label="Buscar IA" />
+          <input id="q" type="text" placeholder="Busca una IA… o escribe lo que quieres hacer" autoComplete="off" spellCheck="false" aria-label="Buscar IA" />
           <kbd>/</kbd>
-          <button type="button" className="qx" id="qClear" aria-label="Borrar b\u00fasqueda">
+          <button type="button" className="qx" id="qClear" aria-label="Borrar búsqueda">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
           </button>
         </label>
@@ -33,7 +33,7 @@ export default function Selector(){
             <summary>Más filtros<span className="pmx"> · ven fotos, textos largos, gratis, nuevas, orden</span></summary>
             <div className="filters" id="filters" />
             <div className="pmin">
-              <div className="seg prov" id="provSeg" role="tablist" aria-label="De d\u00f3nde">
+              <div className="seg prov" id="provSeg" role="tablist" aria-label="De dónde">
                 <span className="pill" />
                 <button role="tab" data-p="all" aria-selected="true">Todos</button>
                 <button role="tab" data-p="sz" aria-selected="false"><i className="pdot" data-pd="sz" /><span className="sz-logo" aria-hidden="true" />Gratis</button>

@@ -33,7 +33,7 @@ export default function Chats(){
           <div className="cfavh" id="cFavH" hidden><b>★ Favoritos</b><button type="button" className="lnk" id="cFavBack">← Mis chats</button></div>
           <label className="field csearch" id="cSearch">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
-            <input id="thQ" type="search" placeholder="Buscar en mis chats\u2026" autoComplete="off" spellCheck="false" aria-label="Buscar en mis chats" />
+            <input id="thQ" type="search" placeholder="Buscar en mis chats…" autoComplete="off" spellCheck="false" aria-label="Buscar en mis chats" />
           </label>
           <div className="thlist" id="thList" data-clarity-mask="true" />
           <div className="side-foot" id="sideFoot" data-clarity-mask="true" />

@@ -103,6 +103,7 @@ for (const r of routes) {
   assert.deepEqual(lost, [], 'SynthFlow JSX: faltan IDs que usa chat.js: ' + lost.join(', '));
   for (const id of ['msgs', 'thList', 'sideFoot', 'accBtn']) assert.ok(new RegExp('id="' + id + '"[^>]*data-clarity-mask="true"|data-clarity-mask="true"[^>]*id="' + id + '"').test(jsx), 'SynthFlow JSX: #' + id + ' debe enmascararse para analítica');
   assert.ok(!/<script\b/i.test(jsx), 'SynthFlow JSX: los scripts se cargan solo con LegacyRuntime');
+  assert.ok(!/="[^"]*\\u[0-9a-fA-F]{4}/.test(jsx), 'SynthFlow JSX: hay un «\\uXXXX» dentro de un atributo con comillas (JSX no lo convierte: escribe el carácter tal cual)');
   assert.ok(!/\son[A-Z][a-zA-Z]+=\{?["']/.test(jsx) && !/dangerouslySetInnerHTML/.test(jsx), 'SynthFlow JSX: sin handlers en texto ni HTML crudo');
   const brand = (fs.readFileSync(path.join(root, 'chat.html'), 'utf8').match(/<html[^>]*\sdata-brand=["']([^"']+)["']/i) || [])[1] || null;
   const lay = fs.readFileSync(path.join(nextDir, 'app/(site)/layout.jsx'), 'utf8').match(/export const BRAND = (\{[^}]*\})/);

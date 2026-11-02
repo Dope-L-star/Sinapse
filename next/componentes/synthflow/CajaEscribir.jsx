@@ -47,7 +47,7 @@ export default function CajaEscribir(){
           <input type="file" id="fileIn" multiple hidden accept="image/*,.pdf,.docx,.xlsx,.pptx,.odt,.ods,.odp,.txt,.md,.csv,.tsv,.json,.jsonl,.xml,.html,.htm,.css,.scss,.js,.mjs,.ts,.jsx,.tsx,.py,.ipynb,.java,.c,.h,.cpp,.cs,.go,.rs,.php,.rb,.sh,.sql,.yml,.yaml,.toml,.ini,.log,.tex,.swift,.kt,.dart,.lua,.vue,.svelte,.srt,.vtt,.rtf,.svg" />
           <input type="file" id="imgIn" multiple hidden accept="image/*" />
           <input type="file" id="camIn" hidden accept="image/*" capture="environment" />
-          <label className="field"><textarea id="inp" rows="1" placeholder="Escribe tu mensaje\u2026" /></label>
+          <label className="field"><textarea id="inp" rows="1" placeholder="Escribe tu mensaje…" /></label>
           <div className="cpick" id="cPickRow">
             <button type="button" className="cpk4" id="cMode" aria-haspopup="menu" aria-expanded="false" aria-controls="modeMenu" title="Modo de uso">
               <span className="cm-ico" id="cModeI" aria-hidden="true" />
@@ -60,7 +60,7 @@ export default function CajaEscribir(){
               <em>Apagar</em>
             </button>
             <button type="button" className="cpk" id="cPick" aria-haspopup="dialog" title="Cambiar de IA" />
-            <button type="button" className="cpk3" id="cEffort" aria-haspopup="menu" aria-expanded="false" aria-controls="effMenu" title="Esfuerzo: cu\u00e1nto piensa la IA antes de responder">
+            <button type="button" className="cpk3" id="cEffort" aria-haspopup="menu" aria-expanded="false" aria-controls="effMenu" title="Esfuerzo: cuánto piensa la IA antes de responder">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4.5 16a8 8 0 1 1 15 0" /><path d="M12 14l3.5-4" /></svg>
               <span id="cEffortL" />
             </button>
@@ -76,7 +76,7 @@ export default function CajaEscribir(){
         <div className="hintline">
           <span>
             <span className="payl" id="payL" />
-            <button className="saver" id="saverBtn" type="button" aria-pressed="false" title="La IA responde m\u00e1s corto y gastas menos de tu l\u00edmite de hoy">
+            <button className="saver" id="saverBtn" type="button" aria-pressed="false" title="La IA responde más corto y gastas menos de tu límite de hoy">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14z" /><path d="M5 19l7-7" /></svg>
               Respuestas cortas
             </button>
