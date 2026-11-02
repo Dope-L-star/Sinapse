@@ -99,7 +99,9 @@ for (const r of routes) {
   const ids = [...jsx.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]);
   assert.equal(ids.length, new Set(ids).size, 'SynthFlow JSX: IDs repetidos');
   const sourceIds = [...original.matchAll(/\bid=["']([^"']+)["']/gi)].map(m => m[1]);
-  const lost = sourceIds.filter(i => !ids.includes(i));
+  /* IDs que el motor quitaba al arrancar y que la versión React ya no trae (#pMore: «Más filtros», hoy «Personalizar búsqueda») */
+  const RETIRADOS = ['pMore'];
+  const lost = sourceIds.filter(i => !ids.includes(i) && !RETIRADOS.includes(i));
   assert.deepEqual(lost, [], 'SynthFlow JSX: faltan IDs que usa chat.js: ' + lost.join(', '));
   for (const id of ['msgs', 'thList', 'sideFoot', 'accBtn']) assert.ok(new RegExp('id="' + id + '"[^>]*data-clarity-mask="true"|data-clarity-mask="true"[^>]*id="' + id + '"').test(jsx), 'SynthFlow JSX: #' + id + ' debe enmascararse para analítica');
   assert.ok(!/<script\b/i.test(jsx), 'SynthFlow JSX: los scripts se cargan solo con LegacyRuntime');
