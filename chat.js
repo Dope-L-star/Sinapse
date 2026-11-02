@@ -225,7 +225,8 @@ async function refresh(silent){
 }
 $('#refreshBtn').addEventListener('click', () => refresh(false));
 setInterval(() => { if (!document.hidden) refresh(true); }, 600000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - cat.t > 60000) refresh(true); });
+/* v3.7 · costo cero: al volver a la pestaña solo se actualiza si la lista tiene más de 5 min (antes 1 min) */
+document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - cat.t > 300000) refresh(true); });
 
 /* filtros y orden */
 const FILTERS = [

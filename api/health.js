@@ -2,14 +2,15 @@
    GET                          → { bad:[{ id, t }] }  modelos escondidos (máx. 12 h)
    GET ?panel=1                 → (equipo) Pulsem: en línea, dificultades, errores, carga, llaves y ayuda
    POST { id, ok }              → «este modelo falló / volvió a responder» (se esconde con 2 conexiones distintas o 1 del equipo)
-   POST { action:'beat', … }    → «sigo aquí» cada 3 min (para saber quién está en línea y si algo le pasa)
+   POST { action:'beat', … }    → «sigo aquí» cada 10 min (equipo: 3) (para saber quién está en línea y si algo le pasa)
    POST { action:'ev', kind, detail } → un tropiezo: error, recarga, confusión, sin IA, tope del día
    Nunca se guardan mensajes ni chats: solo la página, el estado y un texto corto del error. */
 import { route, body, json, fail, redis, pipe, getJ, limit, auth, roleOf, sha, today, str, sbOn, sbGoogleOn, ipOf } from './_lib.js';
 import { status, settings, ORDER, PROV, alerts } from './_pool.js';
 
 const TTL = 12 * 3600, ID_RX = /^(or|pu|gq|sz):[\w.:/@+-]{2,160}$/;
-const ONLINE_MS = 7 * 60e3, KINDS = ['error', 'jserror', 'reload', 'confused', 'noai', 'limit', 'puter_out', 'slow'];
+const ONLINE_MS = 12 * 60e3,   /* v3.7 · el «sigo aquí» de las personas ahora es cada 10 min (el del equipo, cada 3) */
+      KINDS = ['error', 'jserror', 'reload', 'confused', 'noai', 'limit', 'puter_out', 'slow'];
 const RANK = { owner:'Prime', admin:'ZFlow', staff:'Symmetrix', user:'Synther' };
 async function whoOf(req){
   const me = await auth(req, true).catch(() => null);

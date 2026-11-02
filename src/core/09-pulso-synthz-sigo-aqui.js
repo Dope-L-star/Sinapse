@@ -1,4 +1,5 @@
-/* ===== pulso de SymphorIA: «sigo aquí» cada 3 min y avisos cortos cuando algo falla (sin mensajes ni chats) ===== */
+/* ===== pulso de SymphorIA: «sigo aquí» cada 10 min (el equipo cada 3) y avisos cortos cuando algo falla (sin mensajes ni chats)
+   v3.7 · costo cero: de 3 a 10 minutos para las personas = unas 3 veces menos escrituras en Redis por cada visitante ===== */
 const TEL = { since:Date.now(), msgs:0, errs:0, ai:'', locked:false, last:{} };
 const telPage = () => (location.pathname.split('/').pop() || 'index.html').replace(/\.html$/, '') || 'index';
 function telEv(kind, detail){
@@ -9,8 +10,9 @@ function telEv(kind, detail){
   }catch(e){}
 }
 let beatT = 0, beatAt = 0;
+const beatMs = () => { const r = ACC && ACC.user && ACC.user.role; return r && r !== 'user' ? 180000 : 600000; };
 async function telBeat(){
-  clearTimeout(beatT); beatT = setTimeout(telBeat, 180000);
+  clearTimeout(beatT); beatT = setTimeout(telBeat, beatMs());
   if (document.hidden) return; beatAt = Date.now();
   try{
     const r = await fetch('/api/health', { method:'POST', headers:szHeaders(), body:JSON.stringify({ action:'beat', page:telPage(), state:{ since:TEL.since, msgs:TEL.msgs, ai:TEL.ai, locked:TEL.locked, mobile:matchMedia('(max-width:760px)').matches, errs:TEL.errs } }) });
@@ -19,7 +21,7 @@ async function telBeat(){
   }catch(e){}
 }
 setTimeout(telBeat, 4000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - beatAt > 170000) telBeat(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - beatAt > beatMs() - 10000) telBeat(); });
 addEventListener('error', e => { if (!e || !e.message || /ResizeObserver|Script error/i.test(e.message)) return; telEv('jserror', e.message + ' @' + String(e.filename || '').split('/').pop() + ':' + (e.lineno || 0)); });
 addEventListener('unhandledrejection', e => { const m = e && e.reason && (e.reason.message || String(e.reason)); if (!m || /abort|Detenido|net|Failed to fetch|NetworkError|load failed/i.test(m)) return; telEv('jserror', 'promesa: ' + m); });
 try{ const nv = performance.getEntriesByType('navigation')[0]; if (nv && nv.type === 'reload') setTimeout(() => telEv('reload', 'recargó la página'), 2500); }catch(e){}

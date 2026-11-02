@@ -136,7 +136,9 @@ async function mtCheck(){
   }catch(e){}
 }
 if (!mtOff()){
-  const go = () => { mtCheck(); MT.timer = setInterval(() => { if (!document.hidden) mtCheck(); mtAgo(); }, 45000); };
+  /* v3.7 · costo cero: con el aviso encendido se revisa cada 45 s (para saber cuándo termina); apagado, cada 5 min */
+  let mtLast = 0;
+  const go = () => { mtCheck(); mtLast = Date.now(); MT.timer = setInterval(() => { mtAgo(); if (document.hidden) return; if (MT.el || Date.now() - mtLast > 300000){ mtLast = Date.now(); mtCheck(); } }, 45000); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
   addEventListener('synthz-acc', mtExit); accHooks.push(() => setTimeout(mtExit, 0));
   document.addEventListener('visibilitychange', () => { if (!document.hidden) mtCheck(); });
