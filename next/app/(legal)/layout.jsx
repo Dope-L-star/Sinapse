@@ -26,6 +26,8 @@ export default function Layout({ children }){
         <AnalyticsConsent />
         <ClarityConsent />
         <Script src="/movimiento.js" strategy="afterInteractive" />
+        {/* v3.7 · idioma ES/EN en vivo y Ajustes de animaciones y vidrio (el mismo de Ayuda) */}
+        <Script src="/ayuda.js" strategy="afterInteractive" />
       </body>
     </html>
   );
