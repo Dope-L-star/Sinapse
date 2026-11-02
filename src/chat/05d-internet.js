@@ -12,6 +12,9 @@ const needsWeb = text => webOn || (SZ.CFG.autoWeb !== false && WEB_RX.test(text)
 function webCard(){
   const el = document.createElement('div'); el.className = 'agrun webrun';
   el.innerHTML = '<div class="ag-h"><span class="pxw">' + SZ.pixelGrid() + '</span><span class="ag-t"><b>Buscando en internet</b><small>Leo varias páginas para responderte con datos de hoy…</small></span></div>';
+  /* v3.8 · con SynthFlow en React la búsqueda se ve como un radar (#41) y, al llegar, las fuentes aparecen como chips */
+  const fx = document.createElement('div'); fx.className = 'fxhost';
+  if (window.SZFx && window.SZFx.mount(fx, 'radar', { lang:SZ.lang(), modo:'web' })){ el.innerHTML = ''; el.classList.add('fxr'); el.appendChild(fx); el._fx = fx; el._px = { stop(){} }; return el; }
   el._px = SZ.pixelRun($('.pxw', el)); return el;
 }
 async function webSearch(q){
@@ -31,7 +34,11 @@ async function webPrep(msg, text){
   const card = webCard(); lane.appendChild(card); jump();
   try{
     const R = await webSearch(text);
-    if (R.results && R.results.length){ msg.ask = webAsk(msg.ask || text, R); msg.sources = R.results.map(x => ({ t:x.t, u:x.u })); msg.web = R.via; }
+    if (R.results && R.results.length){
+      msg.ask = webAsk(msg.ask || text, R); msg.sources = R.results.map(x => ({ t:x.t, u:x.u })); msg.web = R.via;
+      if (card._fx){ const host = u => { try{ return new URL(u).hostname.replace(/^www\./, ''); }catch(e){ return ''; } }, hs = [...new Set(R.results.map(x => host(x.u)).filter(Boolean))];
+        window.SZFx.mount(card._fx, 'radar', { lang:SZ.lang(), modo:'web', hallazgos:hs }); await new Promise(r => setTimeout(r, !SZ.CFG.anim ? 0 : 900)); }
+    }
     else toast('No encontré nada en internet para eso; te respondo con lo que sabe la IA.');
   }catch(e){ toast(e.message + (e.code === 's_guest' ? '' : ' Te respondo con lo que sabe la IA.')); if (e.code === 's_guest') setTimeout(() => SZ.guestGate({ mode:'signup' }), 400); }
   finally{ try{ card._px.stop(); }catch(e){} card.remove(); if (webOn) setWeb(false); }
