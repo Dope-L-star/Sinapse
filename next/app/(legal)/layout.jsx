@@ -18,6 +18,8 @@ export default function Layout({ children }){
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Chakra+Petch:wght@500;600;700&family=Figtree:wght@300..800&family=IBM+Plex+Mono:wght@400;500&display=swap" />
         <link rel="stylesheet" href="/movimiento.css" />
+        {/* v3.8 · estilo Apple: titulares grandes, secciones que suben, índice y barra de lectura */}
+        <link rel="stylesheet" href="/apple.css" />
         <link rel="stylesheet" href="/clarity-consent.css" />
         <link rel="stylesheet" href="/analytics-consent.css" />
       </head>
@@ -28,6 +30,7 @@ export default function Layout({ children }){
         <Script src="/movimiento.js" strategy="afterInteractive" />
         {/* v3.7 · idioma ES/EN en vivo y Ajustes de animaciones y vidrio (el mismo de Ayuda) */}
         <Script src="/ayuda.js" strategy="afterInteractive" />
+        <Script src="/apple.js" strategy="afterInteractive" />
       </body>
     </html>
   );

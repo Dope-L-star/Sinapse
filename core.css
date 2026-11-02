@@ -1645,6 +1645,101 @@ html.pmode .vt-blob{animation:none}
 .vt .vt-win p{font-size:inherit!important;line-height:1.3!important;letter-spacing:0;margin-top:0}
 .vt .vt-win span,.vt .vt-win b{font-size:inherit}
 .vt{max-width:460px}
+/* ===== v3.8 · Avisos que no se pueden deshacer: tarjeta brutalista (idea del Uiverse #52, no copiada)
+   Papel claro, tinta oscura, borde grueso y sombra dura del color del tema. Sale con un golpe y la sombra «se aplasta» al tocar. ===== */
+.szm.szbru .tcard{--bru-acc:var(--wine,#ff3d9a);--bru-ink:#141018;--bru-paper:#fff6e9;
+  background:var(--bru-paper)!important;color:var(--bru-ink);border:3px solid var(--bru-ink)!important;border-radius:8px!important;
+  box-shadow:9px 9px 0 var(--bru-acc),9px 9px 0 3px var(--bru-ink)!important;padding:0 0 20px!important;overflow:hidden;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;max-width:min(440px,calc(100vw - 40px))}
+.szm.szbru .tcard::before,.szm.szbru .tcard::after{display:none!important}
+.szm.szbru.on .tcard{animation:bruIn .5s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes bruIn{0%{opacity:0;transform:translate(-6px,-14px) rotate(-1.5deg)}60%{opacity:1;transform:translate(2px,2px) rotate(.4deg)}100%{transform:none}}
+.szbru .bru-h{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--bru-acc);color:var(--bru-ink);border-bottom:3px solid var(--bru-ink);
+  font:800 13px/1 var(--brand,'Chakra Petch',system-ui,sans-serif);letter-spacing:.16em}
+.szbru .bru-h svg{width:18px;height:18px;flex:none}
+/* cinta de rayas que corre: «cuidado» sin palabras */
+.szbru .bru-h i{flex:1;height:10px;margin-left:6px;border:2px solid var(--bru-ink);border-radius:2px;
+  background:repeating-linear-gradient(-45deg,var(--bru-ink) 0 6px,transparent 6px 12px);background-size:17px 17px;animation:bruTape 1.4s linear infinite}
+@keyframes bruTape{to{background-position:17px 0}}
+.szbru .tb{padding:16px 20px 0}
+.szbru .tb h3{color:var(--bru-ink)!important;font:800 21px/1.2 var(--sans,'Figtree',sans-serif)!important;letter-spacing:-.01em;margin:0 0 6px}
+.szbru .tb p{color:#3d3743!important;font-size:14.5px!important;line-height:1.5}
+.szbru .tbtn{padding:0 20px;justify-content:flex-end;gap:12px}
+.szbru .tbtn .lnk,.szbru .tbtn .btn{padding:10px 18px!important;border:3px solid var(--bru-ink)!important;border-radius:6px!important;font-weight:800!important;font-size:14px!important;
+  text-decoration:none!important;transition:transform .12s,box-shadow .12s!important}
+.szbru .tbtn .lnk{background:transparent!important;color:var(--bru-ink)!important;box-shadow:4px 4px 0 var(--bru-ink)}
+.szbru .tbtn .btn{background:var(--bru-ink)!important;color:var(--bru-paper)!important;box-shadow:4px 4px 0 var(--bru-acc)}
+.szbru .tbtn .lnk:hover,.szbru .tbtn .btn:hover{transform:translate(-2px,-2px)}
+.szbru .tbtn .lnk:hover{box-shadow:6px 6px 0 var(--bru-ink)}
+.szbru .tbtn .btn:hover{box-shadow:6px 6px 0 var(--bru-acc)}
+.szbru .tbtn .lnk:active,.szbru .tbtn .btn:active{transform:translate(4px,4px);box-shadow:0 0 0 transparent!important}
+.szm.szbru .tcard :focus-visible{outline:3px solid var(--bru-acc);outline-offset:3px}
+/* estilo Simple: el acento es el cobre de Simple */
+html.simple .szm.szbru .tcard{--bru-acc:var(--sacc,#d9a066)}
+html.noanim .szbru .tcard,html.noanim .szbru .bru-h i{animation:none!important}
+@media (max-width:520px){.szbru .tbtn{flex-wrap:wrap}.szbru .tbtn .lnk,.szbru .tbtn .btn{flex:1;justify-content:center;text-align:center}}
+/* ===== v3.8 · Efectos nuevos (componentes React en next/componentes/efectos/)
+   .so- saldo con ojo (#40) · .pm- «pensando» Matrix (#47) · .br- radar «buscando» (#41). Todos siguen al tema (--sb-*, --gold, --wine). ===== */
+
+/* ---------- saldo con ojo ---------- */
+.so{display:inline-flex;align-items:center;gap:10px;padding:7px 8px 7px 8px;border-radius:16px;border:1px solid rgba(var(--gold-rgb,230,182,95),.32);
+  background:linear-gradient(135deg,rgba(var(--gold-rgb,230,182,95),.14),rgba(var(--wine-rgb,201,86,108),.08));color:var(--text,#f6f3ff);font-family:var(--sans,'Figtree',sans-serif)}
+.so-coin{position:relative;display:grid;place-items:center;width:30px;height:30px;flex:none;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff8,transparent 45%),conic-gradient(from 200deg,var(--gold,#e6b65f),var(--wine,#c9566c),var(--gold,#e6b65f));
+  box-shadow:inset 0 -3px 6px rgba(0,0,0,.25),0 4px 12px -4px var(--gold,#e6b65f)}
+.so-coin b{font:800 14px var(--brand,'Chakra Petch',sans-serif);color:#1a1020}
+.so.ver .so-coin{animation:soFlip .7s cubic-bezier(.34,1.56,.64,1)}
+@keyframes soFlip{0%{transform:rotateY(0)}100%{transform:rotateY(360deg)}}
+.so-tx{display:flex;flex-direction:column;line-height:1.1;min-width:64px}
+.so-tx small{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute,#b4adcf)}
+.so-tx>b{display:flex;font:700 18px/1.2 var(--sans,sans-serif);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.so-tx>b i{font-style:normal;display:inline-block;animation:soUp .45s cubic-bezier(.22,1,.36,1) both;animation-delay:var(--d)}
+@keyframes soUp{from{opacity:0;transform:translateY(60%);filter:blur(3px)}}
+.so-dots{color:var(--gold,#e6b65f);letter-spacing:.12em;filter:blur(.3px)}
+.so-eye{display:grid;place-items:center;width:32px;height:32px;flex:none;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:var(--gold,#e6b65f);cursor:pointer;transition:background .25s,transform .25s}
+.so-eye:hover{background:rgba(255,255,255,.12);transform:scale(1.06)}
+.so-eye svg{width:17px;height:17px}
+.so-eye .so-slash{stroke-dasharray:24;stroke-dashoffset:0;transition:stroke-dashoffset .35s}
+.so.ver .so-eye .so-slash{stroke-dashoffset:24}
+.so-eye .so-pupil{transform-origin:12px 12px;transition:transform .35s}
+.so:not(.ver) .so-eye .so-pupil{transform:scaleY(.2)}
+.so.sm{gap:7px;padding:4px 5px;border-radius:12px}.so.sm .so-coin{width:22px;height:22px}.so.sm .so-coin b{font-size:11px}.so.sm .so-tx small{display:none}.so.sm .so-tx>b{font-size:14px}.so.sm .so-eye{width:26px;height:26px;border-radius:9px}
+
+/* ---------- «pensando» con lluvia Matrix ---------- */
+.pm{position:relative;display:flex;align-items:center;min-height:var(--h,64px);padding:0 16px;border-radius:16px;overflow:hidden;isolation:isolate;
+  background:linear-gradient(180deg,rgba(0,0,0,.25),rgba(0,0,0,.1));border:1px solid rgba(255,255,255,.08)}
+.pm-rain{position:absolute;inset:0;z-index:-1;display:flex;justify-content:space-around;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent);mask-image:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent)}
+.pm-rain span{writing-mode:vertical-rl;text-orientation:upright;font:600 11px/1.05 var(--mono,'IBM Plex Mono',monospace);letter-spacing:-.5px;
+  background:linear-gradient(180deg,transparent,var(--sb-primary,#7b3ff2) 40%,var(--sb-light,#3de0ff) 92%,#fff);-webkit-background-clip:text;background-clip:text;color:transparent;
+  opacity:.85;animation:pmFall var(--v,2s) linear infinite;animation-delay:calc(var(--d,0s) * -1)}
+@keyframes pmFall{from{transform:translateY(-105%)}to{transform:translateY(105%)}}
+.pm-tx{margin:0;font:600 14px var(--sans,sans-serif);color:var(--text,#f6f3ff);text-shadow:0 0 12px rgba(0,0,0,.9),0 0 3px rgba(0,0,0,.8)}
+.pm-tx b{background:var(--grad-text,linear-gradient(95deg,#3de0ff,#7b3ff2,#ff3d9a));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none}
+.pm-tx i,.br-tx p i{font-style:normal;animation:pmDot 1.2s infinite;opacity:.2}
+.pm-tx i:nth-of-type(2),.br-tx p i:nth-of-type(2){animation-delay:.2s}.pm-tx i:nth-of-type(3),.br-tx p i:nth-of-type(3){animation-delay:.4s}
+@keyframes pmDot{40%{opacity:1}}
+
+/* ---------- radar «buscando / analizando» ---------- */
+.br{display:flex;align-items:center;gap:14px;padding:10px 14px;border-radius:16px;border:1px solid rgba(var(--accent-rgb,61,224,255),.22);background:rgba(var(--accent-rgb,61,224,255),.05)}
+.br-o{position:relative;width:52px;height:52px;flex:none;border-radius:50%;overflow:hidden;border:1px solid color-mix(in srgb,var(--sb-light,#3de0ff) 55%,transparent);background:radial-gradient(circle,rgba(0,0,0,.2),rgba(0,0,0,.45))}
+.br-sweep{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,color-mix(in srgb,var(--sb-light,#3de0ff) 65%,transparent),transparent 75deg);animation:brSpin 2s linear infinite}
+@keyframes brSpin{to{rotate:360deg}}
+.br-ring{position:absolute;inset:30%;border-radius:50%;border:1px solid color-mix(in srgb,var(--sb-light,#3de0ff) 30%,transparent)}
+.br-ring.b{inset:12%}
+.br-c{position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px;border-radius:50%;background:var(--sb-light,#3de0ff)}
+.br-o em{position:absolute;left:var(--x);top:var(--y);width:5px;height:5px;border-radius:50%;background:var(--sb-secondary,#ff3d9a);box-shadow:0 0 8px var(--sb-secondary,#ff3d9a);opacity:0;animation:brBlip 2s infinite;animation-delay:var(--d)}
+@keyframes brBlip{0%,8%{opacity:0;scale:.4}14%{opacity:1;scale:1.3}60%{opacity:.6;scale:1}100%{opacity:0}}
+.br-tx p{margin:0;font:600 14px var(--sans,sans-serif);color:var(--text,#f6f3ff)}
+.br-tx ul{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0 0;padding:0;list-style:none}
+.br-tx li{font-size:11.5px;padding:2px 9px;border-radius:99px;background:rgba(255,255,255,.07);color:var(--soft,#ddd7ef);animation:soUp .45s cubic-bezier(.22,1,.36,1) both;animation-delay:var(--d)}
+
+/* estilo Simple: tonos tranquilos; sin animaciones: todo quieto */
+html.simple .pm-rain span{background:linear-gradient(180deg,transparent,var(--sacc,#d9a066));-webkit-background-clip:text;background-clip:text;opacity:.35}
+html.simple .br,html.simple .so{border-color:rgba(255,255,255,.1);background:var(--scard,#2f2e2b)}
+html.noanim .pm-rain span,html.noanim .br-sweep,html.noanim .br-o em,html.noanim .so-tx>b i,html.noanim .so-coin{animation:none!important}
+html.noanim .pm-rain span{transform:none;opacity:.25}
+html.noanim .br-o em{opacity:.8}
 /* v3.0 · ventana de Planes: cuatro tarjetas de vidrio; la tuya brilla con su color */
 .tcard.plans{width:min(760px,calc(100vw - 24px))}
 .pl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:14px 0 6px}

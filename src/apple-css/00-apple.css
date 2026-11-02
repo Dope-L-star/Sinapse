@@ -1,0 +1,82 @@
+/* ===== v3.8 · Estilo Apple para Ayuda, Privacidad y Términos (y lo que quiera sumarse con <body class="ap">)
+   Titulares grandes con brillo que pasa una vez, secciones que suben al aparecer, cabecera de vidrio que se encoge al bajar,
+   barra de lectura arriba, índice «En esta página» que sigue lo que lees y preguntas que se abren suavecito.
+   Lo mueve apple.js (src/apple/). Con «Animaciones» apagadas (html.noanim) todo queda quieto y visible. ===== */
+:root{--ap-a:#7b3ff2;--ap-b:#ff3d9a;--ap-c:#ff7a45;--ap-l:#3de0ff;--ap-ease:cubic-bezier(.22,1,.36,1)}
+html.ap-on body{background:radial-gradient(1100px 600px at 15% -15%,rgba(123,63,242,.16),transparent 60%),radial-gradient(900px 560px at 100% 0,rgba(255,61,154,.12),transparent 60%),radial-gradient(900px 700px at 50% 120%,rgba(61,224,255,.07),transparent 60%),#060509}
+
+/* cabecera de vidrio que se encoge */
+html.ap-on .top{z-index:42;transition:padding .45s var(--ap-ease),background .45s,box-shadow .45s;background:rgba(10,9,16,.55);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);border-bottom-color:rgba(255,255,255,.07)}
+html.ap-on.ap-scrolled .top{padding-top:8px;padding-bottom:8px;background:rgba(10,9,16,.78);box-shadow:0 10px 30px -18px rgba(0,0,0,.9)}
+html.ap-on .top nav a,html.ap-on .top .aylang,html.ap-on .top .lang{transition:background .3s,border-color .3s,color .3s,transform .3s var(--ap-ease)}
+html.ap-on .top nav a:hover{background:rgba(255,255,255,.08);color:#fff;transform:translateY(-1px)}
+
+/* barra de lectura */
+.ap-progress{position:fixed;left:0;top:0;z-index:43;height:2px;width:100%;transform-origin:0 50%;transform:scaleX(var(--p,0));background:linear-gradient(90deg,var(--ap-l),var(--ap-a) 40%,var(--ap-b) 75%,var(--ap-c));pointer-events:none}
+
+/* titular grande, con el brillo que cruza una vez */
+html.ap-on main{max-width:860px}
+html.ap-on main h1{font-size:clamp(44px,8.4vw,88px);line-height:1;letter-spacing:-.04em;margin-bottom:16px;
+  background:linear-gradient(100deg,#fff 0 40%,var(--ap-l) 48%,var(--ap-b) 54%,#fff 62% 100%);background-size:260% 100%;background-position:100% 0;-webkit-background-clip:text;background-clip:text;color:transparent}
+html.ap-on.ap-ready main h1{animation:apShine 1.8s .2s var(--ap-ease) both}
+@keyframes apShine{to{background-position:0 0}}
+html.ap-on main .sub{font-size:clamp(17px,2.2vw,22px);line-height:1.45;color:#a9a3b8;max-width:36ch;margin-bottom:28px}
+/* palabras del titular y la bajada que suben una por una */
+.ap-w{display:inline-block;opacity:0;transform:translateY(.45em);filter:blur(6px);transition:opacity .7s var(--ap-ease),transform .7s var(--ap-ease),filter .7s;transition-delay:calc(var(--i) * 45ms)}
+html.ap-ready .ap-w{opacity:1;transform:none;filter:none}
+
+/* índice «En esta página» */
+.ap-toc{position:sticky;top:var(--ap-top,64px);z-index:41;display:flex;gap:6px;overflow-x:auto;margin:0 -16px 26px;padding:10px 16px;scrollbar-width:none;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 16px,#000 calc(100% - 16px),transparent);mask-image:linear-gradient(90deg,transparent,#000 16px,#000 calc(100% - 16px),transparent)}
+.ap-toc::-webkit-scrollbar{display:none}
+.ap-toc b{flex:none;align-self:center;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#7d778c;margin-right:4px}
+.ap-toc a{flex:none;padding:6px 13px;border-radius:999px;font-size:13px;color:#cfc9dc!important;text-decoration:none;background:rgba(20,18,30,.72);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transition:background .3s,color .3s,border-color .3s}
+.ap-toc a.on{color:#fff!important;border-color:transparent;background:linear-gradient(120deg,rgba(123,63,242,.55),rgba(255,61,154,.45))}
+
+/* secciones: suben al aparecer y tienen una luz que sigue el dedo o el ratón */
+html.ap-on .card{position:relative;border-radius:28px;border-color:rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));padding:clamp(22px,3.4vw,34px);margin-bottom:18px;overflow:hidden;
+  scroll-margin-top:calc(var(--ap-top,64px) + 60px)}
+html.ap-on .card::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;
+  background:radial-gradient(420px circle at var(--mx,50%) var(--my,0%),rgba(255,255,255,.07),transparent 60%)}
+html.ap-on .card:hover::before{opacity:1}
+html.ap-on .card h2{font-size:clamp(22px,3vw,30px);letter-spacing:-.02em;margin-bottom:12px}
+html.ap-on .card.tldr{border-color:rgba(255,154,82,.28);background:linear-gradient(135deg,rgba(123,63,242,.12),rgba(255,61,154,.08) 60%,rgba(255,122,69,.06))}
+.ap-rv{opacity:0;transform:translateY(42px) scale(.985);transition:opacity .9s var(--ap-ease),transform .9s var(--ap-ease);transition-delay:var(--d,0ms)}
+.ap-rv.ap-in{opacity:1;transform:none}
+
+/* preguntas: chevron que gira y respuesta que se abre suave */
+html.ap-on details{padding:16px 0;border-top-color:rgba(255,255,255,.07)}
+html.ap-on summary{font-size:16.5px;align-items:center;transition:color .25s}
+html.ap-on summary:hover{color:#fff}
+html.ap-on summary::before{content:""!important;width:22px;height:22px;flex:none;border-radius:50%;background:rgba(255,255,255,.07) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ff9a52' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6l6 6-6 6'/%3E%3C/svg%3E") center/13px no-repeat;transition:transform .4s var(--ap-ease),background-color .3s}
+html.ap-on details[open] summary::before{transform:rotate(90deg);background-color:rgba(255,154,82,.16)}
+html.ap-on details .ap-ans{overflow:hidden;transition:height .45s var(--ap-ease),opacity .45s}
+html.ap-on details p{margin-left:32px;color:#bdb7c9}
+
+/* botones tipo píldora con relieve */
+html.ap-on .acts a{transition:transform .35s var(--ap-ease),box-shadow .35s,background .3s}
+html.ap-on .acts a:hover{transform:translateY(-2px);box-shadow:0 12px 26px -14px rgba(255,61,154,.8)}
+html.ap-on .acts a.go{background-size:180% 100%;animation:apGo 6s ease-in-out infinite alternate}
+@keyframes apGo{to{background-position:100% 0}}
+
+html.ap-on footer{max-width:860px;opacity:.85}
+
+/* celular */
+@media (max-width:640px){
+  /* cabecera en una sola fila: el logo fijo y los botones se deslizan de lado */
+  html.ap-on .top{gap:10px;padding-left:16px;padding-right:0}
+  html.ap-on .top .logo{flex:none;font-size:19px}
+  html.ap-on .top .logo img{width:24px;height:24px}
+  html.ap-on .top nav{flex:1;min-width:0;flex-wrap:nowrap;overflow-x:auto;gap:5px;padding:2px 16px 2px 8px;scrollbar-width:none;
+    -webkit-mask-image:linear-gradient(90deg,transparent,#000 10px,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(90deg,transparent,#000 10px,#000 calc(100% - 22px),transparent)}
+  html.ap-on .top nav::-webkit-scrollbar{display:none}
+  html.ap-on .top nav a,html.ap-on .top .aylang,html.ap-on .top .lang{flex:none;white-space:nowrap;padding:7px 12px;font-size:13px}
+  html.ap-on main h1{font-size:clamp(40px,12vw,56px)}
+  html.ap-on .card{border-radius:22px}
+  .ap-toc{margin-left:-16px;margin-right:-16px}
+}
+/* sin animaciones o sin vidrio */
+html.noanim .ap-rv,html.noanim .ap-w{opacity:1!important;transform:none!important;filter:none!important;transition:none!important}
+html.noanim main h1{animation:none!important;background-position:0 0!important}
+html.noanim .acts a.go{animation:none!important}
+html.noglass .ap-toc a{backdrop-filter:none;-webkit-backdrop-filter:none;background:#16131f}
