@@ -1,6 +1,6 @@
-/* Personalidad de SynthonIA (v3.7): idioma, límites de respeto y pensamientos ocultos. node t/synthonia/personalidad.mjs */
+/* Personalidad de SynthonIA (v3.7): idioma, límites de respeto, pensamientos ocultos y memoria que pregunta. node t/synthonia/personalidad.mjs */
 import assert from 'node:assert/strict';
-import { PERSONA, LANG_HEAD, isRude, boundary, cleanThoughts, langOf } from '../../api/_synthonia.js';
+import { PERSONA, LANG_HEAD, isRude, boundary, cleanThoughts, langOf, memOf, memSys, takeMemory } from '../../api/_synthonia.js';
 
 let ok = 0; const t = (name, fn) => { fn(); ok++; console.log('OK', name); };
 t('idioma', () => { assert.equal(langOf('en'), 'en'); assert.equal(langOf('xx'), 'es'); assert.match(LANG_HEAD.en, /Never answer in Spanish/); });
@@ -19,5 +19,15 @@ t('pensamientos ocultos', () => {
   assert.equal(cleanThoughts('<think>pienso y me cortan'), '');
   assert.equal(cleanThoughts('razono…</think> Respuesta'), 'Respuesta');
   assert.equal(cleanThoughts('Sin nada raro'), 'Sin nada raro');
+});
+t('memoria: solo lo aprobado y pregunta antes', () => {
+  assert.deepEqual(memOf(['Me llamo Ana', 7, '  ', 'eres una idiota', ...Array(20).fill('Estudio diseño')]).length, 12);
+  assert.equal(memOf('no es lista').length, 0);
+  assert.match(memSys('es', ['Me llamo Ana']), /Me llamo Ana/); assert.match(memSys('en', []), /\[remember:/);
+  assert.deepEqual(takeMemory('¡Mucho gusto, Ana! [recordar: Se llama Ana y estudia diseño]'), { text:'¡Mucho gusto, Ana!', remember:'Se llama Ana y estudia diseño' });
+  assert.deepEqual(takeMemory('Nice! [remember: Prefers short answers]'), { text:'Nice!', remember:'Prefers short answers' });
+  assert.equal(takeMemory('Ok [recordar: su contraseña es 1234]').remember, '');
+  assert.equal(takeMemory('Ok [recordar: su teléfono es 3001234567]').remember, '');
+  assert.equal(takeMemory('Sin marca').remember, '');
 });
 console.log(ok + ' pruebas de personalidad OK');

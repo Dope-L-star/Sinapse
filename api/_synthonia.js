@@ -68,3 +68,28 @@ export function cleanThoughts(t){
   s = s.replace(/<(think|thinking|reasoning)>[\s\S]*$/i, '');
   return s.trim();
 }
+
+/* v3.7 · memoria de SynthonIA: recuerda solo lo que vale y PREGUNTA antes de guardar.
+   El navegador manda solo lo que la persona ya aprobó (Ajustes › IAs y memoria); si la persona cuenta algo que vale la pena
+   recordar, la IA lo propone al final con [recordar: …] y la página le pregunta «¿Lo recuerdo?». Nada se guarda sin su sí. */
+export function memOf(list){
+  return (Array.isArray(list) ? list : []).filter(x => typeof x === 'string').map(x => x.replace(/\s+/g, ' ').trim().slice(0, 200)).filter(x => x.length >= 3 && !isRude(x)).slice(0, 12);
+}
+export function memSys(L, mem){
+  const head = L === 'en'
+    ? ' MEMORY: '
+    : ' MEMORIA: ';
+  const known = mem.length ? (L === 'en' ? 'What this person approved for you to remember (use it naturally when it helps, never recite it): ' : 'Lo que esta persona aprobó que recuerdes (úsalo con naturalidad cuando sirva, nunca lo recites): ') + mem.map(x => '- ' + x).join(' ') + ' ' : '';
+  const rule = L === 'en'
+    ? 'If, and only if, the person tells you something lasting and useful about themselves (their name, what they study or do, how they like answers, their language, an accessibility need), end your answer with [remember: the fact in one short sentence]. Never for passwords, phone numbers, addresses, health, money, politics, religion or anything sensitive, never for one-off things, and never if it is already in your memory. You don\'t save anything: the page will ask the person first.'
+    : 'Si, y solo si, la persona te cuenta algo duradero y útil de sí misma (su nombre, qué estudia o a qué se dedica, cómo le gustan las respuestas, su idioma, una necesidad de accesibilidad), termina tu respuesta con [recordar: el dato en una frase corta]. Nunca para contraseñas, teléfonos, direcciones, salud, dinero, política, religión ni nada sensible, nunca para cosas de un momento y nunca si ya está en tu memoria. Tú no guardas nada: la página le pregunta antes a la persona.';
+  return head + known + rule;
+}
+/* saca la marca [recordar: …] / [remember: …] de la respuesta y devuelve el dato propuesto (o '') */
+const SENSITIVE = /\b(contrase|password|clave|pin|tel[eé]fono|phone|direcci[oó]n|address|tarjeta|card|cuenta bancaria|bank|c[eé]dula|pasaporte|passport)\b|\d{6,}/i;
+export function takeMemory(t){
+  let fact = '';
+  const s = String(t || '').replace(/\s*\[(?:recordar|remember)\s*:\s*([^\]]{0,240})\]/gi, (m, f) => { if (!fact) fact = String(f || '').replace(/\s+/g, ' ').trim(); return ''; }).trim();
+  if (fact.length < 3 || fact.length > 200 || SENSITIVE.test(fact) || isRude(fact)) fact = '';
+  return { text:s, remember:fact };
+}
