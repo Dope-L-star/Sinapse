@@ -285,11 +285,13 @@ export async function chat({ who, ipKey, messages, model, maxTokens, system, str
       await pipe([['INCR', 'pk:n:' + k.id + ':' + d], ['EXPIRE', 'pk:n:' + k.id + ':' + d, '172800'], ['DEL', 'pk:plan:' + k.id]]);
       const account = async (tok, outChars) => {
         const total = Math.max(1, tok || 0);
-        await pipe([...(free ? [] : [['INCRBY', quotaKey(who), String(total)], ['EXPIRE', quotaKey(who), '172800'], ['INCRBY', quotaKey(ipKey), String(total)], ['EXPIRE', quotaKey(ipKey), '172800']]),
+        /* v3.7 · se devuelve lo que quedó de verdad en el contador (INCRBY), no «lo de antes + esto»: con dos respuestas a la vez la pila ya no salta */
+        const res = await pipe([...(free ? [] : [['INCRBY', quotaKey(who), String(total)], ['EXPIRE', quotaKey(who), '172800'], ['INCRBY', quotaKey(ipKey), String(total)], ['EXPIRE', quotaKey(ipKey), '172800']]),
           ['INCRBY', 'pk:t:' + k.id + ':' + d, String(total)], ['EXPIRE', 'pk:t:' + k.id + ':' + d, '172800'],
           ['INCR', 'stm:' + Math.floor(Date.now() / 60e3)], ['EXPIRE', 'stm:' + Math.floor(Date.now() / 60e3), '3600'],
           ['HINCRBY', 'st:' + d, 'req', '1'], ['HINCRBY', 'st:' + d, 'tok', String(total)], ['HINCRBY', 'st:' + d, 'ms', String(Date.now() - t0)], ['EXPIRE', 'st:' + d, '1209600']]).catch(() => {});
         if (onDone) try{ await onDone(total); }catch(e){}
+        account.now = !free && Array.isArray(res) && Number.isFinite(+res[0]) ? +res[0] : null;
         return total;
       };
       const meta = { prov:m.prov, provName:PROV[m.prov].name, model:m.id, name:m.name, fallback:!!(model && model !== 'sz:auto' && m.id !== model) };   /* v3.7 · la que elegiste no respondió (o no ve fotos): respondió otra */
@@ -298,7 +300,7 @@ export async function chat({ who, ipKey, messages, model, maxTokens, system, str
         if (typeof text !== 'string' || !text.trim()) continue;
         const u = j.usage || {}, tok = (u.prompt_tokens || 0) + (u.completion_tokens || 0) || inTok + est(text);
         const total = await account(tok);
-        return { text:text.trim(), meta, used:free ? 0 : used + total, limit:dayLimit };
+        return { text:text.trim(), meta, used:free ? 0 : (account.now ?? used + total), limit:dayLimit };
       }
       /* streaming: se pasa tal cual y al final se suma lo gastado (lo que dijo el proveedor o una estimación) */
       const dec2 = new TextDecoder(), enc2 = new TextEncoder(); let buf = '', usage = null, outChars = 0;
@@ -317,7 +319,7 @@ export async function chat({ who, ipKey, messages, model, maxTokens, system, str
         async flush(ctl){
           const tok = usage ? (usage.prompt_tokens || 0) + (usage.completion_tokens || 0) : inTok + Math.ceil(outChars / 4);
           const total = await account(tok);
-          ctl.enqueue(enc2.encode('data: ' + JSON.stringify({ sz:{ used:free ? 0 : used + total, limit:dayLimit, spent:total, est:!usage } }) + '\n\n'));
+          ctl.enqueue(enc2.encode('data: ' + JSON.stringify({ sz:{ used:free ? 0 : (account.now ?? used + total), limit:dayLimit, spent:total, est:!usage } }) + '\n\n'));
         }
       });
       return { stream:up.body.pipeThrough(ts), meta, used, limit:dayLimit };

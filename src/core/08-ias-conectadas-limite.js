@@ -27,7 +27,11 @@ const groqName = id => String(id).replace(/^[^/]+\//, '').split(/[-_]/).map(w =>
 /* ===== IA de SymphorIA: modelos gratis compartidos, con un tope diario por persona ===== */
 const DEVH = (/^[\w-]{12,48}$/.test(DEV) ? DEV : (String(DEV).replace(/[^\w-]/g, '') + 'synthzdevice').slice(0, 24));
 const SZQ = { on:null, used:0, limit:20000, n:0, t:0, guest:null };
-function szqSet(o){ Object.assign(SZQ, o); try{ dispatchEvent(new CustomEvent('synthz-szq', { detail:SZQ })); }catch(e){} }
+function szqSet(o){
+  /* v3.7 · la pila nunca «sube» sola en el día: si llegan dos respuestas a la vez (Comparar, revisión), la que trae un número viejo no la devuelve hacia arriba.
+     Solo se acepta que baje el gasto cuando de verdad se renovó (medianoche: vuelve a casi cero) */
+  if (o && typeof o.used === 'number' && typeof SZQ.used === 'number' && o.used < SZQ.used && o.used > SZQ.used * .5 && !o.reset){ o = Object.assign({}, o); delete o.used; }
+  Object.assign(SZQ, o); try{ dispatchEvent(new CustomEvent('synthz-szq', { detail:SZQ })); }catch(e){} }
 const szHeaders = () => { const h = { 'content-type':'application/json', 'x-sz-device':DEVH }; if (SESS) h.authorization = 'Bearer ' + SESS; return h; };
 const SZ_VEND = [[/llama|meta/i, 'meta-llama'], [/gemma|gemini/i, 'google'], [/mistral|mixtral|codestral|ministral|magistral|devstral|pixtral|open-mi/i, 'mistralai'], [/qwen|qwq/i, 'qwen'], [/deepseek/i, 'deepseek'], [/gpt-oss|openai/i, 'openai'], [/kimi|moonshot/i, 'moonshotai'], [/glm|z-ai/i, 'z-ai'], [/nemotron|nvidia/i, 'nvidia'], [/phi-|microsoft/i, 'microsoft'], [/granite|ibm/i, 'ibm'], [/hermes|nous/i, 'nousresearch']];
 const szVendor = (mid, prov) => (SZ_VEND.find(([rx]) => rx.test(mid)) || [0, prov])[1];
@@ -50,8 +54,12 @@ const coinsTotal = () => coinsOf(SZQ.limit || 25000);
 const coinsFmt = n => Math.round(n).toLocaleString('es');
 const coinsShort = n => n >= 10000 ? (Math.floor(n / 100) / 10).toLocaleString('es') + ' mil' : coinsFmt(n);
 /* v3.0 · batería en vez de palabras (Sammuel, 27 oct): el límite del día se ve como una pila que se descarga y se carga a medianoche */
-const battPct = () => Math.round((1 - limPct()) * 100);
-const coinNote = (mid, r) => /^sz:/.test(String(mid)) && r && !r.cached && ((r.prompt || 0) + (r.completion || 0)) > 0 ? t('enerx.used', { u:Math.max(1, Math.round(((r.prompt || 0) + (r.completion || 0)) / (SZQ.limit || 25000) * 100)), n:battPct() }) : '';
+/* v3.7 · EnerX de verdad (Sammuel, 2 nov): cada respuesta dice cuánto gastó de verdad (con decimales si es poquito, ya no «1 %» fijo)
+   y la batería muestra el mismo número, así lo que dice la respuesta y lo que baja la pila siempre cuadran. */
+const pctFmt = x => { x = Math.max(0, Math.min(100, x)); const d = x >= 99.95 || x <= 0 || Number.isInteger(Math.round(x * 10) / 10) && Math.round(x * 10) % 10 === 0 ? 0 : 1; return (Math.round(x * 10) / 10).toFixed(d).replace('.', LANG === 'en' ? '.' : ','); };
+const battPct = () => pctFmt((1 - limPct()) * 100);
+const spentPct = tok => { const x = (+tok || 0) / (SZQ.limit || 25000) * 100; return x > 0 && x < .1 ? (LANG === 'en' ? 'less than 0.1' : 'menos de 0,1') : pctFmt(x); };
+const coinNote = (mid, r) => /^sz:/.test(String(mid)) && r && !r.cached && ((r.prompt || 0) + (r.completion || 0)) > 0 ? (isGuestQ() ? t('enerx.usedGuest', { n:guestLeft() }) : t('enerx.used', { u:spentPct((r.prompt || 0) + (r.completion || 0)), n:battPct() })) : '';
 const guestLeft = () => Math.max(0, (SZQ.guest.max || 5) - (SZQ.guest.used || 0));
 const limTxt = () => SZQ.on === false ? t('enerx.rest') : guestFull() ? t('enerx.signin') : isGuestQ() ? t('enerx.guestLeft', { n:guestLeft() }) : limPct() >= 1 ? t('enerx.empty') : t('enerx.left', { n:battPct() });
 const limShort = () => SZQ.on === false ? t('enerx.restShort') : guestFull() ? t('enerx.signinShort') : isGuestQ() ? t('enerx.guestShort', { n:guestLeft() }) : limPct() >= 1 ? t('enerx.emptyShort') : battPct() + ' %';
