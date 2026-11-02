@@ -2532,14 +2532,18 @@ html:not(.lk-proj) #cProj,html:not(.lk-syn) #cSyn{display:none !important}
 #sideFoot .sxfoot.gauge.gbatt .gz-n b{grid-area:v;font-size:13.5px;line-height:1.2;white-space:nowrap}
 #sideFoot .sxfoot.gauge.gbatt .gz-n small{grid-area:s;text-align:left;min-width:0;font-size:10.5px;line-height:1.3;white-space:normal}
 
-/* ---------- modo Simple: la barra como la de Claude ---------- */
-.snav,.sfoot,.chats .sn-h{display:none}
-html.simple .chats .sn-h{display:block}
-html.simple .snav{display:flex;flex-direction:column;gap:1px;margin:0 0 4px}
-html.simple .sfoot{display:flex;align-items:center;gap:6px;margin:6px -6px 0;padding:8px 6px 0;border-top:1px solid var(--sline)}
-html.simple .chats .chead,html.simple #cNew,html.simple #cProj,html.simple #cSyn,html.simple #cSeg{display:none !important}
-html.simple .chats .cin:not(.sfind) #cSearch{display:none !important}
-html.simple .chats #cSearch{margin:2px 0 6px;animation:snDrop .3s cubic-bezier(.22,1,.36,1)}
+/* ---------- la barra simple (v3.2 en Simple; v3.7 también en el estilo SynthFlow): una sola barra, como la de Claude ----------
+   En el estilo SynthFlow toma los colores del tema (dorado, océano, bosque, lavanda) y conserva su vidrio. */
+html:not(.simple){--sline:var(--line);--stext:var(--text);--ssoft:var(--soft);--smute:var(--mute);--sacc:var(--gold)}
+.chats .sn-h{display:block}
+.snav{display:flex;flex-direction:column;gap:1px;margin:0 0 4px}
+.sfoot{display:flex;align-items:center;gap:6px;margin:6px -6px 0;padding:8px 6px 0;border-top:1px solid var(--sline)}
+.chats .chead,#cNew,#cProj,#cSyn,#cSeg{display:none !important}
+.chats .cin:not(.sfind) #cSearch{display:none !important}
+.chats #cSearch{margin:2px 0 6px;animation:snDrop .3s cubic-bezier(.22,1,.36,1)}
+html:not(.simple) .sn-i:hover,html:not(.simple) .sn-i.on{background:rgba(var(--gold-rgb),.09)}
+html:not(.simple) .sn-i.on::before{box-shadow:0 0 10px rgba(var(--gold-rgb),.7)}
+html:not(.simple) .sn-i[data-sn="new"] .sn-ic{background:linear-gradient(135deg,var(--gold),var(--wine));color:#160f1f;box-shadow:0 0 14px -2px rgba(var(--gold-rgb),.55)}
 @keyframes snDrop{from{opacity:0;transform:translateY(-6px)}}
 /* arriba: el orbe de SynthFlow y el botón para cerrar la barra */
 .sn-top{display:flex;align-items:center;justify-content:space-between;gap:8px;height:44px;margin:0 0 8px;padding:0 2px 0 6px}
@@ -2589,8 +2593,8 @@ html.simple #sideFoot{padding-top:6px}
 html.simple #sideFoot .sxfoot.gauge.gbatt{background:transparent !important;border:1px solid var(--sline) !important;box-shadow:none !important}
 /* con la lista abierta, la barrita de íconos se esconde: una sola barra, como en Claude */
 @media (min-width:761px){
-  html.simple .shell:not(.nochats) .rail{display:none}
-  html.simple .chats{--cw:288px}
+  .shell:not(.nochats) .rail{display:none}
+  .chats{--cw:288px}
 }
 @media (max-width:760px){.attw .onchip{height:26px;min-width:26px;padding:0 5px}.attw .onchip i{font-size:12.5px}}
 .hex small{text-transform:uppercase}

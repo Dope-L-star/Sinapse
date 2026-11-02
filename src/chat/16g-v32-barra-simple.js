@@ -1,7 +1,7 @@
 /* ===== v3.2 · la barra de chats al estilo Claude en el modo Simple (pedido de Sammuel, 28 oct) =====
-   Solo en Simple: arriba Crear, Proyectos, Sintéticos, Personalización y Más; en medio tus chats («Recientes»);
+   Arriba Crear, Proyectos, Sintéticos, Personalización y Más; en medio tus chats («Recientes»);
    abajo tu cuenta y una lupa para buscar. La barrita de íconos se esconde mientras la lista está abierta.
-   En el estilo SynthFlow no cambia nada de esto (lo de arriba de la lista lo eligen en Ajustes › Atajos en tus chats). */
+   v3.7 · ahora también en el estilo SynthFlow (con los colores del tema): una sola barra, más simple, para todos. */
 {
   const cin = $('#chats .cin'), head = $('#chats .chead');
   const I = {

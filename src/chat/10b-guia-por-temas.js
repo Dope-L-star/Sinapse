@@ -30,14 +30,14 @@ const TOPIC_STEPS = {
     await gPoint(null, 'Un truco más: escribe «hazme una presentación de…» y te la entrego lista para PowerPoint.', { mood:'guino' });
   },
   chats:async () => {
-    await gPoint(gT('#rail [data-r="chats"]', '#tabbar [data-tab="chats"]'), 'Tus chats quedan aquí. Si entras con tu cuenta, los ves en cualquier celular o computador.', { side:true });
-    await gPoint(gT('#railFav', '#tabbar [data-tab="chats"]'), 'Y aquí tus favoritos: las respuestas que guardas con la estrella ★.', { side:true });
+    await gPoint((gT('#thList', '#tabbar [data-tab="chats"]') || gT('#rail [data-r="chats"]', '#tabbar [data-tab="chats"]')), 'Tus chats quedan aquí. Si entras con tu cuenta, los ves en cualquier celular o computador.', { side:true });
+    await gPoint((gT('#sNav [data-sn="more"]', '#tabbar [data-tab="chats"]') || gT('#railFav', '#tabbar [data-tab="chats"]')), 'Y aquí tus favoritos: las respuestas que guardas con la estrella ★.', { side:true });
   },
   limite:async () => {
     await gPoint(gAny('#payPill', '#railCoin', '#payL', '#payM'), 'Aquí ves cómo va tu límite gratis de hoy: el anillo se va vaciando y a medianoche se llena otra vez. Sin cuenta son 5 mensajes de prueba; con tu cuenta gratis, mucho más.', { pad:6 });
   },
   cuenta:async () => {
-    await gPoint(gT('#accBtn', '#tabbar [data-tab="me"]'), 'Aquí entras o creas tu cuenta gratis: sin correo ni tarjeta. Tus chats y favoritos te siguen a todas partes.', { side:true });
+    await gPoint((gT('#sAcc', '#tabbar [data-tab="me"]') || gT('#accBtn', '#tabbar [data-tab="me"]')), 'Aquí entras o creas tu cuenta gratis: sin correo ni tarjeta. Tus chats y favoritos te siguen a todas partes.', { side:true });
     await gPoint(null, 'Y si quieres más, conecta Puter y usa la versión pro de las IAs más usadas (ChatGPT, Claude, Gemini…), gratis y con un clic.', { mood:'guino' });
   },
   ajustes:async () => {

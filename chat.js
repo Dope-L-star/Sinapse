@@ -3079,14 +3079,14 @@ async function runGuide(o = {}){
     await gPoint(gAny('#cPick', '#curChip'), 'Aquí eliges con qué IA hablas. Tócalo y se abre su ventana, con temas, buscador y filtros.');
     await gPoint(gAny('#cCmp', '#pickRow [data-add]'), 'Aquí sumas otra IA: hasta 4 a la vez. Todas responden la misma pregunta y las comparas. Ojo: cada una gasta lo suyo.');
     await gPoint(gAny('#payPill', '#payL', '#payM'), 'Aquí ves cómo va tu límite gratis de hoy.', { pad:6 });
-    await gPoint(gT('#rail [data-r="chats"]', '#tabbar [data-tab="chats"]'), 'Tus chats y tus mensajes favoritos quedan aquí, en cualquier dispositivo si entras con tu cuenta.', { side:true });
+    await gPoint((gT('#thList', '#tabbar [data-tab="chats"]') || gT('#rail [data-r="chats"]', '#tabbar [data-tab="chats"]')), 'Tus chats y tus mensajes favoritos quedan aquí, en cualquier dispositivo si entras con tu cuenta.', { side:true });
     await gPoint(gT('.tchip[data-topic]', '.tchip[data-topic]'), 'Toca un tema cuando quieras y te recomiendo IA expertas en eso.');
     /* v3.0: lo nuevo, para que nadie se quede sin saber dónde está */
-    await gPoint(gT('#cNew', '#rail [data-r="new"]') || gT('#rail [data-r="new"]', '#tabbar [data-tab="chats"]'), 'Con «Nuevo chat» empiezas una conversación limpia cuando cambies de tema. La anterior queda guardada.', { side:true });
+    await gPoint(gT('#sNav [data-sn="new"]', '#rail [data-r="new"]') || gT('#cNew', '#rail [data-r="new"]') || gT('#rail [data-r="new"]', '#tabbar [data-tab="chats"]'), 'Con «Nuevo chat» empiezas una conversación limpia cuando cambies de tema. La anterior queda guardada.', { side:true });
     await gPoint(gAny('#cMode'), 'Aquí eliges el modo: «Automática» escoge la mejor IA por ti, «Chat» te deja elegirla, y «SuperiorSynth» trabaja por pasos como un agente.');
     await gPoint(gAny('#cEffort'), 'Y aquí, cuánto piensa: Auto, Bajo (rápido), Medio o Alto (con calma, para cosas difíciles).');
-    await gPoint(gT('#railProj', '#cProj') || gT('#cProj', '#cProj'), '«Proyectos» junta chats, instrucciones y archivos de un mismo tema. La IA los tiene en cuenta en cada chat del proyecto, como en Claude.', { side:true });
-    await gPoint(gT('#railSyn', '#cSyn') || gT('#cSyn', '#cSyn'), '«Sintéticos» guarda todo lo que la IA crea: páginas, juegos, dibujos y documentos. Cuando una respuesta trae uno, se abre solo al lado del chat.', { side:true });
+    await gPoint(gT('#sNav [data-sn="proj"]', '#cProj') || gT('#railProj', '#cProj') || gT('#cProj', '#cProj'), '«Proyectos» junta chats, instrucciones y archivos de un mismo tema. La IA los tiene en cuenta en cada chat del proyecto, como en Claude.', { side:true });
+    await gPoint(gT('#sNav [data-sn="syn"]', '#cSyn') || gT('#railSyn', '#cSyn') || gT('#cSyn', '#cSyn'), '«Sintéticos» guarda todo lo que la IA crea: páginas, juegos, dibujos y documentos. Cuando una respuesta trae uno, se abre solo al lado del chat.', { side:true });
     const cfgB = gT('#cfgBtn', '#tabbar [data-tab="cfg"]');
     const rr = await gPoint(cfgB, 'En «Ajustes» cambias cómo se ve todo. ¿Te muestro lo más útil?', { buttons:[{ label:'Muéstrame' }, { label:'Ahora no', ghost:true }], auto:15000, mood:'guino' });
     if (rr === 0 && cfgB){
@@ -3234,14 +3234,14 @@ const TOPIC_STEPS = {
     await gPoint(null, 'Un truco más: escribe «hazme una presentación de…» y te la entrego lista para PowerPoint.', { mood:'guino' });
   },
   chats:async () => {
-    await gPoint(gT('#rail [data-r="chats"]', '#tabbar [data-tab="chats"]'), 'Tus chats quedan aquí. Si entras con tu cuenta, los ves en cualquier celular o computador.', { side:true });
-    await gPoint(gT('#railFav', '#tabbar [data-tab="chats"]'), 'Y aquí tus favoritos: las respuestas que guardas con la estrella ★.', { side:true });
+    await gPoint((gT('#thList', '#tabbar [data-tab="chats"]') || gT('#rail [data-r="chats"]', '#tabbar [data-tab="chats"]')), 'Tus chats quedan aquí. Si entras con tu cuenta, los ves en cualquier celular o computador.', { side:true });
+    await gPoint((gT('#sNav [data-sn="more"]', '#tabbar [data-tab="chats"]') || gT('#railFav', '#tabbar [data-tab="chats"]')), 'Y aquí tus favoritos: las respuestas que guardas con la estrella ★.', { side:true });
   },
   limite:async () => {
     await gPoint(gAny('#payPill', '#railCoin', '#payL', '#payM'), 'Aquí ves cómo va tu límite gratis de hoy: el anillo se va vaciando y a medianoche se llena otra vez. Sin cuenta son 5 mensajes de prueba; con tu cuenta gratis, mucho más.', { pad:6 });
   },
   cuenta:async () => {
-    await gPoint(gT('#accBtn', '#tabbar [data-tab="me"]'), 'Aquí entras o creas tu cuenta gratis: sin correo ni tarjeta. Tus chats y favoritos te siguen a todas partes.', { side:true });
+    await gPoint((gT('#sAcc', '#tabbar [data-tab="me"]') || gT('#accBtn', '#tabbar [data-tab="me"]')), 'Aquí entras o creas tu cuenta gratis: sin correo ni tarjeta. Tus chats y favoritos te siguen a todas partes.', { side:true });
     await gPoint(null, 'Y si quieres más, conecta Puter y usa la versión pro de las IAs más usadas (ChatGPT, Claude, Gemini…), gratis y con un clic.', { mood:'guino' });
   },
   ajustes:async () => {
@@ -4659,9 +4659,9 @@ function paintMode(){
   });
 })();
 /* ===== v3.2 · la barra de chats al estilo Claude en el modo Simple (pedido de Sammuel, 28 oct) =====
-   Solo en Simple: arriba Crear, Proyectos, Sintéticos, Personalización y Más; en medio tus chats («Recientes»);
+   Arriba Crear, Proyectos, Sintéticos, Personalización y Más; en medio tus chats («Recientes»);
    abajo tu cuenta y una lupa para buscar. La barrita de íconos se esconde mientras la lista está abierta.
-   En el estilo SynthFlow no cambia nada de esto (lo de arriba de la lista lo eligen en Ajustes › Atajos en tus chats). */
+   v3.7 · ahora también en el estilo SynthFlow (con los colores del tema): una sola barra, más simple, para todos. */
 {
   const cin = $('#chats .cin'), head = $('#chats .chead');
   const I = {
