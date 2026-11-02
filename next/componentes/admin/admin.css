@@ -300,8 +300,14 @@
   .pa-nav-i[aria-current="page"]::before{left:30%;right:30%;top:auto;bottom:-6px;width:auto;height:3px}
   .pa-badge{position:absolute;top:2px;right:calc(50% - 22px);margin:0;min-width:17px;height:17px;font-size:10px;line-height:17px;padding:0 4px}
   .pa-top{top:6px;gap:6px;padding:8px 8px 8px 12px;margin-bottom:16px}
-  .pa-find{min-width:0;padding:8px}
+  .pa-find{flex:none;min-width:0;width:34px;height:34px;padding:0;justify-content:center;border-radius:11px}
   .pa-find span,.pa-find kbd,.pa-live{display:none}
+  .pa-top>*{flex-shrink:0}
+  .pa-top .pa-sp{flex:1 1 0;min-width:0}
+  .pa-ib{width:34px;height:34px}
+  .pa-lang{width:auto;padding:0 8px}
+  .pa-logo svg{width:30px}
+  .pa-logo b{font-size:18px}
   .pa-head h1{font-size:24px}
   .pa-card{padding:16px 14px;border-radius:18px}
   .pa-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -319,6 +325,8 @@
   .pa-days{gap:4px}.pa-day b{font-size:11px}
   .pa-toasts{bottom:96px}
 }
+
+@media (max-width:420px){.pa-top{gap:4px;padding:8px 6px 8px 10px}.pa-top .pa-rank{display:none}}
 
 /* ---------- opciones de la página ---------- */
 html.simple .pa{--pa-a:#d9a066;--pa-b:#d9a066;--pa-c:#d9a066;--pa-glass:#2f2e2b;--pa-edge:rgba(255,255,255,.1);--pa-shadow:none}
