@@ -22,6 +22,35 @@ export function isClarityAllowed({ enabled, audience18Plus, adultOnlyRelease, ag
     && validProjectId(projectId);
 }
 
+/*
+ * v3.8 · Second, separate mode: a public (13+) release where the consent banner first asks the visitor's age.
+ * Only people who say they are 18 or older can opt in; 13-17 answers are stored as 'minor' and Clarity never
+ * loads for them. The whole page is masked (data-clarity-mask on <body>) because the team only wants
+ * click/scroll heatmaps, not readable text. Off by default; needs its own flag plus privacy review.
+ * A self-declared age is not age verification: it is a filter so minors are not asked for analytics.
+ */
+export function isClarityAgeGateAllowed({ enabled, ageGate, privacyReviewed, projectId }) {
+  return enabled === true && ageGate === true && privacyReviewed === true && validProjectId(projectId);
+}
+
+/** 'adult' (adult-only edition), 'age-gate' (13+ site, banner asks age) or null (Clarity off). */
+export function clarityModeFromEnv(env = {}) {
+  const on = k => env[k] === 'true';
+  const projectId = env.NEXT_PUBLIC_CLARITY_PROJECT_ID || CLARITY_PROJECT_ID_DEFAULT;
+  const enabled = on('NEXT_PUBLIC_CLARITY_ENABLED'), privacyReviewed = on('NEXT_PUBLIC_CLARITY_PRIVACY_REVIEWED');
+  if (isClarityAllowed({ enabled, audience18Plus: on('NEXT_PUBLIC_CLARITY_AUDIENCE_18_PLUS'), adultOnlyRelease: on('NEXT_PUBLIC_SYMPHORIA_ADULT_ONLY_RELEASE'),
+    ageControlVerified: on('NEXT_PUBLIC_SYMPHORIA_AGE_CONTROL_VERIFIED'), privacyReviewed, projectId })) return 'adult';
+  if (isClarityAgeGateAllowed({ enabled, ageGate: on('NEXT_PUBLIC_CLARITY_AGE_GATE'), privacyReviewed, projectId })) return 'age-gate';
+  return null;
+}
+
+/** Heatmaps only: masks every text on the page before Clarity starts (Clarity honours data-clarity-mask). */
+export function maskWholePage(documentObject) {
+  const body = documentObject && documentObject.body;
+  if (!body || typeof body.setAttribute !== 'function') return false;
+  try { body.setAttribute('data-clarity-mask', 'true'); return true; } catch { return false; }
+}
+
 export function readClarityChoice(storage, now = Date.now()) {
   if (!storage) return null;
   try {
@@ -30,6 +59,7 @@ export function readClarityChoice(storage, now = Date.now()) {
     const record = JSON.parse(raw);
     if (record?.version !== CLARITY_CONSENT_VERSION) return null;
     if (record.choice === 'denied') return 'denied';
+    if (record.choice === 'minor') return 'minor';
     if (record.choice !== 'granted' || !Number.isFinite(record.updatedAt)) return null;
     // A future-dated record is invalid; a stale grant must be requested again.
     if (record.updatedAt > now + 5 * 60 * 1000 || now - record.updatedAt > CLARITY_GRANT_MAX_AGE_MS) {
@@ -43,7 +73,7 @@ export function readClarityChoice(storage, now = Date.now()) {
 }
 
 export function writeClarityChoice(storage, choice, now = Date.now()) {
-  if (!storage || !['granted', 'denied'].includes(choice)) return false;
+  if (!storage || !['granted', 'denied', 'minor'].includes(choice)) return false;
   try {
     storage.setItem(CLARITY_CONSENT_KEY, JSON.stringify({
       version: CLARITY_CONSENT_VERSION,
