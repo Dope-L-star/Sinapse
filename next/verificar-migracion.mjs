@@ -8,7 +8,6 @@ const nextDir = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(nextDir, '..');
 const routes = [
   { html: 'index.html', route: 'app/(site)/page.jsx', module: 'contenido/legado/index.js', tree: 'contenido/arboles-react/index.json' },
-  { html: 'chat.html', route: 'app/(site)/chat/page.jsx', module: 'contenido/legado/chat.js', tree: 'contenido/arboles-react/chat.json' },
   { html: 'alias.html', route: 'app/(site)/alias/page.jsx', module: 'contenido/legado/alias.js', tree: 'contenido/arboles-react/alias.json' },
   { html: 'ayuda.html', route: 'app/(site)/ayuda/page.jsx', module: 'contenido/legado/ayuda.js', tree: 'contenido/arboles-react/ayuda.json' },
   { html: 'offline.html', route: 'app/(site)/offline/page.jsx', module: 'contenido/legado/offline.js', tree: 'contenido/arboles-react/offline.json' },
@@ -87,7 +86,32 @@ for (const r of routes) {
   }
   console.log(`OK React ${r.html}: ${all.length} elementos, ${ids.length} IDs conservados, árbol actualizado`);
 }
+/* v3.7 · SynthFlow ya no es un árbol JSON: son componentes JSX propios (next/componentes/synthflow/*.jsx) que usa el motor chat.js.
+   chat.html se queda para build.mjs y las pruebas viejas. Si alguien lo cambia, hay que pasar el cambio a los componentes y anotar el hash nuevo. */
+{
+  const dir = path.join(nextDir, 'componentes/synthflow');
+  const jsx = fs.readdirSync(dir).filter(f => f.endsWith('.jsx')).map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n');
+  const route = fs.readFileSync(path.join(nextDir, 'app/(site)/chat/page.jsx'), 'utf8');
+  assert.ok(route.includes('LegacyPage') && route.includes('<SynthFlow />'), 'app/(site)/chat/page.jsx: debe montar <SynthFlow /> dentro de LegacyPage');
+  const original = extractOriginalBody('chat.html');
+  const fuente = JSON.parse(fs.readFileSync(path.join(dir, 'fuente.json'), 'utf8'));
+  assert.equal(createHash('sha256').update(original, 'utf8').digest('hex'), fuente.chatHtmlHash, 'chat.html cambió: pasa el cambio a next/componentes/synthflow/*.jsx y anota el hash nuevo en fuente.json');
+  const ids = [...jsx.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]);
+  assert.equal(ids.length, new Set(ids).size, 'SynthFlow JSX: IDs repetidos');
+  const sourceIds = [...original.matchAll(/\bid=["']([^"']+)["']/gi)].map(m => m[1]);
+  const lost = sourceIds.filter(i => !ids.includes(i));
+  assert.deepEqual(lost, [], 'SynthFlow JSX: faltan IDs que usa chat.js: ' + lost.join(', '));
+  for (const id of ['msgs', 'thList', 'sideFoot', 'accBtn']) assert.ok(new RegExp('id="' + id + '"[^>]*data-clarity-mask="true"|data-clarity-mask="true"[^>]*id="' + id + '"').test(jsx), 'SynthFlow JSX: #' + id + ' debe enmascararse para analítica');
+  assert.ok(!/<script\b/i.test(jsx), 'SynthFlow JSX: los scripts se cargan solo con LegacyRuntime');
+  assert.ok(!/\son[A-Z][a-zA-Z]+=\{?["']/.test(jsx) && !/dangerouslySetInnerHTML/.test(jsx), 'SynthFlow JSX: sin handlers en texto ni HTML crudo');
+  const brand = (fs.readFileSync(path.join(root, 'chat.html'), 'utf8').match(/<html[^>]*\sdata-brand=["']([^"']+)["']/i) || [])[1] || null;
+  const lay = fs.readFileSync(path.join(nextDir, 'app/(site)/layout.jsx'), 'utf8').match(/export const BRAND = (\{[^}]*\})/);
+  const map = JSON.parse(lay[1].replace(/(\w+):/g, '"$1":').replace(/'/g, '"'));
+  assert.equal(map.chat || null, brand, 'chat.html: data-brand no coincide con BRAND del layout');
+  console.log(`OK React chat.html → componentes JSX de SynthFlow: ${ids.length} IDs conservados`);
+}
 const armar = fs.readFileSync(path.join(nextDir, 'armar.mjs'), 'utf8');
+assert.ok(armar.includes("'chat.html'"), 'armar.mjs debe retirar chat.html de public/');
 for (const {html} of routes) assert.ok(armar.includes(`'${html}'`), `armar.mjs debe retirar ${html} de public/`);
 for (const file of ['componentes/LegacyPage.jsx','componentes/LegacyRuntime.jsx','componentes/ReactTree.jsx','app/(site)/layout.jsx']) {
   assert.ok(fs.existsSync(path.join(nextDir, file)), `falta ${file}`);

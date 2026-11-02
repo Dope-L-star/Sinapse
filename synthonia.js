@@ -868,7 +868,9 @@ function botMount(){
       };
       const onViewport = () => put();
       put(); addEventListener('resize', onViewport); addEventListener('scroll', onViewport, { passive:true });
-      BOT.positionCleanup = () => { removeEventListener('resize', onViewport); removeEventListener('scroll', onViewport); };
+      /* v3.7 · el nombre «SynthFlow» del logo se pinta después: si el logo crece, la bolita se corre con él (antes quedaba encima del logo en el celular) */
+      let ro = null; try{ ro = new ResizeObserver(() => put()); ro.observe(mLogo); }catch(e){} [300, 1200].forEach(t => setTimeout(put, t));
+      BOT.positionCleanup = () => { removeEventListener('resize', onViewport); removeEventListener('scroll', onViewport); if (ro) ro.disconnect(); };
       if (document.fonts) document.fonts.ready.then(put);
     } else {
       mLogo.after(b);
@@ -1422,7 +1424,8 @@ function betaBot(){
       /* React owns both controls: keep BETA fixed to the avatar's real viewport box,
          even when the avatar sits beside the mobile logo. */
       t.style.position = 'fixed'; t.style.zIndex = '9599';
-      const candidate = r.left - w - 10 < 8 ? r.right + 10 : r.left - w - 10;
+      /* v3.7 · en la cabecera del celular va a la DERECHA de la bolita (a la izquierda tapaba el logo «SynthFlow») */
+      const candidate = b.classList.contains('inhead') || r.left - w - 10 < 8 ? r.right + 10 : r.left - w - 10;
       const left = Math.max(8, Math.min(innerWidth - w - 8, candidate));
       const top = Math.max(8, Math.min(innerHeight - h - 8, r.top + r.height / 2 - h / 2));
       t.style.left = left.toFixed(0) + 'px'; t.style.top = top.toFixed(0) + 'px'; t.style.visibility = 'visible';

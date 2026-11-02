@@ -1,6 +1,6 @@
 import LegacyPage from '../../../componentes/LegacyPage';
 import { inlineStyle } from '../../../contenido/legado/chat';
-import reactTree from '../../../contenido/arboles-react/chat.json';
+import SynthFlow from '../../../componentes/synthflow/SynthFlow';
 
 export const metadata = {
   title: 'SynthFlow · SymphorIA',
@@ -10,5 +10,5 @@ export const metadata = {
 };
 
 export default function SynthFlowPage() {
-  return <LegacyPage page="chat" tree={reactTree.nodes} inlineStyle={inlineStyle} stylesheets={['chat.css', 'core.css', 'movimiento.css']} scripts={['core.js', 'chat.js', 'movimiento.js']} puter />;
+  return <LegacyPage page="chat" inlineStyle={inlineStyle} stylesheets={['chat.css', 'core.css', 'movimiento.css']} scripts={['core.js', 'chat.js', 'movimiento.js']} puter><SynthFlow /></LegacyPage>;
 }
