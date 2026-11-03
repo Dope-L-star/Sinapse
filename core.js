@@ -1659,7 +1659,7 @@ function workView(o = {}){
     finish(r = {}){
       if (S.done) return; S.done = true; clearInterval(iv); px.stop();
       step(r.error ? 'No pudo responder' : r.aborted ? 'La detuviste' : 'Terminó');
-      const t = ((r.ms != null ? r.ms : performance.now() - S.t0) / 1000).toFixed(1).replace('.', ',');
+      const t = ((r.ms != null ? r.ms : performance.now() - S.t0) / 1000).toFixed(1).replace('.', LANG === 'en' ? '.' : ',');
       w.textContent = r.error ? 'No respondió' : S.reason ? 'Pensó y respondió en ' + t + ' s' : 'Respondió en ' + t + ' s';
       sm.textContent = fmt(S.words) + (S.words === 1 ? ' palabra' : ' palabras');
       el.classList.add('fin'); if (!det.hidden) paintSteps();
@@ -1671,7 +1671,7 @@ function workView(o = {}){
 /* resumen guardado de una respuesta vieja: «Respondió en 2,1 s · 120 palabras ▸» con su detalle */
 function workSaved(sum){
   const el = document.createElement('div'); el.className = 'work fin';
-  const t = ((sum.ms || 0) / 1000).toFixed(1).replace('.', ',');
+  const t = ((sum.ms || 0) / 1000).toFixed(1).replace('.', LANG === 'en' ? '.' : ',');
   el.innerHTML = '<button type="button" class="wk-row" aria-expanded="false"><span class="wk-t"><b class="wk-w">' + (sum.reason ? 'Pensó y respondió en ' : 'Respondió en ') + t + ' s</b><small class="wk-s">' + fmt(sum.words || 0) + ((sum.words || 0) === 1 ? ' palabra' : ' palabras') + '</small></span><svg class="wk-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button><div class="wk-d" hidden><ol class="wk-steps">' + (sum.steps || []).map(([ms, x]) => '<li><em>' + (ms / 1000).toFixed(1).replace('.', ',') + ' s</em>' + esc(x) + '</li>').join('') + '</ol><div class="wk-r"' + (sum.reason ? '' : ' hidden') + '><b>Lo que pensó la IA</b><p></p></div></div>';
   if (sum.reason) $('.wk-r p', el).textContent = sum.reason;
   const row = $('.wk-row', el), det = $('.wk-d', el);
@@ -1903,7 +1903,7 @@ async function ask(p, messages, opts = {}){
 const MARK_HTML = LOGO_Z.replace('class="lgz"', 'class="lgz mark"');
 const SXC = '<svg class="sxc" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="sxg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fb0ff"/><stop offset=".55" stop-color="#c9566c"/><stop offset="1" stop-color="#e6b65f"/></linearGradient></defs><circle cx="12" cy="12" r="10.5" fill="url(#sxg)"/><circle cx="12" cy="12" r="7.6" fill="none" stroke="rgba(11,12,16,.32)" stroke-width="1.1"/><path d="M14.7 9.3c-.5-.8-1.5-1.4-2.8-1.4-1.6 0-2.7.8-2.7 2 0 2.7 5.7 1.4 5.7 4.1 0 1.3-1.2 2.2-2.9 2.2-1.3 0-2.5-.6-3-1.6" transform="translate(-1.4 -1.3)" fill="none" stroke="#0b0c10" stroke-width="1.8" stroke-linecap="round"/><path d="M14.7 14.6l2.4 2.4M17.1 14.6l-2.4 2.4" stroke="#0b0c10" stroke-width="1.35" stroke-linecap="round"/></svg>';
 const coins = n => fmt(n);   /* v1.3: ya no existen las monedas; queda solo el número */
-const metaOf = r => (r.cached ? 'respuesta guardada · no gastó nada' : 'tardó ' + (r.ms / 1000).toFixed(1).replace('.', ',') + ' s')
+const metaOf = r => (r.cached ? (LANG === 'en' ? 'saved answer · cost nothing' : 'respuesta guardada · no gastó nada') : (LANG === 'en' ? 'took ' + (r.ms / 1000).toFixed(1) : 'tardó ' + (r.ms / 1000).toFixed(1).replace('.', ',')) + ' s')
   + (r.swap && r.real ? ' · ' + t('ia.swapped', { n:r.real }) : '');   /* v3.7 · si respondió otra IA porque la elegida no estaba (o no ve fotos), se dice */
 /* últimos 20 mensajes, siempre empezando por uno del usuario (Gemini y otras APIs lo exigen) */
 function history(chat){
@@ -1970,11 +1970,19 @@ const coinsTotal = () => coinsOf(SZQ.limit || 25000);
 const coinsFmt = n => Math.round(n).toLocaleString('es');
 const coinsShort = n => n >= 10000 ? (Math.floor(n / 100) / 10).toLocaleString('es') + ' mil' : coinsFmt(n);
 /* v3.0 · batería en vez de palabras (Sammuel, 27 oct): el límite del día se ve como una pila que se descarga y se carga a medianoche */
-/* v3.7 · EnerX de verdad (Sammuel, 2 nov): cada respuesta dice cuánto gastó de verdad (con decimales si es poquito, ya no «1 %» fijo)
-   y la batería muestra el mismo número, así lo que dice la respuesta y lo que baja la pila siempre cuadran. */
-const pctFmt = x => { x = Math.max(0, Math.min(100, x)); const d = x >= 99.95 || x <= 0 || Number.isInteger(Math.round(x * 10) / 10) && Math.round(x * 10) % 10 === 0 ? 0 : 1; return (Math.round(x * 10) / 10).toFixed(d).replace('.', LANG === 'en' ? '.' : ','); };
-const battPct = () => pctFmt((1 - limPct()) * 100);
-const spentPct = tok => { const x = (+tok || 0) / (SZQ.limit || 25000) * 100; return x > 0 && x < .1 ? (LANG === 'en' ? 'less than 0.1' : 'menos de 0,1') : pctFmt(x); };
+/* v3.7 · EnerX de verdad (Sammuel, 2 nov): cada respuesta dice cuánto gastó de verdad (ya no «1 %» fijo) y la batería baja eso mismo.
+   v3.9 · sin decimales (Sammuel, 3 nov): por dentro se lleva el gasto EXACTO del servidor y se acumula (no se pierde nada al redondear);
+   en pantalla todo va en números enteros. «Usó X %» es justo lo que bajó el número de la pila, así la cuenta siempre cuadra;
+   si una respuesta gastó menos de 1 % se dice «menos de 1 %» (y la pila no salta: baja cuando lo acumulado llega a 1). */
+const pctInt = x => { x = Math.max(0, Math.min(100, +x || 0)); return x > 0 && x < 1 ? 1 : x > 99 && x < 100 ? 99 : Math.round(x); };   /* nunca «0 %» si queda algo ni «100 %» si ya gastaste algo */
+const battAt = used => pctInt((1 - (SZQ.limit ? Math.min(1, Math.max(0, used) / SZQ.limit) : 0)) * 100);
+const battPct = () => String(pctInt((1 - limPct()) * 100));
+const spentPct = (tok, after) => {
+  const real = (+tok || 0) / (SZQ.limit || 25000) * 100;
+  if (real < 1) return LANG === 'en' ? 'less than 1' : 'menos de 1';
+  const a = after == null ? SZQ.used || 0 : after;
+  return String(Math.max(1, battAt(a - tok) - battAt(a)));
+};
 const coinNote = (mid, r) => /^sz:/.test(String(mid)) && r && !r.cached && ((r.prompt || 0) + (r.completion || 0)) > 0 ? (isGuestQ() ? t('enerx.usedGuest', { n:guestLeft() }) : t('enerx.used', { u:spentPct((r.prompt || 0) + (r.completion || 0)), n:battPct() })) : '';
 const guestLeft = () => Math.max(0, (SZQ.guest.max || 5) - (SZQ.guest.used || 0));
 const limTxt = () => SZQ.on === false ? t('enerx.rest') : guestFull() ? t('enerx.signin') : isGuestQ() ? t('enerx.guestLeft', { n:guestLeft() }) : limPct() >= 1 ? t('enerx.empty') : t('enerx.left', { n:battPct() });

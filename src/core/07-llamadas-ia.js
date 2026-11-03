@@ -113,7 +113,7 @@ async function ask(p, messages, opts = {}){
 const MARK_HTML = LOGO_Z.replace('class="lgz"', 'class="lgz mark"');
 const SXC = '<svg class="sxc" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="sxg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fb0ff"/><stop offset=".55" stop-color="#c9566c"/><stop offset="1" stop-color="#e6b65f"/></linearGradient></defs><circle cx="12" cy="12" r="10.5" fill="url(#sxg)"/><circle cx="12" cy="12" r="7.6" fill="none" stroke="rgba(11,12,16,.32)" stroke-width="1.1"/><path d="M14.7 9.3c-.5-.8-1.5-1.4-2.8-1.4-1.6 0-2.7.8-2.7 2 0 2.7 5.7 1.4 5.7 4.1 0 1.3-1.2 2.2-2.9 2.2-1.3 0-2.5-.6-3-1.6" transform="translate(-1.4 -1.3)" fill="none" stroke="#0b0c10" stroke-width="1.8" stroke-linecap="round"/><path d="M14.7 14.6l2.4 2.4M17.1 14.6l-2.4 2.4" stroke="#0b0c10" stroke-width="1.35" stroke-linecap="round"/></svg>';
 const coins = n => fmt(n);   /* v1.3: ya no existen las monedas; queda solo el número */
-const metaOf = r => (r.cached ? 'respuesta guardada · no gastó nada' : 'tardó ' + (r.ms / 1000).toFixed(1).replace('.', ',') + ' s')
+const metaOf = r => (r.cached ? (LANG === 'en' ? 'saved answer · cost nothing' : 'respuesta guardada · no gastó nada') : (LANG === 'en' ? 'took ' + (r.ms / 1000).toFixed(1) : 'tardó ' + (r.ms / 1000).toFixed(1).replace('.', ',')) + ' s')
   + (r.swap && r.real ? ' · ' + t('ia.swapped', { n:r.real }) : '');   /* v3.7 · si respondió otra IA porque la elegida no estaba (o no ve fotos), se dice */
 /* últimos 20 mensajes, siempre empezando por uno del usuario (Gemini y otras APIs lo exigen) */
 function history(chat){

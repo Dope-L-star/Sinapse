@@ -56,11 +56,19 @@ const coinsTotal = () => coinsOf(SZQ.limit || 25000);
 const coinsFmt = n => Math.round(n).toLocaleString('es');
 const coinsShort = n => n >= 10000 ? (Math.floor(n / 100) / 10).toLocaleString('es') + ' mil' : coinsFmt(n);
 /* v3.0 · batería en vez de palabras (Sammuel, 27 oct): el límite del día se ve como una pila que se descarga y se carga a medianoche */
-/* v3.7 · EnerX de verdad (Sammuel, 2 nov): cada respuesta dice cuánto gastó de verdad (con decimales si es poquito, ya no «1 %» fijo)
-   y la batería muestra el mismo número, así lo que dice la respuesta y lo que baja la pila siempre cuadran. */
-const pctFmt = x => { x = Math.max(0, Math.min(100, x)); const d = x >= 99.95 || x <= 0 || Number.isInteger(Math.round(x * 10) / 10) && Math.round(x * 10) % 10 === 0 ? 0 : 1; return (Math.round(x * 10) / 10).toFixed(d).replace('.', LANG === 'en' ? '.' : ','); };
-const battPct = () => pctFmt((1 - limPct()) * 100);
-const spentPct = tok => { const x = (+tok || 0) / (SZQ.limit || 25000) * 100; return x > 0 && x < .1 ? (LANG === 'en' ? 'less than 0.1' : 'menos de 0,1') : pctFmt(x); };
+/* v3.7 · EnerX de verdad (Sammuel, 2 nov): cada respuesta dice cuánto gastó de verdad (ya no «1 %» fijo) y la batería baja eso mismo.
+   v3.9 · sin decimales (Sammuel, 3 nov): por dentro se lleva el gasto EXACTO del servidor y se acumula (no se pierde nada al redondear);
+   en pantalla todo va en números enteros. «Usó X %» es justo lo que bajó el número de la pila, así la cuenta siempre cuadra;
+   si una respuesta gastó menos de 1 % se dice «menos de 1 %» (y la pila no salta: baja cuando lo acumulado llega a 1). */
+const pctInt = x => { x = Math.max(0, Math.min(100, +x || 0)); return x > 0 && x < 1 ? 1 : x > 99 && x < 100 ? 99 : Math.round(x); };   /* nunca «0 %» si queda algo ni «100 %» si ya gastaste algo */
+const battAt = used => pctInt((1 - (SZQ.limit ? Math.min(1, Math.max(0, used) / SZQ.limit) : 0)) * 100);
+const battPct = () => String(pctInt((1 - limPct()) * 100));
+const spentPct = (tok, after) => {
+  const real = (+tok || 0) / (SZQ.limit || 25000) * 100;
+  if (real < 1) return LANG === 'en' ? 'less than 1' : 'menos de 1';
+  const a = after == null ? SZQ.used || 0 : after;
+  return String(Math.max(1, battAt(a - tok) - battAt(a)));
+};
 const coinNote = (mid, r) => /^sz:/.test(String(mid)) && r && !r.cached && ((r.prompt || 0) + (r.completion || 0)) > 0 ? (isGuestQ() ? t('enerx.usedGuest', { n:guestLeft() }) : t('enerx.used', { u:spentPct((r.prompt || 0) + (r.completion || 0)), n:battPct() })) : '';
 const guestLeft = () => Math.max(0, (SZQ.guest.max || 5) - (SZQ.guest.used || 0));
 const limTxt = () => SZQ.on === false ? t('enerx.rest') : guestFull() ? t('enerx.signin') : isGuestQ() ? t('enerx.guestLeft', { n:guestLeft() }) : limPct() >= 1 ? t('enerx.empty') : t('enerx.left', { n:battPct() });
