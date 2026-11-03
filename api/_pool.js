@@ -267,7 +267,10 @@ export async function pingModel(id){
   }
   return put('busy', 120);
 }
-export async function chat({ who, ipKey, messages, model, maxTokens, system, stream = true, onDone, free = false, temperature = .6 }){
+/* v3.9 · opcionales para el enrutador de A.L.I.A.S. (api/_ruta.js); sin ellos todo funciona igual que antes:
+   route = lista de modelos del catálogo en el orden a probar (la mejor primero, luego respaldos) ·
+   onTry({ m, ok, ms, slow }) = se avisa cada intento para medir · firstMs = cuánto esperar a la PRIMERA opción antes de pasar a la siguiente */
+export async function chat({ who, ipKey, messages, model, maxTokens, system, stream = true, onDone, free = false, temperature = .6, route = null, onTry = null, firstMs = 0 }){
   const { dayLimit } = await settings();
   const [used, usedIp] = free ? [0, 0] : (await pipe([['GET', quotaKey(who)], ['GET', quotaKey(ipKey)]])).map(x => +x || 0);
   if (used >= dayLimit) throw err(429, 'Llegaste al límite de hoy. Se renueva a medianoche. Si quieres seguir ya, conecta Puter (gratis, opcional).', 'sz_limit');
@@ -278,11 +281,18 @@ export async function chat({ who, ipKey, messages, model, maxTokens, system, str
   if (system) msgs = [{ role:'system', content:system }, ...msgs.filter(m => m.role !== 'system')];
   nImg = msgs.reduce((n, m) => n + (Array.isArray(m.content) ? m.content.length - 1 : 0), 0);
   const inTok = msgs.reduce((s, m) => s + est(typeof m.content === 'string' ? m.content : m.content[0].text), 0) + nImg * 1000;
-  const steps = nImg ? await visionPlan(model) : await plan(model || 'sz:auto');
+  let steps = nImg ? await visionPlan(model) : await plan(model || 'sz:auto');
+  if (!nImg && Array.isArray(route) && route.length && (!model || model === 'sz:auto')){
+    const cat = await models(false), live = route.map(r => cat.list.find(m => m.id === (r && r.id))).filter(Boolean);
+    steps = [...live, ...steps.filter(a => !live.some(l => l.id === a.id))].slice(0, 5);
+  }
+  const tried = [];
+  const tell = (m, ok, ms, slow) => { if (onTry) try{ onTry({ m, ok, ms, slow }); }catch(e){} };
   if (nImg && !steps.length) throw err(400, 'Ahora mismo ninguna IA conectada puede ver imágenes. Elige una IA que diga «ve fotos» o envía tu pregunta sin la imagen.', 'sz_novision');
   if (!steps.length) throw err(503, 'Las IAs están descansando un momento. Mientras tanto, puedes conectar Puter.', 'sz_off');
-  const d = today(), t0 = Date.now(), tried = [];
-  for (const m of steps){
+  const d = today(), t0 = Date.now();
+  for (const [si, m] of steps.entries()){
+    const tm0 = Date.now(), wait1 = si === 0 && firstMs ? firstMs : 30000;   /* la primera opción espera menos si va lenta: pasa a la siguiente */
     const keys = (await pickKeys(m.prov)).slice(0, 2);
     for (const k of keys){
       let up;
@@ -292,7 +302,7 @@ export async function chat({ who, ipKey, messages, model, maxTokens, system, str
         if (stream && (m.prov === 'groq' || m.prov === 'mistral')) body.stream_options = { include_usage:true };
         if (stream && m.prov === 'openrouter') body.usage = { include:true };
         if (m.prov === 'siliconflow') body.enable_thinking = false;
-        const ac = new AbortController(); let tm = setTimeout(() => ac.abort(), 30000);   /* solo espera a que el proveedor conteste */
+        const ac = new AbortController(); let tm = setTimeout(() => ac.abort(), wait1);   /* solo espera a que el proveedor conteste */
         try{
           up = await calm(() => fetch(base + '/chat/completions', { method:'POST', signal:ac.signal,
             headers:Object.assign({ Authorization:'Bearer ' + k.key, 'content-type':'application/json' }, m.prov === 'openrouter' ? { 'HTTP-Referer':'https://synthz.app', 'X-Title':'SymphorIA' } : {}), body:JSON.stringify(body) }));
@@ -302,11 +312,14 @@ export async function chat({ who, ipKey, messages, model, maxTokens, system, str
       if (!up || !up.ok || (stream && !up.body)){
         const s = up ? up.status : 0, txt = up ? await up.text().catch(() => '') : '';
         tried.push(m.prov + ':' + (s || 'sin respuesta'));
+        tell(m, false, Date.now() - tm0, !up);
         console.error('[synthz] ia', m.prov, k.id, s ? classify(s) : 'sin respuesta');      /* sin llaves ni mensajes */
         if (s === 402 || ((s === 401 || s === 403) && PAY_RX.test(txt))) await markPay(k, s, txt);
         const ttl = s === 429 ? (PLAN_RX.test(txt) ? 1800 : 60) : s === 401 || s === 403 || s === 402 ? 3600 : 120;
         /* alerta: si el modelo ya no existe, se esconde para todos 6 h y la lista se rehace */
         if (s === 404 || (s === 400 && !nImg && /model/i.test(txt))) await pipe([['HSET', 'pool:badm', m.id, String(Date.now())], ['DEL', 'pool:models'], ['LPUSH', 'evl', JSON.stringify({ t:Date.now(), kind:'error', who:'Servidor', rank:'Alerta', sub:'', page:'ia', detail:'Modelo sin servicio: ' + m.name + ' (' + m.prov + ')' })], ['LTRIM', 'evl', '0', '299']]).catch(() => {});
+        /* v3.9 · la primera opción del enrutador no contestó a tiempo: no se pausa la llave (solo fue lenta) y se pasa YA a otro proveedor */
+        if (!up && si === 0 && firstMs){ await redis('HINCRBY', 'st:' + d, 'slow', '1').catch(() => {}); break; }
         await pipe([['SET', 'pk:down:' + k.id, (s ? classify(s) : 'sin respuesta') + (txt ? ' · ' + provSaid(txt) : ''), 'EX', String(ttl)], ['HINCRBY', 'st:' + d, 'err', '1']]);
         continue;
       }
@@ -322,10 +335,11 @@ export async function chat({ who, ipKey, messages, model, maxTokens, system, str
         account.now = !free && Array.isArray(res) && Number.isFinite(+res[0]) ? +res[0] : null;
         return total;
       };
-      const meta = { prov:m.prov, provName:PROV[m.prov].name, model:m.id, name:m.name, fallback:!!(model && model !== 'sz:auto' && m.id !== model) };   /* v3.7 · la que elegiste no respondió (o no ve fotos): respondió otra */
+      const meta = { prov:m.prov, provName:PROV[m.prov].name, model:m.id, name:m.name, fallback:!!(model && model !== 'sz:auto' && m.id !== model), tried:tried.length };   /* v3.7 · la que elegiste no respondió (o no ve fotos): respondió otra */
       if (!stream){
         const j = await up.json().catch(() => ({})); clearTimeout(up._tm); const text = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
-        if (typeof text !== 'string' || !text.trim()) continue;
+        if (typeof text !== 'string' || !text.trim()){ tell(m, false, Date.now() - tm0, false); continue; }
+        tell(m, true, Date.now() - tm0, false);
         const u = j.usage || {}, tok = (u.prompt_tokens || 0) + (u.completion_tokens || 0) || inTok + est(text);
         const total = await account(tok);
         return { text:text.trim(), meta, used:free ? 0 : (account.now ?? used + total), limit:dayLimit };

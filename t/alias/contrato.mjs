@@ -480,6 +480,18 @@ async function testDone(user) {
   if (b.ok !== true) throw new Error('el segundo paso no trae ok:true: ' + clip(JSON.stringify(b)));
   why = assertStep(b.step, 'done', stepId);
   if (why) throw new Error('con prev: ' + why);
+  /* v3.9 · enrutador: el paso dice qué tipo de trabajo era, qué IA lo hizo y por qué */
+  const think = plan.steps.find(s => s.tool === 'think' || s.tool === 'search');
+  if (think) {
+    const r = needJson(await post({ action: 'step', lang: 'es', plan, stepId: think.id, prev: [], synth: false }, user.token), 'step enrutado');
+    const rt = r.step && r.step.route;
+    if (!rt || !rt.cat || !rt.model || !rt.name || !rt.why) throw new Error('el paso no dice qué IA eligió el enrutador: ' + clip(JSON.stringify(r.step)));
+    const fb = needJson(await post({ action: 'feedback', lang: 'es', cat: rt.cat, model: rt.model, up: true }, user.token), 'feedback');
+    if (fb.ok !== true) throw new Error('el 👍 no se guardó: ' + clip(JSON.stringify(fb)));
+    const ln = needJson(await post({ action: 'rutas', lang: 'es' }, user.token), 'rutas');
+    const row = ln.ok && ln.cats && (ln.cats[rt.cat] || []).find(x => x.id === rt.model);
+    if (!row || row.n < 1 || row.up < 1) throw new Error('lo aprendido no registra el intento ni el 👍: ' + clip(JSON.stringify(ln)));
+  }
 }
 async function testError(user) {
   const plan = await testPlan(user, GOAL_ES, 'es');
@@ -609,7 +621,7 @@ async function testNoToken() {
 const TESTS = [
   ['plan devuelve de 3 a 7 pasos', 'action plan, en español: id, goal y de 3 a 7 pasos con tool search, file, memory, image o think.', u => testPlan(u, GOAL_ES, 'es')],
   ['plan en inglés devuelve de 3 a 7 pasos', 'La misma forma con lang en y un objetivo en inglés.', u => testPlan(u, GOAL_EN, 'en')],
-  ['paso hecho devuelve done', 'action step devuelve ok, status done, output, sources, file y error null. También con prev.', testDone],
+  ['paso hecho devuelve done', 'action step devuelve ok, status done, output, sources, file y error null. También con prev. Dice qué IA eligió el enrutador, guarda el 👍 y lo aprendido lo cuenta.', testDone],
   ['paso fallido devuelve error', 'Si la fuente o el modelo fallan, ok true y status error con mensaje.', testError],
   ['límite diario devuelve limit true', 'Al pasar el cupo del día: ok false, error "límite" y limit true. Sigue igual en el uso siguiente.', testLimit],
   ['objetivo vacío se rechaza', 'goal "" no crea plan: ok false y un error.', u => testReject(u, '', 'es')],

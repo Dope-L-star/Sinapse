@@ -2,13 +2,18 @@
 /* Integrado en alias-fase1: claves de textos unificadas con ESCRIBA (prefijo srv.*) y diccionario movido a la raíz (.vercelignore excluye /src). */
 /* POST /api/alias · A.L.I.A.S. (agente por pasos)
    { action:'plan', lang, goal }                  → { ok, plan:{ id, goal, steps:[{ id, title, tool, input }] } }
-   { action:'step', lang, plan, stepId, prev, synth? } → { ok, step:{ id, status, output, sources, file, error, synth? } }
+   { action:'step', lang, plan, stepId, prev, synth? } → { ok, step:{ id, status, output, sources, file, error, synth?, route? } }
+   v3.9 · enrutador (api/_ruta.js): cada pedido va a la IA gratis que mejor resuelve ese tipo de trabajo, con respaldos.
+     route = { cat, model, name, prov, why:'quality'|'fast'|'learned'|'backup'|'synth', first?, slow?, voices? } (también en plan.route)
+   { action:'feedback', lang, cat, model, up } → { ok }   (👍/👎 de la persona: la próxima elección lo tiene en cuenta)
+   { action:'rutas', lang } → { ok, cats:{ <tipo>:[{ name, prov, n, rate, ms, up, down }] }, today:{ ok, fail } }   (lo aprendido)
    (v3.0: el último paso de razonar se hace con Síntesis: 4 IAs y se combinan en una; synth:false lo apaga. synth = { voices:[{ name, prov, text, aporte? }], fused })
    Errores: { ok:false, error } · límite diario: { ok:false, error, limit:true }
    Textos visibles: todos salen de alias-textos.json (raíz, para que viaje con la función) con t(). Los prompts del modelo no se ven y viven aquí. */
 import TX from './_alias-textos.js';
 import { route, body, json, auth, redis, pipe, limit, today, str, rid, sha, ipOf, roleOf } from './_lib.js';
-import { chat, pickKeys, searchWith, searchWiki, markPay, PAY_RX, classify, models, PROV, ORDER } from './_pool.js';
+import { chat, pickKeys, searchWith, searchWiki, markPay, PAY_RX, classify } from './_pool.js';
+import { classify as kindOf, pick, why, record, feedback, learned, used, CATS } from './_ruta.js';
 
 const MAX_GOAL = 500, MAX_STEPS = 7, MIN_STEPS = 3;
 const TOOLS = ['search', 'file', 'memory', 'image', 'think'];
@@ -42,10 +47,24 @@ const SAFE = 'Eres A.L.I.A.S., un agente que ayuda a cumplir un objetivo paso a 
 const sys = lang => SAFE.replace('{L}', t(lang, 'srv.idiomaNombre'));
 const datos = s => '<datos>\n' + String(s).replace(/<\/?datos>/gi, '') + '\n</datos>';
 
-async function ask(req, me, lang, user, maxTokens){
-  const r = await chat({ who:'al:' + me.sub, ipKey:'ip:' + sha('ip:' + ipOf(req)).slice(0, 16), messages:[{ role:'user', content:user }], model:'sz:auto', maxTokens, system:sys(lang), stream:false, free:roleOf(me) !== 'user' });
-  return r.text;
+/* cat = tipo de trabajo (api/_ruta.js) · R = objeto donde se anota qué IA respondió y por qué (viaja al navegador) */
+async function ask(req, me, lang, user, maxTokens, cat, R){
+  const ranked = await pick(cat).catch(() => []), pend = [], fails = [];
+  try{
+    const r = await chat({ who:'al:' + me.sub, ipKey:'ip:' + sha('ip:' + ipOf(req)).slice(0, 16), messages:[{ role:'user', content:user }], model:'sz:auto', maxTokens, system:sys(lang), stream:false, free:roleOf(me) !== 'user',
+      route:ranked.map(x => x.m), firstMs:ranked.length > 1 ? 20000 : 0,
+      onTry:({ m, ok, ms, slow }) => { pend.push(record(cat, m.id, ok, ms)); if (!ok) fails.push({ name:m.name, slow }); } });
+    pend.push(used(r.meta.prov));
+    if (R){
+      const top = ranked[0], won = top && top.m.id === r.meta.model;
+      Object.assign(R, { cat, model:r.meta.model, name:r.meta.name, prov:r.meta.provName, why:won ? why(top, ranked) : 'backup' });
+      if (!won && top){ R.first = top.m.name; R.slow = fails.some(f => f.slow && f.name === top.m.name); }
+    }
+    return r.text;
+  } finally { await Promise.all(pend).catch(() => {}); }
 }
+/* la IA respondió, pero lo que entregó no sirvió (JSON roto, archivo vacío): también cuenta como «no salió bien» */
+const missed = R => R && R.model ? record(R.cat, R.model, false, 0) : null;
 
 /* ---------- v3.0 · Síntesis: el paso final no lo escribe una sola IA, lo escriben cuatro y se COMBINAN en una.
    1) Hasta 4 IAs de proveedores distintos hacen el mismo paso a la vez, sin verse entre sí.
@@ -56,16 +75,8 @@ async function ask(req, me, lang, user, maxTokens){
    Si la fusión no llega a tiempo, se entrega la respuesta que más coincide con las demás (la de consenso), no la más larga.
    Si solo responde una IA, se entrega esa tal cual. Todo cabe en los 60 s de la función. */
 const VOICES = 4, VOICE_MS = 20000, FUSE_MS = 33000;
-async function pickVoices(n){
-  const cat = await models(false), out = [];
-  for (const p of ORDER){                                         /* una por proveedor: errores distintos, no el mismo eco */
-    if (out.length >= n) break;
-    const m = (PROV[p].best || []).map(b => cat.list.find(x => x.prov === p && x.mid === b)).find(Boolean) || cat.list.find(x => x.prov === p);
-    if (m) out.push(m);
-  }
-  for (const m of cat.list){ if (out.length >= n) break; if (!out.includes(m)) out.push(m); }   /* pocos proveedores: otro modelo */
-  return out;
-}
+/* v3.9 · las voces las elige el enrutador: las mejores para ESTE tipo de trabajo, una por proveedor (errores distintos, no el mismo eco) */
+async function pickVoices(n, cat){ return (await pick(cat, n)).map(r => r.m); }
 const within = (pr, ms) => Promise.race([pr, new Promise((_, no) => setTimeout(() => no(Object.assign(new Error('lento'), { code:'slow' })), ms))]);
 /* consenso sin IA: la respuesta que comparte más palabras con las otras */
 const words = s => new Set(String(s).toLowerCase().match(/[\p{L}\p{N}]{4,}/gu) || []);
@@ -84,10 +95,13 @@ const FUSE_RULES = [
   '6. Forma: la que mejor sirva a la tarea (lista, pasos, tabla o párrafos), en el idioma de la tarea.'
 ].join('\n');
 const TAG = (s, t) => { const m = new RegExp('<' + t + '>([\\s\\S]*?)(?:</' + t + '>|$)', 'i').exec(s); return m ? m[1].trim() : ''; };
-async function synthesize(req, me, lang, task, maxTokens){
-  const who = { who:'al:' + me.sub, ipKey:'ip:' + sha('ip:' + ipOf(req)).slice(0, 16), system:sys(lang), stream:false };
-  const vs = await pickVoices(VOICES);
+async function synthesize(req, me, lang, task, maxTokens, cat, R){
+  const pend = [], tryRec = ({ m, ok, ms }) => pend.push(record(cat, m.id, ok, ms));
+  const who = { who:'al:' + me.sub, ipKey:'ip:' + sha('ip:' + ipOf(req)).slice(0, 16), system:sys(lang), stream:false, free:roleOf(me) !== 'user', onTry:tryRec };
+  const vs = await pickVoices(VOICES, cat);
   const got = await Promise.allSettled(vs.map(m => within(chat(Object.assign({ messages:[{ role:'user', content:task }], model:m.id, maxTokens:Math.min(maxTokens, 900) }, who)), VOICE_MS)));
+  await Promise.all(pend).catch(() => {});
+  if (R) Object.assign(R, { cat, why:'synth', voices:got.filter(g => g.status === 'fulfilled' && g.value && g.value.meta).map(g => g.value.meta.name) });
   const lim = got.find(g => g.status === 'rejected' && g.reason && (g.reason.code === 'sz_limit' || g.reason.code === 'sz_limit_ip'));
   const ok = got.map((g, i) => g.status === 'fulfilled' && g.value && String(g.value.text || '').trim() ? { name:(g.value.meta && g.value.meta.name) || vs[i].name, prov:(g.value.meta && g.value.meta.provName) || vs[i].prov, text:clip(g.value.text, 6000) } : null).filter(Boolean);
   if (!ok.length){ if (lim) throw lim.reason; return null; }                       /* nadie respondió: el paso normal lo intenta */
@@ -99,7 +113,7 @@ async function synthesize(req, me, lang, task, maxTokens){
     + '<respuesta>la respuesta final para la persona; no menciones respuestas numeradas, ni que hubo varias IA, ni esta revisión</respuesta>\n'
     + '<aportes>una línea por respuesta, «N: lo que aportó a la final» en pocas palabras (o «N: nada nuevo»)</aportes>';
   let txt;
-  try{ txt = (await within(chat(Object.assign({ messages:[{ role:'user', content:merge }], model:'sz:auto', maxTokens:maxTokens + 500 }, who)), FUSE_MS)).text; }
+  try{ const F = {}; txt = await within(ask(req, me, lang, merge, maxTokens + 500, cat, F), FUSE_MS); if (R) Object.assign(R, { model:F.model, name:F.name, prov:F.prov }); }
   catch(e){ if (e.code === 'sz_limit' || e.code === 'sz_limit_ip') throw e; return { output:consensus(ok).text, synth:{ voices:ok, fused:false } }; }
   const raw = String(txt || '');
   let out = TAG(raw, 'respuesta');
@@ -153,7 +167,7 @@ async function doPlan(req, me, b, lang){
   if (goal.length < 3) throw A('srv.objetivoVacio');
   if (raw.length > MAX_GOAL) throw A('srv.objetivoLargo');
   const undo = await spend(me.sub, 'p', PLANS_DAY * mult(me));
-  let steps = null, answered = false;
+  let steps = null, answered = false; const R = {};
   try{
     for (let i = 0; i < 2 && !steps; i++){
       let txt;
@@ -162,13 +176,14 @@ async function doPlan(req, me, b, lang){
           + 'search (buscar en internet con fuentes), file (crear un archivo: presentación PPTX, texto o código), memory (guardar algo que la persona pida recordar), image (crear una imagen), think (razonar, comparar, resumir o redactar). '
           + 'Usa file solo si el objetivo pide un archivo, memory solo si pide recordar algo e image solo si pide una imagen. El último paso entrega el resultado final. '
           + 'Responde SOLO con JSON, sin texto antes ni después y sin ```: {"steps":[{"title":"máx. 8 palabras","tool":"search|file|memory|image|think","input":"lo que hace el paso, máx. 200 caracteres (en search, la consulta)"}]}'
-          + (i ? '\n\nTu respuesta anterior no era JSON válido. Responde SOLO el JSON.' : ''), 700);
+          + (i ? '\n\nTu respuesta anterior no era JSON válido. Responde SOLO el JSON.' : ''), 700, 'plan', R);
       }catch(e){ if (e.code === 'sz_limit' || e.code === 'sz_limit_ip') throw e; break; }   /* IAs caídas: plan de respaldo */
       answered = true; steps = cleanSteps(jsonOf(txt), false, MIN_STEPS);
+      if (!steps) await missed(R);                                                        /* respondió, pero sin un plan usable */
     }
   }catch(e){ await undo(); throw e; }
   if (!answered) await undo();                                                           /* si ninguna IA respondió, no gasta el cupo */
-  return json({ ok:true, plan:{ id:rid(8), goal, steps:steps || fallbackSteps(goal, lang) } });
+  return json({ ok:true, plan:Object.assign({ id:rid(8), goal, steps:steps || fallbackSteps(goal, lang) }, steps && R.model ? { route:R } : {}) });
 }
 
 /* ---------- action: step ---------- */
@@ -189,7 +204,7 @@ const ctx = (plan, step, prev) => 'Objetivo: ' + plan.goal + '\nPlan: ' + plan.s
   + '\nPaso actual (' + step.id + '): ' + step.title + ' — ' + step.input
   + (prev.length ? '\nResultados de pasos anteriores:\n' + datos(prev.map(p => (p.title ? '[' + p.title + '] ' : '') + p.output).join('\n---\n')) : '');
 
-async function runSearch(req, me, lang, plan, step, prev){
+async function runSearch(req, me, lang, plan, step, prev, R){
   const q = str(step.input || step.title, 200), d = today(), uk = 'alias:q:' + me.sub + ':' + d, gk = 'srch:all:' + d;
   const [n, g] = (await pipe([['GET', uk], ['GET', gk]])).map(x => +x || 0);
   if (n >= SEARCH_DAY * mult(me)) throw A('srv.busquedaLimite', 429);
@@ -217,7 +232,7 @@ async function runSearch(req, me, lang, plan, step, prev){
   let output;
   try{
     output = await ask(req, me, lang, ctx(plan, step, prev) + '\n\nResultados de búsqueda para «' + q + '»:\n' + datos(res.map((x, i) => '[' + (i + 1) + '] ' + x.t + ' (' + x.u + ')\n' + x.s).join('\n\n'))
-      + '\n\nTarea: resume lo útil para este paso en máximo 180 palabras, usando SOLO estos resultados. Cita las fuentes como [1], [2]. Si no alcanzan, dilo.', 500);
+      + '\n\nTarea: resume lo útil para este paso en máximo 180 palabras, usando SOLO estos resultados. Cita las fuentes como [1], [2]. Si no alcanzan, dilo.', 500, kindOf(step.title + ' ' + step.input, 'search'), R);
   }catch(e){
     if (e.code === 'sz_limit' || e.code === 'sz_limit_ip') throw e;
     output = res.map(x => '• ' + str(x.t, 120) + ': ' + str(x.s, 300)).join('\n');       /* sin IA: se entregan los resultados tal cual */
@@ -235,17 +250,17 @@ function safeName(n, lang){
   const m = /\.([a-z0-9]{1,5})$/i.exec(s), ext = m && EXT[m[1].toLowerCase()] ? m[1].toLowerCase() : 'md';
   return ((m ? s.slice(0, m.index) : s) || t(lang, 'srv.nombreArchivo')) + '.' + ext;
 }
-async function runFile(req, me, lang, plan, step, prev){
+async function runFile(req, me, lang, plan, step, prev, R){
   const base = ctx(plan, step, prev);
   if (PPT_RX.test(step.title + ' ' + step.input + ' ' + plan.goal)){
-    const txt = await ask(req, me, lang, base + '\n\nTarea: arma la presentación que pide este paso, usando los resultados anteriores como fuente. Responde SOLO con JSON, sin ```: {"titulo":"...","subtitulo":"...","diapositivas":[{"titulo":"...","puntos":["..."],"notas":"lo que diría quien presenta"}]}. De 6 a 10 diapositivas, máximo 5 puntos cortos (15 palabras) por diapositiva; la última es el cierre.', 1500);
-    const deck = deckOf(txt, lang); if (!deck) throw A('srv.archivoFallo');
+    const txt = await ask(req, me, lang, base + '\n\nTarea: arma la presentación que pide este paso, usando los resultados anteriores como fuente. Responde SOLO con JSON, sin ```: {"titulo":"...","subtitulo":"...","diapositivas":[{"titulo":"...","puntos":["..."],"notas":"lo que diría quien presenta"}]}. De 6 a 10 diapositivas, máximo 5 puntos cortos (15 palabras) por diapositiva; la última es el cierre.', 1500, 'write', R);
+    const deck = deckOf(txt, lang); if (!deck){ await missed(R); throw A('srv.archivoFallo'); }
     const name = (deck.titulo.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-').slice(0, 60) || t(lang, 'srv.nombreArchivo')) + '.pptx';
     return { output:t(lang, 'srv.pptxListo', { n:deck.diapositivas.length, name }), file:{ name, mime:PPTX, text:JSON.stringify(deck) } };
   }
-  const raw = await ask(req, me, lang, base + '\n\nTarea: crea el archivo de texto o de código que pide este paso. Formato EXACTO: primera línea «NAME: nombre.extensión» (extensiones: md, txt, csv, json, html, css, js, py, ts, sql, xml, yaml), una línea en blanco y luego SOLO el contenido del archivo, sin ``` ni explicaciones.', 1500);
+  const raw = await ask(req, me, lang, base + '\n\nTarea: crea el archivo de texto o de código que pide este paso. Formato EXACTO: primera línea «NAME: nombre.extensión» (extensiones: md, txt, csv, json, html, css, js, py, ts, sql, xml, yaml), una línea en blanco y luego SOLO el contenido del archivo, sin ``` ni explicaciones.', 1500, kindOf(step.title + ' ' + step.input + ' ' + plan.goal, 'file'), R);
   const m = /^\s*NAME:\s*([^\n]{1,80})\n+/i.exec(raw); let text = clip(m ? raw.slice(m[0].length) : raw, 30000);
-  text = text.replace(/^```[\w-]*\n/, '').replace(/\n```\s*$/, '').trim(); if (!text) throw A('srv.archivoFallo');
+  text = text.replace(/^```[\w-]*\n/, '').replace(/\n```\s*$/, '').trim(); if (!text){ await missed(R); throw A('srv.archivoFallo'); }
   const name = safeName(m && m[1], lang);
   return { output:t(lang, 'srv.archivoListo', { name }), file:{ name, mime:EXT[name.split('.').pop()] || 'text/plain', text } };
 }
@@ -255,18 +270,21 @@ async function doStep(req, me, b, lang){
   const step = plan.steps.find(s => s.id === id); if (!step) throw A('srv.pasoAjeno');
   const prev = cleanPrev(b.prev, plan), costly = ['search', 'think', 'file'].includes(step.tool);
   const undo = costly ? await spend(me.sub, 's', STEPS_DAY * mult(me)) : async () => {};   /* memory e image no gastan IA aquí */
-  const ok = o => json({ ok:true, step:Object.assign({ id:step.id, status:'done', output:'', sources:[], file:null, error:null }, o) });
+  const R = {};   /* qué IA hizo el paso y por qué (se llena en ask) */
+  const ok = o => json({ ok:true, step:Object.assign({ id:step.id, status:'done', output:'', sources:[], file:null, error:null }, R.cat ? { route:R } : {}, o) });
   try{
     if (step.tool === 'memory') return ok({ output:MARK.memory + ' ' + str(step.input || step.title, 300) });
     if (step.tool === 'image') return ok({ output:MARK.image + ' ' + str(step.input || step.title || plan.goal, 600) });
-    if (step.tool === 'search') return ok(await runSearch(req, me, lang, plan, step, prev));
-    if (step.tool === 'file') return ok(await runFile(req, me, lang, plan, step, prev));
+    if (step.tool === 'search') return ok(await runSearch(req, me, lang, plan, step, prev, R));
+    if (step.tool === 'file') return ok(await runFile(req, me, lang, plan, step, prev, R));
+    const cat = kindOf(step.title + ' ' + step.input + (step.id === plan.steps[plan.steps.length - 1].id ? ' ' + plan.goal : ''), 'think');
     const last = step.id === plan.steps[plan.steps.length - 1].id;
     if (last && b.synth !== false){
-      const syn = await synthesize(req, me, lang, ctx(plan, step, prev) + '\n\nTarea: haz SOLO este paso y entrega su resultado, claro y útil (máximo 450 palabras).', 1300);
+      const syn = await synthesize(req, me, lang, ctx(plan, step, prev) + '\n\nTarea: haz SOLO este paso y entrega su resultado, claro y útil (máximo 450 palabras).', 1300, cat, R);
       if (syn) return ok(syn);
+      for (const k of Object.keys(R)) delete R[k];                                        /* sin Síntesis: lo hace una sola IA */
     }
-    return ok({ output:await ask(req, me, lang, ctx(plan, step, prev) + '\n\nTarea: haz SOLO este paso y entrega su resultado, claro y útil (máximo ' + (last ? 450 : 300) + ' palabras).', last ? 1300 : 800) });
+    return ok({ output:await ask(req, me, lang, ctx(plan, step, prev) + '\n\nTarea: haz SOLO este paso y entrega su resultado, claro y útil (máximo ' + (last ? 450 : 300) + ' palabras).', last ? 1300 : 800, cat, R) });
   }catch(e){
     await undo();
     if (e.limit || e.code === 'sz_limit' || e.code === 'sz_limit_ip') throw e;
@@ -274,6 +292,15 @@ async function doStep(req, me, b, lang){
     if (!e.aKey && key === 'srv.pasoFallo') console.error('[synthz] alias paso', step.tool, e && e.message);
     return ok({ status:'error', error:t(lang, key) });                                      /* el paso falla, la conversación sigue: se puede rehacer */
   }
+}
+
+/* ---------- v3.9 · 👍/👎 de la persona sobre la IA que eligió el enrutador (un voto por persona, modelo y tipo al día) ---------- */
+async function doFeedback(me, b){
+  const cat = String(b.cat || ''), model = String(b.model || '');
+  if (!CATS.includes(cat) || !/^sz:[a-z]+:[\w.:\/@-]{1,120}$/.test(model)) throw A('srv.invalido');
+  const k = 'rt:fb:' + me.sub + ':' + cat + ':' + sha(model).slice(0, 12);
+  if (await redis('SET', k, '1', 'NX', 'EX', '86400')) await feedback(cat, model, !!b.up);
+  return json({ ok:true });
 }
 
 /* ---------- salida de errores: siempre { ok:false, error } en el idioma pedido, sin detalles internos ---------- */
@@ -296,6 +323,8 @@ export default route({
       await limit('alias:' + me.sub, 30, 60);
       if (b.action === 'plan') return await doPlan(req, me, b, lang);
       if (b.action === 'step') return await doStep(req, me, b, lang);
+      if (b.action === 'feedback') return await doFeedback(me, b);
+      if (b.action === 'rutas') return json(Object.assign({ ok:true }, await learned()));
       throw A('srv.accion');
     }catch(e){ return failOut(e, lang); }
   }

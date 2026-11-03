@@ -8,10 +8,13 @@ const nextDir = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(nextDir, '..');
 const routes = [
   { html: 'index.html', route: 'app/(site)/page.jsx', module: 'contenido/legado/index.js', tree: 'contenido/arboles-react/index.json' },
-  { html: 'alias.html', route: 'app/(site)/alias/page.jsx', module: 'contenido/legado/alias.js', tree: 'contenido/arboles-react/alias.json' },
   { html: 'ayuda.html', route: 'app/(site)/ayuda/page.jsx', module: 'contenido/legado/ayuda.js', tree: 'contenido/arboles-react/ayuda.json' },
   { html: 'offline.html', route: 'app/(site)/offline/page.jsx', module: 'contenido/legado/offline.js', tree: 'contenido/arboles-react/offline.json' },
-  { html: 'pulsem.html', route: 'app/(panel)/pulsem/page.jsx', module: 'contenido/legado/pulsem.js', tree: 'contenido/arboles-react/pulsem.json' },
+];
+/* v3.8 · páginas ya reescritas en componentes React (sin árbol copiado del HTML ni el .js viejo de la página) */
+const reactNative = [
+  { html: 'pulsem.html', route: 'app/(panel)/pulsem/page.jsx', app: 'componentes/pulsem/PulsemApp.jsx', old: 'pulsem.js', needs: 'core.js' },
+  { html: 'alias.html', route: 'app/(site)/alias/page.jsx', app: 'componentes/alias/AliasApp.jsx', old: 'alias.js', needs: 'alias-tools.js', masks: ['vPlan', 'vResult'] },
 ];
 function extractJsonModule(file, name) {
   const text = fs.readFileSync(file, 'utf8');
@@ -113,9 +116,19 @@ for (const r of routes) {
   assert.equal(map.chat || null, brand, 'chat.html: data-brand no coincide con BRAND del layout');
   console.log(`OK React chat.html → componentes JSX de SynthFlow: ${ids.length} IDs conservados`);
 }
+for (const r of reactNative) {
+  const route = fs.readFileSync(path.join(nextDir, r.route), 'utf8');
+  assert.ok(fs.existsSync(path.join(nextDir, r.app)), `falta ${r.app}`);
+  assert.ok(!route.includes('reactTree') && !route.includes(`'${r.old}'`), `${r.route}: ya es React; no debe volver a cargar el árbol ni ${r.old}`);
+  assert.ok(route.includes(`'${r.needs}'`), `${r.route}: necesita ${r.needs}`);
+  const src = fs.readdirSync(path.join(nextDir, path.dirname(r.app))).filter(f => /\.jsx?$/.test(f)).map(f => fs.readFileSync(path.join(nextDir, path.dirname(r.app), f), 'utf8')).join('\n');
+  assert.ok(!/\.innerHTML\s*=(?!\s*'')/.test(src), `${r.app}: los componentes no arman HTML a mano con innerHTML`);
+  for (const id of r.masks || []) assert.ok(new RegExp('id="' + id + '" data-clarity-mask="true"').test(src), `${r.app}: #${id} debe enmascararse para analítica`);
+  console.log(`OK React ${r.html}: componentes propios (${r.app})`);
+}
 const armar = fs.readFileSync(path.join(nextDir, 'armar.mjs'), 'utf8');
 assert.ok(armar.includes("'chat.html'"), 'armar.mjs debe retirar chat.html de public/');
-for (const {html} of routes) assert.ok(armar.includes(`'${html}'`), `armar.mjs debe retirar ${html} de public/`);
+for (const {html} of [...routes, ...reactNative]) assert.ok(armar.includes(`'${html}'`), `armar.mjs debe retirar ${html} de public/`);
 for (const file of ['componentes/LegacyPage.jsx','componentes/LegacyRuntime.jsx','componentes/ReactTree.jsx','app/(site)/layout.jsx']) {
   assert.ok(fs.existsSync(path.join(nextDir, file)), `falta ${file}`);
 }

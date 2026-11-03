@@ -8,10 +8,10 @@ Estas rutas salen de `app/` como páginas React (Next App Router):
 |---|---|
 | `/` y `/index.html` | `app/(site)/page.jsx` |
 | `/chat.html` (SynthFlow) | `app/(site)/chat/page.jsx` |
-| `/alias.html` (A.L.I.A.S.) | `app/(site)/alias/page.jsx` |
+| `/alias.html` (A.L.I.A.S.) | `app/(site)/alias/page.jsx` → **React de verdad** (`componentes/alias/*`, v3.8) |
 | `/ayuda.html` | `app/(site)/ayuda/page.jsx` |
 | `/offline.html` | `app/(site)/offline/page.jsx` |
-| `/pulsem.html` | `app/(panel)/pulsem/page.jsx` |
+| `/pulsem.html` | `app/(panel)/pulsem/page.jsx` → **React de verdad** (`componentes/pulsem/*`, v3.8) |
 | `/privacidad.html` y `/terminos.html` | componentes React propios |
 
 Las páginas principales tienen su estructura renderizada como elementos de React mediante `ReactTree.jsx`; ya no dependen de `dangerouslySetInnerHTML` para inyectar todo el cuerpo de la página. Los árboles JSON versionados están en `contenido/arboles-react/` y conservan los IDs/clases/data-attributes que consumen los módulos existentes. Se generaron desde las páginas fuente con `python next/generar-arboles-react.py` (requiere `beautifulsoup4`, solo para desarrollo).
@@ -19,6 +19,18 @@ Las páginas principales tienen su estructura renderizada como elementos de Reac
 `LegacyRuntime` sigue cargando en orden los motores JS actuales —`core.js`, `chat.js`, `index.js`, `alias.js`, `pulsem.js` y módulos auxiliares— para preservar autenticación, streaming, historial, Puter/OpenRouter, adjuntos, comparación y herramientas. Eso es un puente de compatibilidad, no una reescritura terminada de cada módulo a hooks. La migración de estado y efectos internos a React hooks debe hacerse módulo por módulo y no eliminarse este puente hasta que sus flujos pasen pruebas de navegador.
 
 `/sintetico.html` queda deliberadamente como documento aislado con una CSP `sandbox` y un protocolo `postMessage` específico. No se debe colocar en el mismo árbol React que ejecuta la app: la separación evita que el HTML generado por una IA comparta el entorno privilegiado de SynthFlow.
+
+## Pulsem ya es React (v3.8)
+
+`componentes/pulsem/PulsemApp.jsx` reemplaza a `pulsem.js` en la versión publicada: hace la puerta (iniciar sesión / solo el equipo, con su cabecera y botón ES/EN) y, si la cuenta es del equipo, monta el panel nuevo `componentes/admin/PanelAdmin.jsx` (`api={SZ.api}`, `toast={SZ.toast}`, `onAuth` vuelve a la puerta). Textos de la puerta en `componentes/pulsem/textos.js`; los del panel en `componentes/admin/textos.mjs`. `src/pulsem/` queda solo para el `pulsem.html` estático (pruebas de humo y Vercel).
+
+## A.L.I.A.S. ya es React (v3.8)
+
+`componentes/alias/` reemplaza a `alias.js` en la versión publicada: `AliasApp.jsx` (idioma, tema, inicio, plan, controles y el recorrido paso a paso), `Pasos.jsx`, `Resultado.jsx` (texto, Síntesis, descargas .pptx/archivos, fuentes) e `iconos.jsx`. El motor sigue igual: `alias-tools.js` (`window.ALIAS`). Textos en `alias-textos.json`. Se conservan IDs y `data-alias`; la suite de siempre corre contra la versión React con `ALIAS_UI_ROOT=next/out node t/alias/ui.mjs` (después de `node next/armar.mjs`).
+
+**v3.9 · enrutador estilo RouteLLM (`api/_ruta.js`):** cada pedido de A.L.I.A.S. se clasifica (código, escritura, razonamiento, resúmenes, traducción, datos, plan) y va a la IA gratis que mejor lo resuelve entre las que funcionan ahora, con respaldos de otros proveedores (si la primera tarda más de 20 s, responde otra). Cada intento y cada 👍/👎 se guardan por tipo y modelo (`rt:<tipo>`, `rt:log`) y corrigen la siguiente elección. El paso trae `route` (qué IA y por qué); Agentes muestra lo aprendido (`action:'rutas'`). Pruebas: `node t/alias/ruta.mjs`.
+
+**v3.9 · diseño de Sammuel («Mission workspace», `ALIAS_VISUAL_CONCEPT`):** barra lateral (Nueva misión · Misión actual · Mis misiones · Agentes), inicio con orbe, rutas rápidas, misiones recientes y equipo de agentes; la misión muestra la ruta de pasos y la «orquesta» (qué herramienta trabaja ahora). Solo tema oscuro (pedido de Sammuel). Estilos en `alias-mision.css` (todo bajo `.am`, encima de `alias.css`; la página estática `alias.html` no cambia). Del prototipo no se copió lo inventado: las misiones recientes son reales (solo en este navegador, `localStorage` `alias:misiones`) y los agentes son las herramientas del motor (search, memory, think, image, file).
 
 ## Pruebas de estructura
 

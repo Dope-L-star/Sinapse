@@ -5,10 +5,11 @@
 const T = { es: 'Empezar', en: 'Start' };
 const CAPAS = [[0, 25], [.15, 15.9], [.53, 26.4], [.45, 17.8], [1.6, 19.2]];
 
-export default function BotonInicio({ lang = 'es', texto, onClick, type = 'button', disabled }) {
+/* ...resto: id, data-* y aria-* pasan al botón (A.L.I.A.S. lo necesita para sus pruebas: id="bRun" data-alias="run") */
+export default function BotonInicio({ lang = 'es', texto, onClick, type = 'button', disabled, className, ...resto }) {
   const s = texto || T[lang] || T.es;
   return (
-    <button type={type} className="bi" onClick={onClick} disabled={disabled}>
+    <button {...resto} type={type} className={'bi' + (className ? ' ' + className : '')} onClick={onClick} disabled={disabled}>
       <span className="bi-capas" aria-hidden="true">{CAPAS.map(([d, v], i) => <i key={i} style={{ animationDelay: d + 's', animationDuration: v + 's' }} />)}</span>
       <span className="bi-luz" aria-hidden="true" />
       <span className="bi-tx">{s}</span>
