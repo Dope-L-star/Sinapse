@@ -56,7 +56,14 @@ function newChat(){
 /* volver a SymphorIA: la película del portal al revés */
 /* v1.4: con la barra lateral abierta, el logo «SynthFlow» NO lleva a la portada (solo hace un brillito) */
 document.addEventListener('click', e => { const w = e.target.closest && e.target.closest('#railWord'); if (w){ e.preventDefault(); e.stopPropagation(); w.classList.remove('tw'); void w.offsetWidth; w.classList.add('tw'); } }, true);
-document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('a[href="index.html"]'); if (!a || a.id === 'railWord' || (e.defaultPrevented && !/^(backLink|mLogo)$/.test(a.id)) || e.button || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); SZ.portalBack('index.html'); });
+document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('a[href="index.html"]'); if (!a || a.id === 'railWord' || (e.defaultPrevented && !/^(backLink|mLogo)$/.test(a.id)) || e.button || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); toPortada(); });
+/* v4.1 · la portada es solo para gente nueva: quien ya entró no vuelve a ella por el logo, sino por la pantallita
+   «Ya tengo el Flow / Soy nuevo» (Soy nuevo → la abre; Ya tengo el Flow → se queda aquí). Si ya eligió verla, va directo. */
+function toPortada(){
+  const d = SZ.portada && SZ.portada.get();
+  if (d && d.v === 'nuevo'){ SZ.portalBack('index.html'); return; }
+  SZ.synReady.then(() => SZ.welcomeBack({ from:'logo', flow:() => { if (matchMedia('(pointer: fine)').matches) inp.focus(); } }));
+}
 addEventListener('pageshow', e => { if (e.persisted){ root.classList.remove('bye'); const pp = document.getElementById('portal'); if (pp) pp.remove(); SZ.S.busy(false); } });
 SZ.hooks.usage = () => { renderFoot(); coinWatch(); };
 SZ.hooks.md = () => { if (!Object.keys(busy).length && mode === 'solo' && chatArr().length) renderMsgs(); };

@@ -1,6 +1,8 @@
 /* Root layout del sitio público. Las páginas son rutas React con export estático. */
 import ClarityConsent from '../../componentes/ClarityConsent';
 import AnalyticsConsent from '../../componentes/AnalyticsConsent';
+import fs from 'node:fs';
+import path from 'node:path';
 export const metadata = {
   metadataBase: new URL('https://symphoria.pages.dev'),
   title: 'SymphorIA · Tu IA en una sola mesa',
@@ -18,11 +20,18 @@ export const viewport = { width: 'device-width', initialScale: 1, colorScheme: '
 export const BRAND = { chat: 'flow', alias: 'alias' };
 const brandJs = `(function(){var m=${JSON.stringify(BRAND)},p=location.pathname.replace(/^\\/+|(\\.html)?\\/?$/g,'');if(m[p])document.documentElement.dataset.brand=m[p];})();`;
 
+/* v4.1 · la portada solo para gente nueva: el guardián (portada-guardian.js, en la raíz del repo) va en línea en el <head>
+   para que quien ya entró antes salte a SynthFlow antes de pintar nada. Él mismo revisa que la ruta sea la portada.
+   Si no se puede leer el archivo al armar (no debería pasar), se carga con <script src>. */
+let portadaJs = '';
+try { portadaJs = fs.readFileSync(path.join(process.cwd(), '..', 'portada-guardian.js'), 'utf8'); } catch (e) {}
+
 export default function SiteLayout({ children }) {
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: brandJs }} />
+        {portadaJs ? <script dangerouslySetInnerHTML={{ __html: portadaJs }} /> : <script src="/portada-guardian.js" />}
         <link rel="icon" id="favi" href="/media/v30/fav-s.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
