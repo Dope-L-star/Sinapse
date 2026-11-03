@@ -5,17 +5,22 @@
    POST { action:'ping', id | ids } → { status:{ id:'ok'|'busy'|'down' } } (¿esa IA responde ahora? con caché compartida)
    Sin cuenta también funciona: se cuenta por dispositivo y por conexión. */
 import { route, body, json, fail, auth, sha, redis, pipe, today, ipOf, limit, str, roleOf } from './_lib.js';
-import { models, chat, reviewerModel, settings, usedToday, PROV, IMG, pickKeys, markPay, clearPay, outage, classify, searchWith, searchWiki, PAY_RX, baseOf, pingModel } from './_pool.js';
+import { models, chat, reviewerModel, settings, usedToday, PROV, IMG, pickKeys, markPay, clearPay, outage, classify, searchWith, searchWiki, searchRss, readPage, PAY_RX, baseOf, pingModel } from './_pool.js';
 
 /* v2.0 · imágenes con Pollinations: solo con cuenta, con su propio límite diario (no gasta Puter ni tu límite de chat).
    Solo gasta el saldo que ya esté cargado en Pollinations: nunca cobra a una tarjeta. */
 const IMG_GLOBAL = +process.env.SYNTHZ_IMG_GLOBAL || 150;
 /* v2.1 · «Buscar en internet»: Tavily o Exa (gratis, sin tarjeta) y, si no hay, Wikipedia. Cuenta en su propio límite */
 const SEARCH_GLOBAL = +process.env.SYNTHZ_SEARCH_GLOBAL || 300;
+const NEWS_RX = /\b(hoy|ayer|noticias?|[uú]ltim[oa]s?|esta semana|resultado|gan[oó]|elecci|partido|precio|d[oó]lar|cotizaci|today|yesterday|news|latest|this week|score|won|election|price)\b/i;
 async function webSearch(req, me, who, b){
   const q = str(b.q, 300); if (q.length < 2) throw Object.assign(new Error('Escribe qué quieres buscar.'), { status:400, code:'s_empty' });
-  const team = me && roleOf(me) !== 'user', max = team ? 5000 : me ? 30 : 3, d = today();   /* v3.0: el equipo, sin límite propio (solo el tope de todos) */
-  await limit('srch:' + who, 10, 60);
+  const lang = b.lang === 'en' ? 'en' : 'es', read = b.read !== false;
+  /* v3.8 · la misma pregunta en 30 min sale de la caché: no gasta búsquedas de nadie */
+  const ck = 'sc:' + lang + ':' + sha(q.toLowerCase().replace(/\s+/g, ' ').trim()).slice(0, 24), hit = await redis('GET', ck).catch(() => null);
+  if (hit){ try{ return json(Object.assign(JSON.parse(hit), { cached:true })); }catch(e){} }
+  const team = me && roleOf(me) !== 'user', max = team ? 5000 : me ? 60 : 8, d = today();   /* v3.8 · más búsquedas al día: 60 con cuenta, 8 sin cuenta */
+  await limit('srch:' + who, 12, 60);
   const uk = 'srch:' + who + ':' + d, gk = 'srch:all:' + d;
   const [n, g] = (await pipe([['GET', uk], ['GET', gk]])).map(x => +x || 0);
   if (n >= max) throw Object.assign(new Error(me ? 'Ya hiciste tus ' + max + ' búsquedas en internet de hoy. Mañana tienes más.' : 'Sin cuenta puedes buscar en internet ' + max + ' veces al día. Entra (es gratis) para buscar más.'), { status:429, code:me ? 's_limit' : 's_guest' });
@@ -33,10 +38,21 @@ async function webSearch(req, me, who, b){
       if (res.length) break;
     }
   }
-  if (!res.length){ res = await searchWiki(q, 4).catch(() => []); via = 'wikipedia'; }
+  /* v3.8 · sin llaves o sin saldo: feeds públicos de Bing (noticias si la pregunta es de actualidad) y, al final, Wikipedia */
+  if (!res.length){ const news = NEWS_RX.test(q); for (const nw of news ? [true, false] : [false, true]){ res = await searchRss(q, 6, nw, lang).catch(e => { console.error('[synthz] búsqueda rss', e.status || 'sin respuesta'); return []; }); if (res.length){ via = nw ? 'noticias' : 'internet'; break; } } }
+  if (!res.length){ res = await searchWiki(q, 4, lang).catch(() => []); via = 'wikipedia'; }
   res = res.filter(x => /^https?:\/\//.test(x.u)).slice(0, 6);
+  /* v3.8 · la IA no solo ve el resumen: se leen las 3 primeras páginas (6 s cada una, en paralelo) y se guarda lo importante 6 h */
+  if (read && res.length){
+    await Promise.all(res.slice(0, 3).map(async x => {
+      const pk = 'pg:' + sha(x.u).slice(0, 24);
+      try{ let c = await redis('GET', pk).catch(() => null); if (c == null){ c = await readPage(x.u, q).catch(() => ''); await redis('SET', pk, c, 'EX', '21600').catch(() => {}); } if (c && c.length > 120) x.c = c; }catch(e){}
+    }));
+  }
   await pipe([['INCR', uk], ['EXPIRE', uk, '172800'], ['INCR', gk], ['EXPIRE', gk, '172800']]);
-  return json({ results:res, via, left:Math.max(0, max - n - 1) });
+  const out = { results:res, via, at:new Date().toISOString() };
+  if (res.length) await redis('SET', ck, JSON.stringify(out), 'EX', '1800').catch(() => {});
+  return json(Object.assign(out, { left:Math.max(0, max - n - 1) }));
 }
 /* v3.8 · audio y video adjuntos → texto. El navegador manda trozos de 1 minuto (WAV 16 kHz) y aquí los transcribe
    Whisper gratis: Groq (whisper-large-v3-turbo) y, si no hay, Cloudflare Workers AI. Cuenta en su propio límite (no gasta EnerX). */

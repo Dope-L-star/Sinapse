@@ -405,12 +405,51 @@ export async function searchWith(k, q, n = 6){
   return [];
 }
 /* Wikipedia en español: siempre gratis y sin llave (respaldo) */
-export async function searchWiki(q, n = 4){
-  const base = process.env.POOL_WIKI_URL || 'https://es.wikipedia.org';
+export async function searchWiki(q, n = 4, lang = 'es'){
+  const base = process.env.POOL_WIKI_URL || 'https://' + (lang === 'en' ? 'en' : 'es') + '.wikipedia.org';
   const r = await fetch(base + '/w/api.php?action=query&list=search&format=json&utf8=1&srlimit=' + n + '&srsearch=' + encodeURIComponent(q), { headers:{ 'user-agent':'SymphorIA/2.1 (https://synthz-style.vercel.app)' }, signal:AbortSignal.timeout(10000) });
   if (!r.ok) return [];
   const d = await r.json().catch(() => ({}));
   return ((d.query && d.query.search) || []).map(x => ({ t:String(x.title), u:base + '/wiki/' + encodeURIComponent(String(x.title).replace(/ /g, '_')), s:String(x.snippet || '').replace(/<[^>]+>/g, '').replace(/&quot;/g, '"').replace(/&amp;/g, '&').slice(0, 500) }));
+}
+/* v3.8 · respaldos gratis y sin llave cuando Tavily/Exa no responden: los feeds RSS públicos de Bing (web y noticias) */
+const RSS_UA = { 'user-agent':'Mozilla/5.0 (compatible; SymphorIA/3.8; +https://symphoria.pages.dev)', accept:'application/rss+xml,application/xml,text/xml;q=0.9,*/*;q=0.5' };
+const unx = t => String(t || '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').replace(/<[^>]+>/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&nbsp;/g, ' ').replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(+d)).replace(/&amp;/g, '&').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+export async function searchRss(q, n = 6, news = false, lang = 'es'){
+  const mkt = lang === 'en' ? 'en-US' : 'es-CO';
+  const url = 'https://www.bing.com/' + (news ? 'news/search' : 'search') + '?format=rss&setlang=' + lang + '&mkt=' + mkt + '&q=' + encodeURIComponent(q);
+  const r = await fetch(url, { headers:RSS_UA, signal:AbortSignal.timeout(9000) });
+  if (!r.ok) throw Object.assign(new Error('rss ' + r.status), { status:r.status });
+  const x = await r.text(), out = [];
+  for (const m of x.matchAll(/<item>([\s\S]*?)<\/item>/g)){
+    const it = m[1], g = tag => { const k = new RegExp('<' + tag + '[^>]*>([\\s\\S]*?)</' + tag + '>').exec(it); return k ? unx(k[1]) : ''; };
+    let u = g('link'); const real = /[?&]url=([^&]+)/.exec(u); if (real) try{ u = decodeURIComponent(real[1]); }catch(e){}
+    if (!/^https?:\/\//.test(u)) continue;
+    const d = g('pubDate');
+    out.push({ t:g('title'), u, s:(d ? '(' + d.replace(/ \d\d:\d\d:\d\d.*$/, '') + ') ' : '') + g('description').slice(0, 600) });
+    if (out.length >= n) break;
+  }
+  return out;
+}
+/* leer la página de verdad (no solo el resumen del buscador): el texto principal, cerca de lo que buscaste */
+const PRIV = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|0\.|\[?::1\]?|\[?f[cd][0-9a-f]{2}:|metadata\.)/i;
+export async function readPage(u, q, max = 2600){
+  let url; try{ url = new URL(u); }catch(e){ return ''; }
+  if (!/^https?:$/.test(url.protocol) || PRIV.test(url.hostname) || /^\d+\.\d+\.\d+\.\d+$/.test(url.hostname) || url.port && !['80', '443'].includes(url.port)) return '';
+  const r = await fetch(url.href, { headers:{ 'user-agent':RSS_UA['user-agent'], accept:'text/html,application/xhtml+xml,text/plain;q=0.8', 'accept-language':'es,en;q=0.8' }, redirect:'follow', signal:AbortSignal.timeout(6000) });
+  if (!r.ok || !/text\/html|text\/plain|xhtml/.test(r.headers.get('content-type') || '')) return '';
+  const rd = r.body.getReader(), parts = []; let n = 0;
+  while (n < 600000){ const { done, value } = await rd.read(); if (done) break; parts.push(value); n += value.length; }
+  rd.cancel().catch(() => {});
+  let h = new TextDecoder().decode(Buffer.concat(parts.map(p => Buffer.from(p))));
+  h = h.replace(/<(script|style|noscript|svg|nav|footer|header|aside|form|iframe|template)\b[\s\S]*?<\/\1>/gi, ' ').replace(/<!--[\s\S]*?-->/g, ' ');
+  const main = /<(article|main)\b[\s\S]*?<\/\1>/i.exec(h); if (main && main[0].length > 1500) h = main[0];
+  const paras = [...h.matchAll(/<(p|li|h[1-4]|td|blockquote|pre)\b[^>]*>([\s\S]*?)<\/\1>/gi)].map(m => unx(m[2])).filter(t => t.length > 40);
+  const words = String(q || '').toLowerCase().split(/[^\p{L}\d]+/u).filter(w => w.length > 3);
+  const sc = t => { const l = t.toLowerCase(); return words.reduce((k, w) => k + (l.includes(w) ? 1 : 0), 0) + (/\d/.test(t) ? .3 : 0); };
+  const best = new Set(paras.map((t, i) => [sc(t), i]).sort((a, b) => b[0] - a[0]).slice(0, 14).map(x => x[1]));
+  let out = ''; for (let i = 0; i < paras.length && out.length < max; i++) if (best.has(i)) out += paras[i] + '\n';
+  return out.slice(0, max).trim();
 }
 export async function checkKey(k){
   if (SEARCH[k.prov]){
