@@ -23,7 +23,7 @@ const CFG = (() => {
      A quien v2.3 le apagó el vidrio y el fondo sola (lite:1), se le devuelven una vez. */
   if (phone && fresh) c = Object.assign(cfgPreset('visual'), { perf:'visual', cursor:false, lite:2 });
   else if (phone && c.lite !== 2){ c = Object.assign({}, c, cfgPreset('visual'), { perf:'visual', cursor:false, lite:2 }); try{ localStorage.setItem('synthz:cfg', JSON.stringify(Object.assign({ v:2 }, c))); }catch(e){} }
-  return Object.assign({ v:2, perf:'visual', intro:'session', sound:true }, cfgPreset(c.perf), c);
+  return Object.assign({ v:2, perf:'visual', intro:'session', sound:true, dictado:true }, cfgPreset(c.perf), c);   /* v3.9.1 · el dictado viene encendido (Sammuel, 3 nov) */
 })();
 const PERF = CFG.perf === 'speed';
 /* v3.1 · manda Ajustes (Animaciones, Vidrio, Modo rápido), no el sistema: con los «efectos visuales» de Windows apagados,
@@ -37,8 +37,8 @@ function cfgClasses(){ const r = document.documentElement; r.classList.toggle('n
   r.classList.toggle('simple', simple); if (simple){ r.classList.add('noglass', 'nobg'); } r.classList.toggle('navleft', chat && CFG.nav === 'left');
   /* v2.9.2 · tamaño de SynthFlow: compacto (por defecto) o normal; el CSS (chat-css 29) lo achica con zoom:var(--ui-z) */
   r.classList.toggle('compact', chat && CFG.size !== 'normal');
-  /* v3.9 · modo dictado (micrófono en la caja de escribir): función nueva, apagada hasta que la persona la encienda en Ajustes */
-  r.classList.toggle('dicta', chat && !!CFG.dictado);
+  /* v3.9 · modo dictado (micrófono en la caja de escribir). v3.9.1 · encendido por defecto (Sammuel, 3 nov); se apaga en Ajustes */
+  r.classList.toggle('dicta', chat && CFG.dictado !== false);
   /* v3.2 · atajos de la lista de chats: ninguno (por defecto), solo Sintéticos, solo Proyectos o los dos; siempre siguen en la barrita de íconos */
   const lk = CFG.links || 'none'; r.classList.toggle('lk-proj', chat && (lk === 'proj' || lk === 'both')); r.classList.toggle('lk-syn', chat && (lk === 'syn' || lk === 'both'));
   if (chat && !simple && THEMES.some(t => t[0] === CFG.theme && !t[3])) r.dataset.theme = CFG.theme; else delete r.dataset.theme; }
@@ -3039,8 +3039,8 @@ const CFG_ROWS = [['cursor', 'Cursor ' + BRAND(), 'El cursor de vidrio con vient
 /* v2.2 · Ajustes con 2 pestañas: «Página» (cómo se ve y se siente) e «IAs y memoria» (cómo te responden y qué recuerdan de ti) */
 const CFG_PAGE = CFG_ROWS.filter(r => r[0] !== 'beginner');
 const CFG_IA = [['beginner', 'Modo principiante', 'Te responden con palabras sencillas, paso a paso y con ejemplos.'], ['autoWeb', 'Buscar en internet cuando haga falta', 'Si preguntas por algo de hoy (precios, noticias, el clima…), la IA busca sola y te muestra sus fuentes.'], ['saver', 'Respuestas cortas', 'Respuestas más breves: gastas menos de tu límite de hoy.'], ['review', 'Revisión de calidad', 'Otra IA revisa la lógica de cada respuesta y la corrige si encuentra errores. Tarda unos segundos más.']];
-/* v3.9 · modo dictado: nuevo, apagado para todos hasta que se enciende aquí (solo en SynthFlow) */
-const CFG_DIC = ['dictado', 'Modo dictado', 'Un micrófono en la caja de escribir: hablas y el texto aparece en vivo para que lo revises antes de enviar.'];
+/* v3.9 · modo dictado (solo en SynthFlow). v3.9.1 · viene encendido para todos; aquí se apaga */
+const CFG_DIC = ['dictado', 'Modo dictado', 'Un micrófono en la caja de escribir: hablas y el texto aparece en vivo, con puntos, comas y signos de pregunta, para que lo revises antes de enviar.'];
 const memSt0 = () => state.mem || (state.mem = { on:true, t:0, items:[] });
 function memTouch(){ const m = memSt0(); m.t = Date.now(); save(); try{ if (ACC.ready) accPush(); }catch(e){} }
 function memAddCore(text){
@@ -3073,7 +3073,7 @@ function memPanel(host){
 const cfgLinks = [];
 function cfgModal(tab){
   if ($('#cfgm')) return;
-  const draft = Object.assign({ autoWeb:true, review:true }, CFG); draft.saver = !!(state.sx && state.sx.saver);
+  const draft = Object.assign({ autoWeb:true, review:true, dictado:true }, CFG); draft.saver = !!(state.sx && state.sx.saver);
   const o = document.createElement('div'); o.id = 'cfgm'; o.className = 'szm';
   const row = ([k, t, s]) => '<div class="cfgrow"><p>' + t + '<small>' + s + '</small></p><button class="cfgsw" type="button" role="switch" data-k="' + k + '" aria-checked="' + !!draft[k] + '" aria-pressed="' + !!draft[k] + '" aria-label="' + t + '"></button></div>';
   const IN = [['always', 'Cada vez'], ['session', 'Una vez por visita'], ['never', 'Nunca']];
