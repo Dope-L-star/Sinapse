@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { CLARITY_PROJECT_ID_DEFAULT, isClarityAllowed } from './lib/clarity-client.mjs';
+import { CLARITY_PROJECT_ID_DEFAULT, isClarityAllowed, clarityModeFromEnv } from './lib/clarity-client.mjs';
 import { isCloudflareAnalyticsAllowed } from './lib/cloudflare-analytics.mjs';
 
 const aqui = path.dirname(fileURLToPath(import.meta.url)), raiz = path.resolve(aqui, '..');
@@ -21,7 +21,8 @@ const clarityBuildAllowed = isClarityAllowed({
   privacyReviewed: process.env.NEXT_PUBLIC_CLARITY_PRIVACY_REVIEWED === 'true',
   projectId: process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID || CLARITY_PROJECT_ID_DEFAULT,
 });
-if (clarityRequested && !clarityBuildAllowed) {
+/* v3.8 · también vale el modo de mapas de calor (NEXT_PUBLIC_CLARITY_HEATMAPS): aviso de cookies simple y página enmascarada */
+if (clarityRequested && !clarityBuildAllowed && clarityModeFromEnv(process.env) !== 'heatmaps') {
   throw new Error('Clarity está solicitado, pero faltan condiciones de release: audiencia 18+, versión adulta real, control de edad validado, privacidad revisada e ID de proyecto válido. No se ha publicado nada.');
 }
 const cfAnalyticsRequested = process.env.NEXT_PUBLIC_CF_WEB_ANALYTICS_ENABLED === 'true';
@@ -35,7 +36,7 @@ if (cfAnalyticsRequested && !cfAnalyticsAllowed) {
 }
 
 /* páginas que ya pasaron a Next.js (app/<nombre>/page.jsx → out/<nombre>.html). Al pasar otra, se agrega aquí. */
-const HECHAS = ['index.html', 'chat.html', 'alias.html', 'ayuda.html', 'offline.html', 'terminos.html', 'privacidad.html', 'pulsem.html'];
+const HECHAS = ['index.html', 'chat.html', 'alias.html', 'ayuda.html', 'offline.html', 'terminos.html', 'privacidad.html', 'pulsem.html', 'gestion.html'];
 const corre = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, stdio: 'inherit' });
 
 // Evita publicar un árbol React desactualizado respecto de las páginas fuente.

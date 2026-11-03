@@ -1,0 +1,12 @@
+/* v3.8 · Uiverse (#5, glider) en las opciones de Ajustes: la píldora elegida se desliza. Ver src/core/14d-v38-glider.js */
+.cfgseg.uvg-on{position:relative;isolation:isolate}
+.cfgseg .uvg{position:absolute;z-index:-1;top:0;left:0;border-radius:12px;pointer-events:none;opacity:0;
+  background:linear-gradient(120deg,rgba(var(--gold-rgb),.26),rgba(var(--wine-rgb),.26));
+  box-shadow:0 0 0 1px rgba(var(--gold-rgb),.75),0 6px 18px -6px rgba(var(--wine-rgb),.7);
+  transition:transform .5s cubic-bezier(.37,1.95,.66,.56),width .35s,height .35s,opacity .2s}
+.cfgseg.uvg-on button[aria-pressed="true"]{background:transparent!important;border-color:transparent!important}
+.cfgseg.uvg-on button{position:relative}
+html.simple .cfgseg .uvg{background:rgba(255,255,255,.06);box-shadow:0 0 0 1px rgba(var(--sacc-rgb,217,160,102),.7)}
+html.noanim .cfgseg .uvg{transition:none}
+@media (prefers-reduced-motion:reduce){.cfgseg .uvg{transition:opacity .2s}}
+html.simple #cfgm .cfgseg.uvg-on button[aria-pressed="true"]{background:transparent!important;border-color:transparent!important}

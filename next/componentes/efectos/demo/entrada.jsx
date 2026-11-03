@@ -3,6 +3,11 @@ import { createRoot } from 'react-dom/client';
 import SaldoOjo from '../SaldoOjo';
 import PensandoMatrix from '../PensandoMatrix';
 import BuscandoRadar from '../BuscandoRadar';
+import LibroBuscando from '../LibroBuscando';
+import GenerandoImagen from '../GenerandoImagen';
+import BlobCarga from '../BlobCarga';
+import ArchivosXYZ from '../ArchivosXYZ';
+import BotonInicio from '../BotonInicio';
 
 const q = new URLSearchParams(location.search), lang = q.get('lang') === 'en' ? 'en' : 'es';
 document.documentElement.lang = lang;
@@ -17,6 +22,16 @@ function Galeria() {
       <PensandoMatrix lang={lang} /><PensandoMatrix lang={lang} ia="Gemini Flash" />
       <h2 style={{ margin: 0 }}>BuscandoRadar</h2>
       <BuscandoRadar lang={lang} /><BuscandoRadar lang={lang} modo="archivo" /><BuscandoRadar lang={lang} modo="analizar" hallazgos={['wikipedia.org', 'bbc.com', 'eltiempo.com']} />
+      <h2 style={{ margin: 0 }}>LibroBuscando</h2>
+      <LibroBuscando lang={lang} /><LibroBuscando lang={lang} consulta={lang === 'en' ? 'weather in Bogotá' : 'clima en Bogotá'} />
+      <h2 style={{ margin: 0 }}>GenerandoImagen</h2>
+      <GenerandoImagen lang={lang} />
+      <h2 style={{ margin: 0 }}>BlobCarga</h2>
+      <BlobCarga lang={lang} />
+      <h2 style={{ margin: 0 }}>ArchivosXYZ</h2>
+      <ArchivosXYZ lang={lang} archivos={[{ nombre: 'index.html' }, { nombre: 'estilos.css' }, { nombre: 'app.js' }]} />
+      <h2 style={{ margin: 0 }}>BotonInicio</h2>
+      <div><BotonInicio lang={lang} /></div>
     </main>
   );
 }

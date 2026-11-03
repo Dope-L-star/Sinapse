@@ -97,8 +97,10 @@ accHooks.push(k => { if (k === 'out') root.classList.remove('signed'); });
 addEventListener('synthz-acc', accSettled); accHooks.push(k => { if (k === 'pull') accSettled(); });
 function szConfirm(title, text, ok, danger, no){
   return new Promise(res => {
-    const o = document.createElement('div'); o.className = 'szm szc';
-    o.innerHTML = '<div class="tcard" role="alertdialog" aria-modal="true" aria-label="' + esc(title) + '"><div class="word">' + zWord('Synth') + '</div><div class="tb"><h3>' + esc(title) + '</h3><p>' + esc(text) + '</p></div><div class="tbtn" style="margin-top:16px"><button class="lnk" type="button" data-close>' + esc(no || 'Cancelar') + '</button><button class="btn sm' + (danger ? ' warn' : '') + '" type="button" data-ok>' + esc(ok || 'Aceptar') + '</button></div></div>';
+    const o = document.createElement('div'); o.className = 'szm szc' + (danger ? ' szbru' : '');
+    /* v3.8 · lo que no se puede deshacer va en una tarjeta brutalista (idea del Uiverse #52): borde grueso, sombra dura y un encabezado «OJO» */
+    const head = danger ? '<div class="bru-h" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2z"/><path d="M12 10v4M12 18h.01"/></svg><span class="notr">' + (lang() === 'en' ? 'CAREFUL' : 'OJO') + '</span><i></i></div>' : '<div class="word">' + zWord('Synth') + '</div>';
+    o.innerHTML = '<div class="tcard" role="alertdialog" aria-modal="true" aria-label="' + esc(title) + '">' + head + '<div class="tb"><h3>' + esc(title) + '</h3><p>' + esc(text) + '</p></div><div class="tbtn" style="margin-top:16px"><button class="lnk" type="button" data-close>' + esc(no || 'Cancelar') + '</button><button class="btn sm' + (danger ? ' warn' : '') + '" type="button" data-ok>' + esc(ok || 'Aceptar') + '</button></div></div>';
     document.body.appendChild(o); requestAnimationFrame(() => o.classList.add('on'));
     const back = document.activeElement; let gone = false;
     const out = v => { if (gone) return; gone = true; removeEventListener('keydown', key, true); o.classList.remove('on'); setTimeout(() => o.remove(), 400); try{ if (back && back.focus) back.focus(); }catch(e){} res(v); };
