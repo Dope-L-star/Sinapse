@@ -372,6 +372,10 @@
     return r;
   };
 
+  /* v3.9 · enrutador: 👍/👎 sobre la IA que eligió para un tipo de trabajo, y lo que ha aprendido (para mostrarlo) */
+  A.feedback = function (cat, model, up) { return post({ action: 'feedback', cat: cat, model: model, up: !!up }); };
+  A.routes = function () { return post({ action: 'rutas' }); };
+
   /* v3.0: opts.synth === false apaga la Síntesis del paso final (por defecto está encendida) */
   A.runStep = async function (plan, stepId, prev, opts) {
     var body = { action: 'step', plan: plan, stepId: stepId, prev: Array.isArray(prev) ? prev : [] };

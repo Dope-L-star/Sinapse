@@ -1,6 +1,6 @@
 'use client';
 /* A.L.I.A.S. · lista de pasos: mover, renombrar y borrar antes de ejecutar; rehacer después. */
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Icono } from './iconos';
 import { Texto } from './Resultado';
 
@@ -27,6 +27,40 @@ function Renombrar({ st, n, t, onDone }) {
     <input ref={ref} type="text" className="ren" data-alias="step-title" maxLength={120} defaultValue={st.title || ''} aria-label={t('rename_label', { n })}
       onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); fin(true); } else if (e.key === 'Escape') fin(false); }}
       onBlur={() => fin(true)} />
+  );
+}
+
+/* v3.9 · enrutador: qué IA hizo el paso y por qué, en palabras simples, con 👍/👎 para que aprenda */
+export function porQue(rt, t) {
+  const cat = t('rt_cat_' + rt.cat);
+  if (rt.why === 'synth') return t('rt_why_synth', { n: (rt.voices || []).length || 2, name: rt.name || 'A.L.I.A.S.' });
+  if (rt.why === 'backup' && rt.first) return t(rt.slow ? 'rt_why_backup_slow' : 'rt_why_backup', { first: rt.first });
+  return t('rt_why_' + (['quality', 'fast', 'learned'].includes(rt.why) ? rt.why : 'quality'), { cat });
+}
+function Ruta({ rt, id, S, t }) {
+  const [, re] = useState(0);
+  const voted = S.voted && S.voted[id];
+  const vote = (up) => {
+    if (voted) return;
+    (S.voted = S.voted || {})[id] = up ? 'up' : 'down'; re((x) => x + 1);
+    try { if (window.ALIAS && window.ALIAS.feedback) window.ALIAS.feedback(rt.cat, rt.model, up); } catch (e) { /* sin voto */ }
+  };
+  return (
+    <div className="sroute" data-alias="route" data-cat={rt.cat}>
+      <span className="sr-ico" aria-hidden="true"><Icono n="route" /></span>
+      <span className="sr-txt">
+        <b>{rt.why === 'synth' ? t('rt_hizo', { name: (rt.voices || []).join(' · ') || rt.name }) : t('rt_hizo', { name: rt.name })}</b>
+        <small>{porQue(rt, t)} · {t('rt_tipo', { cat: t('rt_cat_' + rt.cat) })}</small>
+      </span>
+      {rt.model ? (
+        <span className="sr-vote" role="group" aria-label={t('rt_tipo', { cat: t('rt_cat_' + rt.cat) })}>
+          {voted ? <small className="sr-thx" role="status">{t('rt_gracias')}</small> : <>
+            <button type="button" className="iconbtn" data-alias="route-up" aria-label={t('rt_bien')} title={t('rt_bien')} onClick={() => vote(true)}><Icono n="up_t" /></button>
+            <button type="button" className="iconbtn" data-alias="route-down" aria-label={t('rt_mal')} title={t('rt_mal')} onClick={() => vote(false)}><Icono n="down_t" /></button>
+          </>}
+        </span>
+      ) : null}
+    </div>
   );
 }
 
@@ -59,6 +93,7 @@ export default function Pasos({ S, t, act, focusRef }) {
                 <span className="sst">{t(skipped ? 'st_skipped' : 'st_' + stt)}</span>
               </div>
               {stt === 'error' && S.errors[st.id] ? <div className="serr">{S.errors[st.id]}</div> : null}
+              {r && r.route && r.route.cat && stt === 'done' ? <Ruta rt={r.route} id={st.id} S={S} t={t} /> : null}
               {r && (r.output || '').trim() ? (
                 <details className="sout" open={!!S.open[st.id]} onToggle={(e) => { S.open[st.id] = e.currentTarget.open; }}>
                   <summary>{t('ver_salida')}</summary>

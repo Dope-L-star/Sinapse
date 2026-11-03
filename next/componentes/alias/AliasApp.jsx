@@ -12,7 +12,7 @@
    Los textos siguen en alias-textos.json (ES/EN) y siguen el idioma de todo SymphorIA al instante.
    Se conservan los IDs y los data-alias: las pruebas (t/alias/ui.mjs) manejan la página por ellos. */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Pasos from './Pasos';
+import Pasos, { porQue } from './Pasos';
 import Resultado, { compilar } from './Resultado';
 import { Icono } from './iconos';
 
@@ -77,6 +77,7 @@ export default function AliasApp() {
   const [hist, setHist] = useState([]);
   const [q, setQ] = useState('');
   const [motor, setMotor] = useState(false);
+  const [rutas, setRutas] = useState(null);   /* lo que el enrutador ha aprendido (vista Agentes) */
   const S = useRef(fresh()).current;
   const synthRef = useRef(true); synthRef.current = synthOn;
   const langRef = useRef('es');
@@ -310,6 +311,15 @@ export default function AliasApp() {
     setView('main'); setGoal(m.goal); setHomeMsg(''); setNavOpen(false);
     focusLater(() => goalRef.current); toTop();
   };
+  /* v3.9 · al abrir Agentes se pide lo que el enrutador ha aprendido (qué IA va mejor para cada tipo de trabajo) */
+  useEffect(() => {
+    if (view !== 'agents' || !motor) return undefined;
+    let alive = true; setRutas((r) => (r && r.ok ? r : { loading: true }));
+    Promise.resolve(window.ALIAS && window.ALIAS.routes ? window.ALIAS.routes() : { ok: false })
+      .then((r) => { if (alive) setRutas(r && r.ok ? r : { ok: false }); }, () => { if (alive) setRutas({ ok: false }); });
+    return () => { alive = false; };
+  }, [view, motor]);
+
   /* N = nueva misión (fuera de los campos de texto) · Escape cierra el menú del celular */
   useEffect(() => {
     const key = (e) => {
@@ -450,6 +460,32 @@ export default function AliasApp() {
                   </article>
                 ))}
               </div>
+
+              <section className="am-panel am-learn" aria-labelledby="rtTitle" data-alias="routes">
+                <div className="am-sechead"><div><h2 id="rtTitle"><Icono n="route" /> {t('rt_titulo')}</h2><p>{t('rt_intro')}</p></div></div>
+                {!rutas || rutas.loading ? <p className="am-empty sm">{t('rt_cargando')}</p>
+                  : !rutas.ok ? <p className="am-empty sm">{t('rt_error')}</p> : <>
+                    <p className="am-ltoday"><span className="am-live" aria-hidden="true" /> {t('rt_hoy', { ok: rutas.today ? rutas.today.ok : 0, fail: rutas.today ? rutas.today.fail : 0 })}</p>
+                    <div className="am-lgrid">
+                      {['code', 'write', 'reason', 'summary', 'translate', 'data', 'plan'].map((c) => {
+                        const rows = (rutas.cats && rutas.cats[c]) || [];
+                        return (
+                          <div className="am-lcat" key={c}>
+                            <b>{t('rt_cat_' + c)}</b>
+                            {rows.length ? <ol>{rows.map((x, i) => (
+                              <li key={x.id} className={i === 0 ? 'first' : ''}>
+                                <span className="nm">{x.name}<small>{x.prov}</small></span>
+                                <span className="st">{t('rt_fila', { rate: Math.round(x.rate * 100), s: (x.ms / 1000).toFixed(1), n: x.n })}{x.up || x.down ? ' · 👍 ' + x.up + ' · 👎 ' + x.down : ''}</span>
+                                <span className="bar" aria-hidden="true"><i style={{ width: Math.round(x.rate * 100) + '%' }} /></span>
+                              </li>
+                            ))}</ol> : <p className="am-lnone">{t('rt_sin_tipo')}</p>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {!Object.values(rutas.cats || {}).some((r) => r && r.length) ? <p className="am-empty sm">{t('rt_vacio')}</p> : null}
+                  </>}
+              </section>
             </section>
           ) : !S.plan ? (
             <section id="vHome" className="am-view" aria-labelledby="homeTitle">
@@ -529,6 +565,7 @@ export default function AliasApp() {
                 <div className="am-sumL">
                   <Pill kind={pillKind}>{t('pill_' + p)}</Pill>
                   <p className="goal"><b>{t('plan_obj')}</b> <span id="planGoal">{S.goal}</span></p>
+                  {S.plan.route && S.plan.route.name ? <p className="am-proute" title={porQue(S.plan.route, t)}><Icono n="route" /> {t('rt_plan', { name: S.plan.route.name })}</p> : null}
                 </div>
                 <div className="am-sprog">
                   <strong>{pct}%</strong><span>{t('progreso')}</span>
@@ -599,10 +636,11 @@ export default function AliasApp() {
                   <div className="am-nodes">
                     {planTools.map((k) => {
                       const mine = S.plan.steps.filter((s) => s.tool === k), work = curTool === k, fin = mine.every((s) => isFinished(S, s.id));
+                      const usedBy = mine.map((s) => S.results[s.id] && S.results[s.id].route && S.results[s.id].route.name).filter(Boolean).pop();
                       return (
                         <div key={k} className={'am-node' + (work ? ' on' : '') + (fin ? ' fin' : '')}>
                           <span className={'am-ico ' + AG_COLOR[k]} aria-hidden="true"><Icono n={k} /></span>
-                          <span className="am-ncopy"><b>{t('ag_' + k + '_n')}</b><small>{work ? t('trabajando') : (mine.length === 1 ? t('pasos_1') : t('pasos_cnt', { n: mine.length }))}</small></span>
+                          <span className="am-ncopy"><b>{t('ag_' + k + '_n')}</b><small>{work ? t('trabajando') : (mine.length === 1 ? t('pasos_1') : t('pasos_cnt', { n: mine.length }))}{usedBy && !work ? ' · ' + t('rt_usa', { name: usedBy }) : ''}</small></span>
                           {fin ? <span className="am-nok" aria-hidden="true"><Icono n="check" /></span> : null}
                         </div>
                       );
