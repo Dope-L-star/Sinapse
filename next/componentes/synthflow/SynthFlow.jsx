@@ -11,6 +11,7 @@ import Selector from './Selector';
 import PuenteEfectos from './PuenteEfectos';
 import IaCaida from './IaCaida';
 import VistaWeb from './VistaWeb';
+import LetreroAlfa from './LetreroAlfa';
 
 export default function SynthFlow(){
   return (
@@ -33,6 +34,7 @@ export default function SynthFlow(){
       <PuenteEfectos />
       <IaCaida />
       <VistaWeb />
+      <LetreroAlfa />
     </>
   );
 }
