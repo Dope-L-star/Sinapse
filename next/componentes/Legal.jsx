@@ -15,7 +15,7 @@ export default function Legal({ actual, titulo, bajada, tituloEn, bajadaEn, en, 
           <button type="button" id="ayLang" className="aylang">English</button>
         </nav>
       </header>
-      <main>
+      <main data-mv-no="">
         <div lang="es">
           <h1>{titulo}</h1>
           <p className="sub">{bajada}</p>

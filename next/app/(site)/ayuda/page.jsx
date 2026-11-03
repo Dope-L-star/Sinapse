@@ -9,5 +9,5 @@ export const metadata = {
 };
 
 export default function AyudaPage() {
-  return <LegacyPage page="ayuda" tree={reactTree.nodes} inlineStyle={inlineStyle} stylesheets={['movimiento.css']} scripts={['ayuda.js', 'movimiento.js']} />;
+  return <LegacyPage page="ayuda" tree={reactTree.nodes} inlineStyle={inlineStyle} stylesheets={['movimiento.css', 'apple.css']} scripts={['ayuda.js', 'movimiento.js', 'apple.js']} />;
 }

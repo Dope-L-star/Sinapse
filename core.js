@@ -3106,7 +3106,7 @@ function cfgModal(tab){
     + '<div class="cfglbl">Idioma · Language</div><div class="cfgseg notr" id="cfgLang">' + LANGS.map(([id, nm]) => '<button type="button" data-lang="' + id + '" lang="' + id + '" aria-pressed="' + (lang() === id) + '">' + nm + '</button>').join('') + '</div>'
     + '<div class="cfglbl">Tamaño de SynthFlow</div><div class="cfgseg" id="cfgSz"><button type="button" data-sz="compact" aria-pressed="' + (draft.size !== 'normal') + '">Compacto</button><button type="button" data-sz="normal" aria-pressed="' + (draft.size === 'normal') + '">Normal</button></div><p class="cnote">Compacto: todo un poco más pequeño, para ver más chat en la pantalla. Normal: el tamaño grande de antes.</p>'
     /* v3.7 · «Atajos en tus chats» salió: la barra nueva siempre muestra Crear, Proyectos y Sintéticos arriba de tus chats */
-    + '<div class="cfglbl">Color de SynthFlow</div><div class="cfgth" id="cfgTh">' + THEMES.map(([id, nm, c1, lock, c2]) => '<button type="button" data-th="' + id + '" aria-pressed="' + ((draft.theme || 'synthz') === id) + '"' + (lock ? ' disabled aria-disabled="true"' : '') + ' style="--t1:' + c1 + ';--t2:' + c2 + '"><i></i><span>' + esc(nm) + '</span>' + (lock ? '<em>Pronto</em>' : '') + '</button>').join('') + '</div><p class="cnote" id="cfgThN"></p>'
+    + '<div class="cfglbl">Color de SynthFlow</div><div class="cfgth" id="cfgTh">' + THEMES.map(([id, nm, c1, lock, c2]) => '<button type="button" data-th="' + id + '" aria-pressed="' + ((draft.theme || 'synthz') === id) + '"' + (lock ? ' aria-disabled="true" data-lock="1"' : '') + ' style="--t1:' + c1 + ';--t2:' + c2 + '"><i></i><span>' + esc(nm) + '</span>' + (lock ? '<em>Pronto</em>' : '') + '</button>').join('') + '</div><p class="cnote" id="cfgThN"></p>'
     + (matchMedia('(pointer:coarse), (max-width:820px)').matches ? '<div class="cfglbl">Barra del celular</div><div class="cfgseg" id="cfgNav"><button type="button" data-nav="bottom" aria-pressed="' + (draft.nav !== 'left') + '">Abajo</button><button type="button" data-nav="left" aria-pressed="' + (draft.nav === 'left') + '">A la izquierda</button></div><p class="cnote">A la izquierda: la barra se esconde y la abres con el botón ☰ de arriba.</p>' : '')
     + '<div class="cfglbl">Detalles</div><div id="cfgRows">' + CFG_PAGE.map(row).join('') + '</div>'
     + '<div class="cfglbl">Intro de la página</div><div class="cfgseg" id="cfgIn">' + IN.map(([v, l]) => '<button type="button" data-in="' + v + '" aria-pressed="' + (draft.intro === v) + '">' + l + '</button>').join('') + '</div><p class="cnote">La animación al entrar al chat siempre se ve.</p>'
@@ -3131,13 +3131,14 @@ function cfgModal(tab){
   $$('[data-lang]', o).forEach(b => b.addEventListener('click', () => { setLang(b.dataset.lang); $$('[data-lang]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));   /* el idioma cambia al instante, sin «Guardar» */
   $$('[data-lk2]', o).forEach(b => b.addEventListener('click', () => { draft.links = b.dataset.lk2; $$('[data-lk2]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
   $$('[data-sz]', o).forEach(b => b.addEventListener('click', () => { draft.size = b.dataset.sz; $$('[data-sz]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
-  $$('[data-th]', o).forEach(b => b.addEventListener('click', () => { if (b.disabled) return; draft.theme = b.dataset.th; $$('[data-th]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+  $$('[data-th]', o).forEach(b => b.addEventListener('click', () => { if (b.dataset.lock) return; draft.theme = b.dataset.th; $$('[data-th]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
   $$('[data-nav]', o).forEach(b => b.addEventListener('click', () => { draft.nav = b.dataset.nav; $$('[data-nav]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
   const tabs = $('.cfgtabs', o), pill = $('.pill', tabs);
   const show = k => { $$('[role=tab]', tabs).forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === k))); $$('.cfgpane', o).forEach(p => { p.hidden = p.dataset.pane !== k; }); const b = $('[data-tab="' + k + '"]', tabs); if (b && pill){ pill.style.width = b.offsetWidth + 'px'; pill.style.transform = 'translateX(' + (b.offsetLeft - 4) + 'px)'; } $('.cfgbody', o).scrollTop = 0; };
   tabs.addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) show(b.dataset.tab); });
   requestAnimationFrame(() => show(ia ? 'ia' : 'page'));
-  try{ cfgSideMenu(o); }catch(e){}   /* v3.7 · menú lateral (core 14b) */
+  try{ cfgSideMenu(o); }catch(e){}
+  try{ cfgThemePreview(o, draft); }catch(e){}   /* v3.8 · vista previa de temas (core 14c + React VistaTemas) */   /* v3.7 · menú lateral (core 14b) */
   /* v3.7 · con Animaciones apagadas no hay intro: se dice en vez de dejar que parezca que no funciona */
   const inNote = () => { const n = $('#cfgIn + .cnote', o); if (n) n.textContent = draft.anim === false ? 'Con «Animaciones» apagadas no hay intro: enciéndelas para verla.' : 'La animación al entrar al chat siempre se ve.'; };
   inNote(); $$('.cfgsw[data-k="anim"]', o).forEach(b => b.addEventListener('click', inNote));
@@ -3238,6 +3239,66 @@ function cfgSideMenu(o){
   body.addEventListener('scroll', () => requestAnimationFrame(follow), { passive:true });
   tabs.addEventListener('click', () => setTimeout(follow, 60));
   setTimeout(follow, 80);
+}
+/* ===== v3.8 · Vista previa de temas en Ajustes
+   Antes de tocar «Guardar» ya ves cómo queda: una ventanita de SynthFlow (componente React VistaTemas, montado por
+   next/componentes/ajustes/PuenteVistaTemas.jsx) pintada con el tema que señalas o eliges, con tu estilo y tamaño.
+   En SynthFlow, además, la página de atrás cambia de color al instante; si cierras sin guardar, vuelve como estaba.
+   Los temas «Pronto» (Aurora y Oro negro) se pueden mirar, pero no elegir. ===== */
+let vtCur = null;
+function vtSend(){
+  const v = vtCur; if (!v || !v.host.isConnected) return;
+  const id = v.hover || v.draft.theme || 'synthz', T0 = THEMES.find(t => t[0] === id), locked = !!(T0 && T0[3]);
+  const d = { host:v.host, theme:id, ui:v.draft.ui === 'simple' ? 'simple' : 'full', size:v.draft.size === 'normal' ? 'normal' : 'compact', lang:lang(), locked, hovering:!!v.hover && id !== (v.draft.theme || 'synthz') };
+  window.__symphoriaVistaTemas = d;
+  try{ dispatchEvent(new CustomEvent('symphoria:vista-temas', { detail:d })); }catch(e){}
+  /* en vivo detrás de la ventana: solo en SynthFlow, con el estilo SynthFlow y con temas que ya se pueden usar */
+  if (v.chat){
+    const live = v.draft.ui !== 'simple' ? (!locked ? id : (v.draft.theme || 'synthz')) : null;
+    if (live && live !== 'synthz' && THEMES.some(t => t[0] === live && !t[3])) root.dataset.theme = live; else delete root.dataset.theme;
+  }
+}
+onLang(() => vtSend());
+function cfgThemePreview(o, draft){
+  const grid = $('#cfgTh', o); if (!grid || $('#cfgThPrev', o)) return;
+  const host = document.createElement('div'); host.id = 'cfgThPrev'; host.className = 'cfgthprev notr';
+  grid.after(host);
+  vtCur = { o, host, draft, hover:null, chat:!!document.getElementById('composer') || /chat(\.html)?$/.test(location.pathname) };
+  const me = vtCur;
+  $$('[data-th]', grid).forEach(b => {
+    const on = () => { me.hover = b.dataset.th; vtSend(); }, off = () => { if (me.hover === b.dataset.th){ me.hover = null; vtSend(); } };
+    b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') on(); }); b.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') off(); });
+    b.addEventListener('focus', on); b.addEventListener('blur', off);
+    /* el clic de 14 ya guardó el tema en el borrador; uno «Pronto» solo se muestra */
+    b.addEventListener('click', () => { me.hover = b.dataset.lock ? b.dataset.th : null; vtSend(); if (b.dataset.lock) toast(lang() === 'en' ? 'Coming soon: you can look at it, but not choose it yet.' : 'Llega pronto: puedes mirarlo, pero todavía no elegirlo.'); });
+  });
+  $$('[data-ui], [data-sz]', o).forEach(b => b.addEventListener('click', () => setTimeout(vtSend, 0)));
+  /* al cerrar (con o sin guardar) la página vuelve a lo que diga la configuración guardada */
+  const mo = new MutationObserver(() => { if (o.classList.contains('on') && o.isConnected) return; mo.disconnect(); if (vtCur === me) vtCur = null; window.__symphoriaVistaTemas = null; try{ dispatchEvent(new Event('symphoria:vista-temas-fin')); }catch(e){} cfgClasses(); });
+  mo.observe(o, { attributes:true, attributeFilter:['class'] });
+  vtSend();
+}
+/* ===== v3.8 · Uiverse (#5, glider): en las opciones de Ajustes (Estilo, Idioma, Tamaño, Barra, Intro) la elección ya no
+   salta de un botón a otro: una píldora con los colores del tema se desliza hasta la que tocas. Los botones siguen siendo
+   los mismos (aria-pressed), así que nada cambia para el teclado ni para los lectores de pantalla.
+   Con «Animaciones» apagadas la píldora aparece directo en su sitio. ===== */
+{
+  const glide = seg => {
+    let g = seg.querySelector(':scope > .uvg');
+    if (!g){ g = document.createElement('i'); g.className = 'uvg'; g.setAttribute('aria-hidden', 'true'); seg.prepend(g); seg.classList.add('uvg-on'); }
+    const b = seg.querySelector('button[aria-pressed="true"]');
+    if (!b || !b.offsetWidth){ g.style.opacity = '0'; return; }
+    g.style.opacity = '1';
+    g.style.transform = 'translate(' + b.offsetLeft + 'px,' + b.offsetTop + 'px)';
+    g.style.width = b.offsetWidth + 'px'; g.style.height = b.offsetHeight + 'px';
+  };
+  const all = () => document.querySelectorAll('.cfgseg').forEach(glide);
+  let raf = 0; const soon = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; all(); }); };
+  new MutationObserver(ms => { if (ms.some(m => m.type === 'childList' ? [...m.addedNodes].some(n => n.nodeType === 1 && (n.matches('.cfgseg,#cfgm') || n.querySelector('.cfgseg'))) : m.target.closest && m.target.closest('.cfgseg'))) soon(); })
+    .observe(document.documentElement, { childList:true, subtree:true, attributes:true, attributeFilter:['aria-pressed'] });
+  addEventListener('resize', soon, { passive:true });
+  /* las secciones de Ajustes se muestran/ocultan: al volverse visibles se recoloca */
+  document.addEventListener('click', e => { if (e.target.closest && e.target.closest('#cfgm')) setTimeout(soon, 30); }, true);
 }
 /* ---------- respuestas en vivo (streaming) ---------- */
 let ridN = 0;
@@ -3606,8 +3667,10 @@ accHooks.push(k => { if (k === 'out') root.classList.remove('signed'); });
 addEventListener('synthz-acc', accSettled); accHooks.push(k => { if (k === 'pull') accSettled(); });
 function szConfirm(title, text, ok, danger, no){
   return new Promise(res => {
-    const o = document.createElement('div'); o.className = 'szm szc';
-    o.innerHTML = '<div class="tcard" role="alertdialog" aria-modal="true" aria-label="' + esc(title) + '"><div class="word">' + zWord('Synth') + '</div><div class="tb"><h3>' + esc(title) + '</h3><p>' + esc(text) + '</p></div><div class="tbtn" style="margin-top:16px"><button class="lnk" type="button" data-close>' + esc(no || 'Cancelar') + '</button><button class="btn sm' + (danger ? ' warn' : '') + '" type="button" data-ok>' + esc(ok || 'Aceptar') + '</button></div></div>';
+    const o = document.createElement('div'); o.className = 'szm szc' + (danger ? ' szbru' : '');
+    /* v3.8 · lo que no se puede deshacer va en una tarjeta brutalista (idea del Uiverse #52): borde grueso, sombra dura y un encabezado «OJO» */
+    const head = danger ? '<div class="bru-h" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2z"/><path d="M12 10v4M12 18h.01"/></svg><span class="notr">' + (lang() === 'en' ? 'CAREFUL' : 'OJO') + '</span><i></i></div>' : '<div class="word">' + zWord('Synth') + '</div>';
+    o.innerHTML = '<div class="tcard" role="alertdialog" aria-modal="true" aria-label="' + esc(title) + '">' + head + '<div class="tb"><h3>' + esc(title) + '</h3><p>' + esc(text) + '</p></div><div class="tbtn" style="margin-top:16px"><button class="lnk" type="button" data-close>' + esc(no || 'Cancelar') + '</button><button class="btn sm' + (danger ? ' warn' : '') + '" type="button" data-ok>' + esc(ok || 'Aceptar') + '</button></div></div>';
     document.body.appendChild(o); requestAnimationFrame(() => o.classList.add('on'));
     const back = document.activeElement; let gone = false;
     const out = v => { if (gone) return; gone = true; removeEventListener('keydown', key, true); o.classList.remove('on'); setTimeout(() => o.remove(), 400); try{ if (back && back.focus) back.focus(); }catch(e){} res(v); };

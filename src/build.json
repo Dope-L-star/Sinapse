@@ -11,5 +11,7 @@
   "alias.js": "src/alias",
   "movimiento.js": "src/movimiento",
   "movimiento.css": "src/movimiento-css",
-  "synthonia.js": "src/synthonia"
+  "synthonia.js": "src/synthonia",
+  "apple.css": "src/apple-css",
+  "apple.js": "src/apple"
 }

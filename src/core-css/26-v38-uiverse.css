@@ -1,0 +1,45 @@
+/* v3.8 · Recursos de Uiverse que mandó Sammuel (29/10), usados como estilo y no como piezas literales.
+   Colores siempre del tema activo (--gold-rgb / --wine-rgb); Simple usa su acento; «Animaciones» apagadas = quieto. */
+
+/* ── #4 + #34 · interruptores de Ajustes: al encender, el botón suelta un halo de colores (como el checkbox de gagan-gv)
+      y dentro aparece un visto que se dibuja (como el checkbox SVG que se traza). Apagado queda igual que antes. ── */
+:is(.cfgsw,.sxsw){overflow:visible}
+:is(.cfgsw,.sxsw)::after{transition:transform .45s cubic-bezier(.34,1.56,.64,1),box-shadow .5s ease!important}
+:is(.cfgsw,.sxsw)[aria-pressed="true"]::after{
+  box-shadow:-3px -3px 9px -2px rgba(var(--gold-rgb),.85),3px -3px 9px -2px rgba(var(--wine-rgb),.8),
+             3px 3px 9px -2px rgba(var(--gold-rgb),.6),-3px 3px 9px -2px rgba(var(--wine-rgb),.55)}
+:is(.cfgsw,.sxsw)::before{content:"";position:absolute;z-index:1;top:50%;left:3px;width:5px;height:9px;margin:-6px 0 0 7.5px;
+  border:solid rgba(var(--wine-rgb),1);border-width:0 2px 2px 0;transform:translateX(0) rotate(45deg);
+  clip-path:inset(0 0 100% 0);opacity:0;transition:transform .45s cubic-bezier(.34,1.56,.64,1),clip-path .3s ease,opacity .2s;pointer-events:none}
+:is(.cfgsw,.sxsw)[aria-pressed="true"]::before{transform:translateX(18px) rotate(45deg);clip-path:inset(0 0 0 0);opacity:1;transition-delay:0s,.18s,.1s}
+:is(.cfgsw,.sxsw):active::after{width:24px!important}
+:is(.cfgsw,.sxsw)[aria-pressed="true"]:active::after{transform:translateX(14px)}
+html.simple :is(.cfgsw,.sxsw)[aria-pressed="true"]::after{box-shadow:none}
+html.simple :is(.cfgsw,.sxsw)::before{border-color:var(--sacc,#d9a066)}
+/* los interruptores que ya traen algo dentro (memoria) no llevan el visto */
+:is(.cfgsw,.sxsw):has(> i)::before{display:none}
+
+/* ── 000748 · «Color de SynthFlow» como un dock: el color que tocas crece y sus vecinos lo acompañan ── */
+@media (hover:hover) and (pointer:fine){
+  .cfgth button i{transition:transform .5s cubic-bezier(.175,.885,.32,1.1),box-shadow .5s}
+  .cfgth button:not([data-lock]):hover i{transform:translateY(-8px) scale(1.45);box-shadow:0 0 0 3px rgba(0,0,0,.35),0 12px 26px -8px var(--t1)}
+  .cfgth button:not([data-lock]):hover + button i,.cfgth button:has(+ button:not([data-lock]):hover) i{transform:translateY(-3px) scale(1.2)}
+  .cfgth button:not([data-lock]):hover + button + button i,.cfgth button:has(+ button + button:not([data-lock]):hover) i{transform:scale(1.08)}
+  .cfgth button:active i{transform:scale(1.08)!important}
+}
+.cfgth button[aria-pressed="true"] i{animation:uvPick .7s cubic-bezier(.34,1.56,.64,1)}
+@keyframes uvPick{0%{transform:scale(.8)}60%{transform:scale(1.18)}100%{transform:none}}
+
+/* ── #9 · el brillito diagonal que cruza los botones al pasar el mouse (elijahgummer) + el anillo separado del botón ── */
+:is(.btn:not(.ghost),.szm .tbtn .btn,.cfgfoot .btn){position:relative;overflow:hidden;isolation:isolate}
+:is(.btn:not(.ghost),.szm .tbtn .btn,.cfgfoot .btn)::after{content:"";position:absolute;z-index:-1;top:-60%;right:-30px;width:28px;height:220%;
+  background:linear-gradient(90deg,transparent,rgba(var(--gold-rgb),.55),transparent);transform:translateX(0) rotate(14deg);opacity:0;
+  transition:transform 1s cubic-bezier(.22,1,.36,1),opacity .3s;pointer-events:none}
+:is(.btn:not(.ghost),.szm .tbtn .btn,.cfgfoot .btn):hover::after{transform:translateX(calc(-1 * var(--uvw,260px))) rotate(14deg);opacity:1}
+:is(.btn:not(.ghost),.szm .tbtn .btn,.cfgfoot .btn):focus-visible{box-shadow:0 0 0 2px var(--bg,#0b0a10),0 0 0 4px rgba(var(--gold-rgb),.8)}
+html.simple :is(.btn:not(.ghost),.cfgfoot .btn)::after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent)}
+
+/* sin animaciones: todo queda en su sitio */
+html.noanim :is(.cfgsw,.sxsw)::after,html.noanim :is(.cfgsw,.sxsw)::before,html.noanim .cfgth button i{transition:none!important;animation:none!important}
+html.noanim :is(.btn,.szm .tbtn .btn,.cfgfoot .btn)::after{display:none}
+@media (prefers-reduced-motion:reduce){.cfgth button i{animation:none!important}:is(.btn,.cfgfoot .btn)::after{display:none}}

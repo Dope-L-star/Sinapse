@@ -1,5 +1,5 @@
 /* Next.js en modo export estático. Este segundo guard también cubre variables cargadas desde .env.* por Next. */
-import { CLARITY_PROJECT_ID_DEFAULT, isClarityAllowed } from './lib/clarity-client.mjs';
+import { CLARITY_PROJECT_ID_DEFAULT, isClarityAllowed, clarityModeFromEnv } from './lib/clarity-client.mjs';
 import { isCloudflareAnalyticsAllowed } from './lib/cloudflare-analytics.mjs';
 
 const clarityRequested = process.env.NEXT_PUBLIC_CLARITY_ENABLED === 'true';
@@ -11,7 +11,8 @@ const clarityBuildAllowed = isClarityAllowed({
   privacyReviewed: process.env.NEXT_PUBLIC_CLARITY_PRIVACY_REVIEWED === 'true',
   projectId: process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID || CLARITY_PROJECT_ID_DEFAULT,
 });
-if (clarityRequested && !clarityBuildAllowed) {
+/* v3.8 · también vale el modo de mapas de calor (NEXT_PUBLIC_CLARITY_HEATMAPS): aviso de cookies simple y página enmascarada */
+if (clarityRequested && !clarityBuildAllowed && clarityModeFromEnv(process.env) !== 'heatmaps') {
   throw new Error('Build bloqueado: Microsoft Clarity requiere release solo 18+, edición adulta, control de edad validado, privacidad revisada e ID válido.');
 }
 const cfAnalyticsRequested = process.env.NEXT_PUBLIC_CF_WEB_ANALYTICS_ENABLED === 'true';

@@ -45,3 +45,12 @@
 @keyframes clarity-panel-in{from{opacity:0;translate:0 10px;scale:.985}to{opacity:1;translate:0 0;scale:1}}
 @media(max-width:520px){.clarity-consent{left:10px;right:10px;bottom:10px;width:auto;padding:19px;border-radius:20px}.clarity-consent__actions{display:grid;grid-template-columns:1fr}.clarity-consent__actions button{width:100%}}
 @media(prefers-reduced-motion:reduce){.clarity-consent{animation:none}.clarity-consent__actions button{transition:none}.clarity-consent__actions button:hover{transform:none}}
+/* v3.8 · «Aceptar cookies» con el halo de colores que gira (Uiverse · M4rco592) */
+.clarity-consent__accept{position:relative;isolation:isolate;overflow:visible}
+.clarity-consent__accept::before{content:"";position:absolute;inset:-3px;z-index:-1;border-radius:15px;padding:2px;background:conic-gradient(from var(--cc-a,0deg),#9cff00,#3de0ff,#7b3ff2,#ff3d9a,#feca57,#9cff00);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;filter:blur(1px);opacity:.75;animation:ccSpin 4s linear infinite}
+.clarity-consent__accept::after{content:"";position:absolute;inset:-6px;z-index:-2;border-radius:18px;background:conic-gradient(from var(--cc-a,0deg),#9cff00,#3de0ff,#7b3ff2,#ff3d9a,#feca57,#9cff00);filter:blur(12px);opacity:.28;animation:ccSpin 4s linear infinite;transition:opacity .3s}
+.clarity-consent__accept:hover::after{opacity:.55}
+@property --cc-a{syntax:"<angle>";inherits:false;initial-value:0deg}
+@keyframes ccSpin{to{--cc-a:360deg}}
+html.noanim .clarity-consent__accept::before,html.noanim .clarity-consent__accept::after{animation:none}
+@media (prefers-reduced-motion:reduce){.clarity-consent__accept::before,.clarity-consent__accept::after{animation:none}}

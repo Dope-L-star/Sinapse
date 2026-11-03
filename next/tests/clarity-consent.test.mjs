@@ -182,3 +182,41 @@ test('la configuración admite las cinco condiciones completas para una futura b
   });
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
 });
+
+/* v3.8 · modo de mapas de calor (web abierta): aviso de cookies simple, toda la página enmascarada */
+import { clarityModeFromEnv, isClarityHeatmapsAllowed, maskWholePage } from '../lib/clarity-client.mjs';
+
+test('el modo de mapas de calor necesita su propia bandera, privacidad revisada e ID válido', () => {
+  const base = { NEXT_PUBLIC_CLARITY_ENABLED: 'true', NEXT_PUBLIC_CLARITY_HEATMAPS: 'true', NEXT_PUBLIC_CLARITY_PRIVACY_REVIEWED: 'true' };
+  assert.equal(clarityModeFromEnv({}), null);
+  assert.equal(clarityModeFromEnv(base), 'heatmaps');
+  assert.equal(clarityModeFromEnv({ ...base, NEXT_PUBLIC_CLARITY_ENABLED: 'false' }), null);
+  assert.equal(clarityModeFromEnv({ ...base, NEXT_PUBLIC_CLARITY_HEATMAPS: 'false' }), null);
+  assert.equal(clarityModeFromEnv({ ...base, NEXT_PUBLIC_CLARITY_PRIVACY_REVIEWED: 'false' }), null);
+  assert.equal(clarityModeFromEnv({ ...base, NEXT_PUBLIC_CLARITY_PROJECT_ID: 'https://evil.example/a' }), null);
+  assert.equal(isClarityHeatmapsAllowed({ enabled: true, heatmaps: true, privacyReviewed: true, projectId: CLARITY_PROJECT_ID_DEFAULT }), true);
+  const adult = { NEXT_PUBLIC_CLARITY_ENABLED: 'true', NEXT_PUBLIC_CLARITY_AUDIENCE_18_PLUS: 'true', NEXT_PUBLIC_SYMPHORIA_ADULT_ONLY_RELEASE: 'true', NEXT_PUBLIC_SYMPHORIA_AGE_CONTROL_VERIFIED: 'true', NEXT_PUBLIC_CLARITY_PRIVACY_REVIEWED: 'true' };
+  assert.equal(clarityModeFromEnv(adult), 'adult');
+});
+
+test('una respuesta vieja de «menor» se sigue leyendo y nunca cuenta como permiso', () => {
+  const storage = memoryStorage();
+  assert.equal(writeClarityChoice(storage, 'minor'), true);
+  assert.equal(readClarityChoice(storage), 'minor');
+  assert.equal(writeClarityChoice(storage, 'otra-cosa'), false);
+});
+
+test('enmascarar toda la página marca el body para Clarity', () => {
+  const attrs = {};
+  assert.equal(maskWholePage({ body: { setAttribute: (k, v) => { attrs[k] = v; } } }), true);
+  assert.equal(attrs['data-clarity-mask'], 'true');
+  assert.equal(maskWholePage(null), false);
+});
+
+test('en modo mapas de calor el «aceptar» no vence: el aviso sale una sola vez', () => {
+  const storage = memoryStorage();
+  writeClarityChoice(storage, 'granted', 1000);
+  const later = 1000 + CLARITY_GRANT_MAX_AGE_MS * 5;
+  assert.equal(readClarityChoice(storage, later, { maxAgeMs: null }), 'granted');
+  assert.equal(readClarityChoice(storage, later), null);   /* el modo adulto sigue renovando a los 180 días */
+});
