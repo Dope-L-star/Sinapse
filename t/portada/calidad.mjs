@@ -73,7 +73,7 @@ for (const [W, H] of WIDTHS){
   page.on('pageerror', e => errors.push(e.message));
   await page.route(u => !u.href.startsWith(BASE), r => r.abort());   /* nada sale a internet */
   await page.addInitScript(() => {
-    try{ localStorage.setItem('synthz:visited', '1'); localStorage.setItem('synthz:tour', '1'); sessionStorage.setItem('synthz:intro', '1'); }catch(e){}
+    try{ localStorage.setItem('synthz:visited', '1'); localStorage.setItem('synthz:tour', '1'); localStorage.setItem('synthz:portada', JSON.stringify({ v:'nuevo', t:1 }));  /* v4.1: quien ya entró no ve la portada salvo que elija «Soy nuevo» */ sessionStorage.setItem('synthz:intro', '1'); }catch(e){}
     window.__cls = 0; new PerformanceObserver(l => { for (const e of l.getEntries()) if (!e.hadRecentInput) window.__cls += e.value; }).observe({ type:'layout-shift', buffered:true });
   });
   await page.goto(BASE + '/index.html'); await page.waitForTimeout(6500);

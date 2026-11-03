@@ -1475,14 +1475,21 @@ markSeen(); setInterval(markSeen, 5 * 60e3);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') markSeen(); });
 let welcomeShown = false;
 function wasAway(){ let force = false; try{ force = new URLSearchParams(location.search).get('bienvenida') === '1'; }catch(e){} return force || (lastSeen0 > 0 && Date.now() - lastSeen0 >= AWAY_MS); }
+/* v4.1 · esta pantallita es la ÚNICA puerta para volver a ver la portada (index.html):
+   «Soy nuevo» guarda la decisión y abre la portada; «Ya tengo el Flow» la guarda y entra directo a SynthFlow.
+   La decisión queda en este dispositivo y viaja con la cuenta (SZ.portada, core 25m). opts.from = 'logo' cuando
+   alguien que ya entró toca el logo para volver a la portada. */
+const portadaPick = v => { try{ window.SZ.portada.set(v); }catch(e){} };
+function goPortada(){ const href = 'index.html?nuevo=1'; if (window.SZ && SZ.portalBack && !reduce && !root.classList.contains('noanim')) SZ.portalBack(href); else location.href = href; }
 function welcomeBack(opts){
   opts = opts || {};
-  if (welcomeShown || $('#szWelcome')) return null;
+  if (welcomeShown || $('#szWelcome')){ if (opts.from === 'logo' && !$('#szWelcome')) welcomeShown = false; else return null; }
   welcomeShown = true;
+  const onIndex = telPage() === 'index', logo = opts.from === 'logo';
   const who = ACC.ready ? accName() : '';
   const o = document.createElement('div'); o.id = 'szWelcome'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-label', 'Bienvenida');
   o.innerHTML = '<div class="wbface">' + face('flow', 64) + '</div>'
-    + '<div class="wbtx"><b>' + (who ? '¡Hola de nuevo! ¿Sigues siendo tú?' : '¡Hola! ¿Ya conoces ' + (isFlow() ? 'SynthFlow' : 'SymphorIA') + '?') + '</b><p>' + (who ? 'La sesión de <em>' + esc(who) + '</em> está abierta en este dispositivo. Si eres nuevo, te muestro cómo funciona todo.' : 'Pasaron más de 12 horas. Si es tu primera vez, te muestro cómo funciona todo en un minuto.') + '</p></div>'
+    + '<div class="wbtx"><b>' + (logo ? '¿Ya tienes el Flow?' : who ? '¡Hola de nuevo! ¿Sigues siendo tú?' : '¡Hola! ¿Ya conoces ' + (isFlow() ? 'SynthFlow' : 'SymphorIA') + '?') + '</b><p>' + (logo ? 'La portada de SymphorIA es la bienvenida para quien llega nuevo. Si ya sabes usarlo, te quedas aquí; si eres nuevo, te la muestro.' : who ? 'La sesión de <em>' + esc(who) + '</em> está abierta en este dispositivo. Si eres nuevo, te muestro cómo funciona todo.' : 'Pasaron más de 12 horas. Si es tu primera vez, te muestro cómo funciona todo en un minuto.') + '</p></div>'
     + '<div class="wbbtn"><button type="button" class="btn sm flow" data-wb="flow">' + face('flow', 22, 'wbmini') + (who ? 'Ya tengo el Flow · continuar' : 'Ya tengo el Flow') + '</button><button type="button" class="btn sm ghost" data-wb="new">Soy nuevo, quiero aprender</button></div>'
     + '<button type="button" class="wbx" data-wb="x" aria-label="Cerrar">✕</button>';
   document.body.appendChild(o);
@@ -1496,8 +1503,8 @@ function welcomeBack(opts){
   o.addEventListener('click', e => {
     const b = e.target.closest('[data-wb]'); if (!b) return;
     const k = b.dataset.wb; close(k);
-    if (k === 'new' && opts.learn) setTimeout(opts.learn, 420);
-    if (k === 'flow' && opts.flow) opts.flow();
+    if (k === 'new'){ portadaPick('nuevo'); if (!onIndex) setTimeout(goPortada, 420); else if (opts.learn) setTimeout(opts.learn, 420); }
+    if (k === 'flow'){ portadaPick('app'); if (onIndex) setTimeout(() => portalOut('chat.html'), 420); else if (opts.flow) opts.flow(); }
   });
   addEventListener('keydown', function esc1(e){ if (e.key === 'Escape' && o.isConnected){ close('x'); removeEventListener('keydown', esc1); } });
   return o;

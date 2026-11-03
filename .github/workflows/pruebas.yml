@@ -34,9 +34,22 @@ jobs:
         run: node t/humo/prueba-mensajes.mjs
       - name: Calidad de la portada (6 pantallas)
         run: node t/portada/calidad.mjs
+      - name: Portada solo para gente nueva (pantallita «Ya tengo el Flow / Soy nuevo»)
+        run: node t/portada/solo-nuevos.mjs
       - name: Fotos para las IAs y revisión de calidad
         run: node t/humo/ia-fotos.mjs
       - name: Personalidad de SynthonIA
         run: node t/synthonia/personalidad.mjs
       - name: Contrato de A.L.I.A.S.
         run: node t/alias/contrato.mjs
+  obertura:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: escritorio/go.mod
+          cache-dependency-path: escritorio/go.sum
+      - name: Instalador de Windows (pruebas y armado)
+        run: node escritorio/armar.mjs 0.0.1

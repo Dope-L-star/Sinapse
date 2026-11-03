@@ -1162,6 +1162,7 @@ function prefsOut(){
   return { v:2, t:Date.now(), model:state.model, fav:state.fav, cmp:state.cmp, sx:state.sx, pinned:state.pinned || '', threads:state.threads || {}, del:(state.del || []).slice(-300),
     arena:state.arena || {}, survey:state.survey || null, useTeam:state.useTeam || '', battle:!!state.battle, cfg:CFG, mem:state.mem,
     projects:projSlim(), projOf:state.projOf || {}, pjDel:(state.pjDel || []).slice(-200),
+    portada:portadaGet(),
     chatKeys:Object.keys(state.chats).filter(k => Array.isArray(state.chats[k]) && state.chats[k].length) };
 }
 /* v2.6 · proyectos: si los archivos pesan mucho, viaja solo su nombre y el texto se queda en este equipo */
@@ -1205,6 +1206,7 @@ function mergeIn(p, chats){
     if (p.arena && typeof p.arena === 'object'){ state.arena = state.arena || {}; Object.keys(p.arena).forEach(id => { const r = p.arena[id], l = state.arena[id]; if (r && typeof r === 'object' && (!l || (+r.t || 0) > (+l.t || 0))) state.arena[id] = { r:+r.r || 1000, w:+r.w || 0, l:+r.l || 0, t:+r.t || 0 }; }); }
     if (p.survey && typeof p.survey === 'object' && (!state.survey || (+p.survey.t || 0) > (+state.survey.t || 0))) state.survey = p.survey;
     if (p.battle) state.battle = true;
+    if (p.portada) portadaMerge(p.portada);   /* v4.1 · «Ya tengo el Flow / Soy nuevo» viaja con la cuenta */
     if (p.mem && typeof p.mem === 'object'){ const m = cleanMem(p.mem); if ((+m.t || 0) > (+(state.mem && state.mem.t) || 0)) state.mem = m; }
     if (p.ledger && typeof p.ledger === 'object'){ syncLedger(); state.ledger = mergeLedger(state.ledger, cleanLedger(p.ledger)); }
     else if (p.usage && typeof p.usage === 'object' && !state.ledger.ep){ const leg = legacyRow(p.usage); if (Object.keys(leg).length){ syncLedger(); state.ledger = mergeLedger(state.ledger, { ep:state.ledger.ep, dev:{ legacy:leg } }); } }
@@ -4464,6 +4466,36 @@ function plansModal(){
   $('[data-close]', o).addEventListener('click', close); o.addEventListener('pointerdown', e => { if (e.target === o) close(); });
   addEventListener('keydown', function k(e){ if (e.key === 'Escape'){ close(); removeEventListener('keydown', k); } });
 }
+/* ---------- v4.1 · la portada (index.html) es solo para gente nueva ----------
+   Quien ya tiene cuenta o ya entró antes va directo a SynthFlow (eso lo hace el guardián que está
+   en el <head> de index.html, antes de pintar nada). La única forma de volver a ver la portada es la
+   pantallita «Ya tengo el Flow / Soy nuevo»: «Soy nuevo» la abre, «Ya tengo el Flow» entra directo.
+   La decisión vive en este dispositivo (synthz:portada = { v:'app'|'nuevo', t }) y viaja con la cuenta
+   (prefs.portada): gana la más reciente. Si no hay ningún dato, es la primera visita de verdad. */
+const PORTADA_KEY = 'synthz:portada';
+function portadaGet(){
+  try{ const d = JSON.parse(localStorage.getItem(PORTADA_KEY) || 'null'); if (d && (d.v === 'app' || d.v === 'nuevo')) return { v:d.v, t:+d.t || 0 }; }catch(e){}
+  return null;
+}
+function portadaSet(v, t){
+  if (v !== 'app' && v !== 'nuevo') return;
+  try{ localStorage.setItem(PORTADA_KEY, JSON.stringify({ v, t:t || Date.now() })); }catch(e){}
+  if (!t) try{ accSchedule(); }catch(e){}   /* decisión nueva de esta persona: que viaje a su cuenta */
+}
+/* lo que trae la cuenta: solo se acepta si es más nuevo que lo de este dispositivo */
+function portadaMerge(p){
+  if (!p || (p.v !== 'app' && p.v !== 'nuevo')) return;
+  const mine = portadaGet();
+  if (!mine || (+p.t || 0) > mine.t) portadaSet(p.v, +p.t || 1);
+}
+/* ya entró a la app de verdad: SynthFlow lo marca al abrir (sirve aunque nunca haya contestado la pantallita) */
+const PAGE_NOW = (location.pathname.split('/').pop() || 'index.html').replace(/\.html$/, '') || 'index';
+if (PAGE_NOW === 'chat') try{ localStorage.setItem('synthz:entro', String(Date.now())); }catch(e){}
+/* ¿esta persona ya es conocida? (lo mismo que mira el guardián de index.html, para el resto del sitio) */
+function portadaKnown(){
+  const d = portadaGet(); if (d) return d.v === 'app';
+  try{ return !!(localStorage.getItem('synthz:sess') || localStorage.getItem('synthz:entro')); }catch(e){ return false; }
+}
 window.SZ = { I18N, LANGS, t, lang, setLang, onLang, i18nApply, root, $, $$, clamp, fmt, reduce, today, sleepRaw, esc, est, Z_PATH, ICONS, ico, zWord, API, MANUAL, ALL, byId,
   get state(){ return state; }, set state(v){ state = v; normalize(); },
   normalize, cleanUsage, cleanChats, cleanStrMap, save, total, addUsage, resetUsage, estAll, todayEst, todayReq, providerBalance, balanceHtml, splitHtml, syncNote, helpGuide, smoothDetails, szPrompt, swapDir, swapDir, get face(){ return face; }, get FACE_GOOD(){ return FACE_GOOD; }, get randomGoodFace(){ return randomGoodFace; }, get welcomeBack(){ return welcomeBack; }, get wasAway(){ return wasAway; }, accSignOutAll, accClaim, ROLE_NAME, trialGet, trialSet, trialStart, legacyRow, cleanLedger, mergeLedger, DEV, hooks, toast, hydrateIcons, md, countTo,
@@ -4471,6 +4503,7 @@ window.SZ = { I18N, LANGS, t, lang, setLang, onLang, i18nApply, root, $, $$, cla
 /* v3.4 · el «turno» del mensaje actual: la revisión de calidad viaja en el mismo turno (no cuenta como otro mensaje sin cuenta) */
 /* v3.4 · SynthonIA (synthonia.js): lo que necesita de core, y cuándo se carga */
 window.SZ.synReady = synReady;
+window.SZ.portada = { get:portadaGet, set:portadaSet, known:portadaKnown };   /* v4.1 · portada solo para gente nueva */
 window.SZ.__syn = { root, $, $$, clamp, CFG, PERF, reduce, sleepRaw, esc, isFlow, BRAND, zWord, t, onLang, ENERX, trStr, ACC, accHooks, api, accName, toast, pixelGrid, pixelRun, typeIn, SZQ, szCatalog, telPage, telEv, burst, portalOut, portalLock, authBox, cfgModal, plansModal, memAddCore, memList,
   get LANG(){ return LANG; }, get SESS(){ return SESS; }, ready:synArrive };
 /* la portada la trae con su propia etiqueta (SynthonIA es la portada); las demás páginas, cuando ya cargaron */
