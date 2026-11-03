@@ -1890,6 +1890,18 @@ html.noanim .ax-card:nth-child(2){transform:translate(-62px,16px) rotate(-14deg)
 html.noanim .ax-card:nth-child(3){transform:translate(62px,16px) rotate(14deg) scale(.9);z-index:0}
 html.noanim .ax-card:nth-child(1){z-index:3}
 @media (prefers-reduced-motion:reduce){:is(.lb-pg,.gi-ring,.bc-blob,.ax-card,.bi-capas i){animation-duration:30s!important}}
+/* v3.8 · Uiverse (#5, glider) en las opciones de Ajustes: la píldora elegida se desliza. Ver src/core/14d-v38-glider.js */
+.cfgseg.uvg-on{position:relative;isolation:isolate}
+.cfgseg .uvg{position:absolute;z-index:-1;top:0;left:0;border-radius:12px;pointer-events:none;opacity:0;
+  background:linear-gradient(120deg,rgba(var(--gold-rgb),.26),rgba(var(--wine-rgb),.26));
+  box-shadow:0 0 0 1px rgba(var(--gold-rgb),.75),0 6px 18px -6px rgba(var(--wine-rgb),.7);
+  transition:transform .5s cubic-bezier(.37,1.95,.66,.56),width .35s,height .35s,opacity .2s}
+.cfgseg.uvg-on button[aria-pressed="true"]{background:transparent!important;border-color:transparent!important}
+.cfgseg.uvg-on button{position:relative}
+html.simple .cfgseg .uvg{background:rgba(255,255,255,.06);box-shadow:0 0 0 1px rgba(var(--sacc-rgb,217,160,102),.7)}
+html.noanim .cfgseg .uvg{transition:none}
+@media (prefers-reduced-motion:reduce){.cfgseg .uvg{transition:opacity .2s}}
+html.simple #cfgm .cfgseg.uvg-on button[aria-pressed="true"]{background:transparent!important;border-color:transparent!important}
 /* v3.0 · ventana de Planes: cuatro tarjetas de vidrio; la tuya brilla con su color */
 .tcard.plans{width:min(760px,calc(100vw - 24px))}
 .pl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:14px 0 6px}
