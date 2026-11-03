@@ -15,7 +15,16 @@ window.SZFlow = Object.freeze({
   hideBar:() => { const c = $('#chatsClose'); if (c) c.click(); },
   closeSheet:() => { if (isMobile()) closeChatsSheet(); },
   mode:() => mode,
-  accInfo:() => accInfo
+  accInfo:() => accInfo,
+  /* v4.1 · la ventana «Ver funcionando» (next/componentes/synthflow/VistaWeb.jsx) usa la lógica de src/chat/02c-web-proyecto.js */
+  web:Object.freeze({
+    doc:(P, path, o) => webDoc(P, path, o),
+    go:(P, from, href) => webGo(P, from, href),
+    zip:P => webZip(P),
+    load:(f, html) => synLoad(f, html),
+    tokens:(text, ext) => webTokens(text, ext),
+    file:F => cnvDownload({ name:F.path, ext:F.ext, text:F.text })
+  })
 });
 { const w = $('#sNav .snw'); if (w && !w.firstChild) w.innerHTML = SZ.flowWord(); }
 try{ dispatchEvent(new CustomEvent('synthflow-ready')); }catch(e){}
