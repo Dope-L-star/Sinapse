@@ -54,6 +54,14 @@ for (const [nombre, f] of Object.entries(LLAMADAS)) {
   for (let i = 0; i < N; i++) { const r = await f(i); if (r.status >= 500) throw new Error(nombre + ' respondió ' + r.status + ': ' + await r.text()); }
   res.porLlamada[nombre] = +((comandos - c0) / N).toFixed(2);
 }
+/* 1b) una hora de una persona en SynthFlow: entrar + latido cada 15 min (4) + lista de IAs cada 20 min (3), misma persona */
+{
+  const c0 = comandos, yo = 777777;
+  for (const f of Object.values(LLAMADAS)) await f(yo);
+  for (let k = 0; k < 3; k++) await LLAMADAS['POST /api/health (latido)'](yo);
+  for (let k = 0; k < 2; k++) await LLAMADAS['GET /api/ai (lista de IAs)'](yo);
+  res.unaHora = comandos - c0;
+}
 /* 2) muchas visitas a la vez: cada visita hace las llamadas de entrada */
 const pct = (a, p) => a[Math.min(a.length - 1, Math.floor(a.length * p))];
 for (const n of [1, 50, 200, 500]) {
@@ -71,6 +79,7 @@ globalThis.fetch = fetchReal;
 if (process.argv.includes('--json')) console.log(JSON.stringify(res, null, 2));
 else {
   console.log('Comandos de Redis por llamada:'); for (const [k, v] of Object.entries(res.porLlamada)) console.log('  ' + k.padEnd(30) + v);
+  console.log('\nUna hora de una persona en SynthFlow: ' + res.unaHora + ' comandos de Redis');
   console.log('\nVisitas a la vez (cada una: config + health + lista de IAs + latido):');
   for (const r of res.concurrencia) console.log('  ' + String(r.visitas).padStart(4) + ' visitas · ' + r.porSegundo + ' llamadas/s · p50 ' + r.p50ms + ' ms · p95 ' + r.p95ms + ' ms · errores ' + r.errores + ' · Redis por visita ' + r.redisPorVisita);
 }

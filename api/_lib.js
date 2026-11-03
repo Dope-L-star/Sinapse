@@ -106,9 +106,12 @@ export const ipOf = req => String((fromProxy(req) && req.headers.get('x-sz-ip'))
 export const str = (v, max) => String(v == null ? '' : v).replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, max);
 
 /* límite de peticiones: n por ventana de s segundos */
+/* Fase 4 · 1 comando en vez de 2: la fecha de vencimiento se pone solo al abrir la ventana (c = 1) o al pasarse del límite
+   (por si la primera se perdió), no en cada llamada */
 export async function limit(key, n, s){
-  const [c] = await pipe([['INCR', 'rl:' + key], ['EXPIRE', 'rl:' + key, String(s), 'NX']]);
-  if (+c > n) throw Object.assign(new Error('Vas muy rápido. Espera un momento e intenta de nuevo.'), { status:429 });
+  const c = +(await redis('INCR', 'rl:' + key));
+  if (c === 1 || c > n) await redis('EXPIRE', 'rl:' + key, String(s), 'NX').catch(() => {});
+  if (c > n) throw Object.assign(new Error('Vas muy rápido. Espera un momento e intenta de nuevo.'), { status:429 });
 }
 
 /* ---------- cifrado de llaves (AES-256-GCM) ---------- */

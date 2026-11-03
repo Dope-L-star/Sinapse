@@ -1,4 +1,4 @@
-/* ===== pulso de SymphorIA: «sigo aquí» cada 10 min (el equipo cada 3) y avisos cortos cuando algo falla (sin mensajes ni chats)
+/* ===== pulso de SymphorIA: «sigo aquí» cada 15 min (el equipo cada 3) y avisos cortos cuando algo falla (sin mensajes ni chats)
    v3.7 · costo cero: de 3 a 10 minutos para las personas = unas 3 veces menos escrituras en Redis por cada visitante ===== */
 const TEL = { since:Date.now(), msgs:0, errs:0, ai:'', locked:false, last:{} };
 const telPage = () => (location.pathname.split('/').pop() || 'index.html').replace(/\.html$/, '') || 'index';
@@ -10,7 +10,8 @@ function telEv(kind, detail){
   }catch(e){}
 }
 let beatT = 0, beatAt = 0;
-const beatMs = () => { const r = ACC && ACC.user && ACC.user.role; return r && r !== 'user' ? 180000 : 600000; };
+/* Fase 4 (Sammuel dio permiso, 3 nov): las personas cada 15 min (antes 10); el equipo sigue cada 3 */
+const beatMs = () => { const r = ACC && ACC.user && ACC.user.role; return r && r !== 'user' ? 180000 : 900000; };
 async function telBeat(){
   clearTimeout(beatT); beatT = setTimeout(telBeat, beatMs());
   if (document.hidden) return; beatAt = Date.now();
@@ -20,7 +21,8 @@ async function telBeat(){
     if (d.help) try{ dispatchEvent(new CustomEvent('synthz-help-ping')); }catch(e){}
   }catch(e){}
 }
-setTimeout(telBeat, 4000);
+/* el primero a los 30 s (antes 4 s): quien entra y se va enseguida ya no gasta una escritura */
+setTimeout(telBeat, 30000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - beatAt > beatMs() - 10000) telBeat(); });
 addEventListener('error', e => { if (!e || !e.message || /ResizeObserver|Script error/i.test(e.message)) return; telEv('jserror', e.message + ' @' + String(e.filename || '').split('/').pop() + ':' + (e.lineno || 0)); });
 addEventListener('unhandledrejection', e => { const m = e && e.reason && (e.reason.message || String(e.reason)); if (!m || /abort|Detenido|net|Failed to fetch|NetworkError|load failed/i.test(m)) return; telEv('jserror', 'promesa: ' + m); });
