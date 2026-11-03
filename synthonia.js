@@ -1200,9 +1200,9 @@ BOT_FAQ.push(
   { k:'cerrar sesion salir logout sign out',
     a:'Para cerrar sesión abre Tu cuenta (tu foto en la barrita) y toca «Cerrar sesión». También puedes cerrarla en todos tus dispositivos.',
     en:'To sign out open Your account (your photo in the bar) and tap «Sign out». You can also sign out on all your devices.', go:['#accBtn', '[data-tab="me"]'] },
-  { k:'opinion sugerencia beta mejorar reportar problema bug feedback suggestion report',
-    a:'Toca «BETA», junto a mí, y cuéntanos qué mejorar o qué falló. Lo lee el equipo de SymphorIA.',
-    en:'Tap «BETA», next to me, and tell us what to improve or what failed. The SymphorIA team reads it.', go:['.szbeta', '#szBeta', '[data-beta]'] },
+  { k:'opinion sugerencia beta alfa alpha mejorar reportar problema bug feedback suggestion report',
+    a:'Toca «ALFA», junto a mí, y cuéntanos qué mejorar o qué falló. Lo lee el equipo de SymphorIA.',
+    en:'Tap «ALPHA», next to me, and tell us what to improve or what failed. The SymphorIA team reads it.', go:['.szbeta', '#szBeta', '[data-beta]'] },
   { k:'persona humano equipo soporte contacto hablar alguien human support contact person',
     a:'En mi ventanita está «Hablar con el equipo»: un Prime, ZFlow o Symmetrix te responde aquí mismo, aunque cierres la página (necesitas tu cuenta gratis).',
     en:'In my little window there\'s «Talk to the team»: a Prime, ZFlow or Symmetrix answers you right here, even if you close the page (you need your free account).', act:'team', lbl:'Hablar con el equipo' },
@@ -1384,7 +1384,7 @@ function feedbackModal(){
   if ($('#szFb')) return;
   const o = document.createElement('div'); o.id = 'szFb'; o.className = 'szm';
   const C = [['idea', '💡', 'Una idea'], ['error', '🐞', 'Algo falló'], ['confuso', '🤔', 'No entendí algo'], ['otro', '💬', 'Otra cosa']];
-  o.innerHTML = '<div class="tcard" role="dialog" aria-modal="true" aria-label="Cuéntanos qué mejorar"><div class="word">' + zWord('Synth') + '</div><div class="tn">BETA · TU OPINIÓN</div><div class="tb"><h3>Cuéntanos qué mejorar</h3><p>Lo lee el equipo de SymphorIA. No hace falta saber de tecnología: escríbelo como se lo dirías a un amigo.</p></div>'
+  o.innerHTML = '<div class="tcard" role="dialog" aria-modal="true" aria-label="Cuéntanos qué mejorar"><div class="word">' + zWord('Synth') + '</div><div class="tn">ALFA · TU OPINIÓN</div><div class="tb"><h3>Cuéntanos qué mejorar</h3><p>Lo lee el equipo de SymphorIA. No hace falta saber de tecnología: escríbelo como se lo dirías a un amigo.</p></div>'
     + '<div class="fbc" role="radiogroup">' + C.map(([k, e, l], i) => '<button type="button" role="radio" data-c="' + k + '" aria-checked="' + (i === 0) + '"><span>' + e + '</span>' + l + '</button>').join('') + '</div>'
     + '<label class="fbt"><textarea maxlength="1000" rows="4" placeholder="Por ejemplo: no encontré dónde cambiar de IA…"></textarea></label>'
     + '<div class="tbtn" style="margin-top:14px"><button class="lnk" type="button" data-close>Cancelar</button><button class="btn sm" type="button" data-send>Enviar</button></div></div>';
@@ -1402,9 +1402,11 @@ function feedbackModal(){
   });
 }
 const betaTx = k => t(k);   /* fuera de betaMk: adentro «t» es el botón */
-onLang(() => document.querySelectorAll('.beta-tag').forEach(b => { b.title = betaTx('beta.title'); b.dataset.tip = betaTx('beta.tip'); }));
+/* v4.2 · ya estamos en ALFA (Sammuel, 3 nov): la etiqueta dice ALFA en español y ALPHA en inglés */
+const betaAll = () => document.querySelectorAll('.beta-tag').forEach(b => { b.textContent = betaTx('beta.tag'); b.title = betaTx('beta.title'); b.dataset.tip = betaTx('beta.tip'); });
+onLang(betaAll); setTimeout(betaAll, 0); addEventListener('synthflow-ready', betaAll);
 function betaMk(){
-  const t = document.createElement('button'); t.type = 'button'; t.className = 'beta-tag'; t.textContent = 'BETA'; t.title = betaTx('beta.title'); t.dataset.tip = betaTx('beta.tip');
+  const t = document.createElement('button'); t.type = 'button'; t.className = 'beta-tag'; t.textContent = betaTx('beta.tag'); t.title = betaTx('beta.title'); t.dataset.tip = betaTx('beta.tip');
   t.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); feedbackModal(); });
   return t;
 }
@@ -1688,7 +1690,7 @@ addEventListener('pointerdown', e => {
     BOT.sticky = 'triste'; botFace('triste', true); if (BOT.open) botClose();
     const unstick = e => { if (e.target.closest && e.target.closest('#szSay,#szHand,#szBot,.szm')) return; if (e.type === 'pointerdown' && e.pointerType === 'mouse' && e.button) return; BOT.sticky = null; botFace('feliz', true); removeEventListener('keydown', unstick, true); removeEventListener('pointerdown', unstick, true); };
     setTimeout(() => { addEventListener('keydown', unstick, true); addEventListener('pointerdown', unstick, true); }, 2500);
-    if (!t || !HAND){ botBubble('Perdónanos por tu mala experiencia. Toca «BETA» para contarnos cuál fue el problema.', 9000); return; }
+    if (!t || !HAND){ botBubble('Perdónanos por tu mala experiencia. Toca «ALFA» para contarnos cuál fue el problema.', 9000); return; }
     const r0 = BOT.el.getBoundingClientRect(); HAND.show({ x:r0.left + r0.width / 2, y:r0.top + r0.height / 2 });
     await HAND.moveTo(t, { shape:'point' }); HAND.spot(t, 8);
     const k = await HAND.talk('Perdónanos por tu mala experiencia. Aquí está nuestro botón para que nos cuentes cuál fue el problema.', { near:t, mood:'triste', buttons:[{ label:'Contarles' }, { label:'Ahora no', ghost:true }], auto:14000 });

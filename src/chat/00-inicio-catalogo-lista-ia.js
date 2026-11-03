@@ -330,7 +330,7 @@ let ptopAll = false;
 function renderPTopics(){
   const L = ptopAll ? TOPICS : TOPICS.slice(0, 8);
   $('#pTopics').innerHTML = L.map(([k, e, l], i) => '<button type="button" class="tchip sm" data-ptk="' + k + '" aria-pressed="' + (ptopic === k) + '" style="--i:' + i + '">' + esc(l) + '</button>').join('')
-    + '<button type="button" class="tchip sm more" data-ptmore>' + (ptopAll ? 'Menos temas' : '+ ' + (TOPICS.length - 8) + ' temas') + '</button>';
+    + '<button type="button" class="tchip sm more" data-ptmore>' + (ptopAll ? (SZ.lang() === 'en' ? 'Fewer topics' : 'Menos temas') : '+ ' + (TOPICS.length - 8) + (SZ.lang() === 'en' ? ' topics' : ' temas')) + '</button>';
 }
 $('#pTopics').addEventListener('click', e => {
   if (e.target.closest('[data-ptmore]')){ ptopAll = !ptopAll; smoothSwap($('#pTopics'), renderPTopics); return; }

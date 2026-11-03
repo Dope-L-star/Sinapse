@@ -5,7 +5,7 @@
    · La sorpresa: «Ver mi pase» voltea el letrero y aparece tu Pase Alfa holográfico, con un código propio
      (se arma en tu navegador, no se manda a ningún lado), la fecha en que entraste y SynthonIA celebrando contigo.
      El brillo del pase sigue al mouse o a la inclinación del celular. Se puede guardar como imagen.
-   · Vuelve a verse con el chip «ALFA» de abajo a la izquierda (solo en esta sesión) o borrando los datos del sitio.
+   · El botón ALFA (antes BETA), junto a SynthonIA, sigue siendo el de «Cuéntanos qué mejorar».
    Respeta: ES/EN al instante, Simple, «sin animaciones» (html.noanim) y prefers-reduced-motion. Escape cierra. */
 import { useEffect, useRef, useState } from 'react';
 
@@ -18,7 +18,7 @@ const T = {
     perks: ['Pruebas lo nuevo primero', 'Tus ideas llegan directo al equipo', 'Todo gratis, sin letra pequeña'],
     pass: 'Ver mi pase', go: '¡Vamos!', back: 'Volver al letrero', save: 'Guardar mi pase',
     ptitle: 'PASE ALFA', holder: 'Pionera o pionero de SymphorIA', since: 'Entró el', code: 'Código',
-    note: 'Este código es solo tuyo y vive en tu navegador.', close: 'Cerrar', chip: 'Ver el letrero de la Alfa',
+    note: 'Este código es solo tuyo y vive en tu navegador.', close: 'Cerrar',
     saved: 'Listo, tu pase quedó guardado.', wink: '¡Gracias por llegar antes que nadie!'
   },
   en: {
@@ -27,7 +27,7 @@ const T = {
     perks: ['Try new things first', 'Your ideas go straight to the team', 'All free, no fine print'],
     pass: 'See my pass', go: "Let's go!", back: 'Back to the sign', save: 'Save my pass',
     ptitle: 'ALPHA PASS', holder: 'SymphorIA pioneer', since: 'Joined on', code: 'Code',
-    note: 'This code is yours alone and lives in your browser.', close: 'Close', chip: 'See the Alpha sign',
+    note: 'This code is yours alone and lives in your browser.', close: 'Close',
     saved: 'Done, your pass was saved.', wink: 'Thanks for getting here first!'
   }
 };
@@ -83,7 +83,7 @@ function svgDelPase(p, t, l) {
 }
 
 export default function LetreroAlfa() {
-  const [open, setOpen] = useState(false), [on, setOn] = useState(false), [flip, setFlip] = useState(false), [chip, setChip] = useState(false);
+  const [open, setOpen] = useState(false), [on, setOn] = useState(false), [flip, setFlip] = useState(false);
   const [lang, setLang] = useState('es'), [pase, setPase] = useState(null);
   const box = useRef(null), card = useRef(null), last = useRef(null);
   const t = T[lang], word = WORD[lang];
@@ -113,7 +113,7 @@ export default function LetreroAlfa() {
   }
   function close() {
     write(KEY, String(Date.now()));
-    setOn(false); setChip(true);
+    setOn(false);
     setTimeout(() => { setOpen(false); try { last.current && last.current.focus && last.current.focus(); } catch (e) {} }, 420);
   }
 
@@ -158,10 +158,7 @@ export default function LetreroAlfa() {
     if (window.SZ && window.SZ.toast) window.SZ.toast(t.saved);
   }
 
-  const chipBtn = chip && !open ? (
-    <button type="button" className="la-chip notr" onClick={show} aria-label={t.chip} title={t.chip}>ALFA</button>
-  ) : null;
-  if (!open) return chipBtn;
+  if (!open) return null;
 
   return (
     <div className={'la notr' + (on ? ' on' : '')} id="letreroAlfa" onPointerDown={e => { if (e.target === e.currentTarget) close(); }}>
