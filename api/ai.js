@@ -5,7 +5,7 @@
    POST { action:'ping', id | ids } → { status:{ id:'ok'|'busy'|'down' } } (¿esa IA responde ahora? con caché compartida)
    Sin cuenta también funciona: se cuenta por dispositivo y por conexión. */
 import { route, body, json, fail, auth, sha, redis, pipe, today, ipOf, limit, str, roleOf } from './_lib.js';
-import { models, chat, reviewerModel, settings, usedToday, PROV, IMG, pickKeys, markPay, clearPay, outage, classify, searchWith, searchWiki, searchRss, readPage, PAY_RX, baseOf, pingModel } from './_pool.js';
+import { models, chat, reviewerModel, settings, usedToday, quotaKey, PROV, IMG, pickKeys, markPay, clearPay, outage, classify, searchWith, searchWiki, searchRss, readPage, PAY_RX, baseOf, pingModel } from './_pool.js';
 
 /* v2.0 · imágenes con Pollinations: solo con cuenta, con su propio límite diario (no gasta Puter ni tu límite de chat).
    Solo gasta el saldo que ya esté cargado en Pollinations: nunca cobra a una tarjeta. */
@@ -185,6 +185,13 @@ function memo(k, ms, fn){
   return p;
 }
 async function guestUsed(who, ipKey){ const [a, b] = (await pipe([['SCARD', gKey(who)], ['SCARD', gKey(ipKey)]])).map(x => +x || 0); return { used:a, usedIp:b }; }
+/* v4.2 · cuántos mensajes le quedan DE VERDAD a quien no tiene cuenta: los mismos topes con los que el servidor deja o no deja escribir
+   (este dispositivo, esta conexión y la EnerX del día). Antes se mandaba solo el del dispositivo y la página mostraba «quedan 2» con la pila en 0 */
+async function guestView(who, ipKey, dayLimit){
+  const [dev, ip, q, qIp] = (await pipe([['SCARD', gKey(who)], ['SCARD', gKey(ipKey)], ['GET', quotaKey(who)], ['GET', quotaKey(ipKey)]])).map(x => +x || 0);
+  const left = q >= dayLimit || qIp >= dayLimit * 3 ? 0 : Math.max(0, Math.min(GUEST_MAX - dev, GUEST_MAX * 3 - ip));
+  return { used:GUEST_MAX - left, max:GUEST_MAX, left };
+}
 const guestErr = () => Object.assign(new Error('Para seguir FlowIAndo, entra o crea tu cuenta. Es gratis y tienes mucho más límite cada día.'), { status:429, code:'sz_guest' });
 async function whoOf(req){
   const me = await auth(req, true).catch(() => null);
@@ -195,9 +202,9 @@ async function whoOf(req){
 export default route({
   async GET(req){
     const [{ who, ipKey, me }, cat, set] = await Promise.all([whoOf(req), memo('models', 60e3, () => models(false)), memo('settings', 60e3, settings)]);
-    const g = me ? null : await guestUsed(who, ipKey);
+    const g = me ? null : await guestView(who, ipKey, set.dayLimit);
     const alert = await memo('outage', 30e3, () => outage()).catch(() => false), alertN = me && roleOf(me) !== 'user' ? +(await redis('SCARD', 'alerts').catch(() => 0)) || 0 : 0;
-    return json({ provs:cat.provs.map(p => ({ id:p, name:PROV[p].name })), models:cat.list.map(m => ({ id:m.id, name:m.name, prov:m.prov, ctx:m.ctx })), limit:set.dayLimit, used:me && roleOf(me) !== 'user' ? 0 : await usedToday(who), team:!!(me && roleOf(me) !== 'user'), guest:g ? { used:Math.max(g.used, Math.min(g.usedIp, GUEST_MAX)), max:GUEST_MAX } : null, alert, alertN, img:me ? { max:roleOf(me) !== 'user' ? 5000 : set.imgDay, used:+(await redis('GET', 'img:' + me.sub + ':' + today())) || 0 } : null });
+    return json({ provs:cat.provs.map(p => ({ id:p, name:PROV[p].name })), models:cat.list.map(m => ({ id:m.id, name:m.name, prov:m.prov, ctx:m.ctx })), limit:set.dayLimit, used:me && roleOf(me) !== 'user' ? 0 : await usedToday(who), team:!!(me && roleOf(me) !== 'user'), guest:g, alert, alertN, img:me ? { max:roleOf(me) !== 'user' ? 5000 : set.imgDay, used:+(await redis('GET', 'img:' + me.sub + ':' + today())) || 0 } : null });
   },
   async POST(req){
     const b = await body(req, 6_000_000), { who, ipKey, me } = await whoOf(req); let guest = null;
@@ -226,8 +233,9 @@ export default route({
     let gu = '';
     if (guest){
       const tk = 'gt:' + who + ':' + guest.turn;
-      const pr = await pipe([['SADD', gKey(who), guest.turn], ['EXPIRE', gKey(who), '172800'], ['SADD', gKey(ipKey), guest.turn], ['EXPIRE', gKey(ipKey), '172800'], ['INCR', tk], ['EXPIRE', tk, '172800'], ['SCARD', gKey(who)]]);
-      gu = (+pr[6] || 0) + '/' + GUEST_MAX;
+      await pipe([['SADD', gKey(who), guest.turn], ['EXPIRE', gKey(who), '172800'], ['SADD', gKey(ipKey), guest.turn], ['EXPIRE', gKey(ipKey), '172800'], ['INCR', tk], ['EXPIRE', tk, '172800']]);
+      const gv = await guestView(who, ipKey, (await memo('settings', 60e3, settings)).dayLimit);
+      gu = gv.used + '/' + GUEST_MAX + '/' + gv.left;
     }
     if (b.action === 'review') return json(Object.assign(r, { guest:gu }));
     return new Response(r.stream, { status:200, headers:{ 'content-type':'text/event-stream; charset=utf-8', 'cache-control':'no-store',

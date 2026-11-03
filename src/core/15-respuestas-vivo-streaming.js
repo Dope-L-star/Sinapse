@@ -4,7 +4,7 @@ const newRid = () => DEV + ':' + Date.now().toString(36) + ':' + (++ridN);
 /* v3.6 · avisa cada vez que se gasta un mensaje de prueba (sin cuenta o la prueba guiada), con lo que queda de verdad según el servidor */
 function spentNote(before, after){
   if (!(before > after)) return;
-  try{ toast(after > 0 ? t('enerx.spent', { n:after }) : t('enerx.spent0')); }catch(e){}
+  try{ toast(after > 0 ? t(after === 1 ? 'enerx.spent1' : 'enerx.spent', { n:after }) : t('enerx.spent0')); }catch(e){}
 }
 async function askStream(p, messages, opts = {}, onDelta){
   const sig = opts.signal, t0 = performance.now(); let acc = '', ttft = 0, usage = null, fin = '', cut = '', via = '', provX = '', real = '', swap = false;
@@ -95,13 +95,13 @@ async function askStream(p, messages, opts = {}, onDelta){
   }
   if (!res.ok && viaSz){
     clearTimeout(idle); const data = await res.json().catch(() => ({})), code = data.code || '';
-    if (code === 'sz_guest'){ szqSet({ guest:{ max:(SZQ.guest && SZQ.guest.max) || 5, used:(SZQ.guest && SZQ.guest.max) || 5 } }); telEv('limit', code); setTimeout(() => guestGate(), 350); }
+    if (code === 'sz_guest'){ szqSet({ guest:{ max:(SZQ.guest && SZQ.guest.max) || 5, used:(SZQ.guest && SZQ.guest.max) || 5, left:0 } }); telEv('limit', code); setTimeout(() => guestGate(), 350); }
     else if (/^sz_limit/.test(code)){ szqSet({ used:SZQ.limit }); telEv('limit', code); }
     else if (code === 'sz_off'){ szqSet({ on:false }); telEv('noai', 'las IAs conectadas no tienen llaves'); }
     else telEv('error', 'IAs conectadas ' + res.status + ' ' + code);
     throw Object.assign(new Error(typeof data.error === 'string' ? data.error : 'La IA no respondió. Intenta de nuevo en un momento.'), { status:res.status, sz:code || 'sz_err', limit:/^sz_limit/.test(code) || code === 'sz_guest', guest:code === 'sz_guest', raw:code, gone:code === 'sz_model' && model0 !== 'sz:auto', switchTo:code === 'sz_down' || code === 'sz_off' ? 'pu' : null });
   }
-  if (viaSz){ try{ real = decodeURIComponent(res.headers.get('x-sz-name') || ''); }catch(e){ real = ''; } swap = res.headers.get('x-sz-fallback') === '1';   /* v3.7 · la IA elegida no estaba o no ve fotos: respondió otra y se dice */ const u = +res.headers.get('x-sz-used'), l = +res.headers.get('x-sz-limit'), gq = /^(\d+)\/(\d+)$/.exec(res.headers.get('x-sz-guest') || ''); const g0 = SZQ.guest && !signedish() ? guestLeft() : null; if (l) szqSet(Object.assign({ on:true, used:u || 0, limit:l }, gq ? { guest:{ used:+gq[1], max:+gq[2] } } : {})); if (gq && g0 != null) spentNote(g0, guestLeft()); }
+  if (viaSz){ try{ real = decodeURIComponent(res.headers.get('x-sz-name') || ''); }catch(e){ real = ''; } swap = res.headers.get('x-sz-fallback') === '1';   /* v3.7 · la IA elegida no estaba o no ve fotos: respondió otra y se dice */ const u = +res.headers.get('x-sz-used'), l = +res.headers.get('x-sz-limit'), gq = /^(\d+)\/(\d+)(?:\/(\d+))?$/.exec(res.headers.get('x-sz-guest') || ''); const g0 = SZQ.guest && !signedish() ? guestLeft() : null; if (l) szqSet(Object.assign({ on:true, used:u || 0, limit:l }, gq ? { guest:{ used:+gq[1], max:+gq[2], left:gq[3] != null ? +gq[3] : null } } : {})); if (gq && g0 != null) spentNote(g0, guestLeft()); }
   if (viaTrial){ const t = trialGet() || {}; const l = res.headers.get('x-trial-left'), l0 = t.left; if (l != null){ t.left = +l; trialSet(t); if (res.headers.get('x-trial-spent') !== '0' && l0 != null) spentNote(+l0, +l); } via = res.headers.get('x-trial-provider') || ''; }
   if (!res.ok){ clearTimeout(idle); const data = await res.json().catch(() => ({})); if (viaTeam && typeof data.error === 'string') throw Object.assign(new Error('Equipo: ' + data.error), { status:res.status, switchTo:res.status === 429 ? 'pu' : null }); const raw = data && data.error ? String(data.error.message || data.error) : ''; throw Object.assign(new Error(friendly(res.status, data, p)), { status:res.status, raw, gone:modelGone(res.status, raw), switchTo: p.id === 'openrouter' && (res.status === 429 || res.status === 402) ? 'pu' : null }); }
   if (!/event-stream/.test(res.headers.get('content-type') || '') || !res.body){

@@ -510,7 +510,7 @@ function renderNow(){
 function renderFoot(){
   const left = SZ.msgsLeft(), lv = SZ.limLvl();
   /* v3.0 · «Medidor del día» como batería: la pila se descarga mientras chateas y se carga a medianoche */
-  const k = Math.max(0, 1 - SZ.limPct()), g = SZ.isGuestQ(), big = g ? Math.max(0, (SZ.SZQ.guest.max || 5) - (SZ.SZQ.guest.used || 0)) + '' : SZ.battPct() + ' %', of = g ? 'de ' + (SZ.SZQ.guest.max || 5) + ' mensajes de prueba' : SZ.SZQ.team ? 'sin límite · equipo' : k > 0 ? 'se carga a medianoche' : 'sin EnerX · se carga a medianoche';
+  const k = Math.max(0, 1 - SZ.limPct()), g = SZ.isGuestQ(), big = g ? SZ.guestLeft() + '' : SZ.battPct() + ' %', of = g ? SZ.t('enerx.of', { n:SZ.SZQ.guest.max || 5 }) : SZ.SZQ.team ? 'sin límite · equipo' : k > 0 ? 'se carga a medianoche' : 'sin EnerX · se carga a medianoche';
   $('#sideFoot').innerHTML = '<button class="sxfoot lim gauge gbatt ' + lv + '" id="sxBtn" type="button" title="Tu EnerX de hoy (tu batería): toca para ver el detalle">'
     + '<span class="gz-t">EnerX de hoy</span>' + SZ.limRing(40)
     + '<span class="gz-n"><b>' + esc(big) + '</b><small>' + esc(of) + '</small></span><span class="sr">' + esc(SZ.limTxt()) + '</span></button>';
@@ -3127,7 +3127,7 @@ async function qualityAfter(el, chat, msg, mid, r){
   finally{ clearTimeout(tm); ctls.delete(ctl); }
   if (d && d.limit) try{ SZ.szqSet({ used:+d.used || 0, limit:+d.limit }); }catch(e){}
   /* v3.6 · sin cuenta, la revisión cuenta en el mismo mensaje: igual se pinta lo que dice el servidor */
-  if (d && /^\d+\/\d+$/.test(String(d.guest || ''))) try{ const [u, m] = String(d.guest).split('/'); SZ.szqSet({ guest:{ used:+u, max:+m } }); }catch(e){}
+  if (d && /^\d+\/\d+(\/\d+)?$/.test(String(d.guest || ''))) try{ const [u, m, l] = String(d.guest).split('/'); SZ.szqSet({ guest:{ used:+u, max:+m, left:l != null ? +l : null } }); }catch(e){}
   /* si cambiaste de chat, la respuesta se borró o ya llegó otra encima, no se toca nada */
   const alive = chat.includes(msg) && msg.content === draft;
   if (!d || !alive || !d.verdict){ const c = $('.qrev', el); if (c) c.remove(); return; }
@@ -4037,7 +4037,7 @@ const TOPIC_STEPS = {
     await gPoint((gT('#sNav [data-sn="more"]', '#tabbar [data-tab="chats"]') || gT('#railFav', '#tabbar [data-tab="chats"]')), 'Y aquí tus favoritos: las respuestas que guardas con la estrella ★.', { side:true });
   },
   limite:async () => {
-    await gPoint(gAny('#payPill', '#railCoin', '#payL', '#payM'), 'Aquí ves cómo va tu límite gratis de hoy: el anillo se va vaciando y a medianoche se llena otra vez. Sin cuenta son 5 mensajes de prueba; con tu cuenta gratis, mucho más.', { pad:6 });
+    await gPoint(gAny('#payPill', '#railCoin', '#payL', '#payM'), 'Aquí ves cómo va tu límite gratis de hoy: el anillo se va vaciando y a medianoche se llena otra vez. Sin cuenta son 5 mensajes al día; con tu cuenta gratis, mucho más.', { pad:6 });
   },
   cuenta:async () => {
     await gPoint((gT('#sAcc', '#tabbar [data-tab="me"]') || gT('#accBtn', '#tabbar [data-tab="me"]')), 'Aquí entras o creas tu cuenta gratis: sin correo ni tarjeta. Tus chats y favoritos te siguen a todas partes.', { side:true });
@@ -4263,7 +4263,7 @@ function paintLock(){
     const done = trialOn && trialLeft() <= 0;
     const gm = (SZ.SZQ.guest && SZ.SZQ.guest.max) || 5;
     $('#lockT').textContent = gst ? 'Para seguir FlowIAndo, entra a tu cuenta' : done ? 'Se acabaron tus mensajes de prueba' : SZ.SZQ.on === false ? 'Las IAs gratis están descansando' : 'Usaste tu límite gratis de hoy';
-    $('#lockS').textContent = gst ? 'Ya usaste tus ' + gm + ' mensajes de prueba de hoy sin cuenta. Crear tu cuenta es gratis, sin correo ni tarjeta, y te da mucho más límite cada día.' : done ? 'Para seguir chateando conecta tu cuenta de Puter (gratis, con un clic).' : 'Vuelve en un momento, o sigue ya con Puter. Conecta tu versión pro de las IAs más usadas.';
+    $('#lockS').textContent = gst ? 'Ya usaste tus mensajes de hoy sin cuenta. Crear tu cuenta es gratis, sin correo ni tarjeta, y te da mucho más límite cada día.' : done ? 'Para seguir chateando conecta tu cuenta de Puter (gratis, con un clic).' : 'Vuelve en un momento, o sigue ya con Puter. Conecta tu versión pro de las IAs más usadas.';
     SZ.telEv('noai', 'sin IA: la de SymphorIA está apagada y no hay Puter');
     if (side.classList.contains('open')) closeSide();
   } else { wHide(); }

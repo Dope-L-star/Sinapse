@@ -167,13 +167,19 @@ Object.assign(I18N.es, {
   'enerx.of': 'de {enerx} · se carga a medianoche',
   'enerx.ofEmpty': 'sin {enerx} · se carga a medianoche',
   'enerx.used': ' · usó {u} % de tu {enerx} · te queda {n} %',
-  'enerx.usedGuest': ' · sin cuenta: te quedan {n} mensajes de prueba hoy',
+  'enerx.usedGuest': ' · sin cuenta: te quedan {n} mensajes hoy',
+  'enerx.usedGuest1': ' · sin cuenta: te queda 1 mensaje hoy',
   'enerx.small': 'Gratis. Tu {enerx} (tu batería) baja un poco con cada mensaje (lo que escribes y lo que te responde). A medianoche se carga al 100 %.',
   'enerx.hint': 'Tu {enerx} de hoy (tu batería): toca para ver el detalle',
-  'enerx.guestLeft': 'Te quedan {n} mensajes de prueba',
-  'enerx.spent': 'Usaste 1 mensaje de prueba. Te quedan {n}.',
-  'enerx.spent0': 'Usaste tu último mensaje de prueba.',
-  'enerx.guestShort': '{n} de prueba',
+  'enerx.guestLeft': 'Te quedan {n} mensajes hoy',
+  'enerx.guestLeft1': 'Te queda 1 mensaje hoy',
+  'enerx.guestNone': 'Te quedan 0 mensajes hoy · entra para seguir',
+  'enerx.of': 'de {n} mensajes de hoy',
+  'enerx.spent': 'Usaste 1 mensaje. Te quedan {n} hoy.',
+  'enerx.spent1': 'Usaste 1 mensaje. Te queda 1 hoy.',
+  'enerx.spent0': 'Usaste tu último mensaje de hoy.',
+  'enerx.guestShort': '{n} mensajes',
+  'enerx.guestShort1': '1 mensaje',
   'enerx.rest': 'Las IAs gratis están descansando',
   'enerx.restShort': 'Descansando',
   'enerx.signin': 'Entra a tu cuenta para seguir FlowIAndo',
@@ -200,13 +206,19 @@ Object.assign(I18N.en, {
   'enerx.of': '{enerx} · recharges at midnight',
   'enerx.ofEmpty': 'no {enerx} · recharges at midnight',
   'enerx.used': ' · used {u} % of your {enerx} · {n} % left',
-  'enerx.usedGuest': ' · without an account: {n} trial messages left today',
+  'enerx.usedGuest': ' · without an account: {n} messages left today',
+  'enerx.usedGuest1': ' · without an account: 1 message left today',
   'enerx.small': 'Free. Your {enerx} (your battery) drops a little with each message (what you write and what you get back). At midnight it recharges to 100 %.',
   'enerx.hint': "Today's {enerx} (your battery): tap for details",
-  'enerx.guestLeft': '{n} trial messages left',
-  'enerx.spent': 'You used 1 trial message. {n} left.',
-  'enerx.spent0': 'You used your last trial message.',
-  'enerx.guestShort': '{n} trial',
+  'enerx.guestLeft': '{n} messages left today',
+  'enerx.guestLeft1': '1 message left today',
+  'enerx.guestNone': '0 messages left today · sign in to keep going',
+  'enerx.of': 'of {n} messages today',
+  'enerx.spent': 'You used 1 message. {n} left today.',
+  'enerx.spent1': 'You used 1 message. 1 left today.',
+  'enerx.spent0': 'You used your last message for today.',
+  'enerx.guestShort': '{n} messages',
+  'enerx.guestShort1': '1 message',
   'enerx.rest': 'The free AIs are resting',
   'enerx.restShort': 'Resting',
   'enerx.signin': 'Sign in to keep going',
@@ -858,8 +870,8 @@ Object.assign(I18N.es, { 'pm.spent':'palabras de '+ENERX+' gastadas hoy · IAs c
 Object.assign(I18N.en, { 'pm.spent':ENERX+' words spent today · connected AIs', 'pm.capP':'How much each person can use per day with the connected AIs (Puter does not count). Stored in tokens: {tok} tokens ≈ {w} '+ENERX+' words (one word ≈ 4/3 of a token). Between 1,000 and 500,000.' });
 Object.assign(I18N.es, { 'pm.test':'Probar', 'pm.del':'Quitar', 'pm.deling':'Quitando…', 'pm.delQ':'¿Quitar la llave de {n}?', 'pm.delP':'Se borra del servidor y deja de usarse para las IAs conectadas. Las llaves de los demás siguen funcionando.', 'pm.delPo':'Es la llave de otra persona del equipo. Se borra del servidor y deja de usarse para las IAs conectadas.', 'pm.deled':'Llave de {n} quitada.' });
 Object.assign(I18N.en, { 'pm.test':'Test', 'pm.del':'Remove', 'pm.deling':'Removing…', 'pm.delQ':'Remove the {n} key?', 'pm.delP':'It is deleted from the server and stops being used for the connected AIs. Everyone else\'s keys keep working.', 'pm.delPo':'This key belongs to someone else on the team. It is deleted from the server and stops being used for the connected AIs.', 'pm.deled':'{n} key removed.' });
-Object.assign(I18N.es, { 'enerx.guest':'Sin cuenta tienes {n} mensajes de prueba al día. Con tu cuenta gratis tienes mucho más.', 'enerx.puter':'Si se acaba, puedes seguir con Puter, que te da la versión pro de las IAs más usadas.' });
-Object.assign(I18N.en, { 'enerx.guest':'Without an account you get {n} trial messages a day. With your free account you get much more.', 'enerx.puter':'If it runs out, you can keep going with Puter, which gives you the pro version of the most popular AIs.' });
+Object.assign(I18N.es, { 'enerx.guest':'Sin cuenta tienes {n} mensajes al día. Con tu cuenta gratis tienes mucho más.', 'enerx.puter':'Si se acaba, puedes seguir con Puter, que te da la versión pro de las IAs más usadas.' });
+Object.assign(I18N.en, { 'enerx.guest':'Without an account you get {n} messages a day. With your free account you get much more.', 'enerx.puter':'If it runs out, you can keep going with Puter, which gives you the pro version of the most popular AIs.' });
 /* ===== v3.0 · SynthFlow y las ventanas de core en inglés =====
    SynthFlow arma sus textos en JS (miles de trozos). En vez de cambiar cada uno por t(), cuando el idioma es inglés
    se trae idioma-en.json (español → inglés, solo si hace falta) y se traduce lo que aparece en pantalla:
@@ -1973,8 +1985,14 @@ const MSG_TOK = 800;
 /* con sesión guardada (o volviendo de Google) ya cuentas como persona con cuenta, aunque tu cuenta tarde un segundo en cargar */
 const signedish = () => !!(ACC && (ACC.ready || ACC.joining || (SESS && !ACC.err)));
 const isGuestQ = () => !!(SZQ.guest && !signedish());
-const guestFull = () => isGuestQ() && (SZQ.guest.used || 0) >= (SZQ.guest.max || 5);
-const limPct = () => Math.max(SZQ.limit ? Math.min(1, (SZQ.used || 0) / SZQ.limit) : 0, isGuestQ() ? Math.min(1, (SZQ.guest.used || 0) / (SZQ.guest.max || 5)) : 0);
+/* v4.2 · un solo número para todo (Sammuel, 3 nov: «está en 0 y dice 2 de prueba»): sin cuenta, la batería, el número grande,
+   el texto de «IAs conectadas» y el botón del lateral leen guestLeft(). Es lo que de verdad te deja escribir el servidor:
+   los mensajes que quedan en este dispositivo y en esta conexión, y 0 si la EnerX del día ya se gastó (antes la pila decía 0 y el texto 2) */
+const guestMax = () => (SZQ.guest && SZQ.guest.max) || 5;
+const guestLeft = () => !SZQ.guest || (SZQ.limit && (SZQ.used || 0) >= SZQ.limit) ? 0 : Math.max(0, Math.min(guestMax(), SZQ.guest.left != null ? SZQ.guest.left : guestMax() - (SZQ.guest.used || 0)));
+const guestFull = () => isGuestQ() && guestLeft() <= 0;
+const gN = (k, n, o) => t(n === 1 ? k + '1' : k, Object.assign({ n }, o));
+const limPct = () => isGuestQ() ? 1 - guestLeft() / guestMax() : SZQ.limit ? Math.min(1, (SZQ.used || 0) / SZQ.limit) : 0;
 const msgsLeft = () => Math.max(0, Math.floor(((SZQ.limit || 25000) - (SZQ.used || 0)) / MSG_TOK));
 const msgsTotal = () => Math.max(1, Math.round((SZQ.limit || 25000) / MSG_TOK));
 /* v2.4: vuelven las SynXCoin's. 1 SynXCoin = 1 palabra (lo que escribes y lo que te responde). El servidor cuenta en tokens; una palabra son unos 4/3 de token */
@@ -1998,10 +2016,9 @@ const spentPct = (tok, after) => {
   const a = after == null ? SZQ.used || 0 : after;
   return String(Math.max(1, battAt(a - tok) - battAt(a)));
 };
-const coinNote = (mid, r) => /^sz:/.test(String(mid)) && r && !r.cached && ((r.prompt || 0) + (r.completion || 0)) > 0 ? (isGuestQ() ? t('enerx.usedGuest', { n:guestLeft() }) : t('enerx.used', { u:spentPct((r.prompt || 0) + (r.completion || 0)), n:battPct() })) : '';
-const guestLeft = () => Math.max(0, (SZQ.guest.max || 5) - (SZQ.guest.used || 0));
-const limTxt = () => SZQ.on === false ? t('enerx.rest') : guestFull() ? t('enerx.signin') : isGuestQ() ? t('enerx.guestLeft', { n:guestLeft() }) : limPct() >= 1 ? t('enerx.empty') : t('enerx.left', { n:battPct() });
-const limShort = () => SZQ.on === false ? t('enerx.restShort') : guestFull() ? t('enerx.signinShort') : isGuestQ() ? t('enerx.guestShort', { n:guestLeft() }) : limPct() >= 1 ? t('enerx.emptyShort') : battPct() + ' %';
+const coinNote = (mid, r) => /^sz:/.test(String(mid)) && r && !r.cached && ((r.prompt || 0) + (r.completion || 0)) > 0 ? (isGuestQ() ? gN('enerx.usedGuest', guestLeft()) : t('enerx.used', { u:spentPct((r.prompt || 0) + (r.completion || 0)), n:battPct() })) : '';
+const limTxt = () => SZQ.on === false ? t('enerx.rest') : guestFull() ? t('enerx.guestNone') : isGuestQ() ? gN('enerx.guestLeft', guestLeft()) : limPct() >= 1 ? t('enerx.empty') : t('enerx.left', { n:battPct() });
+const limShort = () => SZQ.on === false ? t('enerx.restShort') : isGuestQ() ? gN('enerx.guestShort', guestLeft()) : limPct() >= 1 ? t('enerx.emptyShort') : battPct() + ' %';
 const limLvl = () => { const k = limPct(); return k >= 1 ? 'full' : k >= .8 ? 'warn' : 'ok'; };
 /* la pila: cuerpo de vidrio, polo y carga que baja; con poca carga se pone ámbar y vacía, coral. size = alto de referencia (antes era el anillo) */
 function limRing(size){
@@ -2019,7 +2036,7 @@ async function szCatalog(){
   const d = await r.json().catch(() => ({}));
   if (!r.ok){ szqSet({ on:false, t:Date.now() }); return []; }
   const arr = Array.isArray(d.models) ? d.models : [];
-  szqSet({ on:arr.length > 0, used:+d.used || 0, limit:+d.limit || 20000, guest:d.guest && d.guest.max ? { used:+d.guest.used || 0, max:+d.guest.max } : null, img:d.img || null, team:!!d.team, alert:!!d.alert, alertN:+d.alertN || 0, n:arr.length, t:Date.now() });
+  szqSet({ on:arr.length > 0, used:+d.used || 0, limit:+d.limit || 20000, guest:d.guest && d.guest.max ? { used:+d.guest.used || 0, max:+d.guest.max, left:d.guest.left != null ? +d.guest.left : null } : null, img:d.img || null, team:!!d.team, alert:!!d.alert, alertN:+d.alertN || 0, n:arr.length, t:Date.now() });
   if (!arr.length) return [];
   const out = arr.filter(m => m && typeof m.id === 'string' && /^sz:/.test(m.id) && !/allam|infron|openrouter\/(free|auto)|models?[-_ ]router/i.test(m.id) && !/free models router|router/i.test(String(m.name || ''))).map(m => {
     const mid = m.id.split(':').slice(2).join(':'), vendor = szVendor(mid, m.prov);
@@ -3331,7 +3348,7 @@ const newRid = () => DEV + ':' + Date.now().toString(36) + ':' + (++ridN);
 /* v3.6 · avisa cada vez que se gasta un mensaje de prueba (sin cuenta o la prueba guiada), con lo que queda de verdad según el servidor */
 function spentNote(before, after){
   if (!(before > after)) return;
-  try{ toast(after > 0 ? t('enerx.spent', { n:after }) : t('enerx.spent0')); }catch(e){}
+  try{ toast(after > 0 ? t(after === 1 ? 'enerx.spent1' : 'enerx.spent', { n:after }) : t('enerx.spent0')); }catch(e){}
 }
 async function askStream(p, messages, opts = {}, onDelta){
   const sig = opts.signal, t0 = performance.now(); let acc = '', ttft = 0, usage = null, fin = '', cut = '', via = '', provX = '', real = '', swap = false;
@@ -3422,13 +3439,13 @@ async function askStream(p, messages, opts = {}, onDelta){
   }
   if (!res.ok && viaSz){
     clearTimeout(idle); const data = await res.json().catch(() => ({})), code = data.code || '';
-    if (code === 'sz_guest'){ szqSet({ guest:{ max:(SZQ.guest && SZQ.guest.max) || 5, used:(SZQ.guest && SZQ.guest.max) || 5 } }); telEv('limit', code); setTimeout(() => guestGate(), 350); }
+    if (code === 'sz_guest'){ szqSet({ guest:{ max:(SZQ.guest && SZQ.guest.max) || 5, used:(SZQ.guest && SZQ.guest.max) || 5, left:0 } }); telEv('limit', code); setTimeout(() => guestGate(), 350); }
     else if (/^sz_limit/.test(code)){ szqSet({ used:SZQ.limit }); telEv('limit', code); }
     else if (code === 'sz_off'){ szqSet({ on:false }); telEv('noai', 'las IAs conectadas no tienen llaves'); }
     else telEv('error', 'IAs conectadas ' + res.status + ' ' + code);
     throw Object.assign(new Error(typeof data.error === 'string' ? data.error : 'La IA no respondió. Intenta de nuevo en un momento.'), { status:res.status, sz:code || 'sz_err', limit:/^sz_limit/.test(code) || code === 'sz_guest', guest:code === 'sz_guest', raw:code, gone:code === 'sz_model' && model0 !== 'sz:auto', switchTo:code === 'sz_down' || code === 'sz_off' ? 'pu' : null });
   }
-  if (viaSz){ try{ real = decodeURIComponent(res.headers.get('x-sz-name') || ''); }catch(e){ real = ''; } swap = res.headers.get('x-sz-fallback') === '1';   /* v3.7 · la IA elegida no estaba o no ve fotos: respondió otra y se dice */ const u = +res.headers.get('x-sz-used'), l = +res.headers.get('x-sz-limit'), gq = /^(\d+)\/(\d+)$/.exec(res.headers.get('x-sz-guest') || ''); const g0 = SZQ.guest && !signedish() ? guestLeft() : null; if (l) szqSet(Object.assign({ on:true, used:u || 0, limit:l }, gq ? { guest:{ used:+gq[1], max:+gq[2] } } : {})); if (gq && g0 != null) spentNote(g0, guestLeft()); }
+  if (viaSz){ try{ real = decodeURIComponent(res.headers.get('x-sz-name') || ''); }catch(e){ real = ''; } swap = res.headers.get('x-sz-fallback') === '1';   /* v3.7 · la IA elegida no estaba o no ve fotos: respondió otra y se dice */ const u = +res.headers.get('x-sz-used'), l = +res.headers.get('x-sz-limit'), gq = /^(\d+)\/(\d+)(?:\/(\d+))?$/.exec(res.headers.get('x-sz-guest') || ''); const g0 = SZQ.guest && !signedish() ? guestLeft() : null; if (l) szqSet(Object.assign({ on:true, used:u || 0, limit:l }, gq ? { guest:{ used:+gq[1], max:+gq[2], left:gq[3] != null ? +gq[3] : null } } : {})); if (gq && g0 != null) spentNote(g0, guestLeft()); }
   if (viaTrial){ const t = trialGet() || {}; const l = res.headers.get('x-trial-left'), l0 = t.left; if (l != null){ t.left = +l; trialSet(t); if (res.headers.get('x-trial-spent') !== '0' && l0 != null) spentNote(+l0, +l); } via = res.headers.get('x-trial-provider') || ''; }
   if (!res.ok){ clearTimeout(idle); const data = await res.json().catch(() => ({})); if (viaTeam && typeof data.error === 'string') throw Object.assign(new Error('Equipo: ' + data.error), { status:res.status, switchTo:res.status === 429 ? 'pu' : null }); const raw = data && data.error ? String(data.error.message || data.error) : ''; throw Object.assign(new Error(friendly(res.status, data, p)), { status:res.status, raw, gone:modelGone(res.status, raw), switchTo: p.id === 'openrouter' && (res.status === 429 || res.status === 402) ? 'pu' : null }); }
   if (!/event-stream/.test(res.headers.get('content-type') || '') || !res.body){
@@ -3671,7 +3688,7 @@ function guestGate(o = {}){
   const el = document.createElement('div'); el.id = 'szGate'; el.className = 'szm';
   el.innerHTML = '<div class="tcard" role="dialog" aria-modal="true" aria-label="Entra para seguir"><div class="word">' + zWord('Synth') + '</div><div class="tn">SIGUE FLOWIANDO</div>'
     + '<div class="tb"><div class="gtface" aria-hidden="true">' + face('guino', 64) + '</div><h3>Para seguir FlowIAndo, entra a tu cuenta</h3>'
-    + '<p>Ya usaste tus ' + (g.max || 5) + ' mensajes de prueba de hoy sin cuenta. Crear tu cuenta es <b>gratis</b>, no pide correo ni tarjeta, y te da mucho más límite cada día. Además tus chats te siguen a cualquier celular o computador.</p>'
+    + '<p>Ya usaste tus mensajes de hoy sin cuenta. Crear tu cuenta es <b>gratis</b>, no pide correo ni tarjeta, y te da mucho más límite cada día. Además tus chats te siguen a cualquier celular o computador.</p>'
     + '<div id="gateBox"></div></div><div class="tbtn" style="margin-top:14px"><button class="lnk" type="button" data-close>Ahora no</button>' + (pu ? '<button class="lnk" type="button" data-pu>Seguir con mi Puter</button>' : '') + '</div></div>';
   document.body.appendChild(el); requestAnimationFrame(() => el.classList.add('on'));
   $('.tcard', el).animate([{ transform:'scale(.92) translateY(20px)', opacity:0, filter:'blur(8px)' }, { transform:'none', opacity:1, filter:'blur(0)' }], { duration:650, easing:'cubic-bezier(.22,1,.36,1)' });
@@ -4650,7 +4667,7 @@ function portadaKnown(){
 window.SZ = { I18N, LANGS, t, lang, setLang, onLang, i18nApply, root, $, $$, clamp, fmt, reduce, today, sleepRaw, esc, est, Z_PATH, ICONS, ico, zWord, API, MANUAL, ALL, byId,
   get state(){ return state; }, set state(v){ state = v; normalize(); },
   normalize, cleanUsage, cleanChats, cleanStrMap, save, total, addUsage, resetUsage, estAll, todayEst, todayReq, providerBalance, balanceHtml, splitHtml, syncNote, helpGuide, smoothDetails, szPrompt, swapDir, swapDir, get face(){ return face; }, get FACE_GOOD(){ return FACE_GOOD; }, get randomGoodFace(){ return randomGoodFace; }, get welcomeBack(){ return welcomeBack; }, get wasAway(){ return wasAway; }, accSignOutAll, accClaim, ROLE_NAME, trialGet, trialSet, trialStart, legacyRow, cleanLedger, mergeLedger, DEV, hooks, toast, hydrateIcons, md, countTo,
-  BRAND, SPACE, AURORA, isFlow, flowWord, flowOrb, LOGO_Z, fileIco, gIcon, giFill, giFile, zMark, get synBody(){ return synBody; }, get synSet(){ return synSet; }, get SPOSE(){ return SPOSE; }, charify, typeIn, showAll, getJSON, parseModels, loadCatalog, fetchCatalog, vendorLabel, vendorColor, burst, friendly, netMsg, fetchModels, refreshModels, verify, ask, metaOf, history, S, mirrorType, thud, portalOut, portalBack, portalArrive, portalFill, portalReveal, waterIn, ctxMenu, SXC, coins, ACC, accHooks, accStart, accPush, accSignOut, accName, accHandle, securityModal, recoveryPanel, MARK_HTML, expertOf, EXP_LABEL, surveyModal, surveyPicks, surveyScore, orGuide, profileModal, puterLogo, PUTER_LOGO, api, accConfig, accDelete, saveProfile, avatarHtml, myAvatar, grad, tint, TINTS, loadGsi, SESS_get:() => SESS, CFG, PERF, saveCfg, cfgModal, cfgChooser, applyCfg, smoothWheel, orbitBg, authBox, isBlocked, lowEnd, askStream, mkReveal, reveals, chatsReady, IDB, provOf, totalAll, todayAll, BRANDS, brandOf, glassIcon, PIXART, pixelRun, pixelGrid, workView, workSaved, mdLoad, MDLIB, SZ_P, SZQ, SZ_AUTO, szqSet, msgsLeft, msgsTotal, coinsOf, coinsLeft, coinsTotal, coinsFmt, coinsShort, coinNote, limTxt, limShort, limLvl, limPct, limRing, battPct, limBar, szCatalog, szHeaders, guestGate, guestFull, isGuestQ, setTurn, puterOut, puterOutNote, TEL, telEv, telBeat, DEVH, szConfirm, cfgPreset, CFG_KEYS, cfgClasses, get SND(){ return SND; }, get HAND(){ return HAND; }, get feedbackModal(){ return feedbackModal; }, get guideChooser(){ return guideChooser; }, DRIVE, isBad, markBad, markSick, markGood, modelGone, badReady, GROQ_P, get BOT(){ return BOTAPI; }, get EV(){ return EV; }, get lipSync(){ return lipSync; }, get ballFace(){ return ballFace; }, get guideAsk(){ return guideAsk; }, get GTOPICS(){ return GTOPICS; }, get whatsNew(){ return whatsNew; }, signedish, cfgLinks, memAddCore, memList, memPanel, menuOpen, menuClose, MICO, appInstall, appPromo, appStandalone, appPhone, plansModal, planOf };
+  BRAND, SPACE, AURORA, isFlow, flowWord, flowOrb, LOGO_Z, fileIco, gIcon, giFill, giFile, zMark, get synBody(){ return synBody; }, get synSet(){ return synSet; }, get SPOSE(){ return SPOSE; }, charify, typeIn, showAll, getJSON, parseModels, loadCatalog, fetchCatalog, vendorLabel, vendorColor, burst, friendly, netMsg, fetchModels, refreshModels, verify, ask, metaOf, history, S, mirrorType, thud, portalOut, portalBack, portalArrive, portalFill, portalReveal, waterIn, ctxMenu, SXC, coins, ACC, accHooks, accStart, accPush, accSignOut, accName, accHandle, securityModal, recoveryPanel, MARK_HTML, expertOf, EXP_LABEL, surveyModal, surveyPicks, surveyScore, orGuide, profileModal, puterLogo, PUTER_LOGO, api, accConfig, accDelete, saveProfile, avatarHtml, myAvatar, grad, tint, TINTS, loadGsi, SESS_get:() => SESS, CFG, PERF, saveCfg, cfgModal, cfgChooser, applyCfg, smoothWheel, orbitBg, authBox, isBlocked, lowEnd, askStream, mkReveal, reveals, chatsReady, IDB, provOf, totalAll, todayAll, BRANDS, brandOf, glassIcon, PIXART, pixelRun, pixelGrid, workView, workSaved, mdLoad, MDLIB, SZ_P, SZQ, SZ_AUTO, szqSet, msgsLeft, msgsTotal, coinsOf, coinsLeft, coinsTotal, coinsFmt, coinsShort, coinNote, limTxt, limShort, limLvl, limPct, limRing, battPct, limBar, szCatalog, szHeaders, guestGate, guestFull, guestLeft, isGuestQ, setTurn, puterOut, puterOutNote, TEL, telEv, telBeat, DEVH, szConfirm, cfgPreset, CFG_KEYS, cfgClasses, get SND(){ return SND; }, get HAND(){ return HAND; }, get feedbackModal(){ return feedbackModal; }, get guideChooser(){ return guideChooser; }, DRIVE, isBad, markBad, markSick, markGood, modelGone, badReady, GROQ_P, get BOT(){ return BOTAPI; }, get EV(){ return EV; }, get lipSync(){ return lipSync; }, get ballFace(){ return ballFace; }, get guideAsk(){ return guideAsk; }, get GTOPICS(){ return GTOPICS; }, get whatsNew(){ return whatsNew; }, signedish, cfgLinks, memAddCore, memList, memPanel, menuOpen, menuClose, MICO, appInstall, appPromo, appStandalone, appPhone, plansModal, planOf };
 /* v3.4 · el «turno» del mensaje actual: la revisión de calidad viaja en el mismo turno (no cuenta como otro mensaje sin cuenta) */
 /* v3.4 · SynthonIA (synthonia.js): lo que necesita de core, y cuándo se carga */
 window.SZ.synReady = synReady;
