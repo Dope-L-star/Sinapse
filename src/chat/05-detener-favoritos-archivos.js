@@ -228,6 +228,7 @@ function apiMsgs(chat, vision, o = {}){
   { const cs = o.naive ? '' : codeSystem(chat, saver); if (cs) sys.push(cs); }   /* v2.4 · SynthCode: manual de programación cuando pides código */
   { const ef = effortHint(); if (ef && !o.naive) sys.push(ef); }   /* v2.3.1 · esfuerzo */
   { const mm = memSystem(); if (mm && !o.naive) sys.push(mm); }
+  if (!o.naive && !o.noMarks) sys.push(marcasSystem(chat));   /* v4.0 · título con sentido y memoria redactada por la IA */
   { const ps = o.naive ? '' : projSystem(chat, saver); if (ps) sys.push(ps); }   /* v2.6 · proyectos: instrucciones y archivos del proyecto */
   if (SZ.CFG.beginner) sys.push('Modo principiante: la persona no sabe nada del tema. Usa palabras sencillas y frases cortas, explica paso a paso, evita los tecnicismos (si usas uno, explícalo) y pon un ejemplo de la vida diaria.');
   if (sys.length) h.unshift({ role:'system', content:sys.join(' ') });

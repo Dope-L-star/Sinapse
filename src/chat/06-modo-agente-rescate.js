@@ -317,7 +317,7 @@ async function runSolo(onFail, o = {}){
     if (r){ r = Object.assign({}, r, { ms:0, cached:true }); st().sx.saved += r.prompt + r.completion; st().sx.hits += 1; save(); mount(); if (rv) rv.push(r.text); }
     else {
       const ctl = new AbortController(); ctls.add(ctl);
-      try{ r = await SZ.askStream(OR, sent, Object.assign({ model:mid, maxTokens: saver ? 700 : 0, signal:ctl.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { if (holdWeb(txt)) return; mount(); W.write(txt); if (rv) rv.push(txt); }); }finally{ ctls.delete(ctl); }
+      try{ r = await SZ.askStream(OR, sent, Object.assign({ model:mid, maxTokens: saver ? 700 : 0, signal:ctl.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { if (holdWeb(txt)) return; txt = sinMarcas(txt); mount(); W.write(txt); if (rv) rv.push(txt); }); }finally{ ctls.delete(ctl); }
       addUsage(r.prov || SZ.provOf(mid), r.prompt, r.completion, true, { est:r.est, free:/:free$/.test(mid) || r.prov === 'synthz', rid:r.rid });
       if (webAuto && !r.aborted){ const mq = WEB_Q_RX.exec(r.text || ''); webQ = mq ? mq[1].trim() : (String(r.text || '').length < 2500 && CUTOFF_RX.test(r.text || '') ? String(lastU.content || '').slice(0, 300) : null); }
       if (!r.aborted && !r.swapped) SZ.markGood(mid);
@@ -331,7 +331,7 @@ async function runSolo(onFail, o = {}){
         let r2 = null;
         try{
           r2 = await SZ.askStream(OR, [...sent, { role:'assistant', content:base }, { role:'user', content:'Continúa exactamente donde te quedaste: sigue desde la última palabra, sin repetir nada de lo anterior, sin saludar y sin decir que continúas. Escribe solo lo que falta.' }],
-            Object.assign({ model:mid, maxTokens:0, signal:ctl2.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { mount(); const full = base + glue(txt) + txt; W.write(full); if (rv) rv.push(full); });
+            Object.assign({ model:mid, maxTokens:0, signal:ctl2.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { mount(); const full = sinMarcas(base + glue(txt) + txt); W.write(full); if (rv) rv.push(full); });
         }catch(e){ r2 = null; }
         finally{ ctls.delete(ctl2); }
         if (!r2 || r2.aborted && !r2.text) break;
@@ -356,6 +356,8 @@ async function runSolo(onFail, o = {}){
       return await runSolo(onFail, Object.assign({}, o, { fresh:true, retried:true }));
     }
     if (!r.aborted) r.text = limpiaBucles(r.text);
+    /* v4.0 · las marcas de título y memoria se quitan del texto y se usan */
+    { const mk = marcas(r.text); r.text = mk.text || r.text; if (!r.aborted){ titleSet(chat, mk.title); memNext = mk.mem; } }
     const tail = r.aborted ? ' · detenido' : r.cut ? ' · se cortó la conexión' : r.finish === 'length' ? ' · se cortó porque era muy larga (toca «Continuar»)' : '';
     const who = r.swapped ? ' · se acabó tu saldo de Puter este mes; respondió ' + (r.real || 'otra IA') : '';
     W.write(r.text); W.finish({ ms:r.ms, real:r.real || '' });
