@@ -239,6 +239,34 @@ const OUT_MAX = { groq:6000, mistral:6000, openrouter:6000, google:8000, ollama:
 const outTok = (prov, asked) => Math.max(64, Math.min(OUT_MAX[prov] || 3500, Math.round(+asked) || 4096));
 /* v3.0 · free: el equipo (Prime, ZFlow y Symmetrix) usa todo sin límite de EnerX para probar (pedido de Sammuel, 27 oct).
    Lo suyo no cuenta para el límite de su conexión (así no le quita a nadie que esté en la misma red) y su batería se ve llena */
+/* v3.8 · ¿esta IA responde de verdad? Una pregunta mínima (máx. 4 palabras de respuesta) contra ESE modelo, sin respaldos.
+   El resultado se guarda para todos: 'ok' 10 min, 'busy' (llena o lenta) 2 min, 'down' (ya no existe) 30 min. No gasta el límite de nadie. */
+export async function pingModel(id){
+  const ck = 'mp:' + id, hit = await redis('GET', ck).catch(() => null);
+  if (hit === 'ok' || hit === 'busy' || hit === 'down') return hit;
+  const put = async (v, ttl) => { await redis('SET', ck, v, 'EX', String(ttl)).catch(() => {}); return v; };
+  const m = (await models(false)).list.find(x => x.id === id);
+  if (!m) return put('down', 1800);
+  const keys = (await pickKeys(m.prov)).slice(0, 2);
+  if (!keys.length) return put('busy', 120);
+  for (const k of keys){
+    let up = null;
+    try{
+      const body = { model:m.mid, messages:[{ role:'user', content:'Responde solo: ok' }], max_tokens:m.prov === 'google' ? 16 : 4, temperature:0, stream:false };
+      if (m.prov === 'siliconflow') body.enable_thinking = false;
+      up = await fetch((await baseOf(k)) + '/chat/completions', { method:'POST', signal:AbortSignal.timeout(12000),
+        headers:Object.assign({ Authorization:'Bearer ' + k.key, 'content-type':'application/json' }, m.prov === 'openrouter' ? { 'HTTP-Referer':'https://synthz.app', 'X-Title':'SymphorIA' } : {}), body:JSON.stringify(body) });
+    }catch(e){ up = null; }
+    if (up && up.ok){ await pipe([['INCR', 'pk:n:' + k.id + ':' + today()], ['EXPIRE', 'pk:n:' + k.id + ':' + today(), '172800']]).catch(() => {}); return put('ok', 600); }
+    const s = up ? up.status : 0, txt = up ? await up.text().catch(() => '') : '';
+    if (s === 404 || (s === 400 && /model/i.test(txt) && /not|exist|invalid|decommission|support/i.test(txt))){
+      await pipe([['HSET', 'pool:badm', m.id, String(Date.now())], ['DEL', 'pool:models']]).catch(() => {});
+      return put('down', 1800);
+    }
+    if (s === 402 || ((s === 401 || s === 403) && PAY_RX.test(txt))) await markPay(k, s, txt);
+  }
+  return put('busy', 120);
+}
 export async function chat({ who, ipKey, messages, model, maxTokens, system, stream = true, onDone, free = false, temperature = .6 }){
   const { dayLimit } = await settings();
   const [used, usedIp] = free ? [0, 0] : (await pipe([['GET', quotaKey(who)], ['GET', quotaKey(ipKey)]])).map(x => +x || 0);

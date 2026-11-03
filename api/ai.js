@@ -2,9 +2,10 @@
    GET                       → { models, provs, limit, used } modelos gratis disponibles y lo que llevas hoy
    POST { messages, model?, maxTokens? } → respuesta en vivo (streaming), con el gasto al final
    POST { action:'transcribe', audio } → { text } (audio adjunto pasado a texto, trozos de 1 minuto)
+   POST { action:'ping', id | ids } → { status:{ id:'ok'|'busy'|'down' } } (¿esa IA responde ahora? con caché compartida)
    Sin cuenta también funciona: se cuenta por dispositivo y por conexión. */
 import { route, body, json, fail, auth, sha, redis, pipe, today, ipOf, limit, str, roleOf } from './_lib.js';
-import { models, chat, reviewerModel, settings, usedToday, PROV, IMG, pickKeys, markPay, clearPay, outage, classify, searchWith, searchWiki, PAY_RX, baseOf } from './_pool.js';
+import { models, chat, reviewerModel, settings, usedToday, PROV, IMG, pickKeys, markPay, clearPay, outage, classify, searchWith, searchWiki, PAY_RX, baseOf, pingModel } from './_pool.js';
 
 /* v2.0 · imágenes con Pollinations: solo con cuenta, con su propio límite diario (no gasta Puter ni tu límite de chat).
    Solo gasta el saldo que ya esté cargado en Pollinations: nunca cobra a una tarjeta. */
@@ -178,6 +179,14 @@ export default route({
     if (b.action === 'image') return makeImage(req, me, b);
     if (b.action === 'search') return webSearch(req, me, who, b);
     if (b.action === 'transcribe') return transcribe(me, who, b);
+    /* v3.8 · ¿responde la IA que elegiste? (no gasta tu límite; el resultado se comparte unos minutos) */
+    if (b.action === 'ping'){
+      const ids = (Array.isArray(b.ids) ? b.ids : [b.id]).filter(x => typeof x === 'string' && /^sz:[\w.:/@+-]{2,160}$/.test(x)).slice(0, 4);
+      if (!ids.length) return fail(400, 'Modelo no válido.');
+      await limit('ping:' + who, 30, 60);
+      const out = {}; await Promise.all(ids.map(async id => { out[id] = await pingModel(id).catch(() => 'busy'); }));
+      return json({ status:out });
+    }
     if (!me){
       const turn = /^[\w-]{4,40}$/.test(String(b.turn || '')) ? String(b.turn) : 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
       const [inDev, inIp, g, n] = await Promise.all([redis('SISMEMBER', gKey(who), turn), redis('SISMEMBER', gKey(ipKey), turn), guestUsed(who, ipKey), redis('GET', 'gt:' + who + ':' + turn)]);

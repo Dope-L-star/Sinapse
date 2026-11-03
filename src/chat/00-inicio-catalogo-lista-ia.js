@@ -385,14 +385,16 @@ function pickModel(id, node){
     const base = mode === 'cmp' ? st().cmp : [selId()].filter(x => x !== TRIAL_ID), why = cmpWhyNot(id, base);
     if (why === 'ya'){ toast('Esa IA ya está en la comparación.'); return; }
     if (why){ toast(why); return; }
-    addToCompare(id, node); return;
+    if (node !== null) iaThenAdd(id, node); else addToCompare(id, node);   /* v3.8 · solo se suma si de verdad responde */
+    return;
   }
   if (trialOn && id !== TRIAL_ID) exitTrial(true);
-  const same = id === selId();
+  const same = id === selId(), prev = selId();
   if (node) st().pinned = id;
   st().model.openrouter = id; save(); paintSel(); renderTop(!same); paintAccent();
   if (!same && node){ const r = node.getBoundingClientRect(); burst(r.left + 32, r.top + 24, [vendorColor(info(id).vendor), '#ffffff', vendorColor(info(id).vendor)], 8); }
   renderMsgs();
   closeSide();
+  if (node !== null && !same) iaAfterPick(id, prev);   /* v3.8 · ¿responde? si no, vuelves a la de antes y te pregunto para qué la querías */
 }
 

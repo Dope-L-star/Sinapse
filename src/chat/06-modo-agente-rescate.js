@@ -130,6 +130,8 @@ async function send(){
   try{ SZ.setTurn(text + '|' + Date.now()); }catch(e){}
   if (trialOn && trialLeft() <= 0){ toast('Se acabaron tus mensajes de prueba.'); const tb = $('#trialBar'); tb.classList.remove('pulse'); void tb.offsetWidth; tb.classList.add('pulse'); return; }
   if (!budgetOk()) return;
+  /* v3.8 · si todavía se está comprobando la IA que elegiste, espera esa respuesta (1-2 s); si no responde, tu texto se queda en la caja */
+  { const h = HEALTH.get(selId()), m1 = selId(); if (h && h.p){ sendBtn.disabled = true; try{ await h.p; }finally{ sendBtn.disabled = false; } if (selId() !== m1) return; } }
   /* modo agente: no eliges IA; el agente entiende tu pedido, lo mejora, elige la IA experta y te muestra los pasos */
   if (agentOn() && mode === 'solo' && text && !files.length){
     if (agentBusy) return;
@@ -237,7 +239,7 @@ function visionPick(){
   return cat.list.find(m => m.vision && connected(m.id) && !SZ.isBad(m.id)) || null;
 }
 /* ---------- v1.3 · SynthonIA te rescata cuando una IA falla o cuando notas que no te entiende ---------- */
-const TOPIC_RX = [['codigo', /c[oó]digo|program|funci[oó]n|javascript|python|html|css|sql|bug|error de|script/i], ['mate', /ecuaci|matem|calcul|derivad|integral|\d+\s*[x×*+\/-]\s*\d+/i], ['estudiar', /explica|estudi|examen|tarea|aprend|resum/i], ['correo', /correo|email|e-mail/i], ['marketing', /marketing|publicidad|anuncio|vender|ventas|campa[ñn]a/i], ['redes', /instagram|tiktok|reel|post|redes/i], ['idiomas', /traduc|ingl[eé]s|franc[eé]s|idioma/i], ['negocios', /negocio|emprend|empresa|cliente/i], ['ideas', /idea|nombre para|lluvia de/i], ['escribir', /escrib|texto|carta|historia|poema|redact/i]];
+const TOPIC_RX = [['codigo', /c[oó]digo|program|funci[oó]n|javascript|python|html|css|sql|bug|error de|script|coding|code\b|website|app\b/i], ['mate', /ecuaci|matem|calcul|derivad|integral|math|equation|algebra|\d+\s*[x×*+\/-]\s*\d+/i], ['estudiar', /explica|estudi|examen|tarea|aprend|resum|homework|study|exam|learn|explain|summar/i], ['correo', /correo|email|e-mail/i], ['marketing', /marketing|publicidad|anuncio|vender|ventas|campa[ñn]a|advert|\bads?\b|sell|sales/i], ['redes', /instagram|tiktok|reel|post|redes|social media/i], ['idiomas', /traduc|ingl[eé]s|franc[eé]s|idioma|translat|english|spanish|french|language/i], ['negocios', /negocio|emprend|empresa|cliente|business|startup|company|customer/i], ['ideas', /idea|nombre para|lluvia de/i], ['escribir', /escrib|texto|carta|historia|poema|redact|writ|essay|letter|story|poem/i]];
 function guessTopic(t){ const f = TOPIC_RX.find(([k, rx]) => TOPIC[k] && rx.test(t)); return f ? f[0] : null; }
 function altFor(mid, text){
   const tk = guessTopic(text || '');
