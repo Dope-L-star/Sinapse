@@ -20,7 +20,16 @@ window.SZFlow = Object.freeze({
   iaFor:(text, not) => iaFor(text, not),
   iaUse:id => { if (mode === 'cmp'){ if (!st().cmp.includes(id)) addToCompare(id, null); } else pickModel(id, null); setTimeout(() => inp.focus(), 60); },
   iaList:() => openSide(mode === 'cmp' ? 'add' : 'set'),
-  lang:() => SZ.lang()
+  lang:() => SZ.lang(),
+  /* v4.1 · la ventana «Ver funcionando» (next/componentes/synthflow/VistaWeb.jsx) usa la lógica de src/chat/02c-web-proyecto.js */
+  web:Object.freeze({
+    doc:(P, path, o) => webDoc(P, path, o),
+    go:(P, from, href) => webGo(P, from, href),
+    zip:P => webZip(P),
+    load:(f, html) => synLoad(f, html),
+    tokens:(text, ext) => webTokens(text, ext),
+    file:F => cnvDownload({ name:F.path, ext:F.ext, text:F.text })
+  })
 });
 { const w = $('#sNav .snw'); if (w && !w.firstChild) w.innerHTML = SZ.flowWord(); }
 try{ dispatchEvent(new CustomEvent('synthflow-ready')); }catch(e){}

@@ -8,12 +8,16 @@ function synAll(){
     st().chats[th.k].forEach((m, i) => {
       if (m.role !== 'assistant' || !/```/.test(m.content || '')) return;
       box.innerHTML = md(m.content);
-      $$('pre', box).forEach(pre => { const M = cnvMeta(pre); if (isFile(M, pre)) out.push({ M, th, i, sibs:() => { box.innerHTML = md(m.content); return $$('pre', box).map(cnvMeta).filter(x => x.name !== M.name); } }); });
+      const files = $$('pre', box).map(pre => [cnvMeta(pre), pre]).filter(([M, pre]) => isFile(M, pre));
+      /* v4.1 · una página de varios archivos sale como UN Sintético (se abre funcionando, con sus pestañas); el resto, archivo por archivo */
+      const P = webProject(files.map(x => x[0]));
+      if (P) out.push({ M:{ name:P.title || P.entry, label:'web', ext:'html', lines:P.files.length, key:'web:' + P.entry }, P, th, i });
+      files.forEach(([M]) => { if (P && WEB_EXT.has(M.ext)) return; out.push({ M, th, i, sibs:() => { box.innerHTML = md(m.content); return $$('pre', box).map(cnvMeta).filter(x => x.name !== M.name); } }); });
     });
   });
   /* la última versión de cada archivo de cada chat (si la IA lo arregló, sale el arreglado) */
   const seen = new Set();
-  return out.reverse().filter(x => { const k = x.th.k + '|' + x.M.name; if (seen.has(k)) return false; seen.add(k); return true; });
+  return out.reverse().filter(x => { const k = x.th.k + '|' + (x.M.key || x.M.name); if (seen.has(k)) return false; seen.add(k); return true; });
 }
 const SV = document.createElement('section'); SV.className = 'synv'; SV.id = 'synv'; SV.hidden = true; SV.setAttribute('aria-label', 'Sintéticos'); SV.tabIndex = -1;
 $('#shell .main').appendChild(SV);
@@ -25,7 +29,7 @@ function synOpen(){
   synList = synAll();
   SV.innerHTML = '<div class="pj-in"><div class="pj-bar"><span></span><button type="button" class="pj-close" data-sa="close">Volver al chat' + PJ_X + '</button></div>'
     + '<header class="pj-lh"><div><h1>Sintéticos</h1><p>Todo lo que la IA creó en tus chats: páginas, juegos, dibujos, código y documentos. Tócalo y se abre al lado.</p></div></header>'
-    + (synList.length ? '<div class="syn-l">' + synList.map((x, n) => '<div class="syn-w"><button type="button" class="syn-c" data-sn="' + n + '">' + fcIc(x.M.ext) + '<b>' + esc(x.M.name) + '</b><small>' + esc(x.M.label) + ' · ' + x.M.lines + (SZ.lang() === 'en' ? (x.M.lines === 1 ? ' line' : ' lines') : (x.M.lines === 1 ? ' línea' : ' líneas')) + '</small><small>' + esc(x.th.title) + (x.th.t ? ' · ' + pjAgo(x.th.t) : '') + '</small></button><button type="button" class="syn-go" data-sg="' + n + '" title="Ir al chat donde nació">Ir al chat</button></div>').join('') + '</div>'
+    + (synList.length ? '<div class="syn-l">' + synList.map((x, n) => '<div class="syn-w' + (x.P ? ' web' : '') + '"><button type="button" class="syn-c" data-sn="' + n + '">' + (x.P ? '<span class="fc-ic wp-ic" aria-hidden="true">' + WEB_ICO.web + '</span>' : fcIc(x.M.ext)) + '<b>' + esc(x.M.name) + '</b><small>' + (x.P ? '<span class="notr">' + esc(webTxt(SZ.lang() === 'en').kind + ' · ' + webTxt(SZ.lang() === 'en').files(x.P.files.length)) + '</span>' : esc(x.M.label) + ' · ' + x.M.lines + (SZ.lang() === 'en' ? (x.M.lines === 1 ? ' line' : ' lines') : (x.M.lines === 1 ? ' línea' : ' líneas'))) + '</small><small>' + esc(x.th.title) + (x.th.t ? ' · ' + pjAgo(x.th.t) : '') + '</small></button><button type="button" class="syn-go" data-sg="' + n + '" title="Ir al chat donde nació">Ir al chat</button></div>').join('') + '</div>'
       : '<div class="pj-empty"><span class="pj-big">' + SYN_ICO + '</span><b>Aún no hay Sintéticos</b><p>Pídele a la IA una página, un juego o un dibujo (por ejemplo «hazme una calculadora bonita») y aparecerá aquí.</p></div>')
     + '</div>';
   SV.scrollTop = 0; SV.focus({ preventScroll:true });
@@ -35,7 +39,7 @@ SV.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.sa === 'close'){ synClose(); return; }
   if (b.dataset.sg != null){ const x = synList[+b.dataset.sg]; if (x) openThread(x.th.model, x.th.id); return; }
-  if (b.dataset.sn != null){ const x = synList[+b.dataset.sn]; if (x) openCanvas(x.M, x.sibs(), canPreview(x.M) ? 'prev' : 'code'); }
+  if (b.dataset.sn != null){ const x = synList[+b.dataset.sn]; if (x && x.P) webOpen(x.P, { tab:'prev' }); else if (x) openCanvas(x.M, x.sibs(), canPreview(x.M) ? 'prev' : 'code'); }
 });
 addEventListener('keydown', e => { if (e.key === 'Escape' && !SV.hidden && !cvEl && !document.querySelector('.szm.on')) synClose(); });
 {

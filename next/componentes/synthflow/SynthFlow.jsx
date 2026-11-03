@@ -10,6 +10,7 @@ import TabBar from './TabBar';
 import Selector from './Selector';
 import PuenteEfectos from './PuenteEfectos';
 import IaCaida from './IaCaida';
+import VistaWeb from './VistaWeb';
 
 export default function SynthFlow(){
   return (
@@ -31,6 +32,7 @@ export default function SynthFlow(){
       <Selector />
       <PuenteEfectos />
       <IaCaida />
+      <VistaWeb />
     </>
   );
 }
