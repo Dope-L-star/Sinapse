@@ -64,7 +64,7 @@ export async function start({ root = path.join(REPO, 'cloudflare/public'), reply
       try{
         const h = await api(name);
         const chunks = []; for await (const c of req) chunks.push(c);
-        const r = await h.fetch(new Request('http://synthz.test' + req.url, { method:req.method, headers:Object.assign({}, req.headers, { 'x-real-ip':'10.1.2.3' }), body:/GET|HEAD/.test(req.method) ? undefined : Buffer.concat(chunks) }));
+        const r = await h.fetch(new Request('http://synthz.test' + req.url, { method:req.method, headers:Object.assign({}, req.headers, { 'x-real-ip':req.headers['x-test-ip'] || '10.1.2.3' }), body:/GET|HEAD/.test(req.method) ? undefined : Buffer.concat(chunks) }));
         res.writeHead(r.status, Object.fromEntries(r.headers));
         if (r.body){ const rd = r.body.getReader(); for (;;){ const { done, value } = await rd.read(); if (done) break; res.write(value); } }
         res.end();

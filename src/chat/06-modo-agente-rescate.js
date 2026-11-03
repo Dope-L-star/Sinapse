@@ -157,6 +157,7 @@ async function send(){
     card.set(1, same ? 'Tu pedido ya era claro: lo paso tal cual' : 'Mejoré tu pedido para que la IA lo entienda mejor');
     await SZ.sleepRaw(550);
     const tl = plan.tema && TOPIC[plan.tema] ? TOPIC[plan.tema].l.toLowerCase() : '';
+    const wd = webTake(text);
     const light = isSimple(text, plan) ? lightPick() : null;
     card.set(2, light ? 'Es algo sencillo: uso una IA rápida que gasta menos' : tl ? 'Eligiendo la IA que más sabe de ' + tl : 'Eligiendo la mejor IA para esto');
     const pick = light || agentPick(plan.tema);
@@ -166,7 +167,8 @@ async function send(){
     unlock();
     if (g0 !== gen){ card.el.remove(); return; }                /* cambiaste de chat mientras tanto */
     if (!same) msg.ask = plan.pedido;
-    if (plan.web || needsWeb(text)){ card.el.remove(); await webPrep(msg, plan.pedido || text); if (g0 !== gen) return; }
+    /* v4.2 · internet: decide la regla fija (no el plan de la IA), con lo que escribiste tú */
+    if (wd.go){ card.el.remove(); await webPrep(msg, plan.pedido || text, wd.why); if (g0 !== gen) return; }
     if (wantsDeck(text)) msg.deck = true;
     msg.agent = { pick, name:info(pick).name, tl:light ? 'cosas sencillas (gasta menos)' : tl, ask:same ? '' : plan.pedido };
     st().model.openrouter = pick; save(); paintSel(); renderTop(false); paintAccent();
@@ -206,7 +208,7 @@ async function send(){
   if (imgs.length) Object.defineProperty(msg, '_imgs', { value:imgs, enumerable:false, writable:true });
   if (text && wantsDeck(text)) msg.deck = true;
   chat.push(msg); touchThread(); save();
-  if (text && needsWeb(text)){ renderMsgs(); await webPrep(msg, text); save(); }
+  { const wd = text ? webTake(text) : { go:false }; if (wd.why === 'apagado') msg.webNo = true; if (wd.go){ renderMsgs(); await webPrep(msg, text, wd.why); save(); } }
   let okSent = true;
   await runSolo(err => { okSent = false; chat.pop(); save(); renderMsgs(); showErr(err); inp.value = text; files.push(...sent); autoGrow(); updateHint(); renderTray(); }, oneModel ? { model:oneModel } : {});
   if (okSent && text && MEM_RX.test(text)) memOffer(text);
@@ -289,8 +291,9 @@ function limpiaBucles(t){
 async function runSolo(onFail, o = {}){
   const mid = o.model || selId(), chat = chatArr(), g = gen, vis = info(mid).vision, saver = st().sx.saver;
   const slowT = setTimeout(() => { if (busy[mid] === 'think' && SZ.BOT.react) SZ.BOT.react('slow', { auto:mid === 'sz:auto' }); }, 14000);
-  /* v3.8 · la IA decide sola si busca en internet (si ya buscó para este mensaje, no se repite) */
-  const lastU = [...chat].reverse().find(x => x.role === 'user'), webAuto = !o.noWeb && mode === 'solo' && SZ.CFG.autoWeb !== false && !!lastU && !lastU.sources && !lastU.webTried && !lastU.imgId;
+  /* v4.2 · la IA ya NO decide sola si busca (eso la hacía buscar «porque sí y porque no»): decide la regla fija al enviar.
+     Si igual responde que no sabe datos de hoy, SynthonIA te OFRECE buscar; nunca se busca a escondidas. */
+  const lastU = [...chat].reverse().find(x => x.role === 'user'), webAuto = false, webOffer = !o.noWeb && mode === 'solo' && !!lastU && !lastU.sources && !lastU.webTried && !lastU.imgId && !lastU.webNo;
   const sent = apiMsgs(chat, vis, { webAsk:webAuto, srv:/^sz:/.test(mid), mid }), naive = apiMsgs(chat, vis, { naive:true }), ck = hashStr(mid + '|' + saver + '|' + effKey() + '|' + JSON.stringify(sent));
   let hold = webAuto ? null : false, webQ = null;
   const holdWeb = txt => { if (hold === false) return false; if (webMaybe(txt)){ hold = true; return true; } hold = false; return false; };
@@ -319,7 +322,7 @@ async function runSolo(onFail, o = {}){
       const ctl = new AbortController(); ctls.add(ctl);
       try{ r = await SZ.askStream(OR, sent, Object.assign({ model:mid, maxTokens: saver ? 700 : 0, signal:ctl.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { if (holdWeb(txt)) return; txt = sinMarcas(txt); mount(); W.write(txt); if (rv) rv.push(txt); }); }finally{ ctls.delete(ctl); }
       addUsage(r.prov || SZ.provOf(mid), r.prompt, r.completion, true, { est:r.est, free:/:free$/.test(mid) || r.prov === 'synthz', rid:r.rid });
-      if (webAuto && !r.aborted){ const mq = WEB_Q_RX.exec(r.text || ''); webQ = mq ? mq[1].trim() : (String(r.text || '').length < 2500 && CUTOFF_RX.test(r.text || '') ? String(lastU.content || '').slice(0, 300) : null); }
+      if (webOffer && !r.aborted && String(r.text || '').length < 2500 && CUTOFF_RX.test(r.text || '')) setTimeout(() => offerWeb(lastU, onFail, o), 1200);
       if (!r.aborted && !r.swapped) SZ.markGood(mid);
       SZ.TEL.msgs++; SZ.TEL.ai = (r.prov || SZ.provOf(mid)).slice(0, 12);
       st().sx.saved += Math.max(0, msgCost(naive) - msgCost(sent)); save();
@@ -416,3 +419,11 @@ async function regen(){
   await runSolo(err => { chat.push(last); save(); renderMsgs(); showErr(err, { regen:true }); }, { fresh:true });
 }
 
+
+/* v4.2 · la IA dijo que no tiene datos de hoy: SynthonIA te pregunta antes de buscar (tú decides; no se busca a escondidas) */
+function offerWeb(lastU, onFail, o){
+  if (!lastU || lastU.sources || lastU.webTried || !SZ.BOT || !SZ.BOT.offer) return;
+  const en = SZ.lang() === 'en';
+  SZ.BOT.offer(en ? 'This AI says it has no current data for that. Want me to search the web and answer with sources?' : 'Esta IA dice que no tiene datos de hoy para eso. ¿Lo busco en internet y te respondo con fuentes?', 'pensando',
+    en ? 'Search the web' : 'Buscar en internet', async () => { lastU.webTried = true; await webPrep(lastU, String(lastU.content || '').slice(0, 300), 'tu'); save(); renderMsgs(); await runSolo(onFail, Object.assign({}, o, { noWeb:true, fresh:true })); });
+}

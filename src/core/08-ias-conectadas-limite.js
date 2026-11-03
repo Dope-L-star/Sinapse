@@ -44,8 +44,14 @@ const MSG_TOK = 800;
 /* con sesión guardada (o volviendo de Google) ya cuentas como persona con cuenta, aunque tu cuenta tarde un segundo en cargar */
 const signedish = () => !!(ACC && (ACC.ready || ACC.joining || (SESS && !ACC.err)));
 const isGuestQ = () => !!(SZQ.guest && !signedish());
-const guestFull = () => isGuestQ() && (SZQ.guest.used || 0) >= (SZQ.guest.max || 5);
-const limPct = () => Math.max(SZQ.limit ? Math.min(1, (SZQ.used || 0) / SZQ.limit) : 0, isGuestQ() ? Math.min(1, (SZQ.guest.used || 0) / (SZQ.guest.max || 5)) : 0);
+/* v4.2 · un solo número para todo (Sammuel, 3 nov: «está en 0 y dice 2 de prueba»): sin cuenta, la batería, el número grande,
+   el texto de «IAs conectadas» y el botón del lateral leen guestLeft(). Es lo que de verdad te deja escribir el servidor:
+   los mensajes que quedan en este dispositivo y en esta conexión, y 0 si la EnerX del día ya se gastó (antes la pila decía 0 y el texto 2) */
+const guestMax = () => (SZQ.guest && SZQ.guest.max) || 5;
+const guestLeft = () => !SZQ.guest || (SZQ.limit && (SZQ.used || 0) >= SZQ.limit) ? 0 : Math.max(0, Math.min(guestMax(), SZQ.guest.left != null ? SZQ.guest.left : guestMax() - (SZQ.guest.used || 0)));
+const guestFull = () => isGuestQ() && guestLeft() <= 0;
+const gN = (k, n, o) => t(n === 1 ? k + '1' : k, Object.assign({ n }, o));
+const limPct = () => isGuestQ() ? 1 - guestLeft() / guestMax() : SZQ.limit ? Math.min(1, (SZQ.used || 0) / SZQ.limit) : 0;
 const msgsLeft = () => Math.max(0, Math.floor(((SZQ.limit || 25000) - (SZQ.used || 0)) / MSG_TOK));
 const msgsTotal = () => Math.max(1, Math.round((SZQ.limit || 25000) / MSG_TOK));
 /* v2.4: vuelven las SynXCoin's. 1 SynXCoin = 1 palabra (lo que escribes y lo que te responde). El servidor cuenta en tokens; una palabra son unos 4/3 de token */
@@ -69,10 +75,9 @@ const spentPct = (tok, after) => {
   const a = after == null ? SZQ.used || 0 : after;
   return String(Math.max(1, battAt(a - tok) - battAt(a)));
 };
-const coinNote = (mid, r) => /^sz:/.test(String(mid)) && r && !r.cached && ((r.prompt || 0) + (r.completion || 0)) > 0 ? (isGuestQ() ? t('enerx.usedGuest', { n:guestLeft() }) : t('enerx.used', { u:spentPct((r.prompt || 0) + (r.completion || 0)), n:battPct() })) : '';
-const guestLeft = () => Math.max(0, (SZQ.guest.max || 5) - (SZQ.guest.used || 0));
-const limTxt = () => SZQ.on === false ? t('enerx.rest') : guestFull() ? t('enerx.signin') : isGuestQ() ? t('enerx.guestLeft', { n:guestLeft() }) : limPct() >= 1 ? t('enerx.empty') : t('enerx.left', { n:battPct() });
-const limShort = () => SZQ.on === false ? t('enerx.restShort') : guestFull() ? t('enerx.signinShort') : isGuestQ() ? t('enerx.guestShort', { n:guestLeft() }) : limPct() >= 1 ? t('enerx.emptyShort') : battPct() + ' %';
+const coinNote = (mid, r) => /^sz:/.test(String(mid)) && r && !r.cached && ((r.prompt || 0) + (r.completion || 0)) > 0 ? (isGuestQ() ? gN('enerx.usedGuest', guestLeft()) : t('enerx.used', { u:spentPct((r.prompt || 0) + (r.completion || 0)), n:battPct() })) : '';
+const limTxt = () => SZQ.on === false ? t('enerx.rest') : guestFull() ? t('enerx.guestNone') : isGuestQ() ? gN('enerx.guestLeft', guestLeft()) : limPct() >= 1 ? t('enerx.empty') : t('enerx.left', { n:battPct() });
+const limShort = () => SZQ.on === false ? t('enerx.restShort') : isGuestQ() ? gN('enerx.guestShort', guestLeft()) : limPct() >= 1 ? t('enerx.emptyShort') : battPct() + ' %';
 const limLvl = () => { const k = limPct(); return k >= 1 ? 'full' : k >= .8 ? 'warn' : 'ok'; };
 /* la pila: cuerpo de vidrio, polo y carga que baja; con poca carga se pone ámbar y vacía, coral. size = alto de referencia (antes era el anillo) */
 function limRing(size){
@@ -90,7 +95,7 @@ async function szCatalog(){
   const d = await r.json().catch(() => ({}));
   if (!r.ok){ szqSet({ on:false, t:Date.now() }); return []; }
   const arr = Array.isArray(d.models) ? d.models : [];
-  szqSet({ on:arr.length > 0, used:+d.used || 0, limit:+d.limit || 20000, guest:d.guest && d.guest.max ? { used:+d.guest.used || 0, max:+d.guest.max } : null, img:d.img || null, team:!!d.team, alert:!!d.alert, alertN:+d.alertN || 0, n:arr.length, t:Date.now() });
+  szqSet({ on:arr.length > 0, used:+d.used || 0, limit:+d.limit || 20000, guest:d.guest && d.guest.max ? { used:+d.guest.used || 0, max:+d.guest.max, left:d.guest.left != null ? +d.guest.left : null } : null, img:d.img || null, team:!!d.team, alert:!!d.alert, alertN:+d.alertN || 0, n:arr.length, t:Date.now() });
   if (!arr.length) return [];
   const out = arr.filter(m => m && typeof m.id === 'string' && /^sz:/.test(m.id) && !/allam|infron|openrouter\/(free|auto)|models?[-_ ]router/i.test(m.id) && !/free models router|router/i.test(String(m.name || ''))).map(m => {
     const mid = m.id.split(':').slice(2).join(':'), vendor = szVendor(mid, m.prov);

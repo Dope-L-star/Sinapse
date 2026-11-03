@@ -95,8 +95,13 @@ async function compare(){
   const sent = files.splice(0).filter(f => f.state === 'ok'); renderTray();
   const ask = (text || 'Mira los archivos adjuntos.') + sent.map(f => f.text ? '\n\n[Archivo adjunto: ' + f.name + ']\n```\n' + f.text.slice(0, Math.floor(24000 / sent.length)) + '\n```' : '').join('');
   inp.value = ''; autoGrow(); updateHint();
-  const C = newCmpRun(text, sent.length ? { ask, files:sent.map(f => ({ name:f.name, kind:f.kind, thumb:f.thumb })) } : null);
-  if (sent.length) C.msg = { role:'user', content:text, files:sent.map(f => ({ name:f.name, kind:f.kind, text:f.text, thumb:f.thumb })) };
+  /* v4.2 · Comparar sigue la MISMA regla de internet que el chat normal: si toca buscar, se busca una sola vez y todas las IAs reciben los mismos resultados */
+  const wd = text ? webTake(text) : { go:false }, wm = { role:'user', content:text };
+  if (wd.go) await webPrep(wm, text, wd.why);
+  const ask2 = wm.ask ? wm.ask + (ask.length > text.length ? ask.slice(text.length) : '') : ask;
+  const C = newCmpRun(text, sent.length || wm.sources ? { ask:ask2, files:sent.map(f => ({ name:f.name, kind:f.kind, thumb:f.thumb })) } : null);
+  if (sent.length || wm.sources) C.msg = Object.assign({ role:'user', content:text }, sent.length ? { files:sent.map(f => ({ name:f.name, kind:f.kind, text:f.text, thumb:f.thumb })) } : {}, wm.sources ? { sources:wm.sources, web:wm.web, webWhy:wm.webWhy } : {});
+  if (wm.sources){ const u = C.node.querySelector('.m.user'); const se = sourcesEl(wm); if (u) u.after(se); else C.node.prepend(se); }
   ids.forEach(id => cmpJob(id, C));
 }
 /* entrar a Comparar con las IA marcadas (desde los temas) */

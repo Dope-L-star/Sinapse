@@ -76,11 +76,25 @@ check('el sexto ya no entra (429)', a.s === 429, JSON.stringify(a));
 /* sin cuenta (/api/ai) */
 const g = async (msgs, turn) => { const x = await apost({ model:'sz:auto', messages:msgs, turn }); const out = { s:x.status, guest:x.headers.get('x-sz-guest') }; await x.text(); return out; };
 let b = await g(M('hola'), 'gA-1');
-check('sin cuenta: un mensaje cuenta 1', b.s === 200 && b.guest === '1/5', JSON.stringify(b));
+check('sin cuenta: un mensaje cuenta 1', b.s === 200 && b.guest === '1/5/4', JSON.stringify(b));
 b = await g(M('Continúa exactamente donde te quedaste'), 'gA-1'); b = await g(M('[Revisión automática de SynthFlow] arregla'), 'gA-1');
-check('sin cuenta: «Continúa» y el arreglo del mismo mensaje no cuentan otro', b.s === 200 && b.guest === '1/5', JSON.stringify(b));
+check('sin cuenta: «Continúa» y el arreglo del mismo mensaje no cuentan otro', b.s === 200 && b.guest === '1/5/4', JSON.stringify(b));
 b = await g(M('otra'), 'gB-1');
-check('sin cuenta: un mensaje nuevo cuenta (2/5)', b.s === 200 && b.guest === '2/5', JSON.stringify(b));
+check('sin cuenta: un mensaje nuevo cuenta (2/5)', b.s === 200 && b.guest === '2/5/3', JSON.stringify(b));
+
+/* v4.2 · lo que ve la página es lo mismo que deja el servidor (Sammuel: «está en 0 y dice 2 de prueba») */
+const aget = (dev = 'dispositivo-de-prueba-1234', ip = IP) => ai.fetch(new Request('https://synthz.test/api/ai', { headers:{ 'x-real-ip':ip, 'x-sz-device':dev } })).then(x => x.json());
+let d = await aget();
+check('sin cuenta: la página recibe los mismos 3 que quedan', d.guest && d.guest.left === 3 && d.guest.used === 2 && d.guest.max === 5, JSON.stringify(d.guest));
+const qk = [...kv.keys()].find(k => /^q:d:/.test(k));
+kv.set(qk, '9999999');
+d = await aget();
+check('sin cuenta: si la EnerX del día se acabó, quedan 0 (no «2 de prueba»)', d.guest && d.guest.left === 0 && d.guest.used === 5, JSON.stringify(d.guest));
+b = await g(M('otra más'), 'gC-1');
+check('   y de verdad no deja escribir', b.s === 429, JSON.stringify(b));
+kv.delete(qk);
+d = await aget('otro-dispositivo-de-prueba-99');
+check('sin cuenta: otro dispositivo en la misma conexión ve lo que deja la conexión', d.guest && d.guest.left === 5, JSON.stringify(d.guest));
 
 console.log(fails ? '\n' + fails + ' prueba(s) fallaron.' : '\nTodo bien.');
 process.exit(fails ? 1 : 0);
