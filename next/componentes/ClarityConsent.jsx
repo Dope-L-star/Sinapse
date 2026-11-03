@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import {
+  CLARITY_CONSENT_KEY,
   CLARITY_PROJECT_ID_DEFAULT,
   clarityModeFromEnv,
   clearFirstPartyClarityCookies,
@@ -55,6 +56,9 @@ function getStorageSafely() {
   try { return window.localStorage; } catch { return null; }
 }
 
+/* una sola vez para todo el sitio: la decisión vive en localStorage (mismo origen = todas las páginas) */
+const readChoice = () => readClarityChoice(getStorageSafely(), Date.now(), HEATMAPS ? { maxAgeMs: null } : undefined);
+
 function startClarity() {
   if (!ALLOWED || typeof window === 'undefined' || typeof document === 'undefined') return false;
   if (HEATMAPS) maskWholePage(document);   /* solo mapas de calor: nada de texto legible */
@@ -79,7 +83,7 @@ export default function ClarityConsent() {
 
   useEffect(() => {
     if (!ALLOWED) return undefined;
-    const choice = readClarityChoice(getStorageSafely());
+    const choice = readChoice();
     if (choice === 'granted') {
       setHasChoice(true);
       startClarity();
@@ -93,7 +97,16 @@ export default function ClarityConsent() {
     }
     const showSettings = () => setOpen(true);
     window.addEventListener('symphoria:analytics-settings', showSettings);
-    return () => window.removeEventListener('symphoria:analytics-settings', showSettings);
+    /* si decide en otra pestaña o página abierta, aquí también se cierra (y no vuelve a salir) */
+    const otherTab = e => {
+      if (e.key !== CLARITY_CONSENT_KEY) return;
+      const c = readChoice();
+      if (!c) return;
+      setHasChoice(true); setOpen(false);
+      if (c === 'granted') startClarity();
+    };
+    window.addEventListener('storage', otherTab);
+    return () => { window.removeEventListener('symphoria:analytics-settings', showSettings); window.removeEventListener('storage', otherTab); };
   }, []);
 
   const accept = useCallback(() => {

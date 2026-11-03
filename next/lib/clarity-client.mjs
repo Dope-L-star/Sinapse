@@ -50,7 +50,9 @@ export function maskWholePage(documentObject) {
   try { body.setAttribute('data-clarity-mask', 'true'); return true; } catch { return false; }
 }
 
-export function readClarityChoice(storage, now = Date.now()) {
+/* maxAgeMs: how long a «granted» lasts. In 'heatmaps' mode Sammuel wants the notice ONCE for the whole site,
+   so it is called with { maxAgeMs: null } (never expires); the adult mode keeps the 180-day renewal. */
+export function readClarityChoice(storage, now = Date.now(), { maxAgeMs = CLARITY_GRANT_MAX_AGE_MS } = {}) {
   if (!storage) return null;
   try {
     const raw = storage.getItem(CLARITY_CONSENT_KEY);
@@ -61,7 +63,7 @@ export function readClarityChoice(storage, now = Date.now()) {
     if (record.choice === 'minor') return 'minor';
     if (record.choice !== 'granted' || !Number.isFinite(record.updatedAt)) return null;
     // A future-dated record is invalid; a stale grant must be requested again.
-    if (record.updatedAt > now + 5 * 60 * 1000 || now - record.updatedAt > CLARITY_GRANT_MAX_AGE_MS) {
+    if (record.updatedAt > now + 5 * 60 * 1000 || (maxAgeMs != null && now - record.updatedAt > maxAgeMs)) {
       try { storage.removeItem(CLARITY_CONSENT_KEY); } catch {}
       return null;
     }

@@ -212,3 +212,11 @@ test('enmascarar toda la página marca el body para Clarity', () => {
   assert.equal(attrs['data-clarity-mask'], 'true');
   assert.equal(maskWholePage(null), false);
 });
+
+test('en modo mapas de calor el «aceptar» no vence: el aviso sale una sola vez', () => {
+  const storage = memoryStorage();
+  writeClarityChoice(storage, 'granted', 1000);
+  const later = 1000 + CLARITY_GRANT_MAX_AGE_MS * 5;
+  assert.equal(readClarityChoice(storage, later, { maxAgeMs: null }), 'granted');
+  assert.equal(readClarityChoice(storage, later), null);   /* el modo adulto sigue renovando a los 180 días */
+});
