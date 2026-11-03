@@ -6,7 +6,19 @@
 'use strict';
 if (!window.SZ || !SZ.__syn) return;
 const B = SZ.__syn;
-const { root, $, $$, clamp, CFG, PERF, reduce, sleepRaw, esc, isFlow, BRAND, zWord, t, onLang, ENERX, trStr, ACC, accHooks, api, accName, toast, pixelGrid, pixelRun, typeIn, SZQ, szCatalog, telPage, telEv, burst, portalOut, portalLock, authBox, cfgModal, plansModal } = B;
+const { root, $, $$, clamp, CFG, PERF, reduce, sleepRaw, esc, isFlow, BRAND, zWord, t, onLang, ENERX, trStr, ACC, accHooks, api, accName, toast, pixelGrid, pixelRun, typeIn, SZQ, szCatalog, telPage, telEv, burst, portalOut, portalLock, authBox, cfgModal, plansModal, memAddCore, memList } = B;
+/* v3.7 · lo que escribe SynthonIA sale con formato: **negrita**, *cursiva*, `código` y listas con «-».
+   Antes se veían los asteriscos y cosas como «&gt;» (Sammuel, 2 nov). Primero se escapa todo (seguro) y después se pone el formato. */
+const synMd = s => {
+  let h = String(s == null ? '' : s).replace(/&(gt|lt|amp|quot|#39|nbsp);/g, (m, k) => ({ gt:'>', lt:'<', amp:'&', quot:'"', '#39':"'", nbsp:' ' })[k]);
+  h = esc(h)
+    .replace(/\*\*([^*\n][^\n]*?)\*\*/g, '<b>$1</b>').replace(/__([^_\n][^\n]*?)__/g, '<b>$1</b>')
+    .replace(/(^|[\s(«"])\*([^*\s][^*\n]*?)\*(?=[\s).,;:!?»"]|$)/g, '$1<i>$2</i>')
+    .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+    .replace(/^\s*#{1,4}\s+/gm, '').replace(/^\s*[-*•]\s+/gm, '• ')
+    .replace(/\*\*/g, '').replace(/\n/g, '<br>');
+  return h;
+};
 /* ---------- SynthonIA: su carita (SVG), con una expresión para cada momento ---------- */
 const FACE_G = '#f6d9a0';
 /* v2.5 · SynthonIA idéntica al boceto «Cuerpo maestro» y «Expresiones»:
@@ -120,10 +132,10 @@ const SG_IDLE = [40, 280, 8, 'open'];
 const SPOSE = {
   idle:     { L:SG_IDLE, R:SG_IDLE },
   saluda:   { L:SG_IDLE, R:[18, 148, 165, 'wave'], wave:'r' },
-  senala:   { L:SG_IDLE, R:[10, 206, 90, 'point'] },
-  senalaL:  { L:[10, 206, 90, 'point'], R:SG_IDLE },
+  senala:   { L:SG_IDLE, R:[34, 206, 90, 'point'] },   /* v3.7 · más adentro: el índice ya no se corta en el borde */
+  senalaL:  { L:[34, 206, 90, 'point'], R:SG_IDLE },
   celebra:  { L:[22, 130, 158, 'wave'], R:[22, 130, 158, 'wave'] },
-  piensa:   { L:SG_IDLE, R:[102, 332, 176, 'point'] },
+  piensa:   { L:SG_IDLE, R:[126, 320, 176, 'point'] },   /* v3.7 · el índice toca la barbilla (antes quedaba lejos, abajo) */
   escucha:  { L:SG_IDLE, R:[14, 172, 150, 'open'] },
   presenta: { L:SG_IDLE, R:[12, 250, 66, 'wave'] },
   sorpresa: { L:[26, 188, 168, 'wave'], R:[26, 188, 168, 'wave'] },
@@ -133,13 +145,15 @@ const SPOSE = {
 /* una pieza de vidrio: relleno casi transparente, luz que se junta abajo, borde iridiscente y filo blanco */
 const sgPiece = (d, rim) => '<path d="' + d + '" fill="url(#sgGlass)"/><path d="' + d + '" fill="url(#sgCaus)"/>'
   + '<path d="' + d + '" fill="none" stroke="url(#sgIri)" stroke-width="' + (rim || 1.6) + '" stroke-opacity=".85"/><path d="' + d + '" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width=".7"/>';
-/* v2.9 · manos de verdad: palma de vidrio, tres dedos con nudillos y pulgar (antes era una manopla).
+/* v3.7 · el pulgar nace a media palma (antes salía pegado a la muñeca y se veía raro) y en «point» los dedos se doblan de verdad.
+   v2.9 · manos de verdad: palma de vidrio, tres dedos con nudillos y pulgar (antes era una manopla).
    Cada dedo: [x de la base, giro, doblez de la punta, largo 1, largo 2]; el pulgar además dice dónde nace.
    open = relajada, wave = abierta para saludar o celebrar, point = puño con el índice estirado */
 const SG_HANDS = {
-  open:  { f:[[-7, 9, 6, 8, 6.5], [0, 0, 4, 8.8, 7], [7, -7, 4, 8.4, 6.8]], t:[10, 7, -60, 20, 7, 5.5] },
-  wave:  { f:[[-7, 24, -4, 8, 6.5], [0, 4, 0, 9, 7], [7, -16, 2, 8.6, 6.8]], t:[10, 7, -84, 8, 7.4, 5.8] },
-  point: { f:[[-7, 5, 0, 5.2, 0], [0, 2, 0, 5.6, 0], [7, -3, 0, 9.6, 8]], t:[9, 11, 76, 8, 7, 5] }
+  open:  { f:[[-7, 9, 6, 8, 6.5], [0, 0, 4, 8.8, 7], [7, -7, 4, 8.4, 6.8]], t:[9.4, 11.5, -40, 16, 6.6, 5.4] },
+  wave:  { f:[[-7, 22, -4, 8, 6.5], [0, 4, 0, 9, 7], [7, -14, 2, 8.6, 6.8]], t:[9.4, 11, -54, 12, 7.2, 5.6] },
+  /* índice estirado y los otros dos doblados hacia la palma (se ven los nudillos, no palitos sueltos); el pulgar los cruza */
+  point: { f:[[-7, 4, 178, 3, 3.8], [0, 1, 178, 3.2, 4], [7, -3, 0, 9.6, 8]], t:[8.6, 13.2, 64, 22, 6, 4.6] }
 };
 const sgSeg = (L, w) => '<rect x="' + (-w / 2) + '" y="0" width="' + w + '" height="' + L + '" rx="' + (w / 2) + '" fill="url(#sgArm)" stroke="url(#sgIri)" stroke-width=".9"/>';
 const sgKnuckle = (y, r) => '<circle cy="' + y + '" r="' + r + '" fill="#c9566c" stroke="#e6b65f" stroke-opacity=".8" stroke-width=".6"/>';
@@ -762,10 +776,10 @@ const BOT_FAQ = [
   { k:'ias conectadas que son las ias conectadas gratis listas', a:'Las IAs conectadas son IAs gratis que ya vienen listas en SymphorIA. No tienes que configurar nada ni dar tarjeta: solo escribes. Sin cuenta pruebas con 5 mensajes al día; con tu cuenta gratis, mucho más. Cada día tienes un límite gratis para usar las IAs conectadas. A medianoche se vuelve a llenar.', mood:'feliz' },
   { k:'puter que es puter creditos personales cuenta', a:'Con Puter usas la versión pro de las IAs más usadas, como ChatGPT, Claude o Gemini. Es gratis, tiene un saldo que se renueva cada mes y se conecta en Ajustes › IAs y memoria › «Conectar Puter u otra IA». Al lado de cada IA de Puter verás rayitas: verdes gasta poco, amarillas normal y rojas gasta mucho.', act:'conn', lbl:'Conectar mi Puter' },
   { k:'puter conectar conecto conecta conectarlo vincular vinculo', need:'puter', a:'Así conectas Puter: abre Ajustes › pestaña «IAs y memoria» › «Conectar Puter u otra IA» y toca «Conectar con Puter». Se abre una ventanita: entra o crea tu cuenta de Puter (es gratis) y listo. También se conecta solo si eliges una IA que diga «Conecta tu Puter» y le escribes. Con Puter usas la versión pro de IAs como ChatGPT, Claude o Gemini, con un saldo gratis que se renueva cada mes.', act:'conn', lbl:'Conectar mi Puter', go:['[data-tab="cfg"]', '#railCfg', '#cfgBtn'] },
-  { k:'cambiar elegir escoger ia modelo cual otra seleccionar', a:'Toca el nombre de la IA que estás usando y se abre «¿Con quién fluyes hoy?». Primero eliges para qué la quieres y luego aparecen las IA. Tocas «Usar» y listo.', go:['#cPick', '#curChip', '[data-tab="ia"]'] },
+  { k:'cambiar elegir escoger ia modelo cual otra seleccionar', a:'Toca el nombre de la IA que estás usando y se abre «Elige tu IA». Ahí mismo ves las IA: buscas o tocas «Para ti», «Todas» o «Mis favoritas», y tocas «Usar». Si quieres afinar, «Personalizar búsqueda» tiene los filtros. Para comparar varias, usa «Comparar IAs» en la barra.', go:['#cPick', '#curChip', '[data-tab="ia"]'] },
   { k:'comparar comparacion varias dos lado mismo tiempo', a:'Con «Comparar con otra IA» sumas hasta 4. Todas responden lo mismo y aparecen en el orden en que llegan.', go:['#cCmp', '#pickRow [data-add]'] },
   { k:'guia tutorial aprender enseñar como funciona', a:'En la Guía rápida te pregunto si la quieres completa o qué quieres ver: eliges uno o varios temas y te los muestro con mi manita, en ese orden.', go:['#guideTop', '#helpBtn'], act:'guide', lbl:'Abrir la Guía' },
-  { k:'limite cuanto queda quedan mensajes barra uso gasto consumo enerx energia bateria pila carga synxcoin coins', a:'Cada día tienes EnerX, tu batería gratis para usar las IAs conectadas: baja un poco con cada mensaje (lo que escribes y lo que la IA te responde) y a medianoche se carga al 100 %. Sin cuenta son 5 mensajes de prueba al día; con tu cuenta gratis tu EnerX dura mucho más. Te muestro dónde está.', go:['#railCoin', '#tabCoin', '#navTotal', '.pill-total'], tour:'coins' },
+  { k:'limite cuanto queda quedan mensajes barra uso gasto consumo enerx energia bateria pila carga synxcoin coins', a:'Cada día tienes EnerX, tu batería gratis para usar las IAs conectadas: baja un poco con cada mensaje (lo que escribes y lo que la IA te responde) y a medianoche se carga al 100 %. Sin cuenta son 5 mensajes al día; con tu cuenta gratis tu EnerX dura mucho más. Te muestro dónde está.', go:['#railCoin', '#tabCoin', '#navTotal', '.pill-total'], tour:'coins' },
   { k:'pagar cobro cobran gratis precio plata dinero costo tarjeta', a:'SymphorIA es gratis y hoy no te cobra nada. Las IAs conectadas son gratis, y Puter también tiene su parte gratis cada mes. Los planes del menú «⋯» › Planes por ahora solo se muestran: los pagos están apagados.', go:['#moreBtn'] },
   { k:'chats historial conversaciones anteriores guardados donde estan mis', a:'Tus chats están en «Mis chats», en la barrita (en el celular, la pestaña Chats). Se guardan en tu dispositivo y en tu cuenta si entras.', go:['#railChats', '[data-r="chats"]', '[data-tab="chats"]'] },
   { k:'drive google espacio guardar copia respaldo conectar conecto', a:'En Ajustes › IAs y memoria › Google Drive vinculas tu Drive y guardo una copia de tus chats en una carpeta privada. No puedo ver tus otros archivos.', go:['#moreBtn'] },
@@ -783,7 +797,7 @@ const BOT_FAQ = [
   /* charla sencilla */
   { k:'hola buenas hey saludos holi buenos dias tardes noches', a:'¡Hola! Soy SynthonIA 😊 ¿En qué te ayudo con SymphorIA?', wave:true },
   { k:'como estas andas va todo bien que tal', a:'¡Muy bien, gracias por preguntar! Aquí, lista para ayudarte. ¿Y tú cómo vas?', mood:'encantada' },
-  { k:'como te llamas quien eres tu nombre eres', a:'Me llamo SynthonIA. Soy la ayudante de SymphorIA: te explico la página, te muestro dónde están las cosas y, de vez en cuando, te cuento un dato curioso.', mood:'guino' },
+  { k:'como te llamas quien eres tu nombre eres', a:'Me llamo SynthonIA. Soy la ayudante de SymphorIA: te explico la página, te digo las cosas claras y tengo mis opiniones sobre tecnología (spoiler: lo simple que funciona le gana a lo brillante que se rompe).', en:'I\'m SynthonIA, SymphorIA\'s helper: I explain the site, I tell it like it is, and I have my own opinions about tech (spoiler: simple things that work beat shiny things that break).', mood:'guino' },
   { k:'chiste broma cuentame algo gracioso risa', a:'', joke:true, mood:'riendo' },
   { k:'dato curioso sabias algo interesante', a:'', fact:true, mood:'sorprendida' },
   { k:'gracias genial perfecto listo vale chevere bacano', a:'¡Con gusto! Aquí estoy cuando me necesites. ✨', mood:'encantada' },
@@ -856,7 +870,9 @@ function botMount(){
       };
       const onViewport = () => put();
       put(); addEventListener('resize', onViewport); addEventListener('scroll', onViewport, { passive:true });
-      BOT.positionCleanup = () => { removeEventListener('resize', onViewport); removeEventListener('scroll', onViewport); };
+      /* v3.7 · el nombre «SynthFlow» del logo se pinta después: si el logo crece, la bolita se corre con él (antes quedaba encima del logo en el celular) */
+      let ro = null; try{ ro = new ResizeObserver(() => put()); ro.observe(mLogo); }catch(e){} [300, 1200].forEach(t => setTimeout(put, t));
+      BOT.positionCleanup = () => { removeEventListener('resize', onViewport); removeEventListener('scroll', onViewport); if (ro) ro.disconnect(); };
       if (document.fonts) document.fonts.ready.then(put);
     } else {
       mLogo.after(b);
@@ -928,7 +944,7 @@ async function botThink(work){
 function botBubble(text, ms){
   if (!BOT.el || BOT.open || document.querySelector('#vintro,#intro,#portal')) return; let bb = $('#szBotB'); if (!bb){ bb = document.createElement('div'); bb.id = 'szBotB'; document.body.appendChild(bb); }
   const D = demoji(text), md = D.mood || BOT.mood || 'feliz';
-  bb.innerHTML = '<span class="bbf">' + face(md, 52) + '</span><p></p>'; $('p', bb).textContent = D.text;
+  bb.innerHTML = '<span class="bbf">' + face(md, 52) + '</span><p></p>'; $('p', bb).innerHTML = synMd(D.text);
   bb.classList.toggle('big', BOT.el.classList.contains('g2'));
   const r = botAt().getBoundingClientRect(), W = Math.min(BOT.el.classList.contains('g2') ? 380 : 330, innerWidth - 24);
   bb.style.width = W + 'px'; bb.style.left = clamp(r.left + r.width / 2 - W / 2, 12, innerWidth - W - 12) + 'px';
@@ -975,7 +991,7 @@ function botClose(){ BOT.open = false; if (BOT.think) BOT.zen = true; if (BOT.pa
 function botMsgHtml(m){
   if (m.role === 'user') return '<div class="bm u"><p>' + esc(m.content) + '</p></div>';
   if (m.role === 'team') return '<div class="bm t"><span class="rk r-' + esc(String(m.rank || '').toLowerCase()) + '">' + esc(m.rank || 'Equipo') + '</span><b>' + esc(m.name || '') + '</b><p>' + esc(m.content) + '</p></div>';
-  return '<div class="bm a"><span class="mf">' + face(m.mood || 'feliz', 36) + '</span><div><p>' + esc(m.content) + '</p>' + (m.btn ? '<button type="button" class="btn sm ghost" data-ba="' + esc(m.btn[0]) + '">' + esc(m.btn[1]) + '</button>' : '') + '</div></div>';
+  return '<div class="bm a"><span class="mf">' + face(m.mood || 'feliz', 36) + '</span><div><p>' + synMd(m.content) + '</p>' + (m.btn ? '<button type="button" class="btn sm ghost" data-ba="' + esc(m.btn[0]) + '">' + esc(m.btn[1]) + '</button>' : '') + '</div></div>';
 }
 function botRender(){
   const P = BOT.panel; if (!P) return;
@@ -1068,21 +1084,36 @@ async function botAsk(q){
   /* SynthonIA no hace tareas, código ni trabajos: eso es para las IAs del chat */
   if (TASKY.test(fold(q)) || q.length > 220){ BOT.pendingQ = q; await botThink(); return botSay('Eso es trabajo para las IAs de SynthFlow 💪 Yo te ayudo con la página, y con chistes o datos curiosos. ¿Te lo dejo listo en la caja del chat?', 'guino', ['tochat', 'Sí, llévalo al chat']); }
   try{
-    const res = await botThink(async () => { const r = await fetch('/api/help', { method:'POST', headers:Object.assign({ 'content-type':'application/json' }, B.SESS ? { authorization:'Bearer ' + B.SESS } : {}), body:JSON.stringify({ action:'ask', q, lang:B.LANG, hist:BOT.hist.slice(-7, -1).filter(m => m.role === 'user' || m.role === 'assistant').map(m => ({ role:m.role, content:m.content })) }) });
+    const res = await botThink(async () => { const r = await fetch('/api/help', { method:'POST', headers:Object.assign({ 'content-type':'application/json' }, B.SESS ? { authorization:'Bearer ' + B.SESS } : {}), body:JSON.stringify({ action:'ask', q, lang:B.LANG, mem:memList ? memList() : [], hist:BOT.hist.slice(-7, -1).filter(m => m.role === 'user' || m.role === 'assistant').map(m => ({ role:m.role, content:m.content })) }) });
     const d = await r.json().catch(() => ({})); return { r, d }; });
     const { r, d } = res;
     if (!r.ok) return botSay(d.error || 'No pude pensar una respuesta ahora. Mira la Guía o habla con el equipo.', 'disculpa', ['team', 'Hablar con el equipo']);
     /* v3.0 · si la IA dice [ver:lugar], la manita lo señala */
     const pm = String(d.text || '').match(/\[ver:(\w+)\]/), place = pm && BOT_PLACES[pm[1]];
+    /* v3.7 · si le faltaron al respeto, pone el límite con cara seria (sin señalar nada) */
+    if (d.bound) return botSay(String(d.text || ''), 'neutral');
     botSay(String(d.text || '').replace(/\s*\[ver:\w+\]/g, '').trim() + (d.left <= 3 ? '\n\n' + (B.LANG === 'en' ? '(You have ' + d.left + ' new questions left today.)' : '(Te quedan ' + d.left + ' preguntas nuevas hoy.)') : ''), place ? 'senalando' : 'feliz');
     if (place) botAnswer({ a:'', go:place, point:true });
+    if (d.remember) memAsk(String(d.remember));
   }catch(e){ botSay('No pude conectarme. Revisa tu internet e intenta otra vez.', 'disculpa'); }
 }
+/* v3.7 · memoria: SynthonIA propone recordar algo que vale la pena y PREGUNTA; nada se guarda sin el «Sí» de la persona */
+function memAsk(fact){
+  if (!memAddCore || !memList) return;
+  BOT.memQ = BOT.memQ || {}; const id = 'mem:' + Date.now().toString(36); BOT.memQ[id] = fact;
+  setTimeout(() => botSay((B.LANG === 'en' ? 'Should I remember this for next time? «' : '¿Lo recuerdo para la próxima? «') + fact + '»', 'pensando', [id, B.LANG === 'en' ? 'Yes, remember it' : 'Sí, recuérdalo']), 900);
+}
+function memYes(id){
+  const fact = BOT.memQ && BOT.memQ[id]; if (!fact) return; delete BOT.memQ[id];
+  BOT.hist.forEach(m => { if (m.btn && m.btn[0] === id) m.btn = null; });
+  if (memAddCore(fact)) botSay(B.LANG === 'en' ? 'Done, I\'ll remember it. You can see it or forget it anytime in Settings › AIs and memory.' : 'Listo, lo recuerdo. Lo ves o lo olvidas cuando quieras en Ajustes › IAs y memoria.', 'encantada');
+}
 function botAct(a){
+  if (a.startsWith('mem:')) return memYes(a);
   if (BOT.acts && BOT.acts[a]){ const fn = BOT.acts[a]; delete BOT.acts[a]; botClose(); try{ fn(); }catch(e){} return; }
   if (a === 'tochat'){ const q = BOT.pendingQ || ''; botClose(); if (isFlow()){ const i = document.getElementById('inp'); if (i){ i.value = q; i.dispatchEvent(new Event('input', { bubbles:true })); i.focus(); } } else { try{ sessionStorage.setItem('synthz:q', JSON.stringify({ q, t:Date.now() })); }catch(e){} portalOut('chat.html'); } return; }
   if (a === 'guide'){ botClose(); const g = $('#guideTop') || $('#helpBtn'); if (g) g.click(); }
-  else if (a === 'conn' && !/chat\.html/.test(location.pathname)){ botClose(); SZ.portalOut ? SZ.portalOut('chat.html?conn=1') : (location.href = 'chat.html?conn=1'); }
+  else if (a === 'conn' && !isFlow()){ botClose(); SZ.portalOut ? SZ.portalOut('chat.html?conn=1') : (location.href = 'chat.html?conn=1'); }
   else if (a === 'conn'){ botClose(); const x = document.createElement('a'); x.setAttribute('data-conn', ''); document.body.appendChild(x); x.click(); x.remove(); }
   else if (a === 'team') botTeam();
   else if (a === 'login'){ botClose(); const b = $('#accBtn') || $('[data-tab="me"]'); if (b) b.click(); }
@@ -1169,9 +1200,9 @@ BOT_FAQ.push(
   { k:'cerrar sesion salir logout sign out',
     a:'Para cerrar sesión abre Tu cuenta (tu foto en la barrita) y toca «Cerrar sesión». También puedes cerrarla en todos tus dispositivos.',
     en:'To sign out open Your account (your photo in the bar) and tap «Sign out». You can also sign out on all your devices.', go:['#accBtn', '[data-tab="me"]'] },
-  { k:'opinion sugerencia beta mejorar reportar problema bug feedback suggestion report',
-    a:'Toca «BETA», junto a mí, y cuéntanos qué mejorar o qué falló. Lo lee el equipo de SymphorIA.',
-    en:'Tap «BETA», next to me, and tell us what to improve or what failed. The SymphorIA team reads it.', go:['.szbeta', '#szBeta', '[data-beta]'] },
+  { k:'opinion sugerencia beta alfa alpha mejorar reportar problema bug feedback suggestion report',
+    a:'Toca «ALFA», junto a mí, y cuéntanos qué mejorar o qué falló. Lo lee el equipo de SymphorIA.',
+    en:'Tap «ALPHA», next to me, and tell us what to improve or what failed. The SymphorIA team reads it.', go:['.szbeta', '#szBeta', '[data-beta]'] },
   { k:'persona humano equipo soporte contacto hablar alguien human support contact person',
     a:'En mi ventanita está «Hablar con el equipo»: un Prime, ZFlow o Symmetrix te responde aquí mismo, aunque cierres la página (necesitas tu cuenta gratis).',
     en:'In my little window there\'s «Talk to the team»: a Prime, ZFlow or Symmetrix answers you right here, even if you close the page (you need your free account).', act:'team', lbl:'Hablar con el equipo' },
@@ -1217,7 +1248,14 @@ BOT_FAQ.push(
     en:'When you finish «Start in SynthFlow» and pick what you want to do, I start the 2-minute guide on my own: I don\'t ask the topic or the AI again and I show you New chat, the modes, the effort, Projects, Synthetics and Settings. You can say «Not now» and see it again with the Guide button.', go:['#guideTop', '#helpBtn'] },
   { k:'caja escribir barra larga compacta pequena textarea composer input box bar compact',
     a:'La caja para escribir ahora es más larga y más bajita: ocupa más ancho (hasta 900 px) y menos alto, para que veas más chat. Está igual en SynthFlow, en el estilo Simple y en el celular.',
-    en:'The text box is now longer and shorter: it takes more width (up to 900 px) and less height, so you see more chat. It\'s the same in SynthFlow, the Simple style and on phones.', go:['#inp'] }
+    en:'The text box is now longer and shorter: it takes more width (up to 900 px) and less height, so you see more chat. It\'s the same in SynthFlow, the Simple style and on phones.', go:['#inp'] },
+  /* v3.7 · personalidad: no celebra Halloween y tiene opiniones propias de tecnología */
+  { k:'halloween disfraz disfraces calabaza dulce truco brujas costume pumpkin trick treat spooky',
+    a:'Halloween no es lo mío, así que no lo celebro. Mejor algo útil: en SynthFlow puedes poner hasta 4 IAs a responder lo mismo y quedarte con la mejor.',
+    en:'Halloween isn\'t my thing, so I don\'t celebrate it. Something useful instead: in SynthFlow you can have up to 4 AIs answer the same thing and keep the best one.', mood:'guino' },
+  { k:'opinas opinion piensas mejor ia favorita recomiendas opinion think best favorite recommend',
+    a:'Mi opinión, sin rodeos: no te cases con una sola IA. Compara (hasta 4 a la vez) y quédate con la que mejor responda a TU pregunta. Y si una inventa fuentes, fuera.',
+    en:'My honest take: don\'t marry a single AI. Compare (up to 4 at once) and keep the one that best answers YOUR question. And if one makes up sources, it\'s out.', mood:'guino' }
 );
 /* las respuestas de antes también entienden preguntas en inglés */
 [['conectar', 'connect connection setup key unlock works'], ['ias conectadas', 'connected ais free ready what are'], ['puter que', 'puter what is credits'], ['puter conectar', 'puter connect link'],
@@ -1346,7 +1384,7 @@ function feedbackModal(){
   if ($('#szFb')) return;
   const o = document.createElement('div'); o.id = 'szFb'; o.className = 'szm';
   const C = [['idea', '💡', 'Una idea'], ['error', '🐞', 'Algo falló'], ['confuso', '🤔', 'No entendí algo'], ['otro', '💬', 'Otra cosa']];
-  o.innerHTML = '<div class="tcard" role="dialog" aria-modal="true" aria-label="Cuéntanos qué mejorar"><div class="word">' + zWord('Synth') + '</div><div class="tn">BETA · TU OPINIÓN</div><div class="tb"><h3>Cuéntanos qué mejorar</h3><p>Lo lee el equipo de SymphorIA. No hace falta saber de tecnología: escríbelo como se lo dirías a un amigo.</p></div>'
+  o.innerHTML = '<div class="tcard" role="dialog" aria-modal="true" aria-label="Cuéntanos qué mejorar"><div class="word">' + zWord('Synth') + '</div><div class="tn">ALFA · TU OPINIÓN</div><div class="tb"><h3>Cuéntanos qué mejorar</h3><p>Lo lee el equipo de SymphorIA. No hace falta saber de tecnología: escríbelo como se lo dirías a un amigo.</p></div>'
     + '<div class="fbc" role="radiogroup">' + C.map(([k, e, l], i) => '<button type="button" role="radio" data-c="' + k + '" aria-checked="' + (i === 0) + '"><span>' + e + '</span>' + l + '</button>').join('') + '</div>'
     + '<label class="fbt"><textarea maxlength="1000" rows="4" placeholder="Por ejemplo: no encontré dónde cambiar de IA…"></textarea></label>'
     + '<div class="tbtn" style="margin-top:14px"><button class="lnk" type="button" data-close>Cancelar</button><button class="btn sm" type="button" data-send>Enviar</button></div></div>';
@@ -1364,9 +1402,11 @@ function feedbackModal(){
   });
 }
 const betaTx = k => t(k);   /* fuera de betaMk: adentro «t» es el botón */
-onLang(() => document.querySelectorAll('.beta-tag').forEach(b => { b.title = betaTx('beta.title'); b.dataset.tip = betaTx('beta.tip'); }));
+/* v4.2 · ya estamos en ALFA (Sammuel, 3 nov): la etiqueta dice ALFA en español y ALPHA en inglés */
+const betaAll = () => document.querySelectorAll('.beta-tag').forEach(b => { b.textContent = betaTx('beta.tag'); b.title = betaTx('beta.title'); b.dataset.tip = betaTx('beta.tip'); });
+onLang(betaAll); setTimeout(betaAll, 0); addEventListener('synthflow-ready', betaAll);
 function betaMk(){
-  const t = document.createElement('button'); t.type = 'button'; t.className = 'beta-tag'; t.textContent = 'BETA'; t.title = betaTx('beta.title'); t.dataset.tip = betaTx('beta.tip');
+  const t = document.createElement('button'); t.type = 'button'; t.className = 'beta-tag'; t.textContent = betaTx('beta.tag'); t.title = betaTx('beta.title'); t.dataset.tip = betaTx('beta.tip');
   t.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); feedbackModal(); });
   return t;
 }
@@ -1388,7 +1428,8 @@ function betaBot(){
       /* React owns both controls: keep BETA fixed to the avatar's real viewport box,
          even when the avatar sits beside the mobile logo. */
       t.style.position = 'fixed'; t.style.zIndex = '9599';
-      const candidate = r.left - w - 10 < 8 ? r.right + 10 : r.left - w - 10;
+      /* v3.7 · en la cabecera del celular va a la DERECHA de la bolita (a la izquierda tapaba el logo «SynthFlow») */
+      const candidate = b.classList.contains('inhead') || r.left - w - 10 < 8 ? r.right + 10 : r.left - w - 10;
       const left = Math.max(8, Math.min(innerWidth - w - 8, candidate));
       const top = Math.max(8, Math.min(innerHeight - h - 8, r.top + r.height / 2 - h / 2));
       t.style.left = left.toFixed(0) + 'px'; t.style.top = top.toFixed(0) + 'px'; t.style.visibility = 'visible';
@@ -1436,14 +1477,21 @@ markSeen(); setInterval(markSeen, 5 * 60e3);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') markSeen(); });
 let welcomeShown = false;
 function wasAway(){ let force = false; try{ force = new URLSearchParams(location.search).get('bienvenida') === '1'; }catch(e){} return force || (lastSeen0 > 0 && Date.now() - lastSeen0 >= AWAY_MS); }
+/* v4.1 · esta pantallita es la ÚNICA puerta para volver a ver la portada (index.html):
+   «Soy nuevo» guarda la decisión y abre la portada; «Ya tengo el Flow» la guarda y entra directo a SynthFlow.
+   La decisión queda en este dispositivo y viaja con la cuenta (SZ.portada, core 25m). opts.from = 'logo' cuando
+   alguien que ya entró toca el logo para volver a la portada. */
+const portadaPick = v => { try{ window.SZ.portada.set(v); }catch(e){} };
+function goPortada(){ const href = 'index.html?nuevo=1'; if (window.SZ && SZ.portalBack && !reduce && !root.classList.contains('noanim')) SZ.portalBack(href); else location.href = href; }
 function welcomeBack(opts){
   opts = opts || {};
-  if (welcomeShown || $('#szWelcome')) return null;
+  if (welcomeShown || $('#szWelcome')){ if (opts.from === 'logo' && !$('#szWelcome')) welcomeShown = false; else return null; }
   welcomeShown = true;
+  const onIndex = telPage() === 'index', logo = opts.from === 'logo';
   const who = ACC.ready ? accName() : '';
   const o = document.createElement('div'); o.id = 'szWelcome'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-label', 'Bienvenida');
   o.innerHTML = '<div class="wbface">' + face('flow', 64) + '</div>'
-    + '<div class="wbtx"><b>' + (who ? '¡Hola de nuevo! ¿Sigues siendo tú?' : '¡Hola! ¿Ya conoces ' + (isFlow() ? 'SynthFlow' : 'SymphorIA') + '?') + '</b><p>' + (who ? 'La sesión de <em>' + esc(who) + '</em> está abierta en este dispositivo. Si eres nuevo, te muestro cómo funciona todo.' : 'Pasaron más de 12 horas. Si es tu primera vez, te muestro cómo funciona todo en un minuto.') + '</p></div>'
+    + '<div class="wbtx"><b>' + (logo ? '¿Ya tienes el Flow?' : who ? '¡Hola de nuevo! ¿Sigues siendo tú?' : '¡Hola! ¿Ya conoces ' + (isFlow() ? 'SynthFlow' : 'SymphorIA') + '?') + '</b><p>' + (logo ? 'La portada de SymphorIA es la bienvenida para quien llega nuevo. Si ya sabes usarlo, te quedas aquí; si eres nuevo, te la muestro.' : who ? 'La sesión de <em>' + esc(who) + '</em> está abierta en este dispositivo. Si eres nuevo, te muestro cómo funciona todo.' : 'Pasaron más de 12 horas. Si es tu primera vez, te muestro cómo funciona todo en un minuto.') + '</p></div>'
     + '<div class="wbbtn"><button type="button" class="btn sm flow" data-wb="flow">' + face('flow', 22, 'wbmini') + (who ? 'Ya tengo el Flow · continuar' : 'Ya tengo el Flow') + '</button><button type="button" class="btn sm ghost" data-wb="new">Soy nuevo, quiero aprender</button></div>'
     + '<button type="button" class="wbx" data-wb="x" aria-label="Cerrar">✕</button>';
   document.body.appendChild(o);
@@ -1457,8 +1505,8 @@ function welcomeBack(opts){
   o.addEventListener('click', e => {
     const b = e.target.closest('[data-wb]'); if (!b) return;
     const k = b.dataset.wb; close(k);
-    if (k === 'new' && opts.learn) setTimeout(opts.learn, 420);
-    if (k === 'flow' && opts.flow) opts.flow();
+    if (k === 'new'){ portadaPick('nuevo'); if (!onIndex) setTimeout(goPortada, 420); else if (opts.learn) setTimeout(opts.learn, 420); }
+    if (k === 'flow'){ portadaPick('app'); if (onIndex) setTimeout(() => portalOut('chat.html'), 420); else if (opts.flow) opts.flow(); }
   });
   addEventListener('keydown', function esc1(e){ if (e.key === 'Escape' && o.isConnected){ close('x'); removeEventListener('keydown', esc1); } });
   return o;
@@ -1466,7 +1514,9 @@ function welcomeBack(opts){
 
 /* ===== v1.3: mientras corre una guía o un recorrido, solo se puede tocar la guía y «Saltar guía» ===== */
 (function guideLock(){
-  const OK = '#szgHud,#szgPanel,#szSay,#szHand,#ptour,#tour,.szm,#toast,#szChat,.tcard,[data-guide-ok]';
+  /* #szMaint: el aviso de mantenimiento queda encima de todo; si una guía quedaba corriendo debajo, este candado
+     bloqueaba los clics y el teclado del aviso y no se podía escribir la contraseña ni entrar con Google (2 nov) */
+  const OK = '#szgHud,#szgPanel,#szSay,#szHand,#ptour,#tour,.szm,#toast,#szChat,.tcard,[data-guide-ok],#szMaint';
   const on = () => root.classList.contains('guiding') || !!document.getElementById('ptour') || !!document.getElementById('tour');
   let warnT = 0;
   const stop = e => {
@@ -1561,8 +1611,9 @@ addEventListener('pointerdown', e => {
     if (left.length){ const i = left[Math.floor(Math.random() * left.length)]; s[kind] = [...used, i]; keep(s); return L[i]; }
     for (let k = 0; k < 2; k++){
       try{
-        const q = kind === 'j' ? 'Cuéntame un chiste corto, blanco y nuevo, de una o dos líneas.' : 'Dime un dato curioso corto y verdadero del mundo, de una línea.';
-        const r = await fetch('/api/help', { method:'POST', headers:Object.assign({ 'content-type':'application/json' }, B.SESS ? { authorization:'Bearer ' + B.SESS } : {}), body:JSON.stringify({ action:'ask', q, hist:[] }) });
+        /* v3.7 · en inglés se pide en inglés (antes llegaban chistes en español con la página en inglés) */
+        const en = B.LANG === 'en', q = kind === 'j' ? (en ? 'Tell me a short, clean, new joke, one or two lines.' : 'Cuéntame un chiste corto, blanco y nuevo, de una o dos líneas.') : (en ? 'Tell me a short, true fun fact about the world, one line.' : 'Dime un dato curioso corto y verdadero del mundo, de una línea.');
+        const r = await fetch('/api/help', { method:'POST', headers:Object.assign({ 'content-type':'application/json' }, B.SESS ? { authorization:'Bearer ' + B.SESS } : {}), body:JSON.stringify({ action:'ask', q, lang:B.LANG, hist:[] }) });
         const d = await r.json().catch(() => ({}));
         if (r.ok && d.text && !s.x.includes(hash(d.text))){ s.x = [...s.x, hash(d.text)].slice(-500); keep(s); return d.text; }
       }catch(e){ break; }
@@ -1639,7 +1690,7 @@ addEventListener('pointerdown', e => {
     BOT.sticky = 'triste'; botFace('triste', true); if (BOT.open) botClose();
     const unstick = e => { if (e.target.closest && e.target.closest('#szSay,#szHand,#szBot,.szm')) return; if (e.type === 'pointerdown' && e.pointerType === 'mouse' && e.button) return; BOT.sticky = null; botFace('feliz', true); removeEventListener('keydown', unstick, true); removeEventListener('pointerdown', unstick, true); };
     setTimeout(() => { addEventListener('keydown', unstick, true); addEventListener('pointerdown', unstick, true); }, 2500);
-    if (!t || !HAND){ botBubble('Perdónanos por tu mala experiencia. Toca «BETA» para contarnos cuál fue el problema.', 9000); return; }
+    if (!t || !HAND){ botBubble('Perdónanos por tu mala experiencia. Toca «ALFA» para contarnos cuál fue el problema.', 9000); return; }
     const r0 = BOT.el.getBoundingClientRect(); HAND.show({ x:r0.left + r0.width / 2, y:r0.top + r0.height / 2 });
     await HAND.moveTo(t, { shape:'point' }); HAND.spot(t, 8);
     const k = await HAND.talk('Perdónanos por tu mala experiencia. Aquí está nuestro botón para que nos cuentes cuál fue el problema.', { near:t, mood:'triste', buttons:[{ label:'Contarles' }, { label:'Ahora no', ghost:true }], auto:14000 });
@@ -1805,7 +1856,7 @@ function alertMode(on){
     document.body.appendChild(o); alertEl = o; requestAnimationFrame(() => o.classList.add('on'));
     const pb = $('[data-al="pu"]', o); if (pb) pb.addEventListener('click', () => { alertDismissed = true; alertMode(false); try{ dispatchEvent(new CustomEvent('synthz-useputer')); }catch(e){} });
     try{ telEv('noai', 'modo alerta: ninguna IA gratis responde'); }catch(e){}
-    clearInterval(alertT); alertT = setInterval(async () => { try{ await szCatalog(); }catch(e){} if (!SZQ.alert) alertBack(); }, 30000);
+    clearInterval(alertT); alertT = setInterval(async () => { if (document.hidden) return; try{ await szCatalog(); }catch(e){} if (!SZQ.alert) alertBack(); }, 60000);   /* Fase 4: cada minuto y solo con la pestaña a la vista (antes 30 s: con miles de personas esperando, era una avalancha justo cuando el servidor está mal) */
   } else if (!on && alertEl){ const o = alertEl; alertEl = null; clearInterval(alertT); o.classList.remove('on'); setTimeout(() => o.remove(), 500); }
 }
 let alertDismissed = false;
@@ -1830,7 +1881,9 @@ addEventListener('synthz-szq', () => {
 const MT = { el:null, hist:[], timer:0, mood:'feliz', busy:false, since:0, idle:0 };
 const MT_LOVE = /(gracias|te quiero|te amo|te adoro|eres (muy |la |una )?(linda|bonita|hermosa|genial|la mejor|incre[ií]ble|tierna|buena|top)|qu[eé] (linda|bonita|tierna|genial)|me (caes|encantas|gustas)|eres lo m[aá]ximo|abrazo|besito|❤|♥|💖|😍|🥰)/i;
 const MT_FUN = /(ja(ja)+|je(je)+|xd|😂|🤣|chiste|gracios)/i;
-const MT_SAD = /(fe[ao]|tonta|in[uú]til|odio|aburr|mala|est[uú]pida)/i;
+const MT_SAD = /(fe[ao]|odio|aburr|mala|lent[ao]|demora|cu[aá]ndo vuelve)/i;
+/* v3.7 · falta de respeto: ya no pide perdón; pone el límite con firmeza y elegancia (el servidor responde igual, sin gastar IA) */
+const MT_RUDE = /\b(idiota|est[uú]pid[ao]|imb[eé]cil|pendej[ao]|malparid[ao]|gonorrea|hijueputa|hp|hdp|puta|maric[oó]n|perra|zorra|mierda|c[aá]llate|idiot|stupid|moron|bitch|fuck\w*|shit\w*|asshole|shut up)\b|\b(eres|you'?re|you are)\s+(una?\s+|muy\s+|so\s+|a\s+)?(tonta|in[uú]til|basura|fea|dumb|useless|trash|ugly)\b/i;
 const mtOff = () => /pulsem/.test(location.pathname);
 const mtAdmin = () => !!(ACC && ACC.user && ['owner', 'admin'].includes(ACC.user.role));
 const mtTeam = () => !!(ACC && ACC.user && ['owner', 'admin', 'staff'].includes(ACC.user.role));
@@ -1840,12 +1893,13 @@ const mtSkipped = () => { try{ return sessionStorage.getItem('synthz:mtskip') ==
 const MT_LOCAL = {
   love:['¡Ay, me sonrojé! 💛 Gracias, de verdad. Tú también eres lo máximo.', '¡Me hiciste el día! Ya casi vuelvo con todo, gracias por esperarme.', 'Awww 🥰 Con gente como tú da gusto arreglar cosas.'],
   fun:['¡Jajaja! Me dio risa hasta en los circuitos.', 'Jaja, ¿te sabes otro? Mientras tanto el equipo sigue arreglando.', '¡Me hiciste reír! Eso me recarga más que la electricidad.'],
+  rude:['Así no. Con respeto te ayudo en lo que quieras.', 'Ese tono no va conmigo. Si quieres seguimos, pero con respeto.'],
   sad:['Uy… tienes razón en estar molesto. Estamos trabajando para que vuelva pronto y mejor.', 'Perdón por la espera. El equipo está en ello, te lo prometo.'],
   any:['¡Te escucho! Ahora mismo no puedo pensar muy profundo porque estamos arreglando cosas, pero aquí sigo contigo.', 'Mientras se arregla todo, cuéntame: ¿qué es lo primero que quieres hacer cuando vuelva SynthFlow?', 'Buena pregunta. En cuanto termine el mantenimiento te respondo mejor. ¿Me cuentas algo más?']
 };
 const mtPick = L => L[Math.floor(Math.random() * L.length)];
-const mtKind = q => MT_LOVE.test(q) ? 'love' : MT_FUN.test(q) ? 'fun' : MT_SAD.test(q) ? 'sad' : 'any';
-const MT_MOOD_OF = { love:'encantada', fun:'riendo', sad:'disculpa', any:'feliz' };
+const mtKind = q => MT_RUDE.test(q) ? 'rude' : MT_LOVE.test(q) ? 'love' : MT_FUN.test(q) ? 'fun' : MT_SAD.test(q) ? 'sad' : 'any';
+const MT_MOOD_OF = { love:'encantada', fun:'riendo', sad:'disculpa', rude:'neutral', any:'feliz' };
 
 function mtSetMood(m, hop){
   if (!MT.el) return;
@@ -1866,7 +1920,7 @@ function mtBurst(kind){
 function mtAdd(role, text, mood){
   const L = $('.mt-msgs', MT.el), d = document.createElement('div');
   d.className = 'mt-m ' + (role === 'user' ? 'me' : 'ia');
-  d.innerHTML = '<p></p>'; $('p', d).textContent = text; L.appendChild(d);
+  d.innerHTML = '<p></p>'; if (role === 'user') $('p', d).textContent = text; else $('p', d).innerHTML = synMd(text); L.appendChild(d);
   L.scrollTo({ top:L.scrollHeight, behavior:reduce ? 'auto' : 'smooth' });
   MT.hist.push({ role, content:text });
   if (role !== 'user'){
@@ -1884,7 +1938,7 @@ async function mtSend(q){
   MT.busy = true; $('.mt-send', MT.el).disabled = true; MT.el.classList.add('thinking');
   let text = '', mood = MT_MOOD_OF[kind];
   try{
-    const r = await fetch('/api/help', { method:'POST', headers:Object.assign({ 'content-type':'application/json' }, B.SESS ? { authorization:'Bearer ' + B.SESS } : {}), body:JSON.stringify({ action:'ask', ctx:'maint', q, hist:MT.hist.slice(-7, -1) }) });
+    const r = await fetch('/api/help', { method:'POST', headers:Object.assign({ 'content-type':'application/json' }, B.SESS ? { authorization:'Bearer ' + B.SESS } : {}), body:JSON.stringify({ action:'ask', ctx:'maint', q, lang:B.LANG, hist:MT.hist.slice(-7, -1) }) });
     const d = await r.json().catch(() => ({}));
     if (r.ok && d.text){ text = d.text; if (d.mood && FACE[d.mood]) mood = d.mood; }
   }catch(e){}
@@ -1949,19 +2003,24 @@ function mtClose(){
   document.documentElement.classList.remove('mt-on');
   if (reduce) el.remove(); else el.animate([{ opacity:1 }, { opacity:0 }], { duration:380 }).onfinish = () => el.remove();
 }
+let mtLastCheck = 0;
 async function mtCheck(){
   try{
-    const r = await fetch('/api/config', { cache:'no-store' }); if (!r.ok) return;
-    const m = (await r.json()).maint || {};
+    mtLastCheck = Date.now();
+    const { ok, d } = B.cfgFetch ? await B.cfgFetch() : await fetch('/api/config', { cache:'no-store' }).then(async r => ({ ok:r.ok, d:r.ok ? await r.json() : {} })); if (!ok) return;
+    const m = d.maint || {};
     if (m.on && !mtSkipped()) mtOpen({ text:m.text || 'Estamos presentando fallas o actualizaciones. Espera un momento.', t:m.t });
     else if (!m.on){ mtClose(); try{ sessionStorage.removeItem('synthz:mtskip'); }catch(e){} }
   }catch(e){}
 }
 if (!mtOff()){
-  const go = () => { mtCheck(); MT.timer = setInterval(() => { if (!document.hidden) mtCheck(); mtAgo(); }, 45000); };
+  /* v3.7 · costo cero: con el aviso encendido se revisa cada 45 s (para saber cuándo termina); apagado, cada 5 min */
+  let mtLast = 0;
+  const go = () => { mtCheck(); mtLast = Date.now(); MT.timer = setInterval(() => { mtAgo(); if (document.hidden) return; if (MT.el || Date.now() - mtLast > 300000){ mtLast = Date.now(); mtCheck(); } }, 45000); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
   addEventListener('synthz-acc', mtExit); accHooks.push(() => setTimeout(mtExit, 0));
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) mtCheck(); });
+  /* Fase 4 · al volver a la pestaña se revisa, pero no más de una vez por minuto (antes: cada cambio de pestaña era una llamada) */
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && (MT.el || Date.now() - mtLastCheck > 60e3)) mtCheck(); });
 }
 /* ===== v3.1 · Movimiento: SynthonIA sabe por qué todo se mueve, cómo apagarlo y qué cambió =====
    La capa de animaciones vive en movimiento.css / movimiento.js (src/movimiento*). Aquí solo va lo que SynthonIA cuenta y las novedades. */

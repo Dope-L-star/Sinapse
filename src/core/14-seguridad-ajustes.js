@@ -102,13 +102,30 @@ const CFG_ROWS = [['cursor', 'Cursor ' + BRAND(), 'El cursor de vidrio con vient
 /* v2.2 · Ajustes con 2 pestañas: «Página» (cómo se ve y se siente) e «IAs y memoria» (cómo te responden y qué recuerdan de ti) */
 const CFG_PAGE = CFG_ROWS.filter(r => r[0] !== 'beginner');
 const CFG_IA = [['beginner', 'Modo principiante', 'Te responden con palabras sencillas, paso a paso y con ejemplos.'], ['autoWeb', 'Buscar en internet cuando haga falta', 'Si preguntas por algo de hoy (precios, noticias, el clima…), la IA busca sola y te muestra sus fuentes.'], ['saver', 'Respuestas cortas', 'Respuestas más breves: gastas menos de tu límite de hoy.'], ['review', 'Revisión de calidad', 'Otra IA revisa la lógica de cada respuesta y la corrige si encuentra errores. Tarda unos segundos más.']];
+/* v3.9 · modo dictado (solo en SynthFlow). v3.9.1 · viene encendido para todos; aquí se apaga */
+const CFG_DIC = ['dictado', 'Modo dictado', 'Un micrófono en la caja de escribir: hablas y el texto aparece en vivo, con puntos, comas y signos de pregunta, para que lo revises antes de enviar.'];
 const memSt0 = () => state.mem || (state.mem = { on:true, t:0, items:[] });
 function memTouch(){ const m = memSt0(); m.t = Date.now(); save(); try{ if (ACC.ready) accPush(); }catch(e){} }
+/* ¿dos datos hablan de lo mismo? Mismo «casillero» (cómo se llama, dónde vive, en qué trabaja, qué estudia, su edad, su idioma)
+   o casi las mismas palabras (70 % o más). «Le gusta el café» y «Le gusta el té» NO son lo mismo: se guardan los dos. */
+const MEM_SLOT = [/^(se llama|quiere que le digan|su nombre es|(their )?name is|wants to be called)\b/i, /^(vive en|es de|lives in|is from)\b/i, /^(trabaja|works)\b/i, /^(estudia|studies)\b/i, /\b(tiene \d+ a[nñ]os|is \d+ years old)\b/i, /^(habla|su idioma|speaks)\b/i, /^(su cumplea[nñ]os|their birthday)\b/i];
+const memWords = s => new Set(String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').match(/[a-z0-9ñ]{3,}/g) || []);
+function memSame(a, b){
+  a = String(a || '').trim(); b = String(b || '').trim(); if (a.toLowerCase() === b.toLowerCase()) return true;
+  if (MEM_SLOT.some(rx => rx.test(a) && rx.test(b))) return true;
+  const A = memWords(a), B = memWords(b); if (!A.size || !B.size) return false;
+  let n = 0; A.forEach(w => { if (B.has(w)) n++; }); return n / Math.max(A.size, B.size) >= 0.7;
+}
 function memAddCore(text){
   const m = memSt0(), t = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 300); if (t.length < 3) return false;
-  if (!m.items.some(x => x.text.toLowerCase() === t.toLowerCase())) m.items.unshift({ id:'m' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), t:Date.now(), text:t });
+  /* v4.0 · sin duplicar: si ya hay algo del mismo tipo (otro nombre, otra ciudad, otro trabajo) o casi igual, se ACTUALIZA */
+  const old = m.items.find(x => memSame(x.text, t));
+  if (old){ old.text = t; old.t = Date.now(); m.items = [old, ...m.items.filter(x => x !== old)]; }
+  else m.items.unshift({ id:'m' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), t:Date.now(), text:t });
   m.items = m.items.slice(0, 40); memTouch(); return true;
 }
+/* v3.7 · lo que SynthonIA puede usar: solo lo aprobado y solo si la memoria está encendida */
+function memList(){ const m = memSt0(); return m.on ? m.items.slice(0, 12).map(x => x.text) : []; }
 /* la lista de «Lo que recuerdo de ti»: se ve, se agrega, se olvida */
 function memPanel(host){
   const paint = () => {
@@ -132,7 +149,7 @@ function memPanel(host){
 const cfgLinks = [];
 function cfgModal(tab){
   if ($('#cfgm')) return;
-  const draft = Object.assign({ autoWeb:true, review:true }, CFG); draft.saver = !!(state.sx && state.sx.saver);
+  const draft = Object.assign({ autoWeb:true, review:true, dictado:true }, CFG); draft.saver = !!(state.sx && state.sx.saver);
   const o = document.createElement('div'); o.id = 'cfgm'; o.className = 'szm';
   const row = ([k, t, s]) => '<div class="cfgrow"><p>' + t + '<small>' + s + '</small></p><button class="cfgsw" type="button" role="switch" data-k="' + k + '" aria-checked="' + !!draft[k] + '" aria-pressed="' + !!draft[k] + '" aria-label="' + t + '"></button></div>';
   const IN = [['always', 'Cada vez'], ['session', 'Una vez por visita'], ['never', 'Nunca']];
@@ -145,14 +162,15 @@ function cfgModal(tab){
     + '<div class="cfglbl">Estilo de SynthFlow</div><div class="cfgseg" id="cfgUi"><button type="button" data-ui="full" aria-pressed="' + (draft.ui !== 'simple') + '">SynthFlow</button><button type="button" data-ui="simple" aria-pressed="' + (draft.ui === 'simple') + '">Simple</button></div><p class="cnote">Simple: solo tus chats, la caja de escribir y las respuestas, con un diseño tranquilo y sin efectos.</p>'
     + '<div class="cfglbl">Idioma · Language</div><div class="cfgseg notr" id="cfgLang">' + LANGS.map(([id, nm]) => '<button type="button" data-lang="' + id + '" lang="' + id + '" aria-pressed="' + (lang() === id) + '">' + nm + '</button>').join('') + '</div>'
     + '<div class="cfglbl">Tamaño de SynthFlow</div><div class="cfgseg" id="cfgSz"><button type="button" data-sz="compact" aria-pressed="' + (draft.size !== 'normal') + '">Compacto</button><button type="button" data-sz="normal" aria-pressed="' + (draft.size === 'normal') + '">Normal</button></div><p class="cnote">Compacto: todo un poco más pequeño, para ver más chat en la pantalla. Normal: el tamaño grande de antes.</p>'
-    + (document.getElementById('composer') ? '<div class="cfglbl">Atajos en tus chats</div><div class="cfgseg cfgseg4" id="cfgLk">' + [['none', 'Ninguno'], ['syn', 'Sintéticos'], ['proj', 'Proyectos'], ['both', 'Los dos']].map(([v, l]) => '<button type="button" data-lk2="' + v + '" aria-pressed="' + ((draft.links || 'none') === v) + '">' + l + '</button>').join('') + '</div><p class="cnote">Qué va arriba de tu lista de chats, junto a «Nuevo chat». Proyectos y Sintéticos siempre están en la barrita de íconos de la izquierda.</p>' : '')
-    + '<div class="cfglbl">Color de SynthFlow</div><div class="cfgth" id="cfgTh">' + THEMES.map(([id, nm, c1, lock, c2]) => '<button type="button" data-th="' + id + '" aria-pressed="' + ((draft.theme || 'synthz') === id) + '"' + (lock ? ' disabled aria-disabled="true"' : '') + ' style="--t1:' + c1 + ';--t2:' + c2 + '"><i></i><span>' + esc(nm) + '</span>' + (lock ? '<em>Pronto</em>' : '') + '</button>').join('') + '</div><p class="cnote" id="cfgThN"></p>'
+    /* v3.7 · «Atajos en tus chats» salió: la barra nueva siempre muestra Crear, Proyectos y Sintéticos arriba de tus chats */
+    + '<div class="cfglbl">Color de SynthFlow</div><div class="cfgth" id="cfgTh">' + THEMES.map(([id, nm, c1, lock, c2]) => '<button type="button" data-th="' + id + '" aria-pressed="' + ((draft.theme || 'synthz') === id) + '"' + (lock ? ' aria-disabled="true" data-lock="1"' : '') + ' style="--t1:' + c1 + ';--t2:' + c2 + '"><i></i><span>' + esc(nm) + '</span>' + (lock ? '<em>Pronto</em>' : '') + '</button>').join('') + '</div><p class="cnote" id="cfgThN"></p>'
     + (matchMedia('(pointer:coarse), (max-width:820px)').matches ? '<div class="cfglbl">Barra del celular</div><div class="cfgseg" id="cfgNav"><button type="button" data-nav="bottom" aria-pressed="' + (draft.nav !== 'left') + '">Abajo</button><button type="button" data-nav="left" aria-pressed="' + (draft.nav === 'left') + '">A la izquierda</button></div><p class="cnote">A la izquierda: la barra se esconde y la abres con el botón ☰ de arriba.</p>' : '')
     + '<div class="cfglbl">Detalles</div><div id="cfgRows">' + CFG_PAGE.map(row).join('') + '</div>'
     + '<div class="cfglbl">Intro de la página</div><div class="cfgseg" id="cfgIn">' + IN.map(([v, l]) => '<button type="button" data-in="' + v + '" aria-pressed="' + (draft.intro === v) + '">' + l + '</button>').join('') + '</div><p class="cnote">La animación al entrar al chat siempre se ve.</p>'
     + '</section>'
     + '<section class="cfgpane" data-pane="ia"' + (ia ? '' : ' hidden') + '>'
     + '<div class="cfglbl">Cómo te responden</div>' + CFG_IA.map(row).join('')
+    + (document.getElementById('composer') ? '<div class="cfglbl">Dictado por voz</div>' + row(CFG_DIC) + '<p class="cnote">Funciona en Chrome, Edge y Safari. El micrófono solo se usa cuando tocas el botón. La voz la pasa a texto tu navegador: SymphorIA no la recibe ni la guarda.</p>' : '')
     + '<div class="cfglbl" id="cfgMemL">Lo que recuerdo de ti</div><div id="szMem" class="cfgmem"></div>'
     + (cfgLinks.length ? '<div class="cfglbl">Tus IAs</div><div class="cfglinks">' + cfgLinks.map(([l, , d], i) => '<button type="button" class="cfglk" data-lk="' + i + '"><b>' + esc(l) + '</b><small>' + esc(d || '') + '</small><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>').join('') + '</div>' : '')
     + '</section></div>'
@@ -170,12 +188,17 @@ function cfgModal(tab){
   $$('[data-lang]', o).forEach(b => b.addEventListener('click', () => { setLang(b.dataset.lang); $$('[data-lang]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));   /* el idioma cambia al instante, sin «Guardar» */
   $$('[data-lk2]', o).forEach(b => b.addEventListener('click', () => { draft.links = b.dataset.lk2; $$('[data-lk2]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
   $$('[data-sz]', o).forEach(b => b.addEventListener('click', () => { draft.size = b.dataset.sz; $$('[data-sz]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
-  $$('[data-th]', o).forEach(b => b.addEventListener('click', () => { if (b.disabled) return; draft.theme = b.dataset.th; $$('[data-th]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+  $$('[data-th]', o).forEach(b => b.addEventListener('click', () => { if (b.dataset.lock) return; draft.theme = b.dataset.th; $$('[data-th]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
   $$('[data-nav]', o).forEach(b => b.addEventListener('click', () => { draft.nav = b.dataset.nav; $$('[data-nav]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
   const tabs = $('.cfgtabs', o), pill = $('.pill', tabs);
   const show = k => { $$('[role=tab]', tabs).forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === k))); $$('.cfgpane', o).forEach(p => { p.hidden = p.dataset.pane !== k; }); const b = $('[data-tab="' + k + '"]', tabs); if (b && pill){ pill.style.width = b.offsetWidth + 'px'; pill.style.transform = 'translateX(' + (b.offsetLeft - 4) + 'px)'; } $('.cfgbody', o).scrollTop = 0; };
   tabs.addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) show(b.dataset.tab); });
   requestAnimationFrame(() => show(ia ? 'ia' : 'page'));
+  try{ cfgSideMenu(o); }catch(e){}
+  try{ cfgThemePreview(o, draft); }catch(e){}   /* v3.8 · vista previa de temas (core 14c + React VistaTemas) */   /* v3.7 · menú lateral (core 14b) */
+  /* v3.7 · con Animaciones apagadas no hay intro: se dice en vez de dejar que parezca que no funciona */
+  const inNote = () => { const n = $('#cfgIn + .cnote', o); if (n) n.textContent = draft.anim === false ? 'Con «Animaciones» apagadas no hay intro: enciéndelas para verla.' : 'La animación al entrar al chat siempre se ve.'; };
+  inNote(); $$('.cfgsw[data-k="anim"]', o).forEach(b => b.addEventListener('click', inNote));
   if (tab === 'mem') setTimeout(() => { const l = $('#cfgMemL', o); if (l) l.scrollIntoView({ block:'start', behavior:reduce ? 'auto' : 'smooth' }); }, 350);
   const close = () => { o.classList.remove('on'); setTimeout(() => o.remove(), 450); };
   $$('.cfglk', o).forEach(b => b.addEventListener('click', () => { const L = cfgLinks[+b.dataset.lk]; close(); if (L) setTimeout(L[1], 200); }));

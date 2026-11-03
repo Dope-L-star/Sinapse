@@ -23,20 +23,25 @@ async function heroSeq(){
   if (heroDone) return; heroDone = true;
   /* v2.6: SynthonIA saluda mientras se escribe el título (antes aparecía 5 segundos después) */
   $$('.hstage.hero-fade').forEach(el => setTimeout(() => el.classList.add('show'), 350));
-  await typeIn($('#h1'), { cps:22, max:2.8 });
+  /* v4.0 · quien saltó la intro quiere usar la página ya: el título se escribe rápido */
+  const q = introSkipped ? .35 : 1;
+  /* v4.0 · la caja de escribir y «Empezar gratis» salen al terminar el título (antes, después de las 3 frases:
+     una persona nueva esperaba ~12 s en su primera visita antes de tener algo que tocar) */
+  const showCta = () => $$('.hero-fade').forEach((el, i) => setTimeout(() => el.classList.add('show'), i * 160));
+  await typeIn($('#h1'), { cps:22 / q, max:2.8 * q });
+  showCta();
   /* v2.9: «En sintonía con la IA.» se escribe después del título (antes ya estaba ahí desde el principio) */
-  const hs2 = $('.hsub2'); if (hs2) await typeIn(hs2, { cps:40, max:1 });
-  await typeIn($('#heroSub'), { cps:120, max:2.4 });
-  $$('.hero-fade').forEach((el, i) => setTimeout(() => el.classList.add('show'), i * 160));
+  const hs2 = $('.hsub2'); if (hs2) await typeIn(hs2, { cps:40 / q, max:1 * q });
+  await typeIn($('#heroSub'), { cps:120 / q, max:2.4 * q });
 }
 
 /* ---------- intro: la Z se dibuja y se pinta de arriba-derecha a abajo-izquierda ---------- */
-let pulsed = false;
+let pulsed = false, introSkipped = false;
 const afterHero = () => { if (FIRST && !$('#authm') && !$('#ptour')) setTimeout(welcomed ? pageTour : firstRun, 700); else if (!FIRST && SZ.wasAway()) setTimeout(() => SZ.welcomeBack({ learn:openGuide }), 600); };
 function pulseThenHero(){
   if (pulsed) return; pulsed = true;
   try{
-    if (reduce){ root.classList.add('pulsed'); heroSeq().then(afterHero); return; }
+    if (reduce || introSkipped){ root.classList.add('pulsed'); heroSeq().then(afterHero); return; }
     const nb = $('#navWord').getBoundingClientRect();
     if (!FIRST) SZ.thud(nb.left + nb.width / 2, nb.top + nb.height / 2);
     setTimeout(() => root.classList.add('pulsed'), 380);
@@ -57,21 +62,27 @@ async function intro(){
   const k = FIRST ? 1 : .7;
   const sleep = ms => sleepRaw(skip ? 0 : ms * k);
   ov.style.setProperty('--izd', (1.15 * k).toFixed(2) + 's');
-  if (matchMedia('(pointer: coarse)').matches) $('span', skipEl).textContent = SZ.t('ix.skipTouch');
-  /* se salta manteniendo la barra espaciadora 1,5 s (en pantallas táctiles, manteniendo el dedo) */
+    /* se salta manteniendo la barra espaciadora 1,5 s (en pantallas táctiles, manteniendo el dedo) */
   const HOLD = 1500; let holdT0 = 0, holding = false;
   function holdTick(now){
     if (!holding || skip) return;
     const q = clamp((now - holdT0) / HOLD, 0, 1);
     holdBar.style.transform = 'scaleX(' + q + ')';
-    if (q >= 1){ skip = true; return; }
+    if (q >= 1){ skip = introSkipped = true; return; }
     requestAnimationFrame(holdTick);
   }
-  const startHold = () => { if (holding || FIRST) return; holding = true; holdT0 = performance.now(); skipEl.style.opacity = '1'; requestAnimationFrame(holdTick); };
+  const startHold = () => { if (holding) return; holding = true; holdT0 = performance.now(); skipEl.style.opacity = '1'; requestAnimationFrame(holdTick); };
   const stopHold = () => { holding = false; holdBar.style.transform = 'scaleX(0)'; };
   addEventListener('keydown', e => { if (e.code === 'Space' && $('#intro')){ e.preventDefault(); if (!e.repeat) startHold(); } });
   addEventListener('keyup', e => { if (e.code === 'Space') stopHold(); });
   if (matchMedia('(pointer: coarse)').matches){ ov.addEventListener('pointerdown', startHold); ov.addEventListener('pointerup', stopHold); ov.addEventListener('pointercancel', stopHold); }
+  /* v4.0 · revisión de accesibilidad (3 nov): mantener 1,5 s era difícil para quien tiene poca motricidad o no entiende la instrucción,
+     y en la PRIMERA visita no se podía saltar nada (hasta ~9 s mirando sin poder hacer nada). Ahora, primera visita o no,
+     un toque, un clic, Esc o Enter la saltan, y el aviso aparece desde el principio. */
+  const skipNow = () => { if (!skip && $('#intro')){ skip = introSkipped = true; holdBar.style.transform = 'scaleX(1)'; } };
+  ov.addEventListener('click', skipNow);
+  addEventListener('keydown', e => { if ((e.key === 'Escape' || e.key === 'Enter') && $('#intro')) skipNow(); });
+  { const sk = $('span', skipEl), key = matchMedia('(pointer: coarse)').matches ? 'ix.skipTap' : 'ix.skipClick'; sk.dataset.i18nHtml = key; sk.innerHTML = SZ.t(key); }
 
   /* la marca y el nombre guardan las mismas proporciones que en la barra: así el vuelo final calza exacto */
   const navImg = $('#nav .logo .lgz'), navW = $('#navWord .zw') || $('#navWord');
@@ -87,7 +98,7 @@ async function intro(){
 
   await Promise.race([document.fonts ? document.fonts.ready : sleepRaw(0), sleepRaw(1200)]);
   await sleep(200);
-  setTimeout(() => { if (!skip && !FIRST) skipEl.style.opacity = '1'; }, 700);
+  setTimeout(() => { if (!skip) skipEl.style.opacity = '1'; }, 400);
   /* 1. un cometa de luz dibuja la S de un solo trazo y el vidrio aparece detrás de él */
   void ov.offsetWidth; ov.classList.add('draw');
   await sleep(1150);

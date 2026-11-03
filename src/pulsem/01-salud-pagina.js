@@ -12,7 +12,7 @@ function health(){
     if (fail >= 5 && fr > .3) up('down'); else if (fail >= 3 && fr > .1) up('busy');
     if (fail) why.push(fail + ' mensajes sin respuesta hoy');
     if (errs >= 15) up('down'); else if (errs >= 5) up('busy');
-    if (errs) why.push(errs + ' errores en 10 min');
+    if (errs) why.push(errs + (errs === 1 ? ' error' : ' errores') + ' en 10 min');
     if (load5 >= 120) up('busy');
     why.push(load5 + ' mensajes en 5 min');
   }

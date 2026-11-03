@@ -8,11 +8,13 @@ const nextDir = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(nextDir, '..');
 const routes = [
   { html: 'index.html', route: 'app/(site)/page.jsx', module: 'contenido/legado/index.js', tree: 'contenido/arboles-react/index.json' },
-  { html: 'chat.html', route: 'app/(site)/chat/page.jsx', module: 'contenido/legado/chat.js', tree: 'contenido/arboles-react/chat.json' },
-  { html: 'alias.html', route: 'app/(site)/alias/page.jsx', module: 'contenido/legado/alias.js', tree: 'contenido/arboles-react/alias.json' },
   { html: 'ayuda.html', route: 'app/(site)/ayuda/page.jsx', module: 'contenido/legado/ayuda.js', tree: 'contenido/arboles-react/ayuda.json' },
   { html: 'offline.html', route: 'app/(site)/offline/page.jsx', module: 'contenido/legado/offline.js', tree: 'contenido/arboles-react/offline.json' },
-  { html: 'pulsem.html', route: 'app/(panel)/pulsem/page.jsx', module: 'contenido/legado/pulsem.js', tree: 'contenido/arboles-react/pulsem.json' },
+];
+/* v3.8 · páginas ya reescritas en componentes React (sin árbol copiado del HTML ni el .js viejo de la página) */
+const reactNative = [
+  { html: 'pulsem.html', route: 'app/(panel)/pulsem/page.jsx', app: 'componentes/pulsem/PulsemApp.jsx', old: 'pulsem.js', needs: 'core.js' },
+  { html: 'alias.html', route: 'app/(site)/alias/page.jsx', app: 'componentes/alias/AliasApp.jsx', old: 'alias.js', needs: 'alias-tools.js', masks: ['vPlan', 'vResult'] },
 ];
 function extractJsonModule(file, name) {
   const text = fs.readFileSync(file, 'utf8');
@@ -87,8 +89,46 @@ for (const r of routes) {
   }
   console.log(`OK React ${r.html}: ${all.length} elementos, ${ids.length} IDs conservados, árbol actualizado`);
 }
+/* v3.7 · SynthFlow ya no es un árbol JSON: son componentes JSX propios (next/componentes/synthflow/*.jsx) que usa el motor chat.js.
+   chat.html se queda para build.mjs y las pruebas viejas. Si alguien lo cambia, hay que pasar el cambio a los componentes y anotar el hash nuevo. */
+{
+  const dir = path.join(nextDir, 'componentes/synthflow');
+  const jsx = fs.readdirSync(dir).filter(f => f.endsWith('.jsx')).map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n');
+  const route = fs.readFileSync(path.join(nextDir, 'app/(site)/chat/page.jsx'), 'utf8');
+  assert.ok(route.includes('LegacyPage') && route.includes('<SynthFlow />'), 'app/(site)/chat/page.jsx: debe montar <SynthFlow /> dentro de LegacyPage');
+  const original = extractOriginalBody('chat.html');
+  const fuente = JSON.parse(fs.readFileSync(path.join(dir, 'fuente.json'), 'utf8'));
+  assert.equal(createHash('sha256').update(original, 'utf8').digest('hex'), fuente.chatHtmlHash, 'chat.html cambió: pasa el cambio a next/componentes/synthflow/*.jsx y anota el hash nuevo en fuente.json');
+  const ids = [...jsx.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]);
+  assert.equal(ids.length, new Set(ids).size, 'SynthFlow JSX: IDs repetidos');
+  const sourceIds = [...original.matchAll(/\bid=["']([^"']+)["']/gi)].map(m => m[1]);
+  /* IDs que el motor quitaba al arrancar y que la versión React ya no trae (#pMore: «Más filtros», hoy «Personalizar búsqueda») */
+  const RETIRADOS = ['pMore'];
+  const lost = sourceIds.filter(i => !ids.includes(i) && !RETIRADOS.includes(i));
+  assert.deepEqual(lost, [], 'SynthFlow JSX: faltan IDs que usa chat.js: ' + lost.join(', '));
+  for (const id of ['msgs', 'thList', 'sideFoot', 'accBtn']) assert.ok(new RegExp('id="' + id + '"[^>]*data-clarity-mask="true"|data-clarity-mask="true"[^>]*id="' + id + '"').test(jsx), 'SynthFlow JSX: #' + id + ' debe enmascararse para analítica');
+  assert.ok(!/<script\b/i.test(jsx), 'SynthFlow JSX: los scripts se cargan solo con LegacyRuntime');
+  assert.ok(!/="[^"]*\\u[0-9a-fA-F]{4}/.test(jsx), 'SynthFlow JSX: hay un «\\uXXXX» dentro de un atributo con comillas (JSX no lo convierte: escribe el carácter tal cual)');
+  assert.ok(!/\son[A-Z][a-zA-Z]+=\{?["']/.test(jsx) && !/dangerouslySetInnerHTML/.test(jsx), 'SynthFlow JSX: sin handlers en texto ni HTML crudo');
+  const brand = (fs.readFileSync(path.join(root, 'chat.html'), 'utf8').match(/<html[^>]*\sdata-brand=["']([^"']+)["']/i) || [])[1] || null;
+  const lay = fs.readFileSync(path.join(nextDir, 'app/(site)/layout.jsx'), 'utf8').match(/export const BRAND = (\{[^}]*\})/);
+  const map = JSON.parse(lay[1].replace(/(\w+):/g, '"$1":').replace(/'/g, '"'));
+  assert.equal(map.chat || null, brand, 'chat.html: data-brand no coincide con BRAND del layout');
+  console.log(`OK React chat.html → componentes JSX de SynthFlow: ${ids.length} IDs conservados`);
+}
+for (const r of reactNative) {
+  const route = fs.readFileSync(path.join(nextDir, r.route), 'utf8');
+  assert.ok(fs.existsSync(path.join(nextDir, r.app)), `falta ${r.app}`);
+  assert.ok(!route.includes('reactTree') && !route.includes(`'${r.old}'`), `${r.route}: ya es React; no debe volver a cargar el árbol ni ${r.old}`);
+  assert.ok(route.includes(`'${r.needs}'`), `${r.route}: necesita ${r.needs}`);
+  const src = fs.readdirSync(path.join(nextDir, path.dirname(r.app))).filter(f => /\.jsx?$/.test(f)).map(f => fs.readFileSync(path.join(nextDir, path.dirname(r.app), f), 'utf8')).join('\n');
+  assert.ok(!/\.innerHTML\s*=(?!\s*'')/.test(src), `${r.app}: los componentes no arman HTML a mano con innerHTML`);
+  for (const id of r.masks || []) assert.ok(new RegExp('id="' + id + '" data-clarity-mask="true"').test(src), `${r.app}: #${id} debe enmascararse para analítica`);
+  console.log(`OK React ${r.html}: componentes propios (${r.app})`);
+}
 const armar = fs.readFileSync(path.join(nextDir, 'armar.mjs'), 'utf8');
-for (const {html} of routes) assert.ok(armar.includes(`'${html}'`), `armar.mjs debe retirar ${html} de public/`);
+assert.ok(armar.includes("'chat.html'"), 'armar.mjs debe retirar chat.html de public/');
+for (const {html} of [...routes, ...reactNative]) assert.ok(armar.includes(`'${html}'`), `armar.mjs debe retirar ${html} de public/`);
 for (const file of ['componentes/LegacyPage.jsx','componentes/LegacyRuntime.jsx','componentes/ReactTree.jsx','app/(site)/layout.jsx']) {
   assert.ok(fs.existsSync(path.join(nextDir, file)), `falta ${file}`);
 }

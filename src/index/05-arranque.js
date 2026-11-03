@@ -48,8 +48,14 @@ boot();
   b.addEventListener('mouseenter', () => { put('flow'); b.classList.add('cool'); });
 })();
 let seen = false, backIn = '';
-/* v2.4: la intro sale una vez por visita; si alguien la saltó, ya no se le vuelve a mostrar (salvo que pida «Siempre» en Ajustes) */
-try{ const im = SZ.CFG.intro || 'session', skipped = localStorage.getItem('synthz:introSkip') === '1'; seen = !FIRST && (!SZ.CFG.anim || im === 'never' || (im !== 'always' && skipped) || (im === 'session' && sessionStorage.getItem('synthz:intro') === '1')); }catch(e){}
+/* v3.7 · «Intro de la página» en Ajustes manda: Nunca = nunca; Cada vez = siempre; Una vez por visita = una vez por pestaña.
+   Antes, quien no terminaba el recorrido de bienvenida seguía siendo «primera vez» para siempre y veía la intro aunque eligiera «Nunca».
+   Con Animaciones apagadas no hay intro (es una animación); la primera visita de alguien que no eligió nada sí la ve. */
+try{
+  const im = SZ.CFG.intro || 'session', once = sessionStorage.getItem('synthz:intro') === '1';
+  seen = im === 'never' || !SZ.CFG.anim || (im === 'session' && once);
+  if (!seen) sessionStorage.setItem('synthz:intro', '1');
+}catch(e){}
 /* de vuelta desde SynthFlow: «SymphorIA» ya llegó volando a su esquina; sin intro, la página aparece suave */
 try{ backIn = sessionStorage.getItem('synthz:back') || ''; sessionStorage.removeItem('synthz:back'); }catch(e){}
 if (backIn){ seen = !FIRST; requestAnimationFrame(() => requestAnimationFrame(() => { root.classList.add('backout'); setTimeout(() => root.classList.remove('backin', 'backout'), 950); })); }

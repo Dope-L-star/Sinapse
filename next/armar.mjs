@@ -8,8 +8,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { CLARITY_PROJECT_ID_DEFAULT, isClarityAllowed } from './lib/clarity-client.mjs';
+import { CLARITY_PROJECT_ID_DEFAULT, isClarityAllowed, clarityModeFromEnv } from './lib/clarity-client.mjs';
 import { isCloudflareAnalyticsAllowed } from './lib/cloudflare-analytics.mjs';
+import { VERSIONABLES } from './lib/versiones.mjs';
+import crypto from 'node:crypto';
 
 const aqui = path.dirname(fileURLToPath(import.meta.url)), raiz = path.resolve(aqui, '..');
 const clarityRequested = process.env.NEXT_PUBLIC_CLARITY_ENABLED === 'true';
@@ -21,7 +23,8 @@ const clarityBuildAllowed = isClarityAllowed({
   privacyReviewed: process.env.NEXT_PUBLIC_CLARITY_PRIVACY_REVIEWED === 'true',
   projectId: process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID || CLARITY_PROJECT_ID_DEFAULT,
 });
-if (clarityRequested && !clarityBuildAllowed) {
+/* v3.8 · también vale el modo de mapas de calor (NEXT_PUBLIC_CLARITY_HEATMAPS): aviso de cookies simple y página enmascarada */
+if (clarityRequested && !clarityBuildAllowed && clarityModeFromEnv(process.env) !== 'heatmaps') {
   throw new Error('Clarity está solicitado, pero faltan condiciones de release: audiencia 18+, versión adulta real, control de edad validado, privacidad revisada e ID de proyecto válido. No se ha publicado nada.');
 }
 const cfAnalyticsRequested = process.env.NEXT_PUBLIC_CF_WEB_ANALYTICS_ENABLED === 'true';
@@ -35,7 +38,7 @@ if (cfAnalyticsRequested && !cfAnalyticsAllowed) {
 }
 
 /* páginas que ya pasaron a Next.js (app/<nombre>/page.jsx → out/<nombre>.html). Al pasar otra, se agrega aquí. */
-const HECHAS = ['index.html', 'chat.html', 'alias.html', 'ayuda.html', 'offline.html', 'terminos.html', 'privacidad.html', 'pulsem.html'];
+const HECHAS = ['index.html', 'chat.html', 'alias.html', 'ayuda.html', 'offline.html', 'terminos.html', 'privacidad.html', 'pulsem.html', 'gestion.html'];
 const corre = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, stdio: 'inherit' });
 
 // Evita publicar un árbol React desactualizado respecto de las páginas fuente.
@@ -46,6 +49,19 @@ const pub = path.join(aqui, 'public');
 fs.rmSync(pub, { recursive: true, force: true });
 fs.cpSync(path.join(raiz, 'dist'), pub, { recursive: true });
 for (const f of HECHAS) fs.rmSync(path.join(pub, f), { force: true });
+
+/* Fase 4 · caché larga: cada motor heredado se copia también a /v/<huella>/<nombre> (ver lib/versiones.mjs).
+   La huella cambia solo si cambia el archivo, así que /v/* se guarda un año en Cloudflare y en el navegador. */
+const versiones = {};
+for (const f of VERSIONABLES) {
+  const p = path.join(pub, f);
+  if (!fs.existsSync(p)) continue;
+  const huella = crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex').slice(0, 10);
+  fs.mkdirSync(path.join(pub, 'v', huella), { recursive: true });
+  fs.copyFileSync(p, path.join(pub, 'v', huella, f));
+  versiones[f] = huella;
+}
+process.env.SZ_VERSIONES = JSON.stringify(versiones);
 
 if (!fs.existsSync(path.join(aqui, 'node_modules', 'next', 'dist', 'bin', 'next'))) corre('npm', ['ci', '--no-audit', '--no-fund'], aqui);
 fs.rmSync(path.join(aqui, 'out'), { recursive: true, force: true });

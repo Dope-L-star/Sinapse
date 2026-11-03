@@ -16,6 +16,8 @@ function markBad(id, share){
   BAD[id] = Date.now(); saveBad();
   if (share !== false) fetch('/api/health', { method:'POST', headers:{ 'content-type':'application/json' }, body:JSON.stringify({ id, ok:false }), keepalive:true }).catch(() => {});
 }
+/* v3.8 · una IA que no responde AHORA (llena o lenta) se esconde solo un rato y vuelve sola */
+function markSick(id, ms){ if (!id || /^tr:/.test(id)) return; BAD[id] = Date.now() - BAD_MS + (ms || 10 * 60e3); saveBad(); }
 function markGood(id){
   if (BAD[id]){ delete BAD[id]; saveBad(); }
   try{ const k = 'synthz:good:' + id; if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, '1'); }catch(e){}
@@ -27,7 +29,11 @@ const groqName = id => String(id).replace(/^[^/]+\//, '').split(/[-_]/).map(w =>
 /* ===== IA de SymphorIA: modelos gratis compartidos, con un tope diario por persona ===== */
 const DEVH = (/^[\w-]{12,48}$/.test(DEV) ? DEV : (String(DEV).replace(/[^\w-]/g, '') + 'synthzdevice').slice(0, 24));
 const SZQ = { on:null, used:0, limit:20000, n:0, t:0, guest:null };
-function szqSet(o){ Object.assign(SZQ, o); try{ dispatchEvent(new CustomEvent('synthz-szq', { detail:SZQ })); }catch(e){} }
+function szqSet(o){
+  /* v3.7 · la pila nunca «sube» sola en el día: si llegan dos respuestas a la vez (Comparar, revisión), la que trae un número viejo no la devuelve hacia arriba.
+     Solo se acepta que baje el gasto cuando de verdad se renovó (medianoche: vuelve a casi cero) */
+  if (o && typeof o.used === 'number' && typeof SZQ.used === 'number' && o.used < SZQ.used && o.used > SZQ.used * .5 && !o.reset){ o = Object.assign({}, o); delete o.used; }
+  Object.assign(SZQ, o); try{ dispatchEvent(new CustomEvent('synthz-szq', { detail:SZQ })); }catch(e){} }
 const szHeaders = () => { const h = { 'content-type':'application/json', 'x-sz-device':DEVH }; if (SESS) h.authorization = 'Bearer ' + SESS; return h; };
 const SZ_VEND = [[/llama|meta/i, 'meta-llama'], [/gemma|gemini/i, 'google'], [/mistral|mixtral|codestral|ministral|magistral|devstral|pixtral|open-mi/i, 'mistralai'], [/qwen|qwq/i, 'qwen'], [/deepseek/i, 'deepseek'], [/gpt-oss|openai/i, 'openai'], [/kimi|moonshot/i, 'moonshotai'], [/glm|z-ai/i, 'z-ai'], [/nemotron|nvidia/i, 'nvidia'], [/phi-|microsoft/i, 'microsoft'], [/granite|ibm/i, 'ibm'], [/hermes|nous/i, 'nousresearch']];
 const szVendor = (mid, prov) => (SZ_VEND.find(([rx]) => rx.test(mid)) || [0, prov])[1];
@@ -38,8 +44,14 @@ const MSG_TOK = 800;
 /* con sesión guardada (o volviendo de Google) ya cuentas como persona con cuenta, aunque tu cuenta tarde un segundo en cargar */
 const signedish = () => !!(ACC && (ACC.ready || ACC.joining || (SESS && !ACC.err)));
 const isGuestQ = () => !!(SZQ.guest && !signedish());
-const guestFull = () => isGuestQ() && (SZQ.guest.used || 0) >= (SZQ.guest.max || 5);
-const limPct = () => Math.max(SZQ.limit ? Math.min(1, (SZQ.used || 0) / SZQ.limit) : 0, isGuestQ() ? Math.min(1, (SZQ.guest.used || 0) / (SZQ.guest.max || 5)) : 0);
+/* v4.2 · un solo número para todo (Sammuel, 3 nov: «está en 0 y dice 2 de prueba»): sin cuenta, la batería, el número grande,
+   el texto de «IAs conectadas» y el botón del lateral leen guestLeft(). Es lo que de verdad te deja escribir el servidor:
+   los mensajes que quedan en este dispositivo y en esta conexión, y 0 si la EnerX del día ya se gastó (antes la pila decía 0 y el texto 2) */
+const guestMax = () => (SZQ.guest && SZQ.guest.max) || 5;
+const guestLeft = () => !SZQ.guest || (SZQ.limit && (SZQ.used || 0) >= SZQ.limit) ? 0 : Math.max(0, Math.min(guestMax(), SZQ.guest.left != null ? SZQ.guest.left : guestMax() - (SZQ.guest.used || 0)));
+const guestFull = () => isGuestQ() && guestLeft() <= 0;
+const gN = (k, n, o) => t(n === 1 ? k + '1' : k, Object.assign({ n }, o));
+const limPct = () => isGuestQ() ? 1 - guestLeft() / guestMax() : SZQ.limit ? Math.min(1, (SZQ.used || 0) / SZQ.limit) : 0;
 const msgsLeft = () => Math.max(0, Math.floor(((SZQ.limit || 25000) - (SZQ.used || 0)) / MSG_TOK));
 const msgsTotal = () => Math.max(1, Math.round((SZQ.limit || 25000) / MSG_TOK));
 /* v2.4: vuelven las SynXCoin's. 1 SynXCoin = 1 palabra (lo que escribes y lo que te responde). El servidor cuenta en tokens; una palabra son unos 4/3 de token */
@@ -50,11 +62,22 @@ const coinsTotal = () => coinsOf(SZQ.limit || 25000);
 const coinsFmt = n => Math.round(n).toLocaleString('es');
 const coinsShort = n => n >= 10000 ? (Math.floor(n / 100) / 10).toLocaleString('es') + ' mil' : coinsFmt(n);
 /* v3.0 · batería en vez de palabras (Sammuel, 27 oct): el límite del día se ve como una pila que se descarga y se carga a medianoche */
-const battPct = () => Math.round((1 - limPct()) * 100);
-const coinNote = (mid, r) => /^sz:/.test(String(mid)) && r && !r.cached && ((r.prompt || 0) + (r.completion || 0)) > 0 ? t('enerx.used', { u:Math.max(1, Math.round(((r.prompt || 0) + (r.completion || 0)) / (SZQ.limit || 25000) * 100)), n:battPct() }) : '';
-const guestLeft = () => Math.max(0, (SZQ.guest.max || 5) - (SZQ.guest.used || 0));
-const limTxt = () => SZQ.on === false ? t('enerx.rest') : guestFull() ? t('enerx.signin') : isGuestQ() ? t('enerx.guestLeft', { n:guestLeft() }) : limPct() >= 1 ? t('enerx.empty') : t('enerx.left', { n:battPct() });
-const limShort = () => SZQ.on === false ? t('enerx.restShort') : guestFull() ? t('enerx.signinShort') : isGuestQ() ? t('enerx.guestShort', { n:guestLeft() }) : limPct() >= 1 ? t('enerx.emptyShort') : battPct() + ' %';
+/* v3.7 · EnerX de verdad (Sammuel, 2 nov): cada respuesta dice cuánto gastó de verdad (ya no «1 %» fijo) y la batería baja eso mismo.
+   v3.9 · sin decimales (Sammuel, 3 nov): por dentro se lleva el gasto EXACTO del servidor y se acumula (no se pierde nada al redondear);
+   en pantalla todo va en números enteros. «Usó X %» es justo lo que bajó el número de la pila, así la cuenta siempre cuadra;
+   si una respuesta gastó menos de 1 % se dice «menos de 1 %» (y la pila no salta: baja cuando lo acumulado llega a 1). */
+const pctInt = x => { x = Math.max(0, Math.min(100, +x || 0)); return x > 0 && x < 1 ? 1 : x > 99 && x < 100 ? 99 : Math.round(x); };   /* nunca «0 %» si queda algo ni «100 %» si ya gastaste algo */
+const battAt = used => pctInt((1 - (SZQ.limit ? Math.min(1, Math.max(0, used) / SZQ.limit) : 0)) * 100);
+const battPct = () => String(pctInt((1 - limPct()) * 100));
+const spentPct = (tok, after) => {
+  const real = (+tok || 0) / (SZQ.limit || 25000) * 100;
+  if (real < 1) return LANG === 'en' ? 'less than 1' : 'menos de 1';
+  const a = after == null ? SZQ.used || 0 : after;
+  return String(Math.max(1, battAt(a - tok) - battAt(a)));
+};
+const coinNote = (mid, r) => /^sz:/.test(String(mid)) && r && !r.cached && ((r.prompt || 0) + (r.completion || 0)) > 0 ? (isGuestQ() ? gN('enerx.usedGuest', guestLeft()) : t('enerx.used', { u:spentPct((r.prompt || 0) + (r.completion || 0)), n:battPct() })) : '';
+const limTxt = () => SZQ.on === false ? t('enerx.rest') : guestFull() ? t('enerx.guestNone') : isGuestQ() ? gN('enerx.guestLeft', guestLeft()) : limPct() >= 1 ? t('enerx.empty') : t('enerx.left', { n:battPct() });
+const limShort = () => SZQ.on === false ? t('enerx.restShort') : isGuestQ() ? gN('enerx.guestShort', guestLeft()) : limPct() >= 1 ? t('enerx.emptyShort') : battPct() + ' %';
 const limLvl = () => { const k = limPct(); return k >= 1 ? 'full' : k >= .8 ? 'warn' : 'ok'; };
 /* la pila: cuerpo de vidrio, polo y carga que baja; con poca carga se pone ámbar y vacía, coral. size = alto de referencia (antes era el anillo) */
 function limRing(size){
@@ -72,7 +95,7 @@ async function szCatalog(){
   const d = await r.json().catch(() => ({}));
   if (!r.ok){ szqSet({ on:false, t:Date.now() }); return []; }
   const arr = Array.isArray(d.models) ? d.models : [];
-  szqSet({ on:arr.length > 0, used:+d.used || 0, limit:+d.limit || 20000, guest:d.guest && d.guest.max ? { used:+d.guest.used || 0, max:+d.guest.max } : null, img:d.img || null, team:!!d.team, alert:!!d.alert, alertN:+d.alertN || 0, n:arr.length, t:Date.now() });
+  szqSet({ on:arr.length > 0, used:+d.used || 0, limit:+d.limit || 20000, guest:d.guest && d.guest.max ? { used:+d.guest.used || 0, max:+d.guest.max, left:d.guest.left != null ? +d.guest.left : null } : null, img:d.img || null, team:!!d.team, alert:!!d.alert, alertN:+d.alertN || 0, n:arr.length, t:Date.now() });
   if (!arr.length) return [];
   const out = arr.filter(m => m && typeof m.id === 'string' && /^sz:/.test(m.id) && !/allam|infron|openrouter\/(free|auto)|models?[-_ ]router/i.test(m.id) && !/free models router|router/i.test(String(m.name || ''))).map(m => {
     const mid = m.id.split(':').slice(2).join(':'), vendor = szVendor(mid, m.prov);

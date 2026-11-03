@@ -24,7 +24,7 @@ function renderTop(animate){
     row.classList.remove('n3', 'n4');
     const m = info(selId()), open = $('#side').classList.contains('open') && pickMode === 'set';
     row.innerHTML = '<button type="button" class="mchip" id="curChip" aria-haspopup="dialog" aria-expanded="' + open + '" title="Cambiar de IA" style="--vc:' + vendorColor(m.vendor) + '">' + av(m) + '<b id="curName"></b>' + CARET + '</button>'
-      + (trialOn ? '' : '<button type="button" class="addb" data-add aria-label="Agregar otra IA para comparar">' + PLUS + '<span>Agregar otra IA</span></button>')
+      /* v3.7 · «Agregar otra IA» ya no va aquí: Comparar tiene su propio lugar en la barra («Comparar IAs») */
       + '<span class="paym" id="payM"></span>';
     const h1 = $('#curName'); h1.setAttribute('aria-label', m.name);
     if (animate) retype(h1, m.name, { cps:70, max:.7 }); else h1.textContent = m.name;
@@ -64,7 +64,7 @@ function paintPay(){
   if (P){ P.className = 'payl ' + c; P.innerHTML = '<i aria-hidden="true"></i>' + esc(l) + (ex ? '<button type="button" class="lnk" data-tx="exit">Salir</button>' : ''); }
   if (M){
     const bar = !document.body.classList.contains('fresh') && mode !== 'cmp' && !trialOn && (c === 'sz' || agentOn());
-    if (bar){ const k = Math.max(0, 1 - SZ.limPct()), pc = Math.round(k * 100), lv = SZ.limLvl();
+    if (bar){ const pc = SZ.battPct(), lv = SZ.limLvl();
       M.className = 'paym tlim ' + lv; M.setAttribute('role', 'img'); M.setAttribute('aria-label', SZ.isGuestQ() ? SZ.limTxt() : 'Tu EnerX de hoy: ' + SZ.battPct() + ' %');
       M.innerHTML = '<span class="tl-l">Hoy</span>' + SZ.limRing(16) + '<em>' + pc + ' %</em>'; }
     else { M.className = 'paym ' + c; M.removeAttribute('role'); M.removeAttribute('aria-label'); M.innerHTML = '<i aria-hidden="true"></i>' + esc(s); }
@@ -110,7 +110,7 @@ function renderNow(){
 function renderFoot(){
   const left = SZ.msgsLeft(), lv = SZ.limLvl();
   /* v3.0 · «Medidor del día» como batería: la pila se descarga mientras chateas y se carga a medianoche */
-  const k = Math.max(0, 1 - SZ.limPct()), g = SZ.isGuestQ(), big = g ? Math.max(0, (SZ.SZQ.guest.max || 5) - (SZ.SZQ.guest.used || 0)) + '' : Math.round(k * 100) + ' %', of = g ? 'de ' + (SZ.SZQ.guest.max || 5) + ' mensajes de prueba' : SZ.SZQ.team ? 'sin límite · equipo' : k > 0 ? 'se carga a medianoche' : 'sin EnerX · se carga a medianoche';
+  const k = Math.max(0, 1 - SZ.limPct()), g = SZ.isGuestQ(), big = g ? SZ.guestLeft() + '' : SZ.battPct() + ' %', of = g ? SZ.t('enerx.of', { n:SZ.SZQ.guest.max || 5 }) : SZ.SZQ.team ? 'sin límite · equipo' : k > 0 ? 'se carga a medianoche' : 'sin EnerX · se carga a medianoche';
   $('#sideFoot').innerHTML = '<button class="sxfoot lim gauge gbatt ' + lv + '" id="sxBtn" type="button" title="Tu EnerX de hoy (tu batería): toca para ver el detalle">'
     + '<span class="gz-t">EnerX de hoy</span>' + SZ.limRing(40)
     + '<span class="gz-n"><b>' + esc(big) + '</b><small>' + esc(of) + '</small></span><span class="sr">' + esc(SZ.limTxt()) + '</span></button>';

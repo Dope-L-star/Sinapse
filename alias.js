@@ -19,12 +19,14 @@ U.store = {
 };
 
 /* ---- idioma ---- */
+/* v3.7 · manda el idioma de todo SymphorIA (synthz:lang); el de A.L.I.A.S. solo queda de respaldo */
 U.detectLang = function(){
+  const g = U.store.get('synthz:lang'); if (LANGS.includes(g)) return g;
   const s = U.store.get(K_LANG);
   if (LANGS.includes(s)) return s;
   const list = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'es'];
   for (const l of list){ const c = String(l).slice(0, 2).toLowerCase(); if (LANGS.includes(c)) return c; }
-  return 'es';
+  return 'en';   /* ni español ni inglés en el navegador: inglés (igual que el resto de SymphorIA) */
 };
 U.t = function(key, vars){
   const d = U.dict || {};
@@ -42,7 +44,7 @@ U.loadTexts = async function(){
     U.dict = await r.json();
   }catch(e){ U.dict = {}; console.error('ALIAS: no se pudo leer ' + TEXTS_URL, e); }
 };
-U.saveLang = l => U.store.set(K_LANG, l);
+U.saveLang = l => { U.store.set(K_LANG, l); U.store.set('synthz:lang', l); };
 
 /* ---- estado ---- */
 U.fresh = function(){
@@ -669,6 +671,8 @@ function copy(){
 
 /* ---- arranque ---- */
 async function boot(){
+  /* v3.7 · respeta Ajustes de SymphorIA: «Animaciones» y «Vidrio» (blurry) apagados */
+  try{ const c = JSON.parse(localStorage.getItem('synthz:cfg')) || {}; document.documentElement.classList.toggle('noanim', c.anim === false); document.documentElement.classList.toggle('noglass', c.glass === false); }catch(e){}
   const sc = document.documentElement.dataset.scheme;
   U.setScheme(sc === 'light' ? 'light' : 'dark');
   U.lang = U.detectLang();
@@ -679,6 +683,10 @@ async function boot(){
   $('#bNew').addEventListener('click', () => U.cancelAll(false));
   U.draw();
   document.documentElement.classList.add('ready');
+  /* v3.7 · si cambias el idioma en otra pestaña de SymphorIA, A.L.I.A.S. cambia al instante, sin recargar */
+  const follow = () => { const l = U.detectLang(); if (l === U.lang) return; U.lang = l; U.applyI18n(); U.draw(); window.dispatchEvent(new CustomEvent('alias:lang', { detail: { lang: U.lang } })); };
+  addEventListener('storage', e => { if (e.key === 'synthz:lang') follow(); });
+  addEventListener('pageshow', follow);
 }
 window.AliasUI.boot = boot;
 /* se espera un instante para que todas las piezas del archivo armado ya hayan corrido */

@@ -482,6 +482,7 @@ html.enter.po #veil{background:#0b0c10}
 .fc.ro{padding-right:10px}
 .fc.load .ic,.fc.load img{background:linear-gradient(90deg,rgba(255,255,255,.06),rgba(255,255,255,.2),rgba(255,255,255,.06));background-size:200% 100%;animation:shimmer 1.2s infinite linear}
 .fc.err{border-color:rgba(255,140,120,.5)}
+.fc .fcp{flex:none;font:500 11px var(--mono);color:var(--mute);white-space:nowrap}
 .fcs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 body.drag::after{content:"Suelta tus archivos aquí";position:fixed;inset:14px;z-index:9000;display:grid;place-items:center;border:2px dashed rgba(184,196,255,.6);border-radius:26px;background:rgba(11,12,16,.72);backdrop-filter:blur(8px);font-family:var(--serif);font-size:30px;pointer-events:none}
 
@@ -2532,14 +2533,18 @@ html:not(.lk-proj) #cProj,html:not(.lk-syn) #cSyn{display:none !important}
 #sideFoot .sxfoot.gauge.gbatt .gz-n b{grid-area:v;font-size:13.5px;line-height:1.2;white-space:nowrap}
 #sideFoot .sxfoot.gauge.gbatt .gz-n small{grid-area:s;text-align:left;min-width:0;font-size:10.5px;line-height:1.3;white-space:normal}
 
-/* ---------- modo Simple: la barra como la de Claude ---------- */
-.snav,.sfoot,.chats .sn-h{display:none}
-html.simple .chats .sn-h{display:block}
-html.simple .snav{display:flex;flex-direction:column;gap:1px;margin:0 0 4px}
-html.simple .sfoot{display:flex;align-items:center;gap:6px;margin:6px -6px 0;padding:8px 6px 0;border-top:1px solid var(--sline)}
-html.simple .chats .chead,html.simple #cNew,html.simple #cProj,html.simple #cSyn,html.simple #cSeg{display:none !important}
-html.simple .chats .cin:not(.sfind) #cSearch{display:none !important}
-html.simple .chats #cSearch{margin:2px 0 6px;animation:snDrop .3s cubic-bezier(.22,1,.36,1)}
+/* ---------- la barra simple (v3.2 en Simple; v3.7 también en el estilo SynthFlow): una sola barra, como la de Claude ----------
+   En el estilo SynthFlow toma los colores del tema (dorado, océano, bosque, lavanda) y conserva su vidrio. */
+html:not(.simple){--sline:var(--line);--stext:var(--text);--ssoft:var(--soft);--smute:var(--mute);--sacc:var(--gold)}
+.chats .sn-h{display:block}
+.snav{display:flex;flex-direction:column;gap:1px;margin:0 0 4px}
+.sfoot{display:flex;align-items:center;gap:6px;margin:6px -6px 0;padding:8px 6px 0;border-top:1px solid var(--sline)}
+.chats .chead,#cNew,#cProj,#cSyn,#cSeg{display:none !important}
+.chats .cin:not(.sfind) #cSearch{display:none !important}
+.chats #cSearch{margin:2px 0 6px;animation:snDrop .3s cubic-bezier(.22,1,.36,1)}
+html:not(.simple) .sn-i:hover,html:not(.simple) .sn-i.on{background:rgba(var(--gold-rgb),.09)}
+html:not(.simple) .sn-i.on::before{box-shadow:0 0 10px rgba(var(--gold-rgb),.7)}
+html:not(.simple) .sn-i[data-sn="new"] .sn-ic{background:linear-gradient(135deg,var(--gold),var(--wine));color:#160f1f;box-shadow:0 0 14px -2px rgba(var(--gold-rgb),.55)}
 @keyframes snDrop{from{opacity:0;transform:translateY(-6px)}}
 /* arriba: el orbe de SynthFlow y el botón para cerrar la barra */
 .sn-top{display:flex;align-items:center;justify-content:space-between;gap:8px;height:44px;margin:0 0 8px;padding:0 2px 0 6px}
@@ -2589,8 +2594,8 @@ html.simple #sideFoot{padding-top:6px}
 html.simple #sideFoot .sxfoot.gauge.gbatt{background:transparent !important;border:1px solid var(--sline) !important;box-shadow:none !important}
 /* con la lista abierta, la barrita de íconos se esconde: una sola barra, como en Claude */
 @media (min-width:761px){
-  html.simple .shell:not(.nochats) .rail{display:none}
-  html.simple .chats{--cw:288px}
+  .shell:not(.nochats) .rail{display:none}
+  .chats{--cw:288px}
 }
 @media (max-width:760px){.attw .onchip{height:26px;min-width:26px;padding:0 5px}.attw .onchip i{font-size:12.5px}}
 .hex small{text-transform:uppercase}
@@ -2835,3 +2840,399 @@ html.simple .pj-fi{background:rgba(255,255,255,.05);color:var(--ssoft)}
 html.simple .pj-tag{background:rgba(var(--sacc-rgb),.12);color:var(--sacc)}
 html.simple .pj-menu{background:#2a2927 !important;border-color:var(--sline) !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
 html.simple .pj-sh{color:var(--smute)}
+/* ===== v3.7 · selector de IA nuevo y Comparar aparte (pedido de Sammuel, 2 nov) =====
+   Abre directo en «Las IA»: buscas, eliges Para ti / Todas / Favoritas y tocas una.
+   Los filtros quedan detrás de «Personalizar búsqueda» (al lado en computador, encima en celular).
+   «Comparar IAs» vive en la barra; aquí solo aparecen las casillas cuando entras desde ahí. */
+
+/* Comparar ya no está en la caja de escribir */
+#cCmp{display:none !important}
+
+/* cabecera: título + cuántas hay + cerrar */
+#side.v37 .phead{display:flex;align-items:center;gap:10px}
+#side.v37 .phead #pTitle{flex:1;min-width:0;font-family:var(--serif);font-weight:400;font-size:clamp(24px,2.6vw,30px);line-height:1.05}
+#side.v37 .phead .pr-n{margin-left:0}
+#side.v37 .plupa,#side.v37 .pl-go,#side.v37 #sideDone{display:none !important}
+
+/* fila rápida: pestañas + «Personalizar búsqueda» */
+#side.v37 .pq{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:none}
+#side.v37 .pq #pTabs{flex:none}
+.pcust{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:0 14px 0 12px;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.14));background:rgba(255,255,255,.04);color:var(--soft,#c3c5ce);font-size:13px;cursor:pointer;transition:background .2s,border-color .2s,color .2s}
+.pcust svg{width:16px;height:16px}
+.pcust:hover{background:rgba(255,255,255,.08);color:var(--text,#fff)}
+.pcust[aria-expanded="true"]{border-color:var(--gold,#f2c46b);color:var(--text,#fff);background:color-mix(in srgb,var(--gold,#f2c46b) 14%,transparent)}
+.pc-n{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--gold,#f2c46b);color:#1a1206;font:700 11px/1 var(--mono,monospace);font-style:normal}
+
+/* panel de filtros */
+#side.v37 .pl-head{display:flex;align-items:center;gap:10px;flex:none}
+#side.v37 .pl-head b{flex:1;font-family:var(--serif);font-weight:400;font-size:22px;line-height:1.1}
+#side.v37 .pr-back{display:inline-flex !important}
+
+/* la nota corta, sin cajón grande */
+#side.v37 #pNote{flex:none}
+
+/* modo Comparar: casilla en cada IA y botón grande abajo */
+#side.v37.pcmp .mi{cursor:pointer}
+#side.v37.pcmp .mi.ck{border-color:color-mix(in srgb,var(--gold,#f2c46b) 60%,transparent);background:color-mix(in srgb,var(--gold,#f2c46b) 8%,transparent)}
+#side.v37 #pGo:disabled{opacity:.55;cursor:default;filter:saturate(.5)}
+#side.v37 .pfoot{display:flex;align-items:center}
+
+/* computador: una sola ventana; con «Personalizar» se abre el panel de filtros a su izquierda */
+@media (min-width:900px){
+  #side.side.two-p.v37{width:min(780px,calc(100vw - 48px)) !important;grid-template-columns:minmax(0,1fr) !important;transition:width .5s cubic-bezier(.22,1,.36,1)}
+  #side.side.two-p.v37.cust{width:min(1180px,calc(100vw - 48px)) !important;grid-template-columns:minmax(320px,380px) minmax(0,1fr) !important}
+  #side.two-p.v37 .pf-l{display:none;transform:none !important}
+  #side.two-p.v37.cust .pf-l{display:flex;animation:v37custIn .5s cubic-bezier(.22,1,.36,1) both}
+  #side.two-p.v37 .pf-r{clip-path:none !important;opacity:1 !important;visibility:visible;transform:none !important;filter:none !important;pointer-events:auto;transition:none !important}
+  #side.two-p.v37 .pf-r #searchBox{animation:none !important}
+}
+@keyframes v37custIn{from{opacity:0;transform:translateX(30px) scale(.97);filter:blur(6px)}}
+
+/* celular y tableta: «Las IA» siempre; «Personalizar búsqueda» entra por encima */
+@media (max-width:899px){
+  #side.two-p.v37:not(.cust) .pf-l{transform:translateX(-102%)}
+  #side.two-p.v37.cust .pf-l{transform:none}
+  #side.v37 .pq{flex-wrap:wrap}
+  #side.v37 .pq #pTabs{flex:1 1 100%;display:flex}
+  #side.v37 .pq #pTabs button{flex:1}
+  #side.v37 .pcust{flex:1 1 100%;justify-content:center}
+  #side.v37 .phead #pTitle{font-size:24px}
+  /* «Las IA» es la misma hoja en celular: sin caja de vidrio adentro de otra (se veía un borde pegado al título) */
+  html #side.two-p.v37 .pf-r{background:none !important;border:0 !important;box-shadow:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;border-radius:0 !important}
+  html #side.two-p.v37 .pf-r::before,html #side.two-p.v37 .pf-r::after{content:none !important}
+}
+html.noanim #side.v37 .pf-l{animation:none !important}
+
+/* Simple y temas claros: usan sus propios colores */
+html.simple .pcust{border-color:var(--sline,var(--line));background:transparent;color:var(--stext,var(--text))}
+html.simple .pcust[aria-expanded="true"]{border-color:var(--sacc,var(--gold));background:color-mix(in srgb,var(--sacc,var(--gold)) 12%,transparent)}
+/* v3.8 · botón de enviar con avión de papel (SynthFlow en React, idea Uiverse #39 adaptada a cada tema).
+   El avión despega cuando la IA empieza a responder; después aparece el cuadradito para detener y, al terminar, el avión vuelve. */
+.send{overflow:hidden}
+.send .pl{transform:translate(-1px,1px);transition:transform .25s cubic-bezier(.3,.7,.4,1)}
+.send:not(.stop):not([disabled]):hover .pl{transform:translate(1px,-1px) rotate(-10deg)}
+.send.stop.fly svg{display:block}
+.send.stop.fly::after{display:none}
+.send.fly .pl{animation:szPlaneFly .62s linear forwards}
+.send.back .pl{animation:szPlaneBack .46s cubic-bezier(.2,.8,.3,1)}
+@keyframes szPlaneFly{0%{transform:translate(-1px,1px);animation-timing-function:ease-out}22%{transform:translate(-4px,4px) rotate(-6deg) scale(.94);animation-timing-function:cubic-bezier(.4,0,1,1)}100%{transform:translate(30px,-30px) rotate(8deg) scale(.55);opacity:0}}
+@keyframes szPlaneBack{0%{transform:translate(-24px,24px) scale(.55);opacity:0}70%{opacity:1}100%{transform:translate(-1px,1px);opacity:1}}
+html.noanim .send .pl{animation:none !important;transition:none !important}
+html.noanim .send.stop.fly svg{display:none}
+html.noanim .send.stop.fly::after{display:block}
+
+/* v3.8 · efectos React dentro de los mensajes (los monta next/componentes/synthflow/PuenteEfectos.jsx vía window.SZFx; estilos en core-css/25-v38-efectos.css) */
+.think-wrap.fxm .fxhost{margin:6px 0 8px;max-width:520px}
+/* v3.8.1 · Sammuel quiere que el cuadrito de píxeles siga debajo de la lluvia */
+.agrun.fxr{padding:0;border:0;background:none;box-shadow:none}
+.agrun.fxr .fxhost{max-width:520px}
+/* v3.9 · modo dictado (next/componentes/synthflow/Dictado.jsx). Apagado por defecto: solo se ve con html.dicta (Ajustes › Modo dictado).
+   El micrófono va entre los botones de abajo y el avión de enviar; arriba de la caja sale el panel «Te escucho» con las ondas,
+   el reloj, Cancelar / Pausa / Listo y lo que vas diciendo. Usa los colores del tema activo (--gold, --wine) y respeta «Animaciones». */
+.dic-mic{display:none}
+html.dicta .dic-mic:not([hidden]){display:grid}
+html.dicta .composer .comp-in{grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-areas:"c c c c" "f f f f" "a p m s"}
+html.dicta .composer.big .comp-in{grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-areas:"f f f f" "a p m s"}
+.composer .comp-in{position:relative}
+.composer .comp-in:has(.dic-card,.dic-pane){z-index:40}
+.composer .dic-mic{grid-area:m;position:relative;width:36px;height:36px;border-radius:12px;overflow:visible}
+.dic-mic svg{width:18px;height:18px;position:relative;z-index:1}
+.dic-mic.nosr{opacity:.55}
+/* sin IA disponible la caja está bloqueada (no se puede escribir): tampoco se dicta */
+body.locked .composer .dic-mic{display:none !important}
+/* gana al vidrio de los botones (chat-css 36) solo mientras dicta */
+html:not(.x):not(.y) .composer .attach.dic-mic.on{color:#fff !important;border-color:transparent !important;background:none !important;background-image:linear-gradient(135deg,rgba(var(--wine-rgb),.95),rgba(var(--gold-rgb),.85)) !important}
+html:not(.x):not(.y) .composer .attach.dic-mic.on.paused{background-image:none !important;background:rgba(var(--gold-rgb),.18) !important;color:var(--gold) !important;border-color:rgba(var(--gold-rgb),.45) !important}
+.dic-ring{position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;opacity:0}
+.dic-mic.on:not(.paused) .dic-ring{opacity:1;box-shadow:0 0 0 0 rgba(var(--wine-rgb),.55);animation:dicRing 1.6s cubic-bezier(.2,.7,.3,1) infinite}
+.dic-mic.on.talk:not(.paused) .dic-ring{animation-duration:.9s}
+@keyframes dicRing{0%{box-shadow:0 0 0 0 rgba(var(--wine-rgb),.55)}100%{box-shadow:0 0 0 12px rgba(var(--wine-rgb),0)}}
+
+/* panel arriba de la caja */
+.dic-pane{position:absolute;left:50%;bottom:calc(100% + 10px);translate:-50% 0;width:min(100%,600px);z-index:30;padding:12px 14px 10px;border-radius:20px;
+  border:1px solid rgba(var(--gold-rgb),.28);background:rgba(22,20,30,.86);backdrop-filter:blur(22px) saturate(1.4);-webkit-backdrop-filter:blur(22px) saturate(1.4);
+  box-shadow:0 24px 60px -26px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.04) inset,0 0 50px -24px rgba(var(--wine-rgb),.6);color:var(--text);text-align:left;
+  animation:dicIn .42s cubic-bezier(.22,1,.36,1)}
+@keyframes dicIn{from{opacity:0;transform:translateY(10px) scale(.97);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+html.noglass .dic-pane{background:rgb(24,22,32);backdrop-filter:none;-webkit-backdrop-filter:none}
+.dic-top{display:flex;align-items:center;gap:10px;min-width:0}
+.dic-st{font-weight:650;font-size:14px;white-space:nowrap}
+.dic-dots i{font-style:normal;animation:dicDot 1.2s infinite}
+.dic-dots i:nth-child(2){animation-delay:.2s}.dic-dots i:nth-child(3){animation-delay:.4s}
+.dic-pane.paused .dic-dots{display:none}
+@keyframes dicDot{0%,60%,100%{opacity:.2}30%{opacity:1}}
+.dic-t{font-style:normal;font:500 12.5px 'IBM Plex Mono',ui-monospace,monospace;color:var(--mute);font-variant-numeric:tabular-nums}
+.dic-b{margin-left:auto;display:flex;gap:6px;flex:none}
+.dic-b button{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--soft);font-size:13px;font-weight:600;transition:background .2s,border-color .2s,color .2s,transform .15s}
+.dic-b button:hover{background:rgba(255,255,255,.1);color:var(--text)}
+.dic-b button:active{transform:scale(.95)}
+.dic-b svg{width:14px;height:14px;flex:none}
+.dic-b .dic-ok{background:var(--text);color:var(--bg,#111);border-color:transparent}
+.dic-b .dic-ok:hover{background:#fff;color:#111}
+
+/* ondas: se mueven suave mientras escucha y más fuerte cuando hay voz */
+.dic-wave{display:inline-flex;align-items:center;gap:3px;height:22px;flex:none}
+.dic-wave i{width:3px;height:6px;border-radius:2px;background:linear-gradient(var(--gold),var(--wine));animation:dicWave 1.4s ease-in-out infinite;animation-delay:calc(var(--i) * -.17s)}
+.dic-pane.talk .dic-wave i{animation-duration:.55s}
+.dic-pane.talk .dic-wave i:nth-child(odd){animation-name:dicWaveB}
+.dic-pane.paused .dic-wave i{animation:none;height:4px;opacity:.5}
+@keyframes dicWave{0%,100%{height:5px}50%{height:12px}}
+@keyframes dicWaveB{0%,100%{height:7px}50%{height:21px}}
+
+/* lo que vas diciendo: lo fijo normal, lo que todavía está entendiendo más suave. Blurry arriba y abajo al desplazarse */
+.dic-tx{margin-top:8px;max-height:96px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;padding:4px 0;
+  -webkit-mask-image:linear-gradient(transparent,#000 12px,#000 calc(100% - 12px),transparent);mask-image:linear-gradient(transparent,#000 12px,#000 calc(100% - 12px),transparent)}
+.dic-tx::-webkit-scrollbar{display:none}
+.dic-tx p{margin:0;font-size:15px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+.dic-mid{color:var(--mute);font-style:italic}
+.dic-ph{color:var(--mute)}
+.dic-hint{margin:6px 0 0;font-size:11.5px;color:var(--mute)}
+
+/* aviso antes de pedir el micrófono / navegador sin dictado / errores */
+.dic-card{position:absolute;right:0;bottom:calc(100% + 10px);z-index:31;width:min(100%,380px);padding:16px 16px 12px;border-radius:18px;
+  border:1px solid rgba(var(--gold-rgb),.3);background:rgba(22,20,30,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  box-shadow:0 24px 60px -24px rgba(0,0,0,.95);color:var(--text);text-align:left;animation:dicIn .38s cubic-bezier(.22,1,.36,1)}
+.dic-card b{display:block;font-size:15px;margin:2px 0 6px}
+.dic-card p{margin:0;font-size:13.5px;line-height:1.5;color:var(--soft)}
+.dic-ci{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;margin-bottom:8px;color:#fff;background:linear-gradient(135deg,rgba(var(--wine-rgb),.95),rgba(var(--gold-rgb),.85))}
+.dic-ci svg{width:18px;height:18px}
+.dic-cb{display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:12px;flex-wrap:wrap}
+.dic-cb a.lnk{margin-right:auto;font-size:13px}
+.dic-live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Simple: sin vidrio ni brillo, con sus propios colores */
+html.simple .dic-pane,html.simple .dic-card{background:var(--sbg,#1d1c21);backdrop-filter:none;-webkit-backdrop-filter:none;border-color:var(--sline);box-shadow:0 18px 40px -24px rgba(0,0,0,.8)}
+html.simple:not(.x) .composer .attach.dic-mic.on:not(.paused){background-image:none !important;background:var(--gold) !important;color:#1b1b1b !important}
+
+/* celular: el panel ocupa el ancho y los botones quedan solo con su ícono, menos «Listo» */
+@media (max-width:620px){
+  .dic-pane{width:100%;padding:10px 12px 9px;border-radius:18px}
+  .dic-b button:not(.dic-ok){width:32px;padding:0;justify-content:center}
+  .dic-b button:not(.dic-ok) span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .dic-hint{display:none}
+  .dic-card{width:100%}
+}
+
+/* «Animaciones» apagadas en Ajustes: todo quieto, igual de claro */
+html.noanim .dic-pane,html.noanim .dic-card{animation:none}
+html.noanim .dic-ring,html.noanim .dic-dots i{animation:none !important}
+html.noanim .dic-mic.on:not(.paused) .dic-ring{box-shadow:0 0 0 3px rgba(var(--wine-rgb),.45)}
+html.noanim .dic-wave i{animation:none !important;height:8px}
+html.noanim .dic-pane.talk .dic-wave i:nth-child(odd){height:16px}
+/* v3.8 · ventana «esta IA no está respondiendo ahora» (React: IaCaida.jsx). Usa .szm/.tcard: hereda vidrio, temas y Simple */
+#iaCaida .tcard{width:min(94vw,460px);text-align:left}
+#iaCaida h2{margin:6px 0 8px;font:600 22px/1.25 var(--sans,inherit);color:var(--text);letter-spacing:-.01em}
+#iaCaida .iac-sub{margin:0;color:var(--soft);font-size:14.5px;line-height:1.55}
+#iaCaida .tn{margin:20px 0 10px}
+.iac-ico{display:flex;gap:6px;height:30px;align-items:flex-end}
+.iac-ico span{width:8px;border-radius:4px;background:var(--accent,#e6b65f);opacity:.85;animation:iacZz 1.6s ease-in-out infinite}
+.iac-ico span:nth-child(1){height:10px}.iac-ico span:nth-child(2){height:18px;animation-delay:.2s}.iac-ico span:nth-child(3){height:26px;animation-delay:.4s}
+@keyframes iacZz{0%,100%{transform:scaleY(.55);opacity:.45}50%{transform:scaleY(1);opacity:.95}}
+.iac-try{width:100%;min-height:46px;padding:12px 16px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.05);color:var(--text);font:500 15px var(--sans,inherit);text-align:left;transition:background .2s,border-color .2s}
+.iac-try:hover,.iac-try:focus-visible{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3)}
+.iac-para{display:flex;gap:8px;margin-top:10px}
+.iac-para input{flex:1;min-width:0;min-height:46px;padding:0 14px;border:1px solid var(--line);border-radius:14px;background:rgba(0,0,0,.18);color:var(--text);font:15px var(--sans,inherit)}
+.iac-para input:focus{outline:2px solid #b8c4ff;outline-offset:1px}
+.iac-para .btn{flex:none;min-height:46px}
+.iac-rec{margin:14px 0 0;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.06);color:var(--text);font-size:14.5px;line-height:1.5;animation:avpop .45s var(--ease) both}
+.iac-rec p{margin:0 0 10px}
+.iac-wait{color:var(--mute)}
+.iac-foot{margin-top:16px}
+html.simple #iaCaida .tcard{background:var(--sbg,#1a1917) !important;border:1px solid var(--sline) !important;border-radius:16px !important;color:var(--stext,#fff)}
+html.simple #iaCaida h2{font-family:var(--serif,Georgia,serif);font-weight:400;font-size:26px}
+html.simple .iac-ico span{background:var(--stext,#fff)}
+@media (max-width:480px){.iac-para{flex-direction:column}.iac-para .btn{width:100%}}
+@media (prefers-reduced-motion:reduce){.iac-ico span{animation:none}}
+html.noanim .iac-ico span{animation:none}
+/* ===== v4.1 · Páginas web de varios archivos: la tarjeta «Página web» y la ventana «Ver funcionando» (VistaWeb.jsx) =====
+   Colores del tema activo (--gold/--wine), Simple (--sacc, --sbg) y sin animaciones con html.noanim. */
+
+/* --- la tarjeta en el mensaje --- */
+.wproj{margin:14px 0;border-radius:18px;border:1px solid rgba(var(--gold-rgb,230,182,95),.32);background:linear-gradient(150deg,rgba(var(--gold-rgb,230,182,95),.10),rgba(var(--wine-rgb,201,86,108),.06) 60%,rgba(255,255,255,.02));overflow:hidden}
+.wp-h{display:flex;align-items:center;gap:10px;padding:12px 12px 12px 14px;flex-wrap:wrap}
+.wp-main{display:flex;align-items:center;gap:12px;flex:1 1 260px;min-width:0;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.wp-ic{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:13px;color:#fff;background:linear-gradient(140deg,var(--gold,#e6b65f),var(--wine,#c9566c));box-shadow:0 6px 18px rgba(var(--wine-rgb,201,86,108),.3)}
+.wp-ic svg{width:24px;height:24px}
+.wp-t{display:flex;flex-direction:column;min-width:0;gap:1px}
+.wp-t small{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold,#e6b65f);font-weight:700}
+.wp-t b{font-size:15px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wp-t span{font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wp-acts{display:flex;gap:8px;flex:none}
+.wp-b{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:8px 14px;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.14));background:rgba(255,255,255,.05);color:var(--text);font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s,transform .2s,box-shadow .2s}
+.wp-b svg{width:15px;height:15px}
+.wp-b:hover{background:rgba(255,255,255,.1)}
+.wp-b.go{border-color:transparent;color:#160f1d;background:linear-gradient(120deg,var(--gold,#e6b65f),color-mix(in srgb,var(--gold,#e6b65f) 60%,var(--wine,#c9566c)));box-shadow:0 6px 20px rgba(var(--gold-rgb,230,182,95),.28)}
+.wp-b.go:hover{transform:translateY(-1px);box-shadow:0 10px 26px rgba(var(--gold-rgb,230,182,95),.38)}
+.wp-b:focus-visible,.wp-main:focus-visible{outline:2px solid var(--gold,#e6b65f);outline-offset:2px}
+.wp-files{display:flex;flex-direction:column;gap:6px;padding:0 10px 10px}
+.wp-files .fcard{margin:0}
+@media (max-width:560px){.wp-acts{width:100%}.wp-acts .wp-b{flex:1;justify-content:center}}
+html.simple .wproj{background:var(--scard,#2f2e2b);border-color:var(--sline)}
+html.simple .wp-ic{background:var(--sacc);box-shadow:none}
+html.simple .wp-t small{color:var(--sacc)}
+html.simple .wp-b.go{background:var(--sacc);box-shadow:none;color:#1b1a18}
+html.noanim .wp-b{transition:none}
+.syn-w.web .wp-ic{width:36px;height:36px;border-radius:10px}
+.syn-w.web .wp-ic svg{width:20px;height:20px}
+
+/* --- la ventana --- */
+.wv{position:fixed;inset:0;z-index:430;display:flex;justify-content:flex-end;background:rgba(5,6,10,0);transition:background .3s ease}
+.wv.on{background:rgba(5,6,10,.5)}
+.wv-in{width:min(980px,60vw);height:100%;display:flex;flex-direction:column;min-height:0;background:color-mix(in srgb,var(--bg,#0b0820) 92%,#000);border-left:1px solid var(--line,rgba(255,255,255,.12));box-shadow:-30px 0 80px rgba(0,0,0,.5);transform:translateX(102%);transition:transform .42s cubic-bezier(.22,1,.36,1),width .35s cubic-bezier(.22,1,.36,1);color:var(--text)}
+.wv.on .wv-in{transform:none}
+.wv.max .wv-in{width:100vw;border-left:0}
+.wv-h{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line,rgba(255,255,255,.08))}
+.wv-ic{flex:none;display:grid;place-items:center;width:38px;height:38px;border-radius:11px;color:#fff;background:linear-gradient(140deg,var(--gold,#e6b65f),var(--wine,#c9566c))}
+.wv-ic svg{width:21px;height:21px}
+.wv-t{flex:1;min-width:0;display:flex;flex-direction:column}
+.wv-t b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wv-t small{font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wv-syn{display:inline-block;padding:0 7px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:linear-gradient(120deg,rgba(var(--gold-rgb,230,182,95),.25),rgba(var(--wine-rgb,201,86,108),.22));color:var(--text);font-size:10.5px;font-weight:700;letter-spacing:.04em}
+.wv-b{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:6px 12px;border-radius:10px;border:1px solid var(--line,rgba(255,255,255,.12));background:rgba(255,255,255,.04);color:var(--text);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;transition:background .2s}
+.wv-b svg{width:16px;height:16px;flex:none}
+.wv-b.ic{width:36px;padding:0}
+.wv-b:hover:not(:disabled){background:rgba(255,255,255,.1)}
+.wv-b:disabled{opacity:.35;cursor:default}
+.wv-b:focus-visible,.wv button:focus-visible,.wv select:focus-visible,.wv-pre:focus-visible{outline:2px solid var(--gold,#e6b65f);outline-offset:2px}
+.wv-b.go{border-color:transparent;background:var(--gold,#e6b65f);color:#1a1210}
+.wv-tabs{display:flex;gap:4px;margin:10px 14px 0;padding:4px;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.1));align-self:flex-start}
+.wv-tabs button{min-height:32px;padding:6px 16px;border-radius:999px;border:0;background:none;color:var(--mute);font:inherit;font-size:13px;cursor:pointer}
+.wv-tabs button[aria-selected="true"]{background:rgba(var(--gold-rgb,230,182,95),.18);color:var(--text);font-weight:600}
+.wv-prev,.wv-code{flex:1;min-height:0;display:flex;flex-direction:column;margin:10px 14px 14px;border-radius:14px;overflow:hidden;border:1px solid var(--line,rgba(255,255,255,.08));background:rgba(0,0,0,.25)}
+.wv-bar{display:flex;align-items:center;gap:6px;padding:8px;border-bottom:1px solid var(--line,rgba(255,255,255,.08));flex-wrap:wrap}
+.wv-addr{flex:1 1 160px;min-width:0;display:flex;align-items:center;gap:6px;min-height:36px;padding:0 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--line,rgba(255,255,255,.08))}
+.wv-lock svg{width:14px;height:14px;color:#7ee2a8;display:block}
+.wv-addr select,.wv-path{flex:1;min-width:0;border:0;background:none;color:var(--text);font:12.5px/1 var(--mono,ui-monospace,monospace);padding:8px 0;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wv-addr select option{background:#16131d;color:#eee}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.wv-sz{display:flex;gap:2px;padding:3px;border-radius:10px;background:rgba(255,255,255,.05)}
+.wv-sz button{min-height:30px;padding:4px 10px;border-radius:8px;border:0;background:none;color:var(--mute);font:inherit;font-size:12px;cursor:pointer}
+.wv-sz button[aria-pressed="true"]{background:rgba(255,255,255,.12);color:var(--text)}
+.wv-con b{min-width:20px;padding:1px 6px;border-radius:999px;background:rgba(255,255,255,.1);font-size:11px}
+.wv-con.bad b{background:#c2413a;color:#fff}
+.wv-note{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;font-size:13px;background:rgba(var(--gold-rgb,230,182,95),.12);border-bottom:1px solid var(--line,rgba(255,255,255,.08))}
+.wv-note > span{flex:1 1 200px;min-width:0}
+.wv-note code{word-break:break-all;font-size:12px}
+.wv-note.miss{background:rgba(194,65,58,.16)}
+.wv-stage{flex:1;min-height:0;display:flex;justify-content:center;background:#e9e7ef}
+.wv-stage iframe{flex:1;width:100%;height:100%;border:0;background:#fff;transition:max-width .35s cubic-bezier(.22,1,.36,1)}
+.wv-prev[data-size="tab"] .wv-stage,.wv-prev[data-size="cel"] .wv-stage{padding:12px;background:#1a1722}
+.wv-prev[data-size="tab"] iframe,.wv-prev[data-size="cel"] iframe{border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.45)}
+.wv-log{max-height:32%;overflow:auto;padding:8px 12px;font:12px/1.5 var(--mono,ui-monospace,monospace);border-top:1px solid var(--line,rgba(255,255,255,.08));background:#0d0b12}
+.wv-log p{margin:0;color:var(--mute)}
+.wv-ln{padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04);white-space:pre-wrap;word-break:break-word}
+.wv-ln.error{color:#ff8a80}.wv-ln.warn{color:#ffd180}
+.wv-files{display:flex;gap:4px;padding:8px;overflow-x:auto;border-bottom:1px solid var(--line,rgba(255,255,255,.08));scrollbar-width:thin}
+.wv-files button{flex:none;display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:5px 12px;border-radius:9px;border:1px solid transparent;background:none;color:var(--mute);font:12.5px var(--mono,ui-monospace,monospace);cursor:pointer;white-space:nowrap}
+.wv-files button[aria-selected="true"]{background:rgba(255,255,255,.08);border-color:var(--line,rgba(255,255,255,.12));color:var(--text)}
+.wv-files i{font-style:normal;font:700 9px/1 system-ui,sans-serif;padding:3px 4px;border-radius:4px;background:#6f9cff;color:#0d1020}
+.wv-files [data-ext="html"] i,.wv-files [data-ext="htm"] i{background:#ff9a5c}
+.wv-files [data-ext="js"] i,.wv-files [data-ext="mjs"] i{background:#f5d76e}
+.wv-files [data-ext="svg"] i{background:#9be38b}
+.wv-files [data-ext="json"] i{background:#c9a7ff}
+.wv-fbar{display:flex;align-items:center;gap:6px;padding:6px 8px 6px 12px;font-size:12px;color:var(--mute)}
+.wv-fbar > span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--mono,ui-monospace,monospace)}
+.wv-pre{flex:1;min-height:0;margin:0;overflow:auto;padding:14px 16px;font:12.5px/1.65 var(--code,var(--mono,ui-monospace,monospace));white-space:pre;color:#e8e6e1;background:rgba(0,0,0,.3)}
+.wv-pre .hc{color:#7d8597;font-style:italic}.wv-pre .hs{color:#a5d6a7}.wv-pre .hk{color:#f3a3c8}.wv-pre .hn{color:#f7c98b}.wv-pre .hf{color:#9ecbff}
+body.webviewing{overflow:hidden}
+body.webviewing #szBot,body.webviewing #szBotB,body.webviewing .bbeta,body.webviewing .bb,body.webviewing .beta-tag{visibility:hidden !important}
+@media (max-width:899px){
+  .wv-in,.wv.max .wv-in{width:100%;border-left:0}
+  .wv-h{padding-top:calc(10px + env(safe-area-inset-top))}
+  .wv-h .wv-b:not(.ic) span{display:none}
+  .wv-h .wv-b:not(.ic){width:36px;padding:0}
+  .hide-cel{display:none !important}
+  .wv-prev,.wv-code{margin:8px 0 0;border-radius:0;border-left:0;border-right:0;border-bottom:0}
+  .wv-tabs{margin:8px 10px 0}
+  .wv-con span{display:none}
+}
+/* Simple: plano, con su acento */
+html.simple .wv-in{background:var(--sbg,#252422)}
+html.simple .wv-ic{background:var(--sacc)}
+html.simple .wv-syn{background:rgba(var(--sacc-rgb),.18);border-color:rgba(var(--sacc-rgb),.4)}
+html.simple .wv-tabs button[aria-selected="true"]{background:rgba(var(--sacc-rgb),.2)}
+html.simple .wv-b.go{background:var(--sacc)}
+/* sin animaciones */
+html.noanim .wv,html.noanim .wv-in,html.noanim .wv-stage iframe,html.noanim .wv-b{transition:none}
+/* ===== v4.2 · Letrero «¡BIENVENIDO A LA ALFA!» (next/componentes/synthflow/LetreroAlfa.jsx) =====
+   Letrero de teatro con bombillos que corren, letras que se prenden una por una y, por detrás, el Pase Alfa holográfico.
+   Usa los colores del tema activo (--gold/--wine), Simple (--sacc/--sbg) y se queda quieto con html.noanim o reduced-motion. */
+.la{position:fixed;inset:0;z-index:440;display:grid;place-items:center;padding:16px;background:rgba(6,5,12,0);backdrop-filter:blur(0);transition:background .4s ease,backdrop-filter .4s ease}
+.la.on{background:rgba(6,5,12,.62);backdrop-filter:blur(6px)}
+.la-stage{position:relative;width:min(640px,100%);perspective:1600px;opacity:0;transform:translateY(-40px) rotateX(18deg) scale(.94);transition:opacity .45s ease,transform .7s cubic-bezier(.2,1.3,.4,1)}
+.la.on .la-stage{opacity:1;transform:none}
+.la-card{position:relative;display:grid;transform-style:preserve-3d;transition:transform .8s cubic-bezier(.3,1.2,.4,1)}
+.la-card.flip{transform:rotateY(180deg)}
+.la-front,.la-back{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:26px;padding:42px 34px 28px;color:var(--text,#f3eef8);text-align:center}
+.la-back{transform:rotateY(180deg);padding:28px}
+/* el letrero: madera oscura con marco dorado, como marquesina de teatro */
+.la-front{position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:center;align-items:center;background:radial-gradient(120% 80% at 50% 0%,rgba(var(--gold-rgb,230,182,95),.22),transparent 60%),linear-gradient(170deg,#1d1426,#120c19 70%);border:3px solid var(--gold,#e6b65f);box-shadow:0 0 0 6px #120c19,0 0 0 8px rgba(var(--gold-rgb,230,182,95),.55),0 30px 90px rgba(0,0,0,.6),0 0 80px rgba(var(--gold-rgb,230,182,95),.25)}
+.la-back{background:linear-gradient(170deg,#18121f,#0f0b15);border:1px solid rgba(var(--gold-rgb,230,182,95),.4);box-shadow:0 30px 90px rgba(0,0,0,.6)}
+/* bombillos: 13 arriba y 13 abajo, se prenden en cadena */
+.la-bulbs{position:absolute;inset:12px 18px;pointer-events:none}
+.la-bulbs i{position:absolute;top:0;left:calc(var(--i) * 100% / 12);width:9px;height:9px;margin-left:-4.5px;border-radius:50%;background:#fff3c4;box-shadow:0 0 8px 2px rgba(255,214,120,.85),0 0 18px rgba(var(--gold-rgb,230,182,95),.7);animation:laBulb 1.3s steps(1) infinite;animation-delay:calc(var(--i) * -.1s)}
+.la-bulbs i:nth-child(n+14){top:auto;bottom:0;left:calc((25 - var(--i)) * 100% / 12)}
+@keyframes laBulb{0%,100%{opacity:1}50%{opacity:.18;box-shadow:none}}
+.la-kick{margin:6px 0 10px;font:700 11.5px/1 var(--sans,inherit);letter-spacing:.24em;text-transform:uppercase;color:var(--gold,#e6b65f);opacity:0;animation:laUp .6s .2s ease forwards}
+/* las letras de neón: cada una «se enciende» con un parpadeo */
+.la-word{margin:0 0 14px;gap:0 .3em;font:900 clamp(30px,7.2vw,54px)/1.05 var(--sans,'Inter',system-ui,sans-serif);letter-spacing:.01em;display:flex;flex-wrap:wrap;justify-content:center}
+.la-word .w span{display:inline-block;color:#fff8e6;opacity:.12;text-shadow:none;animation:laNeon .9s var(--d) forwards}
+.la-word .w{display:inline-flex;white-space:nowrap}
+@keyframes laNeon{0%{opacity:.12}10%{opacity:1;text-shadow:0 0 6px #fff,0 0 18px var(--gold,#e6b65f)}20%{opacity:.25;text-shadow:none}34%,100%{opacity:1;text-shadow:0 0 4px rgba(255,255,255,.9),0 0 14px var(--gold,#e6b65f),0 0 34px rgba(var(--wine-rgb,201,86,108),.85)}}
+.la.on .la-word .w span{animation-play-state:running}
+.la-sub{max-width:460px;margin:0 auto 16px;color:var(--soft,#d6cfe0);font-size:15.5px;line-height:1.55;opacity:0;animation:laUp .6s 1.15s ease forwards}
+.la-perks{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:0 0 22px;padding:0;list-style:none}
+.la-perks li{padding:7px 13px;border-radius:999px;border:1px solid rgba(var(--gold-rgb,230,182,95),.4);background:rgba(var(--gold-rgb,230,182,95),.08);font-size:13px;color:var(--text,#f3eef8);opacity:0;animation:laUp .5s var(--d) ease forwards}
+.la-perks li::before{content:'✦ ';color:var(--gold,#e6b65f)}
+@keyframes laUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.la-acts{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.la-b{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:10px 20px;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.18));background:rgba(255,255,255,.06);color:var(--text,#f3eef8);font:600 15px var(--sans,inherit);cursor:pointer;transition:background .2s,transform .2s,box-shadow .2s}
+.la-b svg{width:20px;height:20px}
+.la-b:hover{background:rgba(255,255,255,.12);transform:translateY(-1px)}
+.la-b:focus-visible,.la-x:focus-visible{outline:3px solid #b8c4ff;outline-offset:3px}
+.la-go{border-color:transparent;color:#1b1220;background:linear-gradient(120deg,var(--gold,#e6b65f),color-mix(in srgb,var(--gold,#e6b65f) 55%,var(--wine,#c9566c)));box-shadow:0 8px 26px rgba(var(--gold-rgb,230,182,95),.35)}
+.la-go:hover{background:linear-gradient(120deg,var(--gold,#e6b65f),color-mix(in srgb,var(--gold,#e6b65f) 55%,var(--wine,#c9566c)));box-shadow:0 12px 32px rgba(var(--gold-rgb,230,182,95),.5)}
+.la-x{position:absolute;top:-14px;right:-10px;z-index:2;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;border:1px solid var(--line,rgba(255,255,255,.2));background:#1a1420;color:var(--text,#fff);cursor:pointer}
+.la-x svg{width:18px;height:18px}
+/* el pase holográfico: el brillo se mueve con --mx/--my (mouse o inclinación del celular) */
+.la-pase{--mx:.5;--my:.5;position:relative;overflow:hidden;aspect-ratio:1.62;max-width:520px;margin:0 auto;padding:24px 26px;border-radius:22px;text-align:left;background:linear-gradient(140deg,#1b1328,#2a1630);border:1.5px solid rgba(255,255,255,.18);box-shadow:0 18px 50px rgba(0,0,0,.5);transform:perspective(900px) rotateX(calc((var(--my) - .5) * -10deg)) rotateY(calc((var(--mx) - .5) * 14deg));transition:transform .15s ease-out;display:flex;flex-direction:column;justify-content:space-between}
+.la-holo{position:absolute;inset:-40%;pointer-events:none;mix-blend-mode:color-dodge;opacity:.55;background:conic-gradient(from calc(var(--mx) * 360deg) at calc(var(--mx) * 100%) calc(var(--my) * 100%),rgba(var(--gold-rgb,230,182,95),.0),rgba(var(--gold-rgb,230,182,95),.55),rgba(159,231,255,.5),rgba(var(--wine-rgb,201,86,108),.55),rgba(190,140,255,.45),rgba(var(--gold-rgb,230,182,95),.0));filter:blur(18px)}
+.la-pase::after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(115deg,rgba(255,255,255,.05) 0 2px,transparent 2px 9px);mix-blend-mode:overlay}
+.la-ph{position:relative;display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.la-ph small{display:block;font:600 11px/1 var(--serif,Georgia,serif);letter-spacing:.3em;color:var(--gold,#e6b65f)}
+.la-ph b{display:block;margin:8px 0 4px;font:900 clamp(26px,6vw,38px)/1 var(--sans,inherit);background:linear-gradient(90deg,var(--gold,#e6b65f),#9fe7ff,var(--wine,#c9566c));-webkit-background-clip:text;background-clip:text;color:transparent}
+.la-ph span{font-size:14px;color:#efe9f7}
+.la-syn{flex:none;width:104px;height:138px;margin:-14px -6px -30px 0;pointer-events:none}
+.la-syn .szbody{--sz:104px}
+.la-pd{position:relative;display:flex;flex-wrap:wrap;gap:6px 28px;margin:0}
+.la-pd dt{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:#b3abc4}
+.la-pd dd{margin:2px 0 0;font-size:15px;color:#fff}
+.la-code{font:700 clamp(17px,4.4vw,24px)/1.1 var(--mono,ui-monospace,monospace) !important;letter-spacing:.08em}
+.la-wink{position:relative;margin:0;font-size:13px;color:var(--gold,#e6b65f);min-height:1.2em}
+.la-note{margin:14px 0 16px;font-size:13px;color:var(--mute,#a79fb8)}
+@media (max-width:520px){
+  .la-front{padding:36px 18px 22px}.la-back{padding:18px 14px}
+  .la-pase{aspect-ratio:auto;min-height:220px;padding:18px}
+  .la-acts .la-b{flex:1 1 140px;justify-content:center}
+  .la-x{top:-10px;right:-4px}
+  .la-bulbs{inset:10px 12px}.la-bulbs i{width:7px;height:7px;margin-left:-3.5px}
+}
+/* Simple: plano y con su acento */
+html.simple .la-front{background:var(--sbg,#252422);border-color:var(--sacc);box-shadow:0 0 0 6px var(--sbg,#252422),0 0 0 7px var(--sline),0 30px 80px rgba(0,0,0,.5)}
+html.simple .la-word{font-family:var(--serif,Georgia,serif);font-weight:400}
+html.simple .la-word .w span{color:var(--stext,#fff)}
+html.simple .la-go{background:var(--sacc);box-shadow:none}
+html.simple .la-back{background:var(--sbg,#252422)}
+/* sin animaciones: todo prendido y quieto desde el principio */
+html.noanim .la,html.noanim .la-stage,html.noanim .la-card,html.noanim .la-pase,html.noanim .la-b{transition:none}
+html.noanim .la-bulbs i{animation:none}
+html.noanim .la-word span,html.noanim .la-kick,html.noanim .la-sub,html.noanim .la-perks li{animation:none;opacity:1}
+html.noanim .la-word span{text-shadow:0 0 4px rgba(255,255,255,.9),0 0 14px var(--gold,#e6b65f)}
+html.noanim .la-pase{transform:none}
+@media (prefers-reduced-motion:reduce){
+  .la,.la-stage,.la-card,.la-pase{transition:none}
+  .la-bulbs i{animation:none}
+  .la-word span,.la-kick,.la-sub,.la-perks li{animation:none;opacity:1}
+  .la-word span{text-shadow:0 0 4px rgba(255,255,255,.9),0 0 14px var(--gold,#e6b65f)}
+  .la-pase{transform:none}
+}

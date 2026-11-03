@@ -23,9 +23,19 @@ async function api(path, o = {}){
   if (!r.ok) throw Object.assign(new Error(d.error || 'Error ' + r.status), { status:r.status, data:d });
   return d;
 }
+/* Fase 4 · costo cero: /api/config se pedía 2 veces al abrir cada página (las cuentas y el aviso de mantenimiento).
+   Ahora las dos usan la misma respuesta si tiene menos de 5 s. Devuelve { ok, d }. */
+let cfgP = null, cfgT = 0;
+function cfgFetch(maxAge = 5000){
+  if (cfgP && Date.now() - cfgT < maxAge) return cfgP;
+  cfgT = Date.now();
+  const p = cfgP = fetch('/api/config', { cache:'no-store' }).then(async r => ({ ok:r.ok, d:r.ok ? await r.json().catch(() => ({})) : {} }));
+  p.catch(() => { if (cfgP === p) cfgP = null; });
+  return p;
+}
 async function accConfig(){
   if (ACC.avail !== null) return ACC.avail;
-  try{ const r = await fetch('/api/config'); const d = r.ok ? await r.json() : {}; ACC.cid = d.googleClientId || ''; ACC.dcid = d.driveClientId || ''; ACC.sbg = !!d.sbGoogle; ACC.sb = d.sb || null; ACC.google = !!((d.google && ACC.cid) || ACC.sbg); ACC.missing = d.missing || (r.ok ? [] : ['servidor']); ACC.avail = !!d.ok; }
+  try{ const { ok, d } = await cfgFetch(); const r = { ok }; ACC.cid = d.googleClientId || ''; ACC.dcid = d.driveClientId || ''; ACC.sbg = !!d.sbGoogle; ACC.sb = d.sb || null; ACC.google = !!((d.google && ACC.cid) || ACC.sbg); ACC.missing = d.missing || (r.ok ? [] : ['servidor']); ACC.avail = !!d.ok; }
   catch(e){ ACC.avail = false; }
   return ACC.avail;
 }
@@ -38,6 +48,7 @@ function prefsOut(){
   return { v:2, t:Date.now(), model:state.model, fav:state.fav, cmp:state.cmp, sx:state.sx, pinned:state.pinned || '', threads:state.threads || {}, del:(state.del || []).slice(-300),
     arena:state.arena || {}, survey:state.survey || null, useTeam:state.useTeam || '', battle:!!state.battle, cfg:CFG, mem:state.mem,
     projects:projSlim(), projOf:state.projOf || {}, pjDel:(state.pjDel || []).slice(-200),
+    portada:portadaGet(),
     chatKeys:Object.keys(state.chats).filter(k => Array.isArray(state.chats[k]) && state.chats[k].length) };
 }
 /* v2.6 · proyectos: si los archivos pesan mucho, viaja solo su nombre y el texto se queda en este equipo */
@@ -81,6 +92,7 @@ function mergeIn(p, chats){
     if (p.arena && typeof p.arena === 'object'){ state.arena = state.arena || {}; Object.keys(p.arena).forEach(id => { const r = p.arena[id], l = state.arena[id]; if (r && typeof r === 'object' && (!l || (+r.t || 0) > (+l.t || 0))) state.arena[id] = { r:+r.r || 1000, w:+r.w || 0, l:+r.l || 0, t:+r.t || 0 }; }); }
     if (p.survey && typeof p.survey === 'object' && (!state.survey || (+p.survey.t || 0) > (+state.survey.t || 0))) state.survey = p.survey;
     if (p.battle) state.battle = true;
+    if (p.portada) portadaMerge(p.portada);   /* v4.1 · «Ya tengo el Flow / Soy nuevo» viaja con la cuenta */
     if (p.mem && typeof p.mem === 'object'){ const m = cleanMem(p.mem); if ((+m.t || 0) > (+(state.mem && state.mem.t) || 0)) state.mem = m; }
     if (p.ledger && typeof p.ledger === 'object'){ syncLedger(); state.ledger = mergeLedger(state.ledger, cleanLedger(p.ledger)); }
     else if (p.usage && typeof p.usage === 'object' && !state.ledger.ep){ const leg = legacyRow(p.usage); if (Object.keys(leg).length){ syncLedger(); state.ledger = mergeLedger(state.ledger, { ep:state.ledger.ep, dev:{ legacy:leg } }); } }

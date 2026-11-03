@@ -1,16 +1,27 @@
-/* Ayuda: muestra la página en el idioma que elegiste en SymphorIA (o el de tu navegador) y deja cambiarlo con un toque */
+/* Ayuda, Privacidad y Términos: la página sale en el idioma que elegiste en SymphorIA (o el de tu navegador) y se cambia con un toque.
+   v3.7 · también cambia sola, sin recargar: si cambias el idioma en otra pestaña (SynthFlow, la portada…) o vuelves con «Atrás».
+   Además respeta tus Ajustes de SymphorIA: con «Animaciones» apagadas no se mueve y con «Vidrio» apagado no hay blurry. */
 (() => {
-  let L = 'es';
-  try{ const s = localStorage.getItem('synthz:lang'); L = s === 'es' || s === 'en' ? s : /^en\b/i.test(navigator.language || '') ? 'en' : 'es'; }catch(e){}
+  const H = document.documentElement;
+  const want = () => { try{ const s = localStorage.getItem('synthz:lang'); if (s === 'es' || s === 'en') return s; }catch(e){} const L0 = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'es']; for (const x of L0){ const c = String(x).slice(0, 2).toLowerCase(); if (c === 'es' || c === 'en') return c; } return 'en'; };
+  let L = want();
   const set = l => {
-    L = l; document.documentElement.lang = l;
-    document.querySelectorAll('[lang="es"],[lang="en"]').forEach(el => { if (el !== document.documentElement) el.hidden = el.lang !== l; });
+    L = l; H.lang = l;
+    document.querySelectorAll('[lang="es"],[lang="en"]').forEach(el => { if (el !== H) el.hidden = el.lang !== l; });
     const b = document.getElementById('ayLang'); if (b) b.textContent = l === 'en' ? 'Español' : 'English';
-    document.title = l === 'en' ? 'Help · SymphorIA' : 'Ayuda · SymphorIA';
+    const T = H.dataset.titleEs ? H : (document.querySelector('[data-title-es]') || H);   /* en las páginas de React el título va en su contenedor */
+    document.title = (l === 'en' ? T.dataset.titleEn : T.dataset.titleEs) || (l === 'en' ? 'Help · SymphorIA' : 'Ayuda · SymphorIA');
   };
-  document.addEventListener('DOMContentLoaded', () => {
+  const cfg = () => { let c = {}; try{ c = JSON.parse(localStorage.getItem('synthz:cfg')) || {}; }catch(e){} H.classList.toggle('noanim', c.anim === false); H.classList.toggle('noglass', c.glass === false); };
+  cfg();
+  const ready = () => {
     set(L);
     const b = document.getElementById('ayLang');
     if (b) b.addEventListener('click', e => { e.preventDefault(); set(L === 'en' ? 'es' : 'en'); try{ localStorage.setItem('synthz:lang', L); }catch(er){} });
-  });
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ready); else ready();
+  /* otra pestaña cambió el idioma o los ajustes: se aplica al instante */
+  addEventListener('storage', e => { if (e.key === 'synthz:lang'){ const l = want(); if (l !== L) set(l); } else if (e.key === 'synthz:cfg') cfg(); });
+  /* volver con «Atrás» (la página sale de la memoria del navegador): se revisa otra vez */
+  addEventListener('pageshow', () => { cfg(); const l = want(); if (l !== L) set(l); });
 })();

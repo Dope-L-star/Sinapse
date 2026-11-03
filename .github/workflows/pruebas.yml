@@ -34,5 +34,28 @@ jobs:
         run: node t/humo/prueba-mensajes.mjs
       - name: Calidad de la portada (6 pantallas)
         run: node t/portada/calidad.mjs
+      - name: Portada solo para gente nueva (pantallita «Ya tengo el Flow / Soy nuevo»)
+        run: node t/portada/solo-nuevos.mjs
+      - name: Fotos para las IAs y revisión de calidad
+        run: node t/humo/ia-fotos.mjs
+      - name: Personalidad de SynthonIA
+        run: node t/synthonia/personalidad.mjs
       - name: Contrato de A.L.I.A.S.
         run: node t/alias/contrato.mjs
+      - name: Cerebro de las IAs (tipo de trabajo, pensar en lo difícil, respuesta vacía → otra IA)
+        run: node t/cerebro/cerebro.mjs
+      - name: Internet con regla fija (misma pregunta, misma decisión; SynthFlow y A.L.I.A.S. iguales)
+        run: node --test t/web/regla.test.mjs
+      - name: Vista previa de temas y panel admin nuevo (ES/EN)
+        run: node --test next/tests/vista-temas.test.mjs next/tests/panel-admin.test.mjs next/tests/gestion.test.mjs
+  obertura:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: escritorio/go.mod
+          cache-dependency-path: escritorio/go.sum
+      - name: Instalador de Windows (pruebas y armado)
+        run: node escritorio/armar.mjs 0.0.1

@@ -107,3 +107,6 @@ html.noanim #side.two-p .pf-l,html.noanim #side.two-p .pf-r{transition-duration:
 @media (max-width:560px){.pill-total.lim{font-size:12px}}
 .sxfoot.lim{display:flex;align-items:center;gap:10px}
 .rcoin .lring{margin:0 -1px}
+/* v3.7 · «De dónde» salía vacío: el panel de filtros es una columna con scroll y achicaba la fila de proveedores (tiene overflow:auto) a 10 px. Ningún filtro se achica: el panel hace scroll. */
+#side.two-p .pf-l>*{flex-shrink:0}
+#side.two-p .pf-l #provSeg{min-height:max-content}

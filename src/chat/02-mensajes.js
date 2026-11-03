@@ -26,6 +26,9 @@ function thinkEl(mid){
   const m = info(mid), el = document.createElement('div'); el.className = 'm bot brand think-wrap'; el.style.cssText = brandVars(m);
   el.innerHTML = '<div class="who">' + av(m, 'xs') + '<b>' + esc(m.name) + '</b><span class="md">' + esc(m.vlabel || '') + '</span></div>';
   if (!works[mid]) works[mid] = SZ.workView({ model:m.name });
+  /* v3.8 · con SynthFlow en React, mientras la IA piensa sale la lluvia Matrix (#47) con su nombre; el detalle (segundos, pasos) queda debajo */
+  const fx = document.createElement('div'); fx.className = 'fxhost';
+  if (window.SZFx && window.SZFx.mount(fx, 'matrix', { lang:SZ.lang(), ia:SZ.lang() === 'en' && SZ.__syn && SZ.__syn.trStr ? SZ.__syn.trStr(m.name) : m.name })){ el.classList.add('fxm'); el.appendChild(fx); }
   el.appendChild(works[mid].el);
   return el;
 }
@@ -37,7 +40,11 @@ function cnvMeta(pre){
   const txt = code ? code.textContent : pre.textContent, L = CNV_LANG[k] || (k ? [k.toUpperCase(), k.replace(/[^\w]/g, '') || 'txt'] : [/^\s*</.test(txt) ? 'HTML' : 'Texto', /^\s*</.test(txt) ? 'html' : 'txt']);
   /* si la IA puso el nombre del archivo justo antes («index.html», `app.py`…), se usa ese */
   let name = '', prev = pre.parentElement && /\b(cnv|fcard)\b/.test(pre.parentElement.className) ? pre.parentElement.previousElementSibling : pre.previousElementSibling;
-  if (prev){ const f = (prev.textContent || '').match(/([\w.-]+\.(?:[a-z0-9]{1,6}))\s*[:：]?\s*$/i); if (f && !/^\d+\.\d+$/.test(f[1])) name = f[1]; }
+  /* v4.1 · con su carpeta («css/estilos.css»), así la página encuentra su CSS y su JS */
+  if (prev){ const f = (prev.textContent || '').match(/([\w.\/-]+\.(?:[a-z0-9]{1,6}))\s*[`*)]*\s*[:：]?\s*$/i); if (f && !/^\d+\.\d+$/.test(f[1])) name = f[1]; }
+  /* o en un comentario en la primera línea del código: <!-- index.html -->, /* css/estilos.css *\/, // js/app.js, # app.py */
+  if (!name){ const f = txt.split('\n', 1)[0].match(/^\s*(?:<!--|\/\*|\/\/|#)\s*(?:(?:archivo|file|filename|nombre)\s*[:：]\s*)?([\w.\/-]+\.([a-z0-9]{1,6}))\s*(?:-->|\*\/)?\s*$/i); if (f && (!k || f[2].toLowerCase() === L[1] || (L[1] === 'html' && /^htm$/i.test(f[2])) || (L[1] === 'js' && /^(mjs|cjs)$/i.test(f[2])))) name = f[1]; }
+  name = name.replace(/^\.?\/+/, '');
   if (!name) name = (L[1] === 'Dockerfile' ? 'Dockerfile' : (k === 'md' || k === 'markdown' || k === 'txt' || k === 'text' || !k ? 'documento' : 'codigo') + '.' + L[1]);
   const named = !/^(documento|codigo)\./.test(name) && name !== 'Dockerfile', ext = (name.split('.').pop() || L[1] || 'txt').toLowerCase();
   return { label:L[0], name, named, ext, text:txt.replace(/\n$/, ''), lines:txt.replace(/\n$/, '').split('\n').length };
@@ -68,17 +75,19 @@ function codeButtons(body){
       w.innerHTML = '<button type="button" class="cnv-b cnv-cp" data-cv="copy" title="Copiar" aria-label="Copiar">' + CNV_ICO.copy + '<span>Copiar</span></button>';
       pre.before(w); w.appendChild(pre);
     }
-  });
+  });  try{ webGroup(body); }catch(e){}   /* v4.1 · varios archivos de una página → una sola tarjeta «Página web» */
 }
 const MIME = { html:'text/html', htm:'text/html', css:'text/css', js:'text/javascript', json:'application/json', svg:'image/svg+xml', md:'text/markdown', csv:'text/csv', xml:'application/xml' };
 function cnvDownload(M){
-  try{ const blob = new Blob([M.text], { type:(MIME[M.ext] || 'text/plain') + ';charset=utf-8' }), u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = M.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); toast('Descargué ' + M.name + '.'); }
+  try{ const blob = new Blob([M.text], { type:(MIME[M.ext] || 'text/plain') + ';charset=utf-8' }), u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = M.name.split('/').pop(); document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); toast('Descargué ' + M.name + '.'); }
   catch(e){ toast('No pude descargarlo. Usa «Copiar».'); }
 }
 /* los otros archivos del mismo mensaje (para que un HTML use su style.css y su script.js en la vista previa) */
 function siblingsOf(card){ const b = card.closest('.body') || card.parentElement; return $$('.fcard pre', b).map(cnvMeta); }
 const escRx = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 function previewDoc(M, sibs){
+  /* v4.1 · si es parte de una página de varios archivos, se arma con sus rutas (css/…, js/…) */
+  if (/^(html|htm)$/.test(M.ext) && sibs && sibs.length){ const P = webProject(sibs.some(x => x.name === M.name) ? sibs : [M, ...sibs]); if (P && webFind(P, webNorm(M.name))) return webDoc(P, webNorm(M.name)); }
   if (M.ext === 'svg') return '<!doctype html><meta charset="utf-8"><style>html,body{margin:0;height:100%;display:grid;place-items:center;background:#fff}svg{max-width:96vw;max-height:96vh}svg:not([width]){width:96vw;height:96vh}</style>' + M.text;
   let h = M.text;
   if (!/<html[\s>]|<body[\s>]|<!doctype/i.test(h)) h = '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>' + h + '</body></html>';
@@ -140,6 +149,7 @@ function openCanvas(M, sibs, tab){
    En el celular no se abre solo (taparía todo): queda la tarjeta para tocarla */
 function synAuto(el){
   if (!el || !matchMedia('(min-width:900px)').matches) return;
+  { const w = $('.wproj', el); if (w && w._web){ webOpen(w._web, { tab:'prev' }); return; } }
   const cards = $$('.fcard:not(.deck)', el); if (!cards.length) return;
   const pv = cards.filter(c => canPreview(cnvMeta($('pre', c)))), c = (pv.length ? pv : cards).pop(), M = cnvMeta($('pre', c));
   openCanvas(M, siblingsOf(c), canPreview(M) ? 'prev' : 'code');
@@ -150,6 +160,7 @@ document.addEventListener('click', async e => {
   const f = e.target.closest && e.target.closest('.fcard [data-fv]');
   if (f){
     const card = f.closest('.fcard'), M = cnvMeta($('pre', card));
+    if (f.dataset.fv !== 'down' && webOf(card)){ const P = webOf(card); webOpen(P, { path:webNorm(M.name), tab:f.dataset.fv === 'prev' ? 'prev' : 'code' }); return; }
     if (f.dataset.fv === 'down') cnvDownload(M);
     else openCanvas(M, siblingsOf(card), f.dataset.fv === 'prev' ? 'prev' : 'code');
     return;

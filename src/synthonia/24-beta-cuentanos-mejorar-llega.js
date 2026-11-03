@@ -3,7 +3,7 @@ function feedbackModal(){
   if ($('#szFb')) return;
   const o = document.createElement('div'); o.id = 'szFb'; o.className = 'szm';
   const C = [['idea', '💡', 'Una idea'], ['error', '🐞', 'Algo falló'], ['confuso', '🤔', 'No entendí algo'], ['otro', '💬', 'Otra cosa']];
-  o.innerHTML = '<div class="tcard" role="dialog" aria-modal="true" aria-label="Cuéntanos qué mejorar"><div class="word">' + zWord('Synth') + '</div><div class="tn">BETA · TU OPINIÓN</div><div class="tb"><h3>Cuéntanos qué mejorar</h3><p>Lo lee el equipo de SymphorIA. No hace falta saber de tecnología: escríbelo como se lo dirías a un amigo.</p></div>'
+  o.innerHTML = '<div class="tcard" role="dialog" aria-modal="true" aria-label="Cuéntanos qué mejorar"><div class="word">' + zWord('Synth') + '</div><div class="tn">ALFA · TU OPINIÓN</div><div class="tb"><h3>Cuéntanos qué mejorar</h3><p>Lo lee el equipo de SymphorIA. No hace falta saber de tecnología: escríbelo como se lo dirías a un amigo.</p></div>'
     + '<div class="fbc" role="radiogroup">' + C.map(([k, e, l], i) => '<button type="button" role="radio" data-c="' + k + '" aria-checked="' + (i === 0) + '"><span>' + e + '</span>' + l + '</button>').join('') + '</div>'
     + '<label class="fbt"><textarea maxlength="1000" rows="4" placeholder="Por ejemplo: no encontré dónde cambiar de IA…"></textarea></label>'
     + '<div class="tbtn" style="margin-top:14px"><button class="lnk" type="button" data-close>Cancelar</button><button class="btn sm" type="button" data-send>Enviar</button></div></div>';
@@ -21,9 +21,11 @@ function feedbackModal(){
   });
 }
 const betaTx = k => t(k);   /* fuera de betaMk: adentro «t» es el botón */
-onLang(() => document.querySelectorAll('.beta-tag').forEach(b => { b.title = betaTx('beta.title'); b.dataset.tip = betaTx('beta.tip'); }));
+/* v4.2 · ya estamos en ALFA (Sammuel, 3 nov): la etiqueta dice ALFA en español y ALPHA en inglés */
+const betaAll = () => document.querySelectorAll('.beta-tag').forEach(b => { b.textContent = betaTx('beta.tag'); b.title = betaTx('beta.title'); b.dataset.tip = betaTx('beta.tip'); });
+onLang(betaAll); setTimeout(betaAll, 0); addEventListener('synthflow-ready', betaAll);
 function betaMk(){
-  const t = document.createElement('button'); t.type = 'button'; t.className = 'beta-tag'; t.textContent = 'BETA'; t.title = betaTx('beta.title'); t.dataset.tip = betaTx('beta.tip');
+  const t = document.createElement('button'); t.type = 'button'; t.className = 'beta-tag'; t.textContent = betaTx('beta.tag'); t.title = betaTx('beta.title'); t.dataset.tip = betaTx('beta.tip');
   t.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); feedbackModal(); });
   return t;
 }
@@ -45,7 +47,8 @@ function betaBot(){
       /* React owns both controls: keep BETA fixed to the avatar's real viewport box,
          even when the avatar sits beside the mobile logo. */
       t.style.position = 'fixed'; t.style.zIndex = '9599';
-      const candidate = r.left - w - 10 < 8 ? r.right + 10 : r.left - w - 10;
+      /* v3.7 · en la cabecera del celular va a la DERECHA de la bolita (a la izquierda tapaba el logo «SynthFlow») */
+      const candidate = b.classList.contains('inhead') || r.left - w - 10 < 8 ? r.right + 10 : r.left - w - 10;
       const left = Math.max(8, Math.min(innerWidth - w - 8, candidate));
       const top = Math.max(8, Math.min(innerHeight - h - 8, r.top + r.height / 2 - h / 2));
       t.style.left = left.toFixed(0) + 'px'; t.style.top = top.toFixed(0) + 'px'; t.style.visibility = 'visible';
@@ -93,14 +96,21 @@ markSeen(); setInterval(markSeen, 5 * 60e3);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') markSeen(); });
 let welcomeShown = false;
 function wasAway(){ let force = false; try{ force = new URLSearchParams(location.search).get('bienvenida') === '1'; }catch(e){} return force || (lastSeen0 > 0 && Date.now() - lastSeen0 >= AWAY_MS); }
+/* v4.1 · esta pantallita es la ÚNICA puerta para volver a ver la portada (index.html):
+   «Soy nuevo» guarda la decisión y abre la portada; «Ya tengo el Flow» la guarda y entra directo a SynthFlow.
+   La decisión queda en este dispositivo y viaja con la cuenta (SZ.portada, core 25m). opts.from = 'logo' cuando
+   alguien que ya entró toca el logo para volver a la portada. */
+const portadaPick = v => { try{ window.SZ.portada.set(v); }catch(e){} };
+function goPortada(){ const href = 'index.html?nuevo=1'; if (window.SZ && SZ.portalBack && !reduce && !root.classList.contains('noanim')) SZ.portalBack(href); else location.href = href; }
 function welcomeBack(opts){
   opts = opts || {};
-  if (welcomeShown || $('#szWelcome')) return null;
+  if (welcomeShown || $('#szWelcome')){ if (opts.from === 'logo' && !$('#szWelcome')) welcomeShown = false; else return null; }
   welcomeShown = true;
+  const onIndex = telPage() === 'index', logo = opts.from === 'logo';
   const who = ACC.ready ? accName() : '';
   const o = document.createElement('div'); o.id = 'szWelcome'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-label', 'Bienvenida');
   o.innerHTML = '<div class="wbface">' + face('flow', 64) + '</div>'
-    + '<div class="wbtx"><b>' + (who ? '¡Hola de nuevo! ¿Sigues siendo tú?' : '¡Hola! ¿Ya conoces ' + (isFlow() ? 'SynthFlow' : 'SymphorIA') + '?') + '</b><p>' + (who ? 'La sesión de <em>' + esc(who) + '</em> está abierta en este dispositivo. Si eres nuevo, te muestro cómo funciona todo.' : 'Pasaron más de 12 horas. Si es tu primera vez, te muestro cómo funciona todo en un minuto.') + '</p></div>'
+    + '<div class="wbtx"><b>' + (logo ? '¿Ya tienes el Flow?' : who ? '¡Hola de nuevo! ¿Sigues siendo tú?' : '¡Hola! ¿Ya conoces ' + (isFlow() ? 'SynthFlow' : 'SymphorIA') + '?') + '</b><p>' + (logo ? 'La portada de SymphorIA es la bienvenida para quien llega nuevo. Si ya sabes usarlo, te quedas aquí; si eres nuevo, te la muestro.' : who ? 'La sesión de <em>' + esc(who) + '</em> está abierta en este dispositivo. Si eres nuevo, te muestro cómo funciona todo.' : 'Pasaron más de 12 horas. Si es tu primera vez, te muestro cómo funciona todo en un minuto.') + '</p></div>'
     + '<div class="wbbtn"><button type="button" class="btn sm flow" data-wb="flow">' + face('flow', 22, 'wbmini') + (who ? 'Ya tengo el Flow · continuar' : 'Ya tengo el Flow') + '</button><button type="button" class="btn sm ghost" data-wb="new">Soy nuevo, quiero aprender</button></div>'
     + '<button type="button" class="wbx" data-wb="x" aria-label="Cerrar">✕</button>';
   document.body.appendChild(o);
@@ -114,8 +124,8 @@ function welcomeBack(opts){
   o.addEventListener('click', e => {
     const b = e.target.closest('[data-wb]'); if (!b) return;
     const k = b.dataset.wb; close(k);
-    if (k === 'new' && opts.learn) setTimeout(opts.learn, 420);
-    if (k === 'flow' && opts.flow) opts.flow();
+    if (k === 'new'){ portadaPick('nuevo'); if (!onIndex) setTimeout(goPortada, 420); else if (opts.learn) setTimeout(opts.learn, 420); }
+    if (k === 'flow'){ portadaPick('app'); if (onIndex) setTimeout(() => portalOut('chat.html'), 420); else if (opts.flow) opts.flow(); }
   });
   addEventListener('keydown', function esc1(e){ if (e.key === 'Escape' && o.isConnected){ close('x'); removeEventListener('keydown', esc1); } });
   return o;

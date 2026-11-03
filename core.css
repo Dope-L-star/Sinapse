@@ -611,6 +611,9 @@ html.noanim #side.two-p .pf-l,html.noanim #side.two-p .pf-r{transition-duration:
 @media (max-width:560px){.pill-total.lim{font-size:12px}}
 .sxfoot.lim{display:flex;align-items:center;gap:10px}
 .rcoin .lring{margin:0 -1px}
+/* v3.7 · «De dónde» salía vacío: el panel de filtros es una columna con scroll y achicaba la fila de proveedores (tiene overflow:auto) a 10 px. Ningún filtro se achica: el panel hace scroll. */
+#side.two-p .pf-l>*{flex-shrink:0}
+#side.two-p .pf-l #provSeg{min-height:max-content}
 /* ===== v1.3 · logos de vidrio: la S de «Synth», la Z y «Flow» ===== */
 .gS{position:relative;display:inline-block;color:transparent;background:linear-gradient(165deg,rgba(255,255,255,.96) 0%,rgba(255,198,220,.62) 20%,rgba(196,128,214,.42) 46%,rgba(255,150,140,.62) 70%,rgba(255,255,255,.92) 100%);background-size:100% 240%;-webkit-background-clip:text;background-clip:text;-webkit-text-stroke:.024em rgba(255,236,246,.78);filter:drop-shadow(0 0 .12em rgba(232,140,190,.42)) drop-shadow(0 .03em .02em rgba(0,0,0,.35));animation:gSflow 6s ease-in-out infinite;padding-right:.01em}
 @keyframes gSflow{0%,100%{background-position:0 0}50%{background-position:0 100%}}
@@ -1543,6 +1546,362 @@ html:not(.simple) .tcard :is(.cfgsw,.sxsw)[aria-pressed="true"]{
 :is(.cfgsw,.sxsw)[aria-pressed="true"]::after{transform:translateX(18px)}
 /* estilo Simple: su propio acento */
 html.simple :is(.cfgsw,.sxsw)[aria-pressed="true"]{background:var(--sacc,#d9a066) !important;border-color:var(--sacc,#d9a066) !important;box-shadow:none !important}
+/* v3.7 · Ajustes con menú lateral (core 14b). Lista vertical: ícono + texto, barra activa con el color del tema.
+   Sirve igual en SynthFlow y en Simple; en el celular el menú pasa a una fila de chips arriba. */
+#cfgm .cfgcard.cfg-side{width:min(94vw,880px)!important;max-height:min(88vh,760px);display:grid!important;grid-template-columns:210px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;column-gap:22px}
+#cfgm .cfg-side .cfghead{grid-column:1 / -1;grid-row:1;display:flex!important}
+#cfgm .cfg-side .cfghead h3{margin:0 0 6px!important}
+#cfgm .cfg-side .cfgtabs{display:none!important}
+#cfgm .cfg-side .cfgnav{grid-column:1;grid-row:2;align-self:start;display:flex;flex-direction:column;gap:2px;overflow-y:auto;max-height:100%;padding:4px 0;scrollbar-width:none}
+#cfgm .cfg-side .cfgbody{grid-column:2;grid-row:2;padding-top:4px}
+#cfgm .cfg-side .cfgfoot{grid-column:1 / -1;grid-row:3}
+.cfgnav-i{position:relative;display:flex;align-items:center;gap:10px;width:100%;min-height:38px;padding:8px 12px 8px 14px;border:0;border-radius:10px;background:transparent;color:rgba(255,255,255,.66);font:inherit;font-size:14px;text-align:left;cursor:pointer;transition:background .2s ease,color .2s ease}
+.cfgnav-i svg{width:18px;height:18px;flex:none;opacity:.8}
+.cfgnav-i span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cfgnav-i::before{content:"";position:absolute;left:3px;top:9px;bottom:9px;width:3px;border-radius:3px;background:rgb(var(--gold-rgb,232,190,120));transform:scaleY(0);transition:transform .25s cubic-bezier(.22,1,.36,1)}
+.cfgnav-i:hover{background:rgba(255,255,255,.06);color:#fff}
+.cfgnav-i.on{background:rgba(var(--gold-rgb,232,190,120),.12);color:#fff}
+.cfgnav-i.on::before{transform:scaleY(1)}
+.cfgnav-i.on svg{opacity:1;color:rgb(var(--gold-rgb,232,190,120))}
+.cfgnav-i:focus-visible{outline:2px solid rgb(var(--gold-rgb,232,190,120));outline-offset:1px}
+html.noanim .cfgnav-i,html.noanim .cfgnav-i::before{transition:none}
+/* Simple: sus propios colores */
+html.simple #cfgm .cfgcard.cfg-side{grid-template-columns:200px minmax(0,1fr)}
+html.simple #cfgm .cfg-side .cfghead{display:flex!important}
+html.simple #cfgm .cfg-side .cfghead h3{grid-column:auto;grid-row:auto}
+html.simple #cfgm .cfg-side .cfgbody{grid-column:2;grid-row:2}
+html.simple .cfgnav-i{color:var(--smuted,rgba(255,255,255,.62))}
+html.simple .cfgnav-i:hover,html.simple .cfgnav-i.on{background:var(--shover,rgba(255,255,255,.06));color:var(--stext,#fff)}
+html.simple .cfgnav-i::before,html.simple .cfgnav-i.on svg{background:var(--stext,#fff);color:var(--stext,#fff)}
+html.simple .cfgnav-i.on svg{background:none}
+/* celular: chips arriba, el contenido debajo */
+@media (max-width:720px){
+  #cfgm .cfgcard.cfg-side,html.simple #cfgm .cfgcard.cfg-side{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr) auto}
+  #cfgm .cfg-side .cfgnav{grid-column:1;grid-row:2;flex-direction:row;overflow-x:auto;overflow-y:hidden;gap:6px;padding:2px 0 10px;margin:0 -4px}
+  #cfgm .cfg-side .cfgbody,html.simple #cfgm .cfg-side .cfgbody{grid-column:1;grid-row:3}
+  #cfgm .cfg-side .cfgfoot{grid-row:4}
+  .cfgnav-i{width:auto;flex:none;min-height:34px;padding:6px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.12);font-size:13px}
+  .cfgnav-i::before{display:none}
+  .cfgnav-i.on{border-color:rgba(var(--gold-rgb,232,190,120),.6)}
+  html.simple .cfgnav-i{border-color:var(--sline,rgba(255,255,255,.16))}
+  html.simple .cfgnav-i.on{border-color:var(--stext,#fff)}
+}
+/* ===== v3.8 · Vista previa de temas en Ajustes (componente React next/componentes/ajustes/VistaTemas.jsx)
+   Una ventanita de SynthFlow con los colores del tema que señalas. Los colores llegan como variables --vt-* desde React. ===== */
+.cfgth button[data-lock]{opacity:.62;cursor:help}
+.cfgth button[data-lock]:hover,.cfgth button[data-lock]:focus-visible{opacity:.9}
+.cfgthprev{margin:12px 0 2px}
+.cfgthprev:empty{display:none}
+.vt{margin:0;display:grid;gap:8px}
+.vt-win{position:relative;overflow:hidden;aspect-ratio:16/9;border-radius:16px;background:var(--vt-bg);border:1px solid color-mix(in srgb,var(--vt-a) 34%,transparent);
+  box-shadow:0 14px 36px -20px var(--vt-b),inset 0 1px 0 rgba(255,255,255,.12);color:var(--vt-text);font-size:9.5px;line-height:1.3;isolation:isolate;
+  transition:background-color .45s,border-color .45s,box-shadow .45s}
+.vt-blob{position:absolute;z-index:-1;width:46%;aspect-ratio:1;border-radius:50%;filter:blur(26px);opacity:.55;background:var(--vt-a);top:-18%;left:-10%;
+  animation:vtf 7s ease-in-out infinite alternate;transition:background-color .5s}
+.vt-blob:nth-child(2){background:var(--vt-b);left:auto;right:-12%;top:30%;animation-delay:-2.5s}
+.vt-blob:nth-child(3){background:var(--vt-c);top:auto;bottom:-30%;left:30%;width:36%;opacity:.4;animation-delay:-5s}
+@keyframes vtf{to{translate:14px 10px;scale:1.12}}
+.vt-bar{display:flex;align-items:center;gap:4px;height:20px;padding:0 9px;background:rgba(0,0,0,.22);border-bottom:1px solid rgba(255,255,255,.07)}
+.vt-bar i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.28)}
+.vt-bar i:first-child{background:#ff6b6b}.vt-bar i:nth-child(2){background:#ffd166}.vt-bar i:nth-child(3){background:#5ee39a}
+.vt-bar b{margin-left:6px;font-weight:600;letter-spacing:.02em;background:linear-gradient(95deg,var(--vt-light),var(--vt-a) 40%,var(--vt-b) 75%,var(--vt-c));-webkit-background-clip:text;background-clip:text;color:transparent}
+.vt-body{display:grid;grid-template-columns:30% 1fr;height:calc(100% - 20px)}
+.vt-side{display:flex;flex-direction:column;gap:4px;padding:8px 7px;background:var(--vt-side);border-right:1px solid rgba(255,255,255,.06);transition:background-color .45s}
+.vt-new{padding:4px 7px;border-radius:7px;font-weight:600;color:#fff;background:linear-gradient(100deg,var(--vt-a),var(--vt-b) 60%,var(--vt-c));box-shadow:0 4px 12px -6px var(--vt-b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vt-chat{padding:3px 7px;border-radius:6px;color:var(--vt-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vt-chat.on{background:rgba(255,255,255,.08);color:var(--vt-text);box-shadow:inset 2px 0 0 var(--vt-a)}
+.vt-main{position:relative;display:flex;flex-direction:column;gap:7px;padding:9px 10px 34px}
+.vt-user{align-self:flex-end;max-width:78%;margin:0;padding:5px 8px;border-radius:10px 10px 3px 10px;background:color-mix(in srgb,var(--vt-a) 30%,rgba(255,255,255,.06));border:1px solid color-mix(in srgb,var(--vt-a) 40%,transparent)}
+.vt-ai{display:flex;gap:6px;align-items:flex-start}
+.vt-ai p{margin:0 0 4px;color:var(--vt-text)}
+.vt-dot{flex:none;width:14px;height:14px;border-radius:50%;background:conic-gradient(from 200deg,var(--vt-a),var(--vt-b),var(--vt-c),var(--vt-a));box-shadow:0 0 10px -2px var(--vt-b)}
+.vt-line{display:block;height:5px;width:88%;margin-top:4px;border-radius:9px;background:linear-gradient(90deg,var(--vt-soft) 0 60%,transparent 60%);opacity:.35}
+.vt-line.s{width:60%}
+.vt-comp{position:absolute;left:10px;right:10px;bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:4px 4px 4px 9px;border-radius:999px;background:var(--vt-card);
+  border:1px solid color-mix(in srgb,var(--vt-a) 45%,transparent);box-shadow:0 0 0 1px rgba(255,255,255,.04),0 6px 16px -10px var(--vt-a);color:var(--vt-mute)}
+.vt-send{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;color:#fff;background:linear-gradient(135deg,var(--vt-a),var(--vt-b))}
+.vt-send svg{width:11px;height:11px}
+/* estilo Simple: colores propios, letra con serifa y sin manchas de luz */
+.vt-simple .vt-blob{display:none}
+.vt-simple .vt-win{border-color:rgba(255,255,255,.1);box-shadow:0 12px 30px -20px #000}
+.vt-simple .vt-bar b{font-family:var(--serif,'Instrument Serif',Georgia,serif);font-size:11px;font-weight:400;color:var(--vt-text);background:none}
+.vt-simple .vt-new{background:transparent;color:var(--vt-text);border:1px solid rgba(255,255,255,.12);box-shadow:none}
+.vt-simple .vt-user{background:var(--vt-card);border-color:transparent}
+.vt-simple .vt-dot{background:var(--vt-a);box-shadow:none}
+.vt-simple .vt-comp{border-color:rgba(255,255,255,.1);box-shadow:none}
+.vt-simple .vt-send{background:var(--vt-a)}
+/* Normal: todo un poco más grande, como en la página */
+.vt-normal .vt-win{font-size:11px}
+.vt-normal .vt-body{grid-template-columns:34% 1fr}
+.vt-cap{display:grid;gap:3px}
+.vt-tag{display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:12px;color:var(--soft)}
+.vt-tag b{color:var(--text);font-weight:600}
+.vt-tag em{margin-left:4px;font-style:normal;font-size:10px;padding:1px 7px;border-radius:99px;background:rgba(255,255,255,.08);color:var(--mute)}
+.vt-cap small{font-size:11.5px;color:var(--mute);line-height:1.4}
+html.noanim .vt *,html.noanim .vt{animation:none!important;transition:none!important}
+html.pmode .vt-blob{animation:none}
+@media (max-width:520px){.vt-win{font-size:8.5px}.vt-body{grid-template-columns:34% 1fr}.vt-chat:nth-child(4){display:none}}
+/* los <p> de Ajustes traen su propio tamaño de letra: dentro de la miniatura manda el de la miniatura */
+.vt .vt-win p{font-size:inherit!important;line-height:1.3!important;letter-spacing:0;margin-top:0}
+.vt .vt-win span,.vt .vt-win b{font-size:inherit}
+.vt{max-width:460px}
+/* ===== v3.8 · Avisos que no se pueden deshacer: tarjeta brutalista (idea del Uiverse #52, no copiada)
+   Papel claro, tinta oscura, borde grueso y sombra dura del color del tema. Sale con un golpe y la sombra «se aplasta» al tocar. ===== */
+.szm.szbru .tcard{--bru-acc:var(--wine,#ff3d9a);--bru-ink:#141018;--bru-paper:#fff6e9;
+  background:var(--bru-paper)!important;color:var(--bru-ink);border:3px solid var(--bru-ink)!important;border-radius:8px!important;
+  box-shadow:9px 9px 0 var(--bru-acc),9px 9px 0 3px var(--bru-ink)!important;padding:0 0 20px!important;overflow:hidden;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;max-width:min(440px,calc(100vw - 40px))}
+.szm.szbru .tcard::before,.szm.szbru .tcard::after{display:none!important}
+.szm.szbru.on .tcard{animation:bruIn .5s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes bruIn{0%{opacity:0;transform:translate(-6px,-14px) rotate(-1.5deg)}60%{opacity:1;transform:translate(2px,2px) rotate(.4deg)}100%{transform:none}}
+.szbru .bru-h{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--bru-acc);color:var(--bru-ink);border-bottom:3px solid var(--bru-ink);
+  font:800 13px/1 var(--brand,'Chakra Petch',system-ui,sans-serif);letter-spacing:.16em}
+.szbru .bru-h svg{width:18px;height:18px;flex:none}
+/* cinta de rayas que corre: «cuidado» sin palabras */
+.szbru .bru-h i{flex:1;height:10px;margin-left:6px;border:2px solid var(--bru-ink);border-radius:2px;
+  background:repeating-linear-gradient(-45deg,var(--bru-ink) 0 6px,transparent 6px 12px);background-size:17px 17px;animation:bruTape 1.4s linear infinite}
+@keyframes bruTape{to{background-position:17px 0}}
+.szbru .tb{padding:16px 20px 0}
+.szbru .tb h3{color:var(--bru-ink)!important;font:800 21px/1.2 var(--sans,'Figtree',sans-serif)!important;letter-spacing:-.01em;margin:0 0 6px}
+.szbru .tb p{color:#3d3743!important;font-size:14.5px!important;line-height:1.5}
+.szbru .tbtn{padding:0 20px;justify-content:flex-end;gap:12px}
+.szbru .tbtn .lnk,.szbru .tbtn .btn{padding:10px 18px!important;border:3px solid var(--bru-ink)!important;border-radius:6px!important;font-weight:800!important;font-size:14px!important;
+  text-decoration:none!important;transition:transform .12s,box-shadow .12s!important}
+.szbru .tbtn .lnk{background:transparent!important;color:var(--bru-ink)!important;box-shadow:4px 4px 0 var(--bru-ink)}
+.szbru .tbtn .btn{background:var(--bru-ink)!important;color:var(--bru-paper)!important;box-shadow:4px 4px 0 var(--bru-acc)}
+.szbru .tbtn .lnk:hover,.szbru .tbtn .btn:hover{transform:translate(-2px,-2px)}
+.szbru .tbtn .lnk:hover{box-shadow:6px 6px 0 var(--bru-ink)}
+.szbru .tbtn .btn:hover{box-shadow:6px 6px 0 var(--bru-acc)}
+.szbru .tbtn .lnk:active,.szbru .tbtn .btn:active{transform:translate(4px,4px);box-shadow:0 0 0 transparent!important}
+.szm.szbru .tcard :focus-visible{outline:3px solid var(--bru-acc);outline-offset:3px}
+/* estilo Simple: el acento es el cobre de Simple */
+html.simple .szm.szbru .tcard{--bru-acc:var(--sacc,#d9a066)}
+html.noanim .szbru .tcard,html.noanim .szbru .bru-h i{animation:none!important}
+@media (max-width:520px){.szbru .tbtn{flex-wrap:wrap}.szbru .tbtn .lnk,.szbru .tbtn .btn{flex:1;justify-content:center;text-align:center}}
+/* ===== v3.8 · Efectos nuevos (componentes React en next/componentes/efectos/)
+   .so- saldo con ojo (#40) · .pm- «pensando» Matrix (#47) · .br- radar «buscando» (#41). Todos siguen al tema (--sb-*, --gold, --wine). ===== */
+
+/* ---------- saldo con ojo ---------- */
+.so{display:inline-flex;align-items:center;gap:10px;padding:7px 8px 7px 8px;border-radius:16px;border:1px solid rgba(var(--gold-rgb,230,182,95),.32);
+  background:linear-gradient(135deg,rgba(var(--gold-rgb,230,182,95),.14),rgba(var(--wine-rgb,201,86,108),.08));color:var(--text,#f6f3ff);font-family:var(--sans,'Figtree',sans-serif)}
+.so-coin{position:relative;display:grid;place-items:center;width:30px;height:30px;flex:none;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff8,transparent 45%),conic-gradient(from 200deg,var(--gold,#e6b65f),var(--wine,#c9566c),var(--gold,#e6b65f));
+  box-shadow:inset 0 -3px 6px rgba(0,0,0,.25),0 4px 12px -4px var(--gold,#e6b65f)}
+.so-coin b{font:800 14px var(--brand,'Chakra Petch',sans-serif);color:#1a1020}
+.so.ver .so-coin{animation:soFlip .7s cubic-bezier(.34,1.56,.64,1)}
+@keyframes soFlip{0%{transform:rotateY(0)}100%{transform:rotateY(360deg)}}
+.so-tx{display:flex;flex-direction:column;line-height:1.1;min-width:64px}
+.so-tx small{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute,#b4adcf)}
+.so-tx>b{display:flex;font:700 18px/1.2 var(--sans,sans-serif);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.so-tx>b i{font-style:normal;display:inline-block;animation:soUp .45s cubic-bezier(.22,1,.36,1) both;animation-delay:var(--d)}
+@keyframes soUp{from{opacity:0;transform:translateY(60%);filter:blur(3px)}}
+.so-dots{color:var(--gold,#e6b65f);letter-spacing:.12em;filter:blur(.3px)}
+.so-eye{display:grid;place-items:center;width:32px;height:32px;flex:none;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:var(--gold,#e6b65f);cursor:pointer;transition:background .25s,transform .25s}
+.so-eye:hover{background:rgba(255,255,255,.12);transform:scale(1.06)}
+.so-eye svg{width:17px;height:17px}
+.so-eye .so-slash{stroke-dasharray:24;stroke-dashoffset:0;transition:stroke-dashoffset .35s}
+.so.ver .so-eye .so-slash{stroke-dashoffset:24}
+.so-eye .so-pupil{transform-origin:12px 12px;transition:transform .35s}
+.so:not(.ver) .so-eye .so-pupil{transform:scaleY(.2)}
+.so.sm{gap:7px;padding:4px 5px;border-radius:12px}.so.sm .so-coin{width:22px;height:22px}.so.sm .so-coin b{font-size:11px}.so.sm .so-tx small{display:none}.so.sm .so-tx>b{font-size:14px}.so.sm .so-eye{width:26px;height:26px;border-radius:9px}
+
+/* ---------- «pensando» con lluvia Matrix ---------- */
+.pm{position:relative;display:flex;align-items:center;min-height:var(--h,64px);padding:0 16px;border-radius:16px;overflow:hidden;isolation:isolate;
+  background:linear-gradient(180deg,rgba(0,0,0,.25),rgba(0,0,0,.1));border:1px solid rgba(255,255,255,.08)}
+.pm-rain{position:absolute;inset:0;z-index:-1;display:flex;justify-content:space-around;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent);mask-image:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent)}
+.pm-rain span{writing-mode:vertical-rl;text-orientation:upright;font:600 11px/1.05 var(--mono,'IBM Plex Mono',monospace);letter-spacing:-.5px;
+  background:linear-gradient(180deg,transparent,var(--sb-primary,#7b3ff2) 40%,var(--sb-light,#3de0ff) 92%,#fff);-webkit-background-clip:text;background-clip:text;color:transparent;
+  opacity:.85;animation:pmFall var(--v,2s) linear infinite;animation-delay:calc(var(--d,0s) * -1)}
+/* v3.8.1 · la carita de SynthonIA que cae entre las palabras del sitio */
+.pm-rain span.pm-face{writing-mode:horizontal-tb;background:none;color:var(--sb-light,#3de0ff);width:20px;opacity:1;filter:drop-shadow(0 0 4px rgba(61,224,255,.6))}
+.pm-face svg{display:block;width:20px;height:23px;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round}
+.pm-face svg .ey{fill:currentColor;stroke:none}
+.pm-rain span:not(.pm-face){font-size:12px;letter-spacing:0}
+html.simple .pm-rain span.pm-face{background:none;color:var(--sacc,#d9a066);filter:none}
+@keyframes pmFall{from{transform:translateY(-105%)}to{transform:translateY(105%)}}
+.pm-tx{margin:0;font:600 14px var(--sans,sans-serif);color:var(--text,#f6f3ff);text-shadow:0 0 12px rgba(0,0,0,.9),0 0 3px rgba(0,0,0,.8)}
+.pm-tx b{background:var(--grad-text,linear-gradient(95deg,#3de0ff,#7b3ff2,#ff3d9a));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none}
+.pm-tx i,.br-tx p i{font-style:normal;animation:pmDot 1.2s infinite;opacity:.2}
+.pm-tx i:nth-of-type(2),.br-tx p i:nth-of-type(2){animation-delay:.2s}.pm-tx i:nth-of-type(3),.br-tx p i:nth-of-type(3){animation-delay:.4s}
+@keyframes pmDot{40%{opacity:1}}
+
+/* ---------- radar «buscando / analizando» ---------- */
+.br{display:flex;align-items:center;gap:14px;padding:10px 14px;border-radius:16px;border:1px solid rgba(var(--accent-rgb,61,224,255),.22);background:rgba(var(--accent-rgb,61,224,255),.05)}
+.br-o{position:relative;width:52px;height:52px;flex:none;border-radius:50%;overflow:hidden;border:1px solid color-mix(in srgb,var(--sb-light,#3de0ff) 55%,transparent);background:radial-gradient(circle,rgba(0,0,0,.2),rgba(0,0,0,.45))}
+.br-sweep{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,color-mix(in srgb,var(--sb-light,#3de0ff) 65%,transparent),transparent 75deg);animation:brSpin 2s linear infinite}
+@keyframes brSpin{to{rotate:360deg}}
+.br-ring{position:absolute;inset:30%;border-radius:50%;border:1px solid color-mix(in srgb,var(--sb-light,#3de0ff) 30%,transparent)}
+.br-ring.b{inset:12%}
+.br-c{position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px;border-radius:50%;background:var(--sb-light,#3de0ff)}
+.br-o em{position:absolute;left:var(--x);top:var(--y);width:5px;height:5px;border-radius:50%;background:var(--sb-secondary,#ff3d9a);box-shadow:0 0 8px var(--sb-secondary,#ff3d9a);opacity:0;animation:brBlip 2s infinite;animation-delay:var(--d)}
+@keyframes brBlip{0%,8%{opacity:0;scale:.4}14%{opacity:1;scale:1.3}60%{opacity:.6;scale:1}100%{opacity:0}}
+.br-tx p{margin:0;font:600 14px var(--sans,sans-serif);color:var(--text,#f6f3ff)}
+.br-tx ul{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0 0;padding:0;list-style:none}
+.br-tx li{font-size:11.5px;padding:2px 9px;border-radius:99px;background:rgba(255,255,255,.07);color:var(--soft,#ddd7ef);animation:soUp .45s cubic-bezier(.22,1,.36,1) both;animation-delay:var(--d)}
+
+/* estilo Simple: tonos tranquilos; sin animaciones: todo quieto */
+html.simple .pm-rain span{background:linear-gradient(180deg,transparent,var(--sacc,#d9a066));-webkit-background-clip:text;background-clip:text;opacity:.35}
+html.simple .br,html.simple .so{border-color:rgba(255,255,255,.1);background:var(--scard,#2f2e2b)}
+html.noanim .pm-rain span,html.noanim .br-sweep,html.noanim .br-o em,html.noanim .so-tx>b i,html.noanim .so-coin{animation:none!important}
+html.noanim .pm-rain span{transform:none;opacity:.25}
+html.noanim .br-o em{opacity:.8}
+/* v3.8 · Recursos de Uiverse que mandó Sammuel (29/10), usados como estilo y no como piezas literales.
+   Colores siempre del tema activo (--gold-rgb / --wine-rgb); Simple usa su acento; «Animaciones» apagadas = quieto. */
+
+/* ── #4 + #34 · interruptores de Ajustes: al encender, el botón suelta un halo de colores (como el checkbox de gagan-gv)
+      y dentro aparece un visto que se dibuja (como el checkbox SVG que se traza). Apagado queda igual que antes. ── */
+:is(.cfgsw,.sxsw){overflow:visible}
+:is(.cfgsw,.sxsw)::after{transition:transform .45s cubic-bezier(.34,1.56,.64,1),box-shadow .5s ease!important}
+:is(.cfgsw,.sxsw)[aria-pressed="true"]::after{
+  box-shadow:-3px -3px 9px -2px rgba(var(--gold-rgb),.85),3px -3px 9px -2px rgba(var(--wine-rgb),.8),
+             3px 3px 9px -2px rgba(var(--gold-rgb),.6),-3px 3px 9px -2px rgba(var(--wine-rgb),.55)}
+:is(.cfgsw,.sxsw)::before{content:"";position:absolute;z-index:1;top:50%;left:3px;width:5px;height:9px;margin:-6px 0 0 7.5px;
+  border:solid rgba(var(--wine-rgb),1);border-width:0 2px 2px 0;transform:translateX(0) rotate(45deg);
+  clip-path:inset(0 0 100% 0);opacity:0;transition:transform .45s cubic-bezier(.34,1.56,.64,1),clip-path .3s ease,opacity .2s;pointer-events:none}
+:is(.cfgsw,.sxsw)[aria-pressed="true"]::before{transform:translateX(18px) rotate(45deg);clip-path:inset(0 0 0 0);opacity:1;transition-delay:0s,.18s,.1s}
+:is(.cfgsw,.sxsw):active::after{width:24px!important}
+:is(.cfgsw,.sxsw)[aria-pressed="true"]:active::after{transform:translateX(14px)}
+html.simple :is(.cfgsw,.sxsw)[aria-pressed="true"]::after{box-shadow:none}
+html.simple :is(.cfgsw,.sxsw)::before{border-color:var(--sacc,#d9a066)}
+/* los interruptores que ya traen algo dentro (memoria) no llevan el visto */
+:is(.cfgsw,.sxsw):has(> i)::before{display:none}
+
+/* ── 000748 · «Color de SynthFlow» como un dock: el color que tocas crece y sus vecinos lo acompañan ── */
+@media (hover:hover) and (pointer:fine){
+  .cfgth button i{transition:transform .5s cubic-bezier(.175,.885,.32,1.1),box-shadow .5s}
+  .cfgth button:not([data-lock]):hover i{transform:translateY(-8px) scale(1.45);box-shadow:0 0 0 3px rgba(0,0,0,.35),0 12px 26px -8px var(--t1)}
+  .cfgth button:not([data-lock]):hover + button i,.cfgth button:has(+ button:not([data-lock]):hover) i{transform:translateY(-3px) scale(1.2)}
+  .cfgth button:not([data-lock]):hover + button + button i,.cfgth button:has(+ button + button:not([data-lock]):hover) i{transform:scale(1.08)}
+  .cfgth button:active i{transform:scale(1.08)!important}
+}
+.cfgth button[aria-pressed="true"] i{animation:uvPick .7s cubic-bezier(.34,1.56,.64,1)}
+@keyframes uvPick{0%{transform:scale(.8)}60%{transform:scale(1.18)}100%{transform:none}}
+
+/* ── #9 · el brillito diagonal que cruza los botones al pasar el mouse (elijahgummer) + el anillo separado del botón ── */
+:is(.btn:not(.ghost),.szm .tbtn .btn,.cfgfoot .btn){position:relative;overflow:hidden;isolation:isolate}
+:is(.btn:not(.ghost),.szm .tbtn .btn,.cfgfoot .btn)::after{content:"";position:absolute;z-index:-1;top:-60%;right:-30px;width:28px;height:220%;
+  background:linear-gradient(90deg,transparent,rgba(var(--gold-rgb),.55),transparent);transform:translateX(0) rotate(14deg);opacity:0;
+  transition:transform 1s cubic-bezier(.22,1,.36,1),opacity .3s;pointer-events:none}
+:is(.btn:not(.ghost),.szm .tbtn .btn,.cfgfoot .btn):hover::after{transform:translateX(calc(-1 * var(--uvw,260px))) rotate(14deg);opacity:1}
+:is(.btn:not(.ghost),.szm .tbtn .btn,.cfgfoot .btn):focus-visible{box-shadow:0 0 0 2px var(--bg,#0b0a10),0 0 0 4px rgba(var(--gold-rgb),.8)}
+html.simple :is(.btn:not(.ghost),.cfgfoot .btn)::after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent)}
+
+/* sin animaciones: todo queda en su sitio */
+html.noanim :is(.cfgsw,.sxsw)::after,html.noanim :is(.cfgsw,.sxsw)::before,html.noanim .cfgth button i{transition:none!important;animation:none!important}
+html.noanim :is(.btn,.szm .tbtn .btn,.cfgfoot .btn)::after{display:none}
+@media (prefers-reduced-motion:reduce){.cfgth button i{animation:none!important}:is(.btn,.cfgfoot .btn)::after{display:none}}
+/* ===== v4.0 · revisión de accesibilidad y comprensión (3 nov) ===== */
+/* texto solo para lectores de pantalla (las frases que se escriben letra por letra se leen enteras) */
+.sr-txt{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important;border:0!important;opacity:1!important}
+/* foco visible con teclado donde el diseño no puso uno propio (baja prioridad: cualquier estilo propio gana) */
+:where(a,button,[role=button],[role=switch],[role=tab],summary,select,textarea,input,[tabindex]):focus-visible{outline:2px solid #3de0ff;outline-offset:2px}
+/* la etiqueta BETA de SynthFlow medía 17 px de alto: muy chica para un dedo */
+.beta-tag.bb{min-height:24px;display:inline-flex;align-items:center}
+/* «?» (guía) y Configuración de la portada casi no se veían sobre el fondo */
+#nav .cfgb{color:rgba(255,255,255,.9);border-color:rgba(255,255,255,.32);background:rgba(255,255,255,.1)}
+/* el aviso «toca para saltar» de la intro, más legible */
+#intSkip{font-size:14px;color:var(--soft,#d8d4ee)}
+/* v3.8 · Efectos React de next/componentes/efectos/ hechos con recursos de Uiverse que mandó Sammuel.
+   Todos usan los colores del tema (--gold-rgb / --wine-rgb), solo mueven transform/opacity y se quedan quietos con «Animaciones» apagadas. */
+
+/* ── LibroBuscando (.lb-) · anand_4957 ── */
+.lb{display:flex;align-items:center;gap:14px;padding:10px 4px}
+.lb-book{position:relative;flex:none;width:58px;height:44px;border-radius:5px;perspective:300px;transform-style:preserve-3d;
+  background:linear-gradient(135deg,rgba(var(--gold-rgb),1),rgba(var(--wine-rgb),1));box-shadow:0 6px 16px -6px rgba(var(--wine-rgb),.8),inset 0 0 0 2px rgba(255,255,255,.18)}
+.lb-pg,.lb-sh{position:absolute;top:3px;left:3px;width:calc(50% - 3px);height:calc(100% - 6px);border-radius:2px 0 0 2px;transform-origin:100% 50%}
+.lb-pg{background:#f4f3f7 repeating-linear-gradient(transparent 0 5px,rgba(20,20,30,.16) 5px 6px) 4px 6px/18px 26px no-repeat;
+  animation:lbFlip 2.8s cubic-bezier(.65,0,.35,1) infinite;animation-delay:calc(var(--n,0) * .35s);backface-visibility:hidden}
+.lb-pg:nth-child(2){--n:0}.lb-pg:nth-child(3){--n:1}.lb-pg:nth-child(4){--n:2}.lb-pg:nth-child(5){--n:3;background:#e6e4ee}
+.lb-sh{background:linear-gradient(-45deg,transparent 50%,rgba(0,0,0,.25) 50%);filter:blur(3px);top:auto;bottom:-10px;height:14px;opacity:.6}
+@keyframes lbFlip{0%,8%{transform:rotateY(0)}42%,58%{transform:rotateY(-180deg);filter:brightness(.6)}92%,100%{transform:rotateY(0)}}
+.lb-tx,.gi-tx,.bc small,.ax-tx{margin:0;font-size:13.5px;color:var(--soft,#c3c5ce)}
+.lb-tx b{color:var(--text,#fff);font-weight:600}
+:is(.lb-tx,.bc small)>i{font-style:normal;animation:lbDot 1.2s infinite;opacity:.2}
+:is(.lb-tx,.bc small)>i:nth-of-type(2){animation-delay:.2s}:is(.lb-tx,.bc small)>i:nth-of-type(3){animation-delay:.4s}
+@keyframes lbDot{40%{opacity:1}}
+
+/* ── GenerandoImagen (.gi-) · dexter-st ── */
+.gi{position:relative;display:grid;place-items:center;width:var(--s,150px);height:var(--s,150px);margin:6px auto}
+.gi-ring{position:absolute;inset:0;border-radius:50%;animation:giRot 2s linear infinite;
+  box-shadow:0 8px 16px 0 rgba(255,255,255,.85) inset,0 16px 26px 0 rgba(var(--gold-rgb),.9) inset,0 48px 52px 0 rgba(var(--wine-rgb),.9) inset}
+@keyframes giRot{0%{transform:rotate(90deg)}50%{transform:rotate(270deg);filter:hue-rotate(-25deg)}100%{transform:rotate(450deg)}}
+.gi-tx{position:relative;z-index:1;font-weight:300;font-size:calc(var(--s,150px) / 12);color:#fff;white-space:nowrap}
+.gi-tx span{display:inline-block;opacity:.4;animation:giLet 2s infinite;animation-delay:calc(var(--i) * .09s)}
+@keyframes giLet{0%,100%{opacity:.4;transform:none}20%{opacity:1;transform:scale(1.18)}40%{opacity:.7;transform:none}}
+
+/* ── BlobCarga (.bc-) · dylanharriscameron ── */
+.bc{position:relative;overflow:hidden;height:var(--h,220px);border-radius:18px;isolation:isolate;
+  background:rgba(var(--wine-rgb),.06);box-shadow:0 18px 40px -20px rgba(0,0,0,.6)}
+.bc-blob{position:absolute;z-index:-1;top:50%;left:50%;width:46%;aspect-ratio:1;border-radius:50%;background:rgba(var(--gold-rgb),1);filter:blur(22px);
+  animation:bcBounce 5s infinite ease}
+.bc-b2{background:rgba(var(--wine-rgb),1);width:36%;animation-duration:6.5s;animation-direction:reverse}
+@keyframes bcBounce{0%,100%{transform:translate(-100%,-100%)}25%{transform:translate(0,-100%)}50%{transform:translate(0,0)}75%{transform:translate(-100%,0)}}
+.bc-glass{position:absolute;inset:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:16px;text-align:center;border-radius:14px;
+  background:rgba(14,12,20,.62);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);outline:1px solid rgba(255,255,255,.14)}
+.bc-glass b{font-size:15px;color:var(--text,#fff)}
+.bc-bar{display:block;width:min(200px,70%);height:4px;margin-top:8px;border-radius:9px;overflow:hidden;background:rgba(255,255,255,.08)}
+.bc-bar i{display:block;height:100%;width:40%;border-radius:inherit;background:linear-gradient(90deg,rgba(var(--gold-rgb),1),rgba(var(--wine-rgb),1));animation:bcRun 1.6s cubic-bezier(.65,0,.35,1) infinite}
+@keyframes bcRun{from{transform:translateX(-100%)}to{transform:translateX(250%)}}
+
+/* ── ArchivosXYZ (.ax-) · ilkhoeri: las tarjetas se turnan al frente; solo transform ── */
+.ax{display:grid;justify-items:center;gap:8px;padding:6px 0}
+.ax-stage{position:relative;width:240px;height:150px}
+.ax-card{position:absolute;left:50%;top:0;width:108px;height:142px;margin-left:-54px;padding:10px;border:0;border-radius:14px;cursor:pointer;color:#fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;overflow:hidden;
+  background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.35),rgba(var(--gold-rgb),1) 45%,rgba(var(--wine-rgb),1));
+  box-shadow:0 14px 30px -12px rgba(0,0,0,.7),inset 0 0 0 1px rgba(255,255,255,.2);animation:axTurn 9s cubic-bezier(.75,0,0,1) infinite;animation-delay:calc(var(--k) * -3s)}
+.ax-card:nth-child(2){background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.35),rgba(var(--wine-rgb),1) 45%,rgba(60,40,120,1))}
+.ax-card:nth-child(3){background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.3),#3aa0f0 45%,#1d3f9e)}
+.ax-ext{font:800 34px/1 inherit;font-size:34px;letter-spacing:-.02em;color:transparent;-webkit-text-stroke:1.5px rgba(255,255,255,.9);background:linear-gradient(-45deg,rgba(255,255,255,.2),rgba(255,255,255,.75));-webkit-background-clip:text;background-clip:text}
+.ax-card small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;opacity:.9}
+.ax-card:hover,.ax-card:focus-visible{animation-play-state:paused}
+.ax-stage:hover .ax-card{animation-play-state:paused}
+@keyframes axTurn{
+  0%,26%{transform:translate(0,0) rotate(0);z-index:3;opacity:1}
+  33.3%,59%{transform:translate(-62px,16px) rotate(-14deg) scale(.9);z-index:1;opacity:.85}
+  66.6%,92%{transform:translate(62px,16px) rotate(14deg) scale(.9);z-index:2;opacity:.85}
+  100%{transform:translate(0,0) rotate(0);z-index:3;opacity:1}}
+.ax-n1 .ax-card{animation:none}.ax-n1 .ax-stage{width:120px}
+.ax-n2 .ax-card{animation-name:axTurn2;animation-duration:6s}
+@keyframes axTurn2{0%,40%{transform:none;z-index:2}50%,90%{transform:translate(56px,14px) rotate(12deg) scale(.9);z-index:1}100%{transform:none;z-index:2}}
+
+/* ── BotonInicio (.bi-) · dexter-st: capas de color que giran dentro, luz que respira ── */
+.bi{position:relative;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;isolation:isolate;cursor:pointer;
+  padding:13px 38px;border-radius:32px;border:2px solid rgba(255,255,255,.85);background:rgba(var(--wine-rgb),1);
+  font:600 19px/1 inherit;font-size:19px;letter-spacing:.12em;color:#140b10;box-shadow:inset 0 0 10px 6px rgba(40,30,80,.55)}
+.bi-capas{position:absolute;inset:0;z-index:-1;filter:saturate(.8) brightness(1.35)}
+.bi-capas i{position:absolute;left:-60%;top:-200%;width:220%;aspect-ratio:1;mix-blend-mode:difference;animation:biRot 20s linear infinite;
+  background:repeating-radial-gradient(ellipse at 65% 180%,#fff 0 6%,rgba(var(--gold-rgb),1) 9% 15%,#fff 18%)}
+.bi-capas i:last-child{mix-blend-mode:color-dodge}
+@keyframes biRot{to{transform:rotate(360deg)}}
+.bi-luz{position:absolute;z-index:0;width:80%;height:60%;border-radius:50px;background:rgba(255,255,255,.35);filter:blur(6px);animation:biPulse 3s ease-in-out infinite;pointer-events:none}
+@keyframes biPulse{0%,100%{opacity:1}50%{opacity:.1}}
+.bi-tx{position:relative;z-index:1;text-shadow:0 0 4px #fff;transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.bi:hover .bi-tx{transform:scale(1.1)}.bi:active .bi-tx{transform:scale(.95)}
+.bi:focus-visible{outline:2px solid rgba(var(--gold-rgb),1);outline-offset:4px}
+.bi:disabled{opacity:.5;cursor:not-allowed}
+html.simple .bi{background:var(--sacc,#d9a066)}
+
+/* sin animaciones: todo quieto y legible */
+html.noanim :is(.lb-pg,.gi-ring,.gi-tx span,.bc-blob,.bc-bar i,.ax-card,.bi-capas i,.bi-luz,.lb-tx>i,.bc small>i){animation:none!important}
+html.noanim :is(.gi-tx span,.lb-tx>i,.bc small>i){opacity:1}
+html.noanim .ax-card:nth-child(2){transform:translate(-62px,16px) rotate(-14deg) scale(.9);z-index:1}
+html.noanim .ax-card:nth-child(3){transform:translate(62px,16px) rotate(14deg) scale(.9);z-index:0}
+html.noanim .ax-card:nth-child(1){z-index:3}
+@media (prefers-reduced-motion:reduce){:is(.lb-pg,.gi-ring,.bc-blob,.ax-card,.bi-capas i){animation-duration:30s!important}}
+/* v3.8 · Uiverse (#5, glider) en las opciones de Ajustes: la píldora elegida se desliza. Ver src/core/14d-v38-glider.js */
+.cfgseg.uvg-on{position:relative;isolation:isolate}
+.cfgseg .uvg{position:absolute;z-index:-1;top:0;left:0;border-radius:12px;pointer-events:none;opacity:0;
+  background:linear-gradient(120deg,rgba(var(--gold-rgb),.26),rgba(var(--wine-rgb),.26));
+  box-shadow:0 0 0 1px rgba(var(--gold-rgb),.75),0 6px 18px -6px rgba(var(--wine-rgb),.7);
+  transition:transform .5s cubic-bezier(.37,1.95,.66,.56),width .35s,height .35s,opacity .2s}
+.cfgseg.uvg-on button[aria-pressed="true"]{background:transparent!important;border-color:transparent!important}
+.cfgseg.uvg-on button{position:relative}
+html.simple .cfgseg .uvg{background:rgba(255,255,255,.06);box-shadow:0 0 0 1px rgba(var(--sacc-rgb,217,160,102),.7)}
+html.noanim .cfgseg .uvg{transition:none}
+@media (prefers-reduced-motion:reduce){.cfgseg .uvg{transition:opacity .2s}}
+html.simple #cfgm .cfgseg.uvg-on button[aria-pressed="true"]{background:transparent!important;border-color:transparent!important}
 /* v3.0 · ventana de Planes: cuatro tarjetas de vidrio; la tuya brilla con su color */
 .tcard.plans{width:min(760px,calc(100vw - 24px))}
 .pl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:14px 0 6px}
@@ -1562,3 +1921,27 @@ html.simple :is(.cfgsw,.sxsw)[aria-pressed="true"]{background:var(--sacc,#d9a066
 @keyframes plIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
 html.noanim .pl-card{animation:none}
 @media (max-width:520px){.pl-grid{grid-template-columns:1fr 1fr;gap:8px}.pl-card{padding:11px 10px 10px}.pl-card ul{font-size:11.5px;padding-left:14px}.pl-card header b{font-size:15px}}
+/* v3.8 · Fase 3 · «Me interesa»: puerta falsa con chispas que brillan (recurso Uiverse #54), nada se cobra */
+.pl-quiero{position:relative;margin-top:auto;align-self:flex-start;padding:7px 14px;border-radius:999px;border:1px solid color-mix(in srgb,var(--pc) 60%,transparent);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--pc) 28%,transparent),rgba(255,255,255,.04));color:#fff;font:600 12.5px var(--sans,inherit);cursor:pointer;white-space:nowrap;max-width:100%;
+  width:auto;height:auto;min-height:32px;overflow:hidden;transition:transform .25s,box-shadow .3s,background .3s}
+.pl-quiero::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);transform:translateX(-120%);animation:plBrillo 3.2s ease-in-out infinite;animation-delay:calc(var(--i) * .4s)}
+.pl-quiero:hover{transform:translateY(-1px);box-shadow:0 8px 24px -10px var(--pc)}
+.pl-quiero.si{background:color-mix(in srgb,var(--pc) 85%,#000);color:#0b0820;border-color:transparent}
+.pl-quiero.si::after{display:none}
+.pl-n{font-size:11.5px;color:var(--pc);min-height:1em}
+.pl-correo{margin:10px 0 4px;padding:12px;border-radius:16px;border:1px dashed rgba(255,255,255,.18);background:rgba(255,255,255,.03);text-align:left}
+.pl-correo label{display:block;font-size:13px;margin-bottom:8px}
+.pl-correo div{display:flex;gap:8px}
+.pl-correo input{flex:1;min-width:0;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.25);color:#fff;font:inherit;font-size:14px}
+.pl-aviso{margin:6px 0 0;font-size:12.5px;color:#86efac;min-height:1em}
+@keyframes plBrillo{0%,60%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+html.noanim .pl-quiero::after{animation:none;display:none}
+@media (max-width:520px){.pl-quiero{padding:6px 10px;font-size:11.5px}.pl-correo div{flex-wrap:wrap}.pl-correo .btn{flex:1}}
+/* v3.8 · estrellitas de cuatro puntas que saltan de los botones de crear/empezar (recurso Uiverse #54) */
+.sz-chispa{position:fixed;z-index:2147483000;pointer-events:none;transform:translate(-50%,-50%) scale(0);
+  background:currentColor;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);
+  filter:drop-shadow(0 0 4px currentColor);animation:szChispa .95s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes szChispa{0%{transform:translate(-50%,-50%) scale(0) rotate(0)}30%{transform:translate(calc(-50% + var(--dx) * .4),calc(-50% + var(--dy) * .4)) scale(1) rotate(45deg);opacity:1}
+  100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.2) rotate(120deg);opacity:0}}
+html.noanim .sz-chispa{display:none}

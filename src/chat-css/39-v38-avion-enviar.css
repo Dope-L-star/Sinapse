@@ -1,0 +1,20 @@
+/* v3.8 · botón de enviar con avión de papel (SynthFlow en React, idea Uiverse #39 adaptada a cada tema).
+   El avión despega cuando la IA empieza a responder; después aparece el cuadradito para detener y, al terminar, el avión vuelve. */
+.send{overflow:hidden}
+.send .pl{transform:translate(-1px,1px);transition:transform .25s cubic-bezier(.3,.7,.4,1)}
+.send:not(.stop):not([disabled]):hover .pl{transform:translate(1px,-1px) rotate(-10deg)}
+.send.stop.fly svg{display:block}
+.send.stop.fly::after{display:none}
+.send.fly .pl{animation:szPlaneFly .62s linear forwards}
+.send.back .pl{animation:szPlaneBack .46s cubic-bezier(.2,.8,.3,1)}
+@keyframes szPlaneFly{0%{transform:translate(-1px,1px);animation-timing-function:ease-out}22%{transform:translate(-4px,4px) rotate(-6deg) scale(.94);animation-timing-function:cubic-bezier(.4,0,1,1)}100%{transform:translate(30px,-30px) rotate(8deg) scale(.55);opacity:0}}
+@keyframes szPlaneBack{0%{transform:translate(-24px,24px) scale(.55);opacity:0}70%{opacity:1}100%{transform:translate(-1px,1px);opacity:1}}
+html.noanim .send .pl{animation:none !important;transition:none !important}
+html.noanim .send.stop.fly svg{display:none}
+html.noanim .send.stop.fly::after{display:block}
+
+/* v3.8 · efectos React dentro de los mensajes (los monta next/componentes/synthflow/PuenteEfectos.jsx vía window.SZFx; estilos en core-css/25-v38-efectos.css) */
+.think-wrap.fxm .fxhost{margin:6px 0 8px;max-width:520px}
+/* v3.8.1 · Sammuel quiere que el cuadrito de píxeles siga debajo de la lluvia */
+.agrun.fxr{padding:0;border:0;background:none;box-shadow:none}
+.agrun.fxr .fxhost{max-width:520px}

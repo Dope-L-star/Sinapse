@@ -7,8 +7,16 @@ const I18N = { es:{}, en:{} };
 const LANGS = [['es', 'Español'], ['en', 'English']];
 let LANG = (() => {
   try{ const s = localStorage.getItem('synthz:lang'); if (s === 'es' || s === 'en') return s; }catch(e){}
-  return /^en\b/i.test((navigator.languages && navigator.languages[0]) || navigator.language || '') ? 'en' : 'es';
+  return sysLang();
 })();
+/* v3.7 · primera visita: entra en el idioma del navegador o del computador (Sammuel, 2 nov).
+   Se recorre la lista de idiomas preferidos: el primero que sea español o inglés manda.
+   Si ninguno lo es (francés, alemán, japonés…), entra en inglés, que se entiende en más lugares. Lo que elijas a mano siempre se respeta. */
+function sysLang(){
+  const L = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'es'];
+  for (const l of L){ const c = String(l).slice(0, 2).toLowerCase(); if (c === 'es' || c === 'en') return c; }
+  return 'en';
+}
 document.documentElement.lang = LANG;
 const lang = () => LANG;
 function t(k, v){
@@ -18,7 +26,7 @@ function t(k, v){
 }
 function i18nApply(r = document){
   /* si el texto ya es el mismo no se toca: así no se borran las letras animadas (charify) ni se rompen referencias */
-  r.querySelectorAll('[data-i18n]').forEach(el => { const v = t(el.dataset.i18n); if (el.textContent !== v) el.textContent = v; });
+  r.querySelectorAll('[data-i18n]').forEach(el => { const v = t(el.dataset.i18n), sr = el.querySelector(':scope > .sr-txt'), cur = sr ? el.textContent.slice(0, el.textContent.length - sr.textContent.length) : el.textContent; if (cur !== v) el.textContent = v; });
   const tp = document.createElement('template');
   r.querySelectorAll('[data-i18n-html]').forEach(el => { tp.innerHTML = t(el.dataset.i18nHtml); if (el.innerHTML !== tp.innerHTML) el.innerHTML = tp.innerHTML; });
   r.querySelectorAll('[data-i18n-attr]').forEach(el => el.dataset.i18nAttr.split(';').forEach(p => { const [a, k] = p.split('=').map(x => x && x.trim()); if (a && k) el.setAttribute(a, t(k)); }));

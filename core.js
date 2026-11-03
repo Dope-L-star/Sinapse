@@ -23,7 +23,7 @@ const CFG = (() => {
      A quien v2.3 le apagó el vidrio y el fondo sola (lite:1), se le devuelven una vez. */
   if (phone && fresh) c = Object.assign(cfgPreset('visual'), { perf:'visual', cursor:false, lite:2 });
   else if (phone && c.lite !== 2){ c = Object.assign({}, c, cfgPreset('visual'), { perf:'visual', cursor:false, lite:2 }); try{ localStorage.setItem('synthz:cfg', JSON.stringify(Object.assign({ v:2 }, c))); }catch(e){} }
-  return Object.assign({ v:2, perf:'visual', intro:'session', sound:true }, cfgPreset(c.perf), c);
+  return Object.assign({ v:2, perf:'visual', intro:'session', sound:true, dictado:true }, cfgPreset(c.perf), c);   /* v3.9.1 · el dictado viene encendido (Sammuel, 3 nov) */
 })();
 const PERF = CFG.perf === 'speed';
 /* v3.1 · manda Ajustes (Animaciones, Vidrio, Modo rápido), no el sistema: con los «efectos visuales» de Windows apagados,
@@ -37,6 +37,8 @@ function cfgClasses(){ const r = document.documentElement; r.classList.toggle('n
   r.classList.toggle('simple', simple); if (simple){ r.classList.add('noglass', 'nobg'); } r.classList.toggle('navleft', chat && CFG.nav === 'left');
   /* v2.9.2 · tamaño de SynthFlow: compacto (por defecto) o normal; el CSS (chat-css 29) lo achica con zoom:var(--ui-z) */
   r.classList.toggle('compact', chat && CFG.size !== 'normal');
+  /* v3.9 · modo dictado (micrófono en la caja de escribir). v3.9.1 · encendido por defecto (Sammuel, 3 nov); se apaga en Ajustes */
+  r.classList.toggle('dicta', chat && CFG.dictado !== false);
   /* v3.2 · atajos de la lista de chats: ninguno (por defecto), solo Sintéticos, solo Proyectos o los dos; siempre siguen en la barrita de íconos */
   const lk = CFG.links || 'none'; r.classList.toggle('lk-proj', chat && (lk === 'proj' || lk === 'both')); r.classList.toggle('lk-syn', chat && (lk === 'syn' || lk === 'both'));
   if (chat && !simple && THEMES.some(t => t[0] === CFG.theme && !t[3])) r.dataset.theme = CFG.theme; else delete r.dataset.theme; }
@@ -107,8 +109,16 @@ const I18N = { es:{}, en:{} };
 const LANGS = [['es', 'Español'], ['en', 'English']];
 let LANG = (() => {
   try{ const s = localStorage.getItem('synthz:lang'); if (s === 'es' || s === 'en') return s; }catch(e){}
-  return /^en\b/i.test((navigator.languages && navigator.languages[0]) || navigator.language || '') ? 'en' : 'es';
+  return sysLang();
 })();
+/* v3.7 · primera visita: entra en el idioma del navegador o del computador (Sammuel, 2 nov).
+   Se recorre la lista de idiomas preferidos: el primero que sea español o inglés manda.
+   Si ninguno lo es (francés, alemán, japonés…), entra en inglés, que se entiende en más lugares. Lo que elijas a mano siempre se respeta. */
+function sysLang(){
+  const L = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'es'];
+  for (const l of L){ const c = String(l).slice(0, 2).toLowerCase(); if (c === 'es' || c === 'en') return c; }
+  return 'en';
+}
 document.documentElement.lang = LANG;
 const lang = () => LANG;
 function t(k, v){
@@ -118,7 +128,7 @@ function t(k, v){
 }
 function i18nApply(r = document){
   /* si el texto ya es el mismo no se toca: así no se borran las letras animadas (charify) ni se rompen referencias */
-  r.querySelectorAll('[data-i18n]').forEach(el => { const v = t(el.dataset.i18n); if (el.textContent !== v) el.textContent = v; });
+  r.querySelectorAll('[data-i18n]').forEach(el => { const v = t(el.dataset.i18n), sr = el.querySelector(':scope > .sr-txt'), cur = sr ? el.textContent.slice(0, el.textContent.length - sr.textContent.length) : el.textContent; if (cur !== v) el.textContent = v; });
   const tp = document.createElement('template');
   r.querySelectorAll('[data-i18n-html]').forEach(el => { tp.innerHTML = t(el.dataset.i18nHtml); if (el.innerHTML !== tp.innerHTML) el.innerHTML = tp.innerHTML; });
   r.querySelectorAll('[data-i18n-attr]').forEach(el => el.dataset.i18nAttr.split(';').forEach(p => { const [a, k] = p.split('=').map(x => x && x.trim()); if (a && k) el.setAttribute(a, t(k)); }));
@@ -151,17 +161,25 @@ Object.assign(I18N.es, {
   'enerx.name': '{enerx}',
   'enerx.today': '{enerx} de hoy',
   'enerx.left': 'Te queda {n} % de {enerx}',
+  'ia.swapped': 'respondió {n} porque la que elegiste no estaba disponible',
   'enerx.empty': 'Sin {enerx} por hoy',
   'enerx.emptyShort': 'Sin {enerx}',
   'enerx.of': 'de {enerx} · se carga a medianoche',
   'enerx.ofEmpty': 'sin {enerx} · se carga a medianoche',
   'enerx.used': ' · usó {u} % de tu {enerx} · te queda {n} %',
+  'enerx.usedGuest': ' · sin cuenta: te quedan {n} mensajes hoy',
+  'enerx.usedGuest1': ' · sin cuenta: te queda 1 mensaje hoy',
   'enerx.small': 'Gratis. Tu {enerx} (tu batería) baja un poco con cada mensaje (lo que escribes y lo que te responde). A medianoche se carga al 100 %.',
   'enerx.hint': 'Tu {enerx} de hoy (tu batería): toca para ver el detalle',
-  'enerx.guestLeft': 'Te quedan {n} mensajes de prueba',
-  'enerx.spent': 'Usaste 1 mensaje de prueba. Te quedan {n}.',
-  'enerx.spent0': 'Usaste tu último mensaje de prueba.',
-  'enerx.guestShort': '{n} de prueba',
+  'enerx.guestLeft': 'Te quedan {n} mensajes hoy',
+  'enerx.guestLeft1': 'Te queda 1 mensaje hoy',
+  'enerx.guestNone': 'Te quedan 0 mensajes hoy · entra para seguir',
+  'enerx.of': 'de {n} mensajes de hoy',
+  'enerx.spent': 'Usaste 1 mensaje. Te quedan {n} hoy.',
+  'enerx.spent1': 'Usaste 1 mensaje. Te queda 1 hoy.',
+  'enerx.spent0': 'Usaste tu último mensaje de hoy.',
+  'enerx.guestShort': '{n} mensajes',
+  'enerx.guestShort1': '1 mensaje',
   'enerx.rest': 'Las IAs gratis están descansando',
   'enerx.restShort': 'Descansando',
   'enerx.signin': 'Entra a tu cuenta para seguir FlowIAndo',
@@ -182,17 +200,25 @@ Object.assign(I18N.en, {
   'enerx.name': '{enerx}',
   'enerx.today': "Today's {enerx}",
   'enerx.left': '{n} % {enerx} left',
+  'ia.swapped': '{n} answered because the one you picked wasn\'t available',
   'enerx.empty': 'Out of {enerx} for today',
   'enerx.emptyShort': 'No {enerx}',
   'enerx.of': '{enerx} · recharges at midnight',
   'enerx.ofEmpty': 'no {enerx} · recharges at midnight',
   'enerx.used': ' · used {u} % of your {enerx} · {n} % left',
+  'enerx.usedGuest': ' · without an account: {n} messages left today',
+  'enerx.usedGuest1': ' · without an account: 1 message left today',
   'enerx.small': 'Free. Your {enerx} (your battery) drops a little with each message (what you write and what you get back). At midnight it recharges to 100 %.',
   'enerx.hint': "Today's {enerx} (your battery): tap for details",
-  'enerx.guestLeft': '{n} trial messages left',
-  'enerx.spent': 'You used 1 trial message. {n} left.',
-  'enerx.spent0': 'You used your last trial message.',
-  'enerx.guestShort': '{n} trial',
+  'enerx.guestLeft': '{n} messages left today',
+  'enerx.guestLeft1': '1 message left today',
+  'enerx.guestNone': '0 messages left today · sign in to keep going',
+  'enerx.of': 'of {n} messages today',
+  'enerx.spent': 'You used 1 message. {n} left today.',
+  'enerx.spent1': 'You used 1 message. 1 left today.',
+  'enerx.spent0': 'You used your last message for today.',
+  'enerx.guestShort': '{n} messages',
+  'enerx.guestShort1': '1 message',
   'enerx.rest': 'The free AIs are resting',
   'enerx.restShort': 'Resting',
   'enerx.signin': 'Sign in to keep going',
@@ -532,6 +558,8 @@ Object.assign(I18N.es, {
  "ix.noacc": "pruébala sin cuenta",
  "ix.skip": "Mantén <kbd>espacio</kbd> 1,5 s para saltar",
  "ix.skipTouch": "Mantén presionado 1,5 s para saltar",
+ "ix.skipTap": "Toca la pantalla para saltar",
+ "ix.skipClick": "Haz clic o pulsa <kbd>Esc</kbd> para saltar",
  "ix.idea1": "Explícame la fotosíntesis fácil",
  "ix.idea2": "Dame 3 ideas para un regalo barato",
  "ix.idea3": "Encuentra el error en mi código",
@@ -618,6 +646,8 @@ Object.assign(I18N.en, {
  "ix.noacc": "try it without an account",
  "ix.skip": "Hold <kbd>space</kbd> for 1.5 s to skip",
  "ix.skipTouch": "Press and hold 1.5 s to skip",
+ "ix.skipTap": "Tap the screen to skip",
+ "ix.skipClick": "Click or press <kbd>Esc</kbd> to skip",
  "ix.idea1": "Explain photosynthesis simply",
  "ix.idea2": "Give me 3 ideas for a cheap gift",
  "ix.idea3": "Find the bug in my code",
@@ -779,7 +809,8 @@ Object.assign(I18N.es,{
  "ix.lk4d":"Se instala desde aquí: pantalla completa y a un toque",
  "ix.title":"SymphorIA · Diseña a la velocidad del pensamiento. En sintonía con la IA.",
  "ix.metaDesc":"SymphorIA: tu espacio para explorar la IA. Pregunta, crea, programa y compara modelos desde un solo lugar. Totalmente gratis.",
- "beta.title":"Estamos en beta: cuéntanos qué mejorar",
+ "beta.title":"Estamos en alfa: cuéntanos qué mejorar",
+ "beta.tag":"ALFA",
  "beta.tip":"Cuéntanos qué mejorar",
  "bal.puLeft":"Te queda {p} de tu crédito gratis de este mes",
  "bal.puErr":"Puter no respondió con tu saldo. Intenta más tarde.",
@@ -819,7 +850,8 @@ Object.assign(I18N.en,{
  "ix.lk4d":"Installs from here: full screen, one tap away",
  "ix.title":"SymphorIA · Design at the speed of thought. In tune with AI.",
  "ix.metaDesc":"SymphorIA: your space to explore AI. Ask, create, code and compare models from one place. Completely free.",
- "beta.title":"We're in beta: tell us what to improve",
+ "beta.title":"We're in alpha: tell us what to improve",
+ "beta.tag":"ALPHA",
  "beta.tip":"Tell us what to improve",
  "bal.puLeft":"You have {p} of this month's free credit left",
  "bal.puErr":"Puter didn't send your balance. Try again later.",
@@ -838,8 +870,8 @@ Object.assign(I18N.es, { 'pm.spent':'palabras de '+ENERX+' gastadas hoy · IAs c
 Object.assign(I18N.en, { 'pm.spent':ENERX+' words spent today · connected AIs', 'pm.capP':'How much each person can use per day with the connected AIs (Puter does not count). Stored in tokens: {tok} tokens ≈ {w} '+ENERX+' words (one word ≈ 4/3 of a token). Between 1,000 and 500,000.' });
 Object.assign(I18N.es, { 'pm.test':'Probar', 'pm.del':'Quitar', 'pm.deling':'Quitando…', 'pm.delQ':'¿Quitar la llave de {n}?', 'pm.delP':'Se borra del servidor y deja de usarse para las IAs conectadas. Las llaves de los demás siguen funcionando.', 'pm.delPo':'Es la llave de otra persona del equipo. Se borra del servidor y deja de usarse para las IAs conectadas.', 'pm.deled':'Llave de {n} quitada.' });
 Object.assign(I18N.en, { 'pm.test':'Test', 'pm.del':'Remove', 'pm.deling':'Removing…', 'pm.delQ':'Remove the {n} key?', 'pm.delP':'It is deleted from the server and stops being used for the connected AIs. Everyone else\'s keys keep working.', 'pm.delPo':'This key belongs to someone else on the team. It is deleted from the server and stops being used for the connected AIs.', 'pm.deled':'{n} key removed.' });
-Object.assign(I18N.es, { 'enerx.guest':'Sin cuenta tienes {n} mensajes de prueba al día. Con tu cuenta gratis tienes mucho más.', 'enerx.puter':'Si se acaba, puedes seguir con Puter, que te da la versión pro de las IAs más usadas.' });
-Object.assign(I18N.en, { 'enerx.guest':'Without an account you get {n} trial messages a day. With your free account you get much more.', 'enerx.puter':'If it runs out, you can keep going with Puter, which gives you the pro version of the most popular AIs.' });
+Object.assign(I18N.es, { 'enerx.guest':'Sin cuenta tienes {n} mensajes al día. Con tu cuenta gratis tienes mucho más.', 'enerx.puter':'Si se acaba, puedes seguir con Puter, que te da la versión pro de las IAs más usadas.' });
+Object.assign(I18N.en, { 'enerx.guest':'Without an account you get {n} messages a day. With your free account you get much more.', 'enerx.puter':'If it runs out, you can keep going with Puter, which gives you the pro version of the most popular AIs.' });
 /* ===== v3.0 · SynthFlow y las ventanas de core en inglés =====
    SynthFlow arma sus textos en JS (miles de trozos). En vez de cambiar cada uno por t(), cuando el idioma es inglés
    se trae idioma-en.json (español → inglés, solo si hace falta) y se traduce lo que aparece en pantalla:
@@ -862,11 +894,28 @@ function trStr(s){
   const m = TR.map; if (!m || !s || !/\p{L}{2}/u.test(s)) return s;
   const k = s.replace(/\s+/g, ' ').trim(); if (!k) return s;
   if (m[k] != null) return s.match(/^\s*/)[0] + m[k] + s.match(/\s*$/)[0];
-  let r = TR.rx ? s.replace(TR.rx, x => m[x] ?? x) : s;
+  let r = s; TR_PRE.forEach(([rx, to]) => { r = r.replace(rx, to); });
+  r = TR.rx ? r.replace(TR.rx, x => m[x] ?? x) : r;
   TR_RULES.forEach(([rx, to]) => { r = r.replace(rx, to); });
   return r;
 }
 /* números con su palabra («7 líneas», «hace 5 min»…), que el diccionario no puede tener uno por uno */
+const TR_DAYS = { lun:'Mon', mar:'Tue', 'mié':'Wed', jue:'Thu', vie:'Fri', 'sáb':'Sat', dom:'Sun' };
+/* v3.7 · Pulsem en inglés: frases con números (van ANTES del diccionario, para que no se traduzcan a medias) */
+const TR_PRE = [
+  /* v3.8 · planes como puerta falsa */ [/^(\d+) personas lo quieren$/, '$1 people want it'], [/^¿Te escribimos cuando abra (.+)\? \(opcional\)$/, 'Want us to write when $1 opens? (optional)'], /* v4.2 · solo cuenta quien deja su correo */ [/^(\d+) personas dejaron su correo$/, '$1 people left their email'], [/^Para contar tu interés en (.+), déjanos tu correo\. Te escribimos solo cuando abra\.$/, 'To count your interest in $1, leave your email. We will only write when it opens.'],
+  /* v3.7 · selector de IA */ [/^(\d+) IA$/, (m, n) => n + (n === '1' ? ' AI' : ' AIs')], [/^(\d+) versi(?:ón|ones)$/, (m, n) => n + (n === '1' ? ' version' : ' versions')], [/^\+ (\d+) temas$/, '+ $1 topics'], [/^Menos temas$/, 'Fewer topics'],
+  /* v3.8 · SynthFlow: «3 fuentes», la IA «pensando»/«escribiendo» arriba y el «Ej.:» de la caja */ [/^(\d+) fuentes?$/, (m, n) => n + (n === '1' ? ' source' : ' sources')], [/^pensando$/, 'thinking'], [/^escribiendo$/, 'writing'], [/^Ej\.: /, 'E.g.: '],
+  /* v3.8 · adjuntar cualquier archivo */ [/^Máximo (\d+) archivos por mensaje\.$/, 'Up to $1 files per message.'], [/^(.+) está mirando tu foto para que (.+) la entienda…$/, '$1 is looking at your photo so $2 can understand it…'], [/^Leyendo «(.+)»…$/, 'Reading «$1»…'],
+  /* v3.7 · foto con una IA que no ve: responde otra solo esa vez */ [/^(.+) no ve fotos: esta vez te responde (.+), que sí las ve\. Después sigues con (.+)\.$/, "$1 can't see photos: this time $2 answers, since it can. After that you're back with $3."],
+  [/(\d+) mensajes en (?:los últimos )?(\d+) min\b/g, '$1 messages in the last $2 min'], [/(\d+) error(?:es)? en (\d+) min\b/g, (m, a, b) => a + (a === '1' ? ' error' : ' errors') + ' in ' + b + ' min'],
+  [/(\d+) de (\d+) llaves activas/g, '$1 of $2 keys active'], [/(\d+) personas tuvieron dificultades en la última hora/g, '$1 people had trouble in the last hour'], [/\b1 persona tuvo dificultades en la última hora/g, '1 person had trouble in the last hour'],
+  [/(\d+) personas\b/g, '$1 people'], [/\b1 persona\b/g, '1 person'], [/(\d+) nuevos\b/g, '$1 new'], [/(\d+) esperando\b/g, '$1 waiting'], [/(\d+) sin respuesta \+15 min/g, '$1 unanswered 15+ min'],
+  [/([\d.]+) de ([\d.]+) · ([\d,]+) %/g, (m, a, b, c) => a.replace(/\./g, ',') + ' of ' + b.replace(/\./g, ',') + ' · ' + c.replace(',', '.') + ' %'], [/(\d+) llaves · (\d+) modelos gratis/g, '$1 keys · $2 free models'],
+  [/ · computador · /g, ' · computer · '], [/ · celular · /g, ' · phone · '], [/(\d+) h (\d+) min aquí/g, '$1 h $2 min here'], [/(\d+) min aquí/g, '$1 min here'], [/Lo gratis de este mes \((\d{4}-\d{2})\)/g, 'This month\'s free tier ($1)'],
+  [/^con ([A-ZÁÉÍÓÚ][\p{L}\d]+)$/gu, 'with $1'], [/\b(lun|mar|mié|jue|vie|sáb|dom) (\d{2})$/g, (m, d, n) => TR_DAYS[d] + ' ' + n],
+  [/^en vivo · /g, 'live · '], [/^Inicio · /g, 'Home · '], [/\bhace (\d+) s\b/g, '$1 s ago'], [/🐞 Algo falló · /g, '🐞 Something broke · '], [/🤔 No entendió algo · /g, '🤔 Got confused · '], [/💬 Otro · /g, '💬 Other · '],
+];
 const TR_RULES = [[/\b1 línea\b/g, '1 line'], [/(\d[\d.,]*) líneas\b/g, '$1 lines'], [/(\d[\d.,]*) palabras\b/g, '$1 words'], [/\b1 palabra\b/g, '1 word'],
   [/\bhace (\d+) (min|h|d)\b/g, '$1 $2 ago'], [/\bhace (\d+) días\b/g, '$1 days ago'], [/(\d[\d.,]*) mensajes\b/g, '$1 messages'], [/\b1 mensaje\b/g, '1 message'],
   [/(\d[\d.,]*) archivos\b/g, '$1 files'], [/(\d[\d.,]*) chats\b/g, '$1 chats'], [/(\d[\d.,]*) respuestas\b/g, '$1 answers'], [/(\d[\d.,]*) votos\b/g, '$1 votes'], [/(\d[\d.,]*) diapositivas\b/g, '$1 slides'],
@@ -1113,9 +1162,19 @@ async function api(path, o = {}){
   if (!r.ok) throw Object.assign(new Error(d.error || 'Error ' + r.status), { status:r.status, data:d });
   return d;
 }
+/* Fase 4 · costo cero: /api/config se pedía 2 veces al abrir cada página (las cuentas y el aviso de mantenimiento).
+   Ahora las dos usan la misma respuesta si tiene menos de 5 s. Devuelve { ok, d }. */
+let cfgP = null, cfgT = 0;
+function cfgFetch(maxAge = 5000){
+  if (cfgP && Date.now() - cfgT < maxAge) return cfgP;
+  cfgT = Date.now();
+  const p = cfgP = fetch('/api/config', { cache:'no-store' }).then(async r => ({ ok:r.ok, d:r.ok ? await r.json().catch(() => ({})) : {} }));
+  p.catch(() => { if (cfgP === p) cfgP = null; });
+  return p;
+}
 async function accConfig(){
   if (ACC.avail !== null) return ACC.avail;
-  try{ const r = await fetch('/api/config'); const d = r.ok ? await r.json() : {}; ACC.cid = d.googleClientId || ''; ACC.dcid = d.driveClientId || ''; ACC.sbg = !!d.sbGoogle; ACC.sb = d.sb || null; ACC.google = !!((d.google && ACC.cid) || ACC.sbg); ACC.missing = d.missing || (r.ok ? [] : ['servidor']); ACC.avail = !!d.ok; }
+  try{ const { ok, d } = await cfgFetch(); const r = { ok }; ACC.cid = d.googleClientId || ''; ACC.dcid = d.driveClientId || ''; ACC.sbg = !!d.sbGoogle; ACC.sb = d.sb || null; ACC.google = !!((d.google && ACC.cid) || ACC.sbg); ACC.missing = d.missing || (r.ok ? [] : ['servidor']); ACC.avail = !!d.ok; }
   catch(e){ ACC.avail = false; }
   return ACC.avail;
 }
@@ -1128,6 +1187,7 @@ function prefsOut(){
   return { v:2, t:Date.now(), model:state.model, fav:state.fav, cmp:state.cmp, sx:state.sx, pinned:state.pinned || '', threads:state.threads || {}, del:(state.del || []).slice(-300),
     arena:state.arena || {}, survey:state.survey || null, useTeam:state.useTeam || '', battle:!!state.battle, cfg:CFG, mem:state.mem,
     projects:projSlim(), projOf:state.projOf || {}, pjDel:(state.pjDel || []).slice(-200),
+    portada:portadaGet(),
     chatKeys:Object.keys(state.chats).filter(k => Array.isArray(state.chats[k]) && state.chats[k].length) };
 }
 /* v2.6 · proyectos: si los archivos pesan mucho, viaja solo su nombre y el texto se queda en este equipo */
@@ -1171,6 +1231,7 @@ function mergeIn(p, chats){
     if (p.arena && typeof p.arena === 'object'){ state.arena = state.arena || {}; Object.keys(p.arena).forEach(id => { const r = p.arena[id], l = state.arena[id]; if (r && typeof r === 'object' && (!l || (+r.t || 0) > (+l.t || 0))) state.arena[id] = { r:+r.r || 1000, w:+r.w || 0, l:+r.l || 0, t:+r.t || 0 }; }); }
     if (p.survey && typeof p.survey === 'object' && (!state.survey || (+p.survey.t || 0) > (+state.survey.t || 0))) state.survey = p.survey;
     if (p.battle) state.battle = true;
+    if (p.portada) portadaMerge(p.portada);   /* v4.1 · «Ya tengo el Flow / Soy nuevo» viaja con la cuenta */
     if (p.mem && typeof p.mem === 'object'){ const m = cleanMem(p.mem); if ((+m.t || 0) > (+(state.mem && state.mem.t) || 0)) state.mem = m; }
     if (p.ledger && typeof p.ledger === 'object'){ syncLedger(); state.ledger = mergeLedger(state.ledger, cleanLedger(p.ledger)); }
     else if (p.usage && typeof p.usage === 'object' && !state.ledger.ep){ const leg = legacyRow(p.usage); if (Object.keys(leg).length){ syncLedger(); state.ledger = mergeLedger(state.ledger, { ep:state.ledger.ep, dev:{ legacy:leg } }); } }
@@ -1625,7 +1686,7 @@ function workView(o = {}){
     finish(r = {}){
       if (S.done) return; S.done = true; clearInterval(iv); px.stop();
       step(r.error ? 'No pudo responder' : r.aborted ? 'La detuviste' : 'Terminó');
-      const t = ((r.ms != null ? r.ms : performance.now() - S.t0) / 1000).toFixed(1).replace('.', ',');
+      const t = ((r.ms != null ? r.ms : performance.now() - S.t0) / 1000).toFixed(1).replace('.', LANG === 'en' ? '.' : ',');
       w.textContent = r.error ? 'No respondió' : S.reason ? 'Pensó y respondió en ' + t + ' s' : 'Respondió en ' + t + ' s';
       sm.textContent = fmt(S.words) + (S.words === 1 ? ' palabra' : ' palabras');
       el.classList.add('fin'); if (!det.hidden) paintSteps();
@@ -1637,7 +1698,7 @@ function workView(o = {}){
 /* resumen guardado de una respuesta vieja: «Respondió en 2,1 s · 120 palabras ▸» con su detalle */
 function workSaved(sum){
   const el = document.createElement('div'); el.className = 'work fin';
-  const t = ((sum.ms || 0) / 1000).toFixed(1).replace('.', ',');
+  const t = ((sum.ms || 0) / 1000).toFixed(1).replace('.', LANG === 'en' ? '.' : ',');
   el.innerHTML = '<button type="button" class="wk-row" aria-expanded="false"><span class="wk-t"><b class="wk-w">' + (sum.reason ? 'Pensó y respondió en ' : 'Respondió en ') + t + ' s</b><small class="wk-s">' + fmt(sum.words || 0) + ((sum.words || 0) === 1 ? ' palabra' : ' palabras') + '</small></span><svg class="wk-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button><div class="wk-d" hidden><ol class="wk-steps">' + (sum.steps || []).map(([ms, x]) => '<li><em>' + (ms / 1000).toFixed(1).replace('.', ',') + ' s</em>' + esc(x) + '</li>').join('') + '</ol><div class="wk-r"' + (sum.reason ? '' : ' hidden') + '><b>Lo que pensó la IA</b><p></p></div></div>';
   if (sum.reason) $('.wk-r p', el).textContent = sum.reason;
   const row = $('.wk-row', el), det = $('.wk-d', el);
@@ -1657,7 +1718,19 @@ function countTo(el, val){
 }
 
 /* la etiqueta para lectores de pantalla sigue al idioma (si el texto tiene clave, se lee la traducción) */
-function ariaSync(el){ const k = el.dataset.i18n || el.dataset.i18nHtml, v = k && t(k); el.setAttribute('aria-label', (v && v !== k ? v : el.textContent).replace(/<[^>]+>/g, '').trim().replace(/\s+/g, ' ')); }
+/* v4.0 · un <p> o <span> con aria-label NO se lee (ARIA lo prohíbe en elementos sin rol): la frase de la portada
+   «Pregunta, crea, programa y compara…» quedaba muda para los lectores de pantalla. Ahí va un texto oculto a la vista en su lugar. */
+const srFree = el => { const s = el.querySelector(':scope > .sr-txt'); return s ? el.textContent.slice(0, el.textContent.length - s.textContent.length) : el.textContent; };
+const ARIA_NAMED = /^(H[1-6]|A|BUTTON|LABEL|SUMMARY)$/;
+function ariaSync(el){
+  const k = el.dataset.i18n || el.dataset.i18nHtml, v = k && t(k), txt = (v && v !== k ? v : srFree(el)).replace(/<[^>]+>/g, '').trim().replace(/\s+/g, ' ');
+  if (ARIA_NAMED.test(el.tagName) || el.hasAttribute('role')){ el.setAttribute('aria-label', txt); return; }
+  let s = el.querySelector(':scope > .sr-txt');
+  /* si el cambio de idioma ya dejó el texto normal (sin letras sueltas), se lee solo y no hace falta copia */
+  if (el._chars && !el.querySelector('.tc')){ if (s) s.remove(); return; }
+  if (!s){ s = document.createElement('span'); s.className = 'sr-txt'; el.appendChild(s); }
+  s.textContent = txt;
+}
 onLang(() => document.querySelectorAll('[data-aa]').forEach(ariaSync));
 
 /* ===== escritura suave: cada letra aparece con un resplandor y un cursor la acompaña ===== */
@@ -1680,7 +1753,7 @@ function charify(el){
           if (wrap) frag.appendChild(holder);
         });
         n.replaceWith(frag);
-      } else if (n.nodeType === 1 && !/^(SCRIPT|STYLE|SVG|I|BUTTON)$/i.test(n.tagName)) walk(n);
+      } else if (n.nodeType === 1 && !/^(SCRIPT|STYLE|SVG|I|BUTTON)$/i.test(n.tagName) && !n.classList.contains('sr-txt')) walk(n);
     });
   };
   walk(el);
@@ -1857,7 +1930,8 @@ async function ask(p, messages, opts = {}){
 const MARK_HTML = LOGO_Z.replace('class="lgz"', 'class="lgz mark"');
 const SXC = '<svg class="sxc" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="sxg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fb0ff"/><stop offset=".55" stop-color="#c9566c"/><stop offset="1" stop-color="#e6b65f"/></linearGradient></defs><circle cx="12" cy="12" r="10.5" fill="url(#sxg)"/><circle cx="12" cy="12" r="7.6" fill="none" stroke="rgba(11,12,16,.32)" stroke-width="1.1"/><path d="M14.7 9.3c-.5-.8-1.5-1.4-2.8-1.4-1.6 0-2.7.8-2.7 2 0 2.7 5.7 1.4 5.7 4.1 0 1.3-1.2 2.2-2.9 2.2-1.3 0-2.5-.6-3-1.6" transform="translate(-1.4 -1.3)" fill="none" stroke="#0b0c10" stroke-width="1.8" stroke-linecap="round"/><path d="M14.7 14.6l2.4 2.4M17.1 14.6l-2.4 2.4" stroke="#0b0c10" stroke-width="1.35" stroke-linecap="round"/></svg>';
 const coins = n => fmt(n);   /* v1.3: ya no existen las monedas; queda solo el número */
-const metaOf = r => r.cached ? 'respuesta guardada · no gastó nada' : 'tardó ' + (r.ms / 1000).toFixed(1).replace('.', ',') + ' s';
+const metaOf = r => (r.cached ? (LANG === 'en' ? 'saved answer · cost nothing' : 'respuesta guardada · no gastó nada') : (LANG === 'en' ? 'took ' + (r.ms / 1000).toFixed(1) : 'tardó ' + (r.ms / 1000).toFixed(1).replace('.', ',')) + ' s')
+  + (r.swap && r.real ? ' · ' + t('ia.swapped', { n:r.real }) : '');   /* v3.7 · si respondió otra IA porque la elegida no estaba (o no ve fotos), se dice */
 /* últimos 20 mensajes, siempre empezando por uno del usuario (Gemini y otras APIs lo exigen) */
 function history(chat){
   const h = chat.slice(-20).map(m => ({ role:m.role, content:m.content }));
@@ -1883,6 +1957,8 @@ function markBad(id, share){
   BAD[id] = Date.now(); saveBad();
   if (share !== false) fetch('/api/health', { method:'POST', headers:{ 'content-type':'application/json' }, body:JSON.stringify({ id, ok:false }), keepalive:true }).catch(() => {});
 }
+/* v3.8 · una IA que no responde AHORA (llena o lenta) se esconde solo un rato y vuelve sola */
+function markSick(id, ms){ if (!id || /^tr:/.test(id)) return; BAD[id] = Date.now() - BAD_MS + (ms || 10 * 60e3); saveBad(); }
 function markGood(id){
   if (BAD[id]){ delete BAD[id]; saveBad(); }
   try{ const k = 'synthz:good:' + id; if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, '1'); }catch(e){}
@@ -1894,7 +1970,11 @@ const groqName = id => String(id).replace(/^[^/]+\//, '').split(/[-_]/).map(w =>
 /* ===== IA de SymphorIA: modelos gratis compartidos, con un tope diario por persona ===== */
 const DEVH = (/^[\w-]{12,48}$/.test(DEV) ? DEV : (String(DEV).replace(/[^\w-]/g, '') + 'synthzdevice').slice(0, 24));
 const SZQ = { on:null, used:0, limit:20000, n:0, t:0, guest:null };
-function szqSet(o){ Object.assign(SZQ, o); try{ dispatchEvent(new CustomEvent('synthz-szq', { detail:SZQ })); }catch(e){} }
+function szqSet(o){
+  /* v3.7 · la pila nunca «sube» sola en el día: si llegan dos respuestas a la vez (Comparar, revisión), la que trae un número viejo no la devuelve hacia arriba.
+     Solo se acepta que baje el gasto cuando de verdad se renovó (medianoche: vuelve a casi cero) */
+  if (o && typeof o.used === 'number' && typeof SZQ.used === 'number' && o.used < SZQ.used && o.used > SZQ.used * .5 && !o.reset){ o = Object.assign({}, o); delete o.used; }
+  Object.assign(SZQ, o); try{ dispatchEvent(new CustomEvent('synthz-szq', { detail:SZQ })); }catch(e){} }
 const szHeaders = () => { const h = { 'content-type':'application/json', 'x-sz-device':DEVH }; if (SESS) h.authorization = 'Bearer ' + SESS; return h; };
 const SZ_VEND = [[/llama|meta/i, 'meta-llama'], [/gemma|gemini/i, 'google'], [/mistral|mixtral|codestral|ministral|magistral|devstral|pixtral|open-mi/i, 'mistralai'], [/qwen|qwq/i, 'qwen'], [/deepseek/i, 'deepseek'], [/gpt-oss|openai/i, 'openai'], [/kimi|moonshot/i, 'moonshotai'], [/glm|z-ai/i, 'z-ai'], [/nemotron|nvidia/i, 'nvidia'], [/phi-|microsoft/i, 'microsoft'], [/granite|ibm/i, 'ibm'], [/hermes|nous/i, 'nousresearch']];
 const szVendor = (mid, prov) => (SZ_VEND.find(([rx]) => rx.test(mid)) || [0, prov])[1];
@@ -1905,8 +1985,14 @@ const MSG_TOK = 800;
 /* con sesión guardada (o volviendo de Google) ya cuentas como persona con cuenta, aunque tu cuenta tarde un segundo en cargar */
 const signedish = () => !!(ACC && (ACC.ready || ACC.joining || (SESS && !ACC.err)));
 const isGuestQ = () => !!(SZQ.guest && !signedish());
-const guestFull = () => isGuestQ() && (SZQ.guest.used || 0) >= (SZQ.guest.max || 5);
-const limPct = () => Math.max(SZQ.limit ? Math.min(1, (SZQ.used || 0) / SZQ.limit) : 0, isGuestQ() ? Math.min(1, (SZQ.guest.used || 0) / (SZQ.guest.max || 5)) : 0);
+/* v4.2 · un solo número para todo (Sammuel, 3 nov: «está en 0 y dice 2 de prueba»): sin cuenta, la batería, el número grande,
+   el texto de «IAs conectadas» y el botón del lateral leen guestLeft(). Es lo que de verdad te deja escribir el servidor:
+   los mensajes que quedan en este dispositivo y en esta conexión, y 0 si la EnerX del día ya se gastó (antes la pila decía 0 y el texto 2) */
+const guestMax = () => (SZQ.guest && SZQ.guest.max) || 5;
+const guestLeft = () => !SZQ.guest || (SZQ.limit && (SZQ.used || 0) >= SZQ.limit) ? 0 : Math.max(0, Math.min(guestMax(), SZQ.guest.left != null ? SZQ.guest.left : guestMax() - (SZQ.guest.used || 0)));
+const guestFull = () => isGuestQ() && guestLeft() <= 0;
+const gN = (k, n, o) => t(n === 1 ? k + '1' : k, Object.assign({ n }, o));
+const limPct = () => isGuestQ() ? 1 - guestLeft() / guestMax() : SZQ.limit ? Math.min(1, (SZQ.used || 0) / SZQ.limit) : 0;
 const msgsLeft = () => Math.max(0, Math.floor(((SZQ.limit || 25000) - (SZQ.used || 0)) / MSG_TOK));
 const msgsTotal = () => Math.max(1, Math.round((SZQ.limit || 25000) / MSG_TOK));
 /* v2.4: vuelven las SynXCoin's. 1 SynXCoin = 1 palabra (lo que escribes y lo que te responde). El servidor cuenta en tokens; una palabra son unos 4/3 de token */
@@ -1917,11 +2003,22 @@ const coinsTotal = () => coinsOf(SZQ.limit || 25000);
 const coinsFmt = n => Math.round(n).toLocaleString('es');
 const coinsShort = n => n >= 10000 ? (Math.floor(n / 100) / 10).toLocaleString('es') + ' mil' : coinsFmt(n);
 /* v3.0 · batería en vez de palabras (Sammuel, 27 oct): el límite del día se ve como una pila que se descarga y se carga a medianoche */
-const battPct = () => Math.round((1 - limPct()) * 100);
-const coinNote = (mid, r) => /^sz:/.test(String(mid)) && r && !r.cached && ((r.prompt || 0) + (r.completion || 0)) > 0 ? t('enerx.used', { u:Math.max(1, Math.round(((r.prompt || 0) + (r.completion || 0)) / (SZQ.limit || 25000) * 100)), n:battPct() }) : '';
-const guestLeft = () => Math.max(0, (SZQ.guest.max || 5) - (SZQ.guest.used || 0));
-const limTxt = () => SZQ.on === false ? t('enerx.rest') : guestFull() ? t('enerx.signin') : isGuestQ() ? t('enerx.guestLeft', { n:guestLeft() }) : limPct() >= 1 ? t('enerx.empty') : t('enerx.left', { n:battPct() });
-const limShort = () => SZQ.on === false ? t('enerx.restShort') : guestFull() ? t('enerx.signinShort') : isGuestQ() ? t('enerx.guestShort', { n:guestLeft() }) : limPct() >= 1 ? t('enerx.emptyShort') : battPct() + ' %';
+/* v3.7 · EnerX de verdad (Sammuel, 2 nov): cada respuesta dice cuánto gastó de verdad (ya no «1 %» fijo) y la batería baja eso mismo.
+   v3.9 · sin decimales (Sammuel, 3 nov): por dentro se lleva el gasto EXACTO del servidor y se acumula (no se pierde nada al redondear);
+   en pantalla todo va en números enteros. «Usó X %» es justo lo que bajó el número de la pila, así la cuenta siempre cuadra;
+   si una respuesta gastó menos de 1 % se dice «menos de 1 %» (y la pila no salta: baja cuando lo acumulado llega a 1). */
+const pctInt = x => { x = Math.max(0, Math.min(100, +x || 0)); return x > 0 && x < 1 ? 1 : x > 99 && x < 100 ? 99 : Math.round(x); };   /* nunca «0 %» si queda algo ni «100 %» si ya gastaste algo */
+const battAt = used => pctInt((1 - (SZQ.limit ? Math.min(1, Math.max(0, used) / SZQ.limit) : 0)) * 100);
+const battPct = () => String(pctInt((1 - limPct()) * 100));
+const spentPct = (tok, after) => {
+  const real = (+tok || 0) / (SZQ.limit || 25000) * 100;
+  if (real < 1) return LANG === 'en' ? 'less than 1' : 'menos de 1';
+  const a = after == null ? SZQ.used || 0 : after;
+  return String(Math.max(1, battAt(a - tok) - battAt(a)));
+};
+const coinNote = (mid, r) => /^sz:/.test(String(mid)) && r && !r.cached && ((r.prompt || 0) + (r.completion || 0)) > 0 ? (isGuestQ() ? gN('enerx.usedGuest', guestLeft()) : t('enerx.used', { u:spentPct((r.prompt || 0) + (r.completion || 0)), n:battPct() })) : '';
+const limTxt = () => SZQ.on === false ? t('enerx.rest') : guestFull() ? t('enerx.guestNone') : isGuestQ() ? gN('enerx.guestLeft', guestLeft()) : limPct() >= 1 ? t('enerx.empty') : t('enerx.left', { n:battPct() });
+const limShort = () => SZQ.on === false ? t('enerx.restShort') : isGuestQ() ? gN('enerx.guestShort', guestLeft()) : limPct() >= 1 ? t('enerx.emptyShort') : battPct() + ' %';
 const limLvl = () => { const k = limPct(); return k >= 1 ? 'full' : k >= .8 ? 'warn' : 'ok'; };
 /* la pila: cuerpo de vidrio, polo y carga que baja; con poca carga se pone ámbar y vacía, coral. size = alto de referencia (antes era el anillo) */
 function limRing(size){
@@ -1939,7 +2036,7 @@ async function szCatalog(){
   const d = await r.json().catch(() => ({}));
   if (!r.ok){ szqSet({ on:false, t:Date.now() }); return []; }
   const arr = Array.isArray(d.models) ? d.models : [];
-  szqSet({ on:arr.length > 0, used:+d.used || 0, limit:+d.limit || 20000, guest:d.guest && d.guest.max ? { used:+d.guest.used || 0, max:+d.guest.max } : null, img:d.img || null, team:!!d.team, alert:!!d.alert, alertN:+d.alertN || 0, n:arr.length, t:Date.now() });
+  szqSet({ on:arr.length > 0, used:+d.used || 0, limit:+d.limit || 20000, guest:d.guest && d.guest.max ? { used:+d.guest.used || 0, max:+d.guest.max, left:d.guest.left != null ? +d.guest.left : null } : null, img:d.img || null, team:!!d.team, alert:!!d.alert, alertN:+d.alertN || 0, n:arr.length, t:Date.now() });
   if (!arr.length) return [];
   const out = arr.filter(m => m && typeof m.id === 'string' && /^sz:/.test(m.id) && !/allam|infron|openrouter\/(free|auto)|models?[-_ ]router/i.test(m.id) && !/free models router|router/i.test(String(m.name || ''))).map(m => {
     const mid = m.id.split(':').slice(2).join(':'), vendor = szVendor(mid, m.prov);
@@ -1973,7 +2070,8 @@ function puterOutNote(){ if (puOutNoted) return; puOutNoted = true; toast('Usast
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
 })();
 
-/* ===== pulso de SymphorIA: «sigo aquí» cada 3 min y avisos cortos cuando algo falla (sin mensajes ni chats) ===== */
+/* ===== pulso de SymphorIA: «sigo aquí» cada 15 min (el equipo cada 3) y avisos cortos cuando algo falla (sin mensajes ni chats)
+   v3.7 · costo cero: de 3 a 10 minutos para las personas = unas 3 veces menos escrituras en Redis por cada visitante ===== */
 const TEL = { since:Date.now(), msgs:0, errs:0, ai:'', locked:false, last:{} };
 const telPage = () => (location.pathname.split('/').pop() || 'index.html').replace(/\.html$/, '') || 'index';
 function telEv(kind, detail){
@@ -1984,8 +2082,10 @@ function telEv(kind, detail){
   }catch(e){}
 }
 let beatT = 0, beatAt = 0;
+/* Fase 4 (Sammuel dio permiso, 3 nov): las personas cada 15 min (antes 10); el equipo sigue cada 3 */
+const beatMs = () => { const r = ACC && ACC.user && ACC.user.role; return r && r !== 'user' ? 180000 : 900000; };
 async function telBeat(){
-  clearTimeout(beatT); beatT = setTimeout(telBeat, 180000);
+  clearTimeout(beatT); beatT = setTimeout(telBeat, beatMs());
   if (document.hidden) return; beatAt = Date.now();
   try{
     const r = await fetch('/api/health', { method:'POST', headers:szHeaders(), body:JSON.stringify({ action:'beat', page:telPage(), state:{ since:TEL.since, msgs:TEL.msgs, ai:TEL.ai, locked:TEL.locked, mobile:matchMedia('(max-width:760px)').matches, errs:TEL.errs } }) });
@@ -1993,8 +2093,9 @@ async function telBeat(){
     if (d.help) try{ dispatchEvent(new CustomEvent('synthz-help-ping')); }catch(e){}
   }catch(e){}
 }
-setTimeout(telBeat, 4000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - beatAt > 170000) telBeat(); });
+/* el primero a los 30 s (antes 4 s): quien entra y se va enseguida ya no gasta una escritura */
+setTimeout(telBeat, 30000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - beatAt > beatMs() - 10000) telBeat(); });
 addEventListener('error', e => { if (!e || !e.message || /ResizeObserver|Script error/i.test(e.message)) return; telEv('jserror', e.message + ' @' + String(e.filename || '').split('/').pop() + ':' + (e.lineno || 0)); });
 addEventListener('unhandledrejection', e => { const m = e && e.reason && (e.reason.message || String(e.reason)); if (!m || /abort|Detenido|net|Failed to fetch|NetworkError|load failed/i.test(m)) return; telEv('jserror', 'promesa: ' + m); });
 try{ const nv = performance.getEntriesByType('navigation')[0]; if (nv && nv.type === 'reload') setTimeout(() => telEv('reload', 'recargó la página'), 2500); }catch(e){}
@@ -2386,7 +2487,12 @@ let lockOff = null;
 function portalLock(on){
   if (lockOff){ lockOff(); lockOff = null; }
   if (!on) return;
-  const stop = e => { if (e.key === 'F5' || (e.key === 'r' && (e.ctrlKey || e.metaKey))) return; e.preventDefault(); e.stopPropagation(); };
+  const stop = e => {
+    if (e.key === 'F5' || (e.key === 'r' && (e.ctrlKey || e.metaKey))) return;
+    /* el aviso de mantenimiento (encima de todo) siempre se puede usar */
+    const m = document.getElementById('szMaint'); if (m && (m.contains(e.target) || m.contains(document.activeElement))) return;
+    e.preventDefault(); e.stopPropagation();
+  };
   const ev = ['keydown', 'keypress', 'wheel', 'touchmove', 'mousedown', 'click', 'pointerdown'];
   ev.forEach(t => addEventListener(t, stop, { capture:true, passive:false }));
   lockOff = () => ev.forEach(t => removeEventListener(t, stop, { capture:true }));
@@ -2994,13 +3100,30 @@ const CFG_ROWS = [['cursor', 'Cursor ' + BRAND(), 'El cursor de vidrio con vient
 /* v2.2 · Ajustes con 2 pestañas: «Página» (cómo se ve y se siente) e «IAs y memoria» (cómo te responden y qué recuerdan de ti) */
 const CFG_PAGE = CFG_ROWS.filter(r => r[0] !== 'beginner');
 const CFG_IA = [['beginner', 'Modo principiante', 'Te responden con palabras sencillas, paso a paso y con ejemplos.'], ['autoWeb', 'Buscar en internet cuando haga falta', 'Si preguntas por algo de hoy (precios, noticias, el clima…), la IA busca sola y te muestra sus fuentes.'], ['saver', 'Respuestas cortas', 'Respuestas más breves: gastas menos de tu límite de hoy.'], ['review', 'Revisión de calidad', 'Otra IA revisa la lógica de cada respuesta y la corrige si encuentra errores. Tarda unos segundos más.']];
+/* v3.9 · modo dictado (solo en SynthFlow). v3.9.1 · viene encendido para todos; aquí se apaga */
+const CFG_DIC = ['dictado', 'Modo dictado', 'Un micrófono en la caja de escribir: hablas y el texto aparece en vivo, con puntos, comas y signos de pregunta, para que lo revises antes de enviar.'];
 const memSt0 = () => state.mem || (state.mem = { on:true, t:0, items:[] });
 function memTouch(){ const m = memSt0(); m.t = Date.now(); save(); try{ if (ACC.ready) accPush(); }catch(e){} }
+/* ¿dos datos hablan de lo mismo? Mismo «casillero» (cómo se llama, dónde vive, en qué trabaja, qué estudia, su edad, su idioma)
+   o casi las mismas palabras (70 % o más). «Le gusta el café» y «Le gusta el té» NO son lo mismo: se guardan los dos. */
+const MEM_SLOT = [/^(se llama|quiere que le digan|su nombre es|(their )?name is|wants to be called)\b/i, /^(vive en|es de|lives in|is from)\b/i, /^(trabaja|works)\b/i, /^(estudia|studies)\b/i, /\b(tiene \d+ a[nñ]os|is \d+ years old)\b/i, /^(habla|su idioma|speaks)\b/i, /^(su cumplea[nñ]os|their birthday)\b/i];
+const memWords = s => new Set(String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').match(/[a-z0-9ñ]{3,}/g) || []);
+function memSame(a, b){
+  a = String(a || '').trim(); b = String(b || '').trim(); if (a.toLowerCase() === b.toLowerCase()) return true;
+  if (MEM_SLOT.some(rx => rx.test(a) && rx.test(b))) return true;
+  const A = memWords(a), B = memWords(b); if (!A.size || !B.size) return false;
+  let n = 0; A.forEach(w => { if (B.has(w)) n++; }); return n / Math.max(A.size, B.size) >= 0.7;
+}
 function memAddCore(text){
   const m = memSt0(), t = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 300); if (t.length < 3) return false;
-  if (!m.items.some(x => x.text.toLowerCase() === t.toLowerCase())) m.items.unshift({ id:'m' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), t:Date.now(), text:t });
+  /* v4.0 · sin duplicar: si ya hay algo del mismo tipo (otro nombre, otra ciudad, otro trabajo) o casi igual, se ACTUALIZA */
+  const old = m.items.find(x => memSame(x.text, t));
+  if (old){ old.text = t; old.t = Date.now(); m.items = [old, ...m.items.filter(x => x !== old)]; }
+  else m.items.unshift({ id:'m' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), t:Date.now(), text:t });
   m.items = m.items.slice(0, 40); memTouch(); return true;
 }
+/* v3.7 · lo que SynthonIA puede usar: solo lo aprobado y solo si la memoria está encendida */
+function memList(){ const m = memSt0(); return m.on ? m.items.slice(0, 12).map(x => x.text) : []; }
 /* la lista de «Lo que recuerdo de ti»: se ve, se agrega, se olvida */
 function memPanel(host){
   const paint = () => {
@@ -3024,7 +3147,7 @@ function memPanel(host){
 const cfgLinks = [];
 function cfgModal(tab){
   if ($('#cfgm')) return;
-  const draft = Object.assign({ autoWeb:true, review:true }, CFG); draft.saver = !!(state.sx && state.sx.saver);
+  const draft = Object.assign({ autoWeb:true, review:true, dictado:true }, CFG); draft.saver = !!(state.sx && state.sx.saver);
   const o = document.createElement('div'); o.id = 'cfgm'; o.className = 'szm';
   const row = ([k, t, s]) => '<div class="cfgrow"><p>' + t + '<small>' + s + '</small></p><button class="cfgsw" type="button" role="switch" data-k="' + k + '" aria-checked="' + !!draft[k] + '" aria-pressed="' + !!draft[k] + '" aria-label="' + t + '"></button></div>';
   const IN = [['always', 'Cada vez'], ['session', 'Una vez por visita'], ['never', 'Nunca']];
@@ -3037,14 +3160,15 @@ function cfgModal(tab){
     + '<div class="cfglbl">Estilo de SynthFlow</div><div class="cfgseg" id="cfgUi"><button type="button" data-ui="full" aria-pressed="' + (draft.ui !== 'simple') + '">SynthFlow</button><button type="button" data-ui="simple" aria-pressed="' + (draft.ui === 'simple') + '">Simple</button></div><p class="cnote">Simple: solo tus chats, la caja de escribir y las respuestas, con un diseño tranquilo y sin efectos.</p>'
     + '<div class="cfglbl">Idioma · Language</div><div class="cfgseg notr" id="cfgLang">' + LANGS.map(([id, nm]) => '<button type="button" data-lang="' + id + '" lang="' + id + '" aria-pressed="' + (lang() === id) + '">' + nm + '</button>').join('') + '</div>'
     + '<div class="cfglbl">Tamaño de SynthFlow</div><div class="cfgseg" id="cfgSz"><button type="button" data-sz="compact" aria-pressed="' + (draft.size !== 'normal') + '">Compacto</button><button type="button" data-sz="normal" aria-pressed="' + (draft.size === 'normal') + '">Normal</button></div><p class="cnote">Compacto: todo un poco más pequeño, para ver más chat en la pantalla. Normal: el tamaño grande de antes.</p>'
-    + (document.getElementById('composer') ? '<div class="cfglbl">Atajos en tus chats</div><div class="cfgseg cfgseg4" id="cfgLk">' + [['none', 'Ninguno'], ['syn', 'Sintéticos'], ['proj', 'Proyectos'], ['both', 'Los dos']].map(([v, l]) => '<button type="button" data-lk2="' + v + '" aria-pressed="' + ((draft.links || 'none') === v) + '">' + l + '</button>').join('') + '</div><p class="cnote">Qué va arriba de tu lista de chats, junto a «Nuevo chat». Proyectos y Sintéticos siempre están en la barrita de íconos de la izquierda.</p>' : '')
-    + '<div class="cfglbl">Color de SynthFlow</div><div class="cfgth" id="cfgTh">' + THEMES.map(([id, nm, c1, lock, c2]) => '<button type="button" data-th="' + id + '" aria-pressed="' + ((draft.theme || 'synthz') === id) + '"' + (lock ? ' disabled aria-disabled="true"' : '') + ' style="--t1:' + c1 + ';--t2:' + c2 + '"><i></i><span>' + esc(nm) + '</span>' + (lock ? '<em>Pronto</em>' : '') + '</button>').join('') + '</div><p class="cnote" id="cfgThN"></p>'
+    /* v3.7 · «Atajos en tus chats» salió: la barra nueva siempre muestra Crear, Proyectos y Sintéticos arriba de tus chats */
+    + '<div class="cfglbl">Color de SynthFlow</div><div class="cfgth" id="cfgTh">' + THEMES.map(([id, nm, c1, lock, c2]) => '<button type="button" data-th="' + id + '" aria-pressed="' + ((draft.theme || 'synthz') === id) + '"' + (lock ? ' aria-disabled="true" data-lock="1"' : '') + ' style="--t1:' + c1 + ';--t2:' + c2 + '"><i></i><span>' + esc(nm) + '</span>' + (lock ? '<em>Pronto</em>' : '') + '</button>').join('') + '</div><p class="cnote" id="cfgThN"></p>'
     + (matchMedia('(pointer:coarse), (max-width:820px)').matches ? '<div class="cfglbl">Barra del celular</div><div class="cfgseg" id="cfgNav"><button type="button" data-nav="bottom" aria-pressed="' + (draft.nav !== 'left') + '">Abajo</button><button type="button" data-nav="left" aria-pressed="' + (draft.nav === 'left') + '">A la izquierda</button></div><p class="cnote">A la izquierda: la barra se esconde y la abres con el botón ☰ de arriba.</p>' : '')
     + '<div class="cfglbl">Detalles</div><div id="cfgRows">' + CFG_PAGE.map(row).join('') + '</div>'
     + '<div class="cfglbl">Intro de la página</div><div class="cfgseg" id="cfgIn">' + IN.map(([v, l]) => '<button type="button" data-in="' + v + '" aria-pressed="' + (draft.intro === v) + '">' + l + '</button>').join('') + '</div><p class="cnote">La animación al entrar al chat siempre se ve.</p>'
     + '</section>'
     + '<section class="cfgpane" data-pane="ia"' + (ia ? '' : ' hidden') + '>'
     + '<div class="cfglbl">Cómo te responden</div>' + CFG_IA.map(row).join('')
+    + (document.getElementById('composer') ? '<div class="cfglbl">Dictado por voz</div>' + row(CFG_DIC) + '<p class="cnote">Funciona en Chrome, Edge y Safari. El micrófono solo se usa cuando tocas el botón. La voz la pasa a texto tu navegador: SymphorIA no la recibe ni la guarda.</p>' : '')
     + '<div class="cfglbl" id="cfgMemL">Lo que recuerdo de ti</div><div id="szMem" class="cfgmem"></div>'
     + (cfgLinks.length ? '<div class="cfglbl">Tus IAs</div><div class="cfglinks">' + cfgLinks.map(([l, , d], i) => '<button type="button" class="cfglk" data-lk="' + i + '"><b>' + esc(l) + '</b><small>' + esc(d || '') + '</small><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>').join('') + '</div>' : '')
     + '</section></div>'
@@ -3062,12 +3186,17 @@ function cfgModal(tab){
   $$('[data-lang]', o).forEach(b => b.addEventListener('click', () => { setLang(b.dataset.lang); $$('[data-lang]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));   /* el idioma cambia al instante, sin «Guardar» */
   $$('[data-lk2]', o).forEach(b => b.addEventListener('click', () => { draft.links = b.dataset.lk2; $$('[data-lk2]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
   $$('[data-sz]', o).forEach(b => b.addEventListener('click', () => { draft.size = b.dataset.sz; $$('[data-sz]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
-  $$('[data-th]', o).forEach(b => b.addEventListener('click', () => { if (b.disabled) return; draft.theme = b.dataset.th; $$('[data-th]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+  $$('[data-th]', o).forEach(b => b.addEventListener('click', () => { if (b.dataset.lock) return; draft.theme = b.dataset.th; $$('[data-th]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
   $$('[data-nav]', o).forEach(b => b.addEventListener('click', () => { draft.nav = b.dataset.nav; $$('[data-nav]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
   const tabs = $('.cfgtabs', o), pill = $('.pill', tabs);
   const show = k => { $$('[role=tab]', tabs).forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === k))); $$('.cfgpane', o).forEach(p => { p.hidden = p.dataset.pane !== k; }); const b = $('[data-tab="' + k + '"]', tabs); if (b && pill){ pill.style.width = b.offsetWidth + 'px'; pill.style.transform = 'translateX(' + (b.offsetLeft - 4) + 'px)'; } $('.cfgbody', o).scrollTop = 0; };
   tabs.addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) show(b.dataset.tab); });
   requestAnimationFrame(() => show(ia ? 'ia' : 'page'));
+  try{ cfgSideMenu(o); }catch(e){}
+  try{ cfgThemePreview(o, draft); }catch(e){}   /* v3.8 · vista previa de temas (core 14c + React VistaTemas) */   /* v3.7 · menú lateral (core 14b) */
+  /* v3.7 · con Animaciones apagadas no hay intro: se dice en vez de dejar que parezca que no funciona */
+  const inNote = () => { const n = $('#cfgIn + .cnote', o); if (n) n.textContent = draft.anim === false ? 'Con «Animaciones» apagadas no hay intro: enciéndelas para verla.' : 'La animación al entrar al chat siempre se ve.'; };
+  inNote(); $$('.cfgsw[data-k="anim"]', o).forEach(b => b.addEventListener('click', inNote));
   if (tab === 'mem') setTimeout(() => { const l = $('#cfgMemL', o); if (l) l.scrollIntoView({ block:'start', behavior:reduce ? 'auto' : 'smooth' }); }, 350);
   const close = () => { o.classList.remove('on'); setTimeout(() => o.remove(), 450); };
   $$('.cfglk', o).forEach(b => b.addEventListener('click', () => { const L = cfgLinks[+b.dataset.lk]; close(); if (L) setTimeout(L[1], 200); }));
@@ -3113,16 +3242,129 @@ if (document.getElementById('cm')){
   addEventListener('keydown', midOff); addEventListener('blur', midOff); addEventListener('wheel', e => { if (!e.buttons) midOff(); }, { passive:true });
 }
 
+/* ===== v3.7 · Ajustes con menú lateral (estilo del Uiverse #31 que mandó Sammuel: lista vertical con ícono, texto y barra activa)
+   Cada título de Ajustes («Cómo se ve», «Idioma», «Color», «Lo que recuerdo de ti»…) es una entrada del menú.
+   Tocarla abre su pestaña y baja hasta esa parte; al hacer scroll, la entrada activa sigue lo que estás viendo.
+   Las pestañas viejas siguen en el código (la Guía las usa), pero no se ven. En el celular el menú es una fila de chips arriba. ===== */
+const CFG_NAV_ICO = {
+  eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  brush:'<path d="M14 4l6 6-9 9H5v-6z"/><path d="M12 6l6 6"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/>',
+  size:'<path d="M4 9V4h5M20 15v5h-5M4 4l7 7M20 20l-7-7"/>',
+  bolt:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+  palette:'<path d="M12 3a9 9 0 100 18c1.2 0 1.8-.9 1.4-1.9-.5-1.2.3-2.1 1.5-2.1H18a3 3 0 003-3c0-6-4-11-9-11z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/>',
+  phone:'<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
+  sliders:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+  play:'<circle cx="12" cy="12" r="9"/><path d="M10 8.5l5.5 3.5-5.5 3.5z"/>',
+  chat:'<path d="M4 5h16v11H9l-5 4z"/>',
+  brain:'<path d="M9 4a3 3 0 00-3 3 3 3 0 00-2 5 3 3 0 002 5 3 3 0 006 0V4.5A2.5 2.5 0 009 4zM15 4a3 3 0 013 3 3 3 0 012 5 3 3 0 01-2 5 3 3 0 01-6 0"/>',
+  mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/>',
+  link:'<path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/>'
+};
+const cfgNavIco = txt => { const s = String(txt || '').toLowerCase();
+  const k = /c[oó]mo se ve|look/.test(s) ? 'eye' : /estilo|style/.test(s) ? 'brush' : /idioma|language/.test(s) ? 'globe' : /tama|size/.test(s) ? 'size' : /atajo|shortcut/.test(s) ? 'bolt'
+    : /color|colou?r/.test(s) ? 'palette' : /celular|phone/.test(s) ? 'phone' : /intro/.test(s) ? 'play' : /responden|answer/.test(s) ? 'chat' : /recuerdo|remember|memor/.test(s) ? 'brain' : /dictado|dictation/.test(s) ? 'mic' : /tus ias|your ais/.test(s) ? 'link' : 'sliders';
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + CFG_NAV_ICO[k] + '</svg>'; };
+function cfgSideMenu(o){
+  const card = o && $('.cfgcard', o), body = card && $('.cfgbody', card), tabs = card && $('.cfgtabs', card); if (!card || !body || !tabs || $('.cfgnav', card)) return;
+  const items = [];
+  $$('.cfgpane', body).forEach(p => $$('.cfglbl', p).forEach(l => items.push({ pane:p.dataset.pane, l })));
+  if (items.length < 2) return;
+  const nav = document.createElement('nav'); nav.className = 'cfgnav'; nav.setAttribute('aria-label', 'Secciones de Ajustes');
+  nav.innerHTML = items.map((it, i) => '<button type="button" class="cfgnav-i" data-ni="' + i + '">' + cfgNavIco(it.l.textContent) + '<span>' + esc(it.l.textContent) + '</span></button>').join('');
+  card.classList.add('cfg-side'); body.before(nav);
+  const btns = $$('.cfgnav-i', nav);
+  const mark = i => btns.forEach((b, k) => { const on = k === i; b.classList.toggle('on', on); if (on) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current'); if (on && nav.scrollWidth > nav.clientWidth + 4) b.scrollIntoView({ block:'nearest', inline:'nearest' }); });
+  const paneOn = () => { const p = $('.cfgpane:not([hidden])', body); return p ? p.dataset.pane : ''; };
+  let lock = 0;
+  const follow = () => {
+    if (Date.now() < lock) return;
+    const top = body.getBoundingClientRect().top + 48, pane = paneOn(); let best = -1;
+    items.forEach((it, i) => { if (it.pane === pane && it.l.getBoundingClientRect().top <= top) best = i; });
+    if (best < 0) best = items.findIndex(it => it.pane === pane);
+    mark(best);
+  };
+  nav.addEventListener('click', e => {
+    const b = e.target.closest('.cfgnav-i'); if (!b) return;
+    const it = items[+b.dataset.ni]; if (!it) return;
+    if (paneOn() !== it.pane){ const tb = $('[data-tab="' + it.pane + '"]', tabs); if (tb) tb.click(); }
+    lock = Date.now() + 700; mark(+b.dataset.ni);
+    requestAnimationFrame(() => { body.scrollTo({ top:Math.max(0, it.l.offsetTop - body.offsetTop - 6), behavior:reduce ? 'auto' : 'smooth' }); });
+  });
+  body.addEventListener('scroll', () => requestAnimationFrame(follow), { passive:true });
+  tabs.addEventListener('click', () => setTimeout(follow, 60));
+  setTimeout(follow, 80);
+}
+/* ===== v3.8 · Vista previa de temas en Ajustes
+   Antes de tocar «Guardar» ya ves cómo queda: una ventanita de SynthFlow (componente React VistaTemas, montado por
+   next/componentes/ajustes/PuenteVistaTemas.jsx) pintada con el tema que señalas o eliges, con tu estilo y tamaño.
+   En SynthFlow, además, la página de atrás cambia de color al instante; si cierras sin guardar, vuelve como estaba.
+   Los temas «Pronto» (Aurora y Oro negro) se pueden mirar, pero no elegir. ===== */
+let vtCur = null;
+function vtSend(){
+  const v = vtCur; if (!v || !v.host.isConnected) return;
+  const id = v.hover || v.draft.theme || 'synthz', T0 = THEMES.find(t => t[0] === id), locked = !!(T0 && T0[3]);
+  const d = { host:v.host, theme:id, ui:v.draft.ui === 'simple' ? 'simple' : 'full', size:v.draft.size === 'normal' ? 'normal' : 'compact', lang:lang(), locked, hovering:!!v.hover && id !== (v.draft.theme || 'synthz') };
+  window.__symphoriaVistaTemas = d;
+  try{ dispatchEvent(new CustomEvent('symphoria:vista-temas', { detail:d })); }catch(e){}
+  /* en vivo detrás de la ventana: solo en SynthFlow, con el estilo SynthFlow y con temas que ya se pueden usar */
+  if (v.chat){
+    const live = v.draft.ui !== 'simple' ? (!locked ? id : (v.draft.theme || 'synthz')) : null;
+    if (live && live !== 'synthz' && THEMES.some(t => t[0] === live && !t[3])) root.dataset.theme = live; else delete root.dataset.theme;
+  }
+}
+onLang(() => vtSend());
+function cfgThemePreview(o, draft){
+  const grid = $('#cfgTh', o); if (!grid || $('#cfgThPrev', o)) return;
+  const host = document.createElement('div'); host.id = 'cfgThPrev'; host.className = 'cfgthprev notr';
+  grid.after(host);
+  vtCur = { o, host, draft, hover:null, chat:!!document.getElementById('composer') || /chat(\.html)?$/.test(location.pathname) };
+  const me = vtCur;
+  $$('[data-th]', grid).forEach(b => {
+    const on = () => { me.hover = b.dataset.th; vtSend(); }, off = () => { if (me.hover === b.dataset.th){ me.hover = null; vtSend(); } };
+    b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') on(); }); b.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') off(); });
+    b.addEventListener('focus', on); b.addEventListener('blur', off);
+    /* el clic de 14 ya guardó el tema en el borrador; uno «Pronto» solo se muestra */
+    b.addEventListener('click', () => { me.hover = b.dataset.lock ? b.dataset.th : null; vtSend(); if (b.dataset.lock) toast(lang() === 'en' ? 'Coming soon: you can look at it, but not choose it yet.' : 'Llega pronto: puedes mirarlo, pero todavía no elegirlo.'); });
+  });
+  $$('[data-ui], [data-sz]', o).forEach(b => b.addEventListener('click', () => setTimeout(vtSend, 0)));
+  /* al cerrar (con o sin guardar) la página vuelve a lo que diga la configuración guardada */
+  const mo = new MutationObserver(() => { if (o.classList.contains('on') && o.isConnected) return; mo.disconnect(); if (vtCur === me) vtCur = null; window.__symphoriaVistaTemas = null; try{ dispatchEvent(new Event('symphoria:vista-temas-fin')); }catch(e){} cfgClasses(); });
+  mo.observe(o, { attributes:true, attributeFilter:['class'] });
+  vtSend();
+}
+/* ===== v3.8 · Uiverse (#5, glider): en las opciones de Ajustes (Estilo, Idioma, Tamaño, Barra, Intro) la elección ya no
+   salta de un botón a otro: una píldora con los colores del tema se desliza hasta la que tocas. Los botones siguen siendo
+   los mismos (aria-pressed), así que nada cambia para el teclado ni para los lectores de pantalla.
+   Con «Animaciones» apagadas la píldora aparece directo en su sitio. ===== */
+{
+  const glide = seg => {
+    let g = seg.querySelector(':scope > .uvg');
+    if (!g){ g = document.createElement('i'); g.className = 'uvg'; g.setAttribute('aria-hidden', 'true'); seg.prepend(g); seg.classList.add('uvg-on'); }
+    const b = seg.querySelector('button[aria-pressed="true"]');
+    if (!b || !b.offsetWidth){ g.style.opacity = '0'; return; }
+    g.style.opacity = '1';
+    g.style.transform = 'translate(' + b.offsetLeft + 'px,' + b.offsetTop + 'px)';
+    g.style.width = b.offsetWidth + 'px'; g.style.height = b.offsetHeight + 'px';
+  };
+  const all = () => document.querySelectorAll('.cfgseg').forEach(glide);
+  let raf = 0; const soon = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; all(); }); };
+  new MutationObserver(ms => { if (ms.some(m => m.type === 'childList' ? [...m.addedNodes].some(n => n.nodeType === 1 && (n.matches('.cfgseg,#cfgm') || n.querySelector('.cfgseg'))) : m.target.closest && m.target.closest('.cfgseg'))) soon(); })
+    .observe(document.documentElement, { childList:true, subtree:true, attributes:true, attributeFilter:['aria-pressed'] });
+  addEventListener('resize', soon, { passive:true });
+  /* las secciones de Ajustes se muestran/ocultan: al volverse visibles se recoloca */
+  document.addEventListener('click', e => { if (e.target.closest && e.target.closest('#cfgm')) setTimeout(soon, 30); }, true);
+}
 /* ---------- respuestas en vivo (streaming) ---------- */
 let ridN = 0;
 const newRid = () => DEV + ':' + Date.now().toString(36) + ':' + (++ridN);
 /* v3.6 · avisa cada vez que se gasta un mensaje de prueba (sin cuenta o la prueba guiada), con lo que queda de verdad según el servidor */
 function spentNote(before, after){
   if (!(before > after)) return;
-  try{ toast(after > 0 ? t('enerx.spent', { n:after }) : t('enerx.spent0')); }catch(e){}
+  try{ toast(after > 0 ? t(after === 1 ? 'enerx.spent1' : 'enerx.spent', { n:after }) : t('enerx.spent0')); }catch(e){}
 }
 async function askStream(p, messages, opts = {}, onDelta){
-  const sig = opts.signal, t0 = performance.now(); let acc = '', ttft = 0, usage = null, fin = '', cut = '', via = '', provX = '', real = '';
+  const sig = opts.signal, t0 = performance.now(); let acc = '', ttft = 0, usage = null, fin = '', cut = '', via = '', provX = '', real = '', swap = false;
   /* lo que la IA «piensa» (campo reasoning o etiquetas <think>) se separa de la respuesta y se muestra aparte */
   let raw = '', tagR = '', fieldR = '';
   const emitR = () => { if (opts.onReason) try{ opts.onReason(fieldR + tagR); }catch(e){} };
@@ -3141,7 +3383,7 @@ async function askStream(p, messages, opts = {}, onDelta){
     const text = acc.trim() || '(La IA devolvió una respuesta vacía.)';
     const prompt = usage && usage.prompt_tokens != null ? usage.prompt_tokens : Math.ceil(inChars / 4);
     const completion = usage && usage.completion_tokens != null ? usage.completion_tokens : est(text);
-    return { text, prompt, completion, ms:performance.now() - t0, ttft, model:opts.model, aborted:!!aborted, est:!usage, finish:fin, cut, rid:newRid(), via, prov:provX || undefined, real, reasoning:(fieldR + tagR).trim().slice(0, 8000) };
+    return { text, prompt, completion, ms:performance.now() - t0, ttft, model:opts.model, aborted:!!aborted, est:!usage, finish:fin, cut, rid:newRid(), via, prov:provX || undefined, real, swap, reasoning:(fieldR + tagR).trim().slice(0, 8000) };
   };
   const model0 = String(opts.model || state.model[p.id] || '');
   /* sin créditos de Puter: pasa sola a las IAs conectadas (el único aviso es «Usaste el saldo de este mes de Puter: sigo con las IAs conectadas») */
@@ -3193,6 +3435,7 @@ async function askStream(p, messages, opts = {}, onDelta){
   const body = viaSz ? { messages, model:model0, turn } : viaGroq ? { model:model0.replace(/^gq:/, ''), messages, stream:true, stream_options:{ include_usage:true } } : { model:model0.replace(/^or:/, ''), messages, stream:true, usage:{ include:true } };
   if (viaTeam) body.teamId = state.useTeam;
   if (opts.maxTokens) body.max_tokens = opts.maxTokens;
+  if (opts.effort && viaSz) body.effort = opts.effort;   /* v4.0 · el servidor usa el esfuerzo para decidir si la IA piensa antes (Alto) o responde directo (Bajo) */
   if (opts.effort && p.id === 'openrouter' && !viaSz && !viaGroq && !viaTrial) body.reasoning = { effort:opts.effort };   /* v2.3.1 · esfuerzo: OpenRouter lo ignora en las IA que no razonan */
   const ctl = new AbortController(); let idle = 0;
   const bump = () => { clearTimeout(idle); idle = setTimeout(() => ctl.abort(), 70000); };
@@ -3210,13 +3453,13 @@ async function askStream(p, messages, opts = {}, onDelta){
   }
   if (!res.ok && viaSz){
     clearTimeout(idle); const data = await res.json().catch(() => ({})), code = data.code || '';
-    if (code === 'sz_guest'){ szqSet({ guest:{ max:(SZQ.guest && SZQ.guest.max) || 5, used:(SZQ.guest && SZQ.guest.max) || 5 } }); telEv('limit', code); setTimeout(() => guestGate(), 350); }
+    if (code === 'sz_guest'){ szqSet({ guest:{ max:(SZQ.guest && SZQ.guest.max) || 5, used:(SZQ.guest && SZQ.guest.max) || 5, left:0 } }); telEv('limit', code); setTimeout(() => guestGate(), 350); }
     else if (/^sz_limit/.test(code)){ szqSet({ used:SZQ.limit }); telEv('limit', code); }
     else if (code === 'sz_off'){ szqSet({ on:false }); telEv('noai', 'las IAs conectadas no tienen llaves'); }
     else telEv('error', 'IAs conectadas ' + res.status + ' ' + code);
     throw Object.assign(new Error(typeof data.error === 'string' ? data.error : 'La IA no respondió. Intenta de nuevo en un momento.'), { status:res.status, sz:code || 'sz_err', limit:/^sz_limit/.test(code) || code === 'sz_guest', guest:code === 'sz_guest', raw:code, gone:code === 'sz_model' && model0 !== 'sz:auto', switchTo:code === 'sz_down' || code === 'sz_off' ? 'pu' : null });
   }
-  if (viaSz){ try{ real = decodeURIComponent(res.headers.get('x-sz-name') || ''); }catch(e){ real = ''; } const u = +res.headers.get('x-sz-used'), l = +res.headers.get('x-sz-limit'), gq = /^(\d+)\/(\d+)$/.exec(res.headers.get('x-sz-guest') || ''); const g0 = SZQ.guest && !signedish() ? guestLeft() : null; if (l) szqSet(Object.assign({ on:true, used:u || 0, limit:l }, gq ? { guest:{ used:+gq[1], max:+gq[2] } } : {})); if (gq && g0 != null) spentNote(g0, guestLeft()); }
+  if (viaSz){ try{ real = decodeURIComponent(res.headers.get('x-sz-name') || ''); }catch(e){ real = ''; } swap = res.headers.get('x-sz-fallback') === '1';   /* v3.7 · la IA elegida no estaba o no ve fotos: respondió otra y se dice */ const u = +res.headers.get('x-sz-used'), l = +res.headers.get('x-sz-limit'), gq = /^(\d+)\/(\d+)(?:\/(\d+))?$/.exec(res.headers.get('x-sz-guest') || ''); const g0 = SZQ.guest && !signedish() ? guestLeft() : null; if (l) szqSet(Object.assign({ on:true, used:u || 0, limit:l }, gq ? { guest:{ used:+gq[1], max:+gq[2], left:gq[3] != null ? +gq[3] : null } } : {})); if (gq && g0 != null) spentNote(g0, guestLeft()); }
   if (viaTrial){ const t = trialGet() || {}; const l = res.headers.get('x-trial-left'), l0 = t.left; if (l != null){ t.left = +l; trialSet(t); if (res.headers.get('x-trial-spent') !== '0' && l0 != null) spentNote(+l0, +l); } via = res.headers.get('x-trial-provider') || ''; }
   if (!res.ok){ clearTimeout(idle); const data = await res.json().catch(() => ({})); if (viaTeam && typeof data.error === 'string') throw Object.assign(new Error('Equipo: ' + data.error), { status:res.status, switchTo:res.status === 429 ? 'pu' : null }); const raw = data && data.error ? String(data.error.message || data.error) : ''; throw Object.assign(new Error(friendly(res.status, data, p)), { status:res.status, raw, gone:modelGone(res.status, raw), switchTo: p.id === 'openrouter' && (res.status === 429 || res.status === 402) ? 'pu' : null }); }
   if (!/event-stream/.test(res.headers.get('content-type') || '') || !res.body){
@@ -3235,7 +3478,7 @@ async function askStream(p, messages, opts = {}, onDelta){
         if (!line.startsWith('data:')) continue;
         const d = line.slice(5).trim(); if (d === '[DONE]') continue;
         let j; try{ j = JSON.parse(d); }catch(e){ continue; }
-        if (j.sz){ szqSet({ used:+j.sz.used || SZQ.used, limit:+j.sz.limit || SZQ.limit }); if (!usage && j.sz.spent) usage = { prompt_tokens:Math.ceil(inChars / 4), completion_tokens:Math.max(0, j.sz.spent - Math.ceil(inChars / 4)) }; continue; }
+        if (j.sz){ szqSet({ used:+j.sz.used || SZQ.used, limit:+j.sz.limit || SZQ.limit }); if (j.sz.spent){ const pp = Math.min(+j.sz.spent, Math.ceil(inChars / 4)); usage = { prompt_tokens:pp, completion_tokens:+j.sz.spent - pp }; }   /* v3.7 · lo que descontó el servidor es lo que se muestra: así «usó X %» y la pila cuadran */ continue; }
         if (j.error){ if (acc){ cut = String(j.error.message || 'error'); return done(false); } const raw = String(j.error.message || ''); throw Object.assign(new Error(friendly(+j.error.code || 502, j, p)), { status:+j.error.code || 502, raw, gone:modelGone(+j.error.code || 502, raw) }); }
         if (j.usage) usage = j.usage; else if (j.x_groq && j.x_groq.usage) usage = j.x_groq.usage;
         const ch = (j.choices || [])[0]; if (ch && ch.delta){ pushR(ch.delta.reasoning); pushR(ch.delta.reasoning_content); if (typeof ch.delta.content === 'string') push(ch.delta.content); }
@@ -3459,7 +3702,7 @@ function guestGate(o = {}){
   const el = document.createElement('div'); el.id = 'szGate'; el.className = 'szm';
   el.innerHTML = '<div class="tcard" role="dialog" aria-modal="true" aria-label="Entra para seguir"><div class="word">' + zWord('Synth') + '</div><div class="tn">SIGUE FLOWIANDO</div>'
     + '<div class="tb"><div class="gtface" aria-hidden="true">' + face('guino', 64) + '</div><h3>Para seguir FlowIAndo, entra a tu cuenta</h3>'
-    + '<p>Ya usaste tus ' + (g.max || 5) + ' mensajes de prueba de hoy sin cuenta. Crear tu cuenta es <b>gratis</b>, no pide correo ni tarjeta, y te da mucho más límite cada día. Además tus chats te siguen a cualquier celular o computador.</p>'
+    + '<p>Ya usaste tus mensajes de hoy sin cuenta. Crear tu cuenta es <b>gratis</b>, no pide correo ni tarjeta, y te da mucho más límite cada día. Además tus chats te siguen a cualquier celular o computador.</p>'
     + '<div id="gateBox"></div></div><div class="tbtn" style="margin-top:14px"><button class="lnk" type="button" data-close>Ahora no</button>' + (pu ? '<button class="lnk" type="button" data-pu>Seguir con mi Puter</button>' : '') + '</div></div>';
   document.body.appendChild(el); requestAnimationFrame(() => el.classList.add('on'));
   $('.tcard', el).animate([{ transform:'scale(.92) translateY(20px)', opacity:0, filter:'blur(8px)' }, { transform:'none', opacity:1, filter:'blur(0)' }], { duration:650, easing:'cubic-bezier(.22,1,.36,1)' });
@@ -3480,8 +3723,10 @@ accHooks.push(k => { if (k === 'out') root.classList.remove('signed'); });
 addEventListener('synthz-acc', accSettled); accHooks.push(k => { if (k === 'pull') accSettled(); });
 function szConfirm(title, text, ok, danger, no){
   return new Promise(res => {
-    const o = document.createElement('div'); o.className = 'szm szc';
-    o.innerHTML = '<div class="tcard" role="alertdialog" aria-modal="true" aria-label="' + esc(title) + '"><div class="word">' + zWord('Synth') + '</div><div class="tb"><h3>' + esc(title) + '</h3><p>' + esc(text) + '</p></div><div class="tbtn" style="margin-top:16px"><button class="lnk" type="button" data-close>' + esc(no || 'Cancelar') + '</button><button class="btn sm' + (danger ? ' warn' : '') + '" type="button" data-ok>' + esc(ok || 'Aceptar') + '</button></div></div>';
+    const o = document.createElement('div'); o.className = 'szm szc' + (danger ? ' szbru' : '');
+    /* v3.8 · lo que no se puede deshacer va en una tarjeta brutalista (idea del Uiverse #52): borde grueso, sombra dura y un encabezado «OJO» */
+    const head = danger ? '<div class="bru-h" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2z"/><path d="M12 10v4M12 18h.01"/></svg><span class="notr">' + (lang() === 'en' ? 'CAREFUL' : 'OJO') + '</span><i></i></div>' : '<div class="word">' + zWord('Synth') + '</div>';
+    o.innerHTML = '<div class="tcard" role="alertdialog" aria-modal="true" aria-label="' + esc(title) + '">' + head + '<div class="tb"><h3>' + esc(title) + '</h3><p>' + esc(text) + '</p></div><div class="tbtn" style="margin-top:16px"><button class="lnk" type="button" data-close>' + esc(no || 'Cancelar') + '</button><button class="btn sm' + (danger ? ' warn' : '') + '" type="button" data-ok>' + esc(ok || 'Aceptar') + '</button></div></div>';
     document.body.appendChild(o); requestAnimationFrame(() => o.classList.add('on'));
     const back = document.activeElement; let gone = false;
     const out = v => { if (gone) return; gone = true; removeEventListener('keydown', key, true); o.classList.remove('on'); setTimeout(() => o.remove(), 400); try{ if (back && back.focus) back.focus(); }catch(e){} res(v); };
@@ -3506,17 +3751,20 @@ const EXP = [
   ['math', 'matemáticas', /math|qwq|deepseek-r|\bo4\b|minerva|mathstral/i]
 ];
 const EXP_LABEL = Object.fromEntries(EXP.map(([k, l]) => [k, l]));
+/* v3.7 · en inglés la línea sale entera en inglés (antes: «Expert in código y think carefully…») */
+const EXP_EN = { code:'code', reason:'thinking carefully before answering', write:'writing', fast:'quick answers', vision:'images and PDFs', long:'very long texts', lang:'Spanish and other languages', math:'math' };
 function expertOf(m){
   if (!m) return { tags:[], line:'' };
   const hay = (m.id + ' ' + m.name + ' ' + (m.desc || '')).toLowerCase(), tags = [];
   EXP.forEach(([k, , re]) => {
     if (k === 'vision' ? m.vision : k === 'long' ? m.ctx >= 200000 : k === 'reason' ? (m.reasoning || re.test(hay)) : re.test(hay)) tags.push(k);
   });
-  if (!tags.length) return { tags, line:'Uso general' };          /* sin datos de especialidad: no inventamos una */
+  const en = LANG === 'en';
+  if (!tags.length) return { tags, line:en ? 'General use' : 'Uso general' };          /* sin datos de especialidad: no inventamos una */
   const order = ['code', 'reason', 'vision', 'math', 'write', 'long', 'fast', 'lang'];
   tags.sort((a, b) => order.indexOf(a) - order.indexOf(b));
-  const top = tags.slice(0, 2).map(k => EXP_LABEL[k]);
-  return { tags, line:'Experta en ' + (top.length > 1 ? top[0] + ' y ' + top[1] : top[0]) };
+  const top = tags.slice(0, 2).map(k => (en ? EXP_EN : EXP_LABEL)[k]);
+  return { tags, line:(en ? 'Expert in ' : 'Experta en ') + (top.length > 1 ? top[0] + (en ? ' and ' : ' y ') + top[1] : top[0]) };
 }
 /* ---------- encuesta: elige las IA que mejor te sirven ---------- */
 const SURVEY = [
@@ -4325,25 +4573,117 @@ function plansModal(){
   if ($('#szPlans')) return;
   const me = planOf(), o = document.createElement('div'); o.id = 'szPlans'; o.className = 'szm';
   o.innerHTML = '<div class="tcard plans" role="dialog" aria-modal="true" aria-label="Planes de SymphorIA"><div class="word">' + zWord('Synth') + '</div><div class="tn">PLANES</div><div class="tb">'
-    + '<h3>Elige cómo FlowIAr</h3><p>Las IAs gratis siempre van a estar. Los planes de pago llegan pronto: hoy nadie puede pagar y no se cobra nada.</p>'
+    + '<h3>Elige cómo FlowIAr</h3><p>Las IAs gratis siempre van a estar. Los planes de pago llegan pronto: hoy nadie puede pagar y no se cobra nada. Toca «Me interesa» en el que quieras y sabremos cuál abrir primero.</p>'
     + '<div class="pl-grid">' + PLANS.map((P, i) => '<article class="pl-card' + (P.id === me ? ' me' : '') + '" style="--pc:' + P.c + ';--i:' + i + '"><header><b>' + esc(P.n) + '</b>' + (P.id === me ? '<em>Tu plan</em>' : '') + '</header><span class="pl-p">' + esc(P.p) + '</span><ul>' + P.L.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>'
-      + (P.id === me ? '<span class="pl-on">Activo</span>' : P.id === 'chispa' ? '' : '<button type="button" class="btn sm ghost" disabled aria-disabled="true">Pronto</button>') + '</article>').join('') + '</div>'
+      + (P.id === me ? '<span class="pl-on">Activo</span>' : P.id === 'chispa' ? '' : '<button type="button" class="pl-quiero" data-plan="' + P.id + '"></button><small class="pl-n" data-plan="' + P.id + '"></small>') + '</article>').join('') + '</div>'
+    + '<form class="pl-correo" hidden novalidate><label for="plMail"></label><div><input id="plMail" type="email" autocomplete="email" inputmode="email" placeholder="Tu correo"><button type="submit" class="btn sm">Avísame</button></div><p class="pl-aviso" role="status"></p></form>'
     + '<p class="cnote">' + (me === 'orquesta' ? 'Eres del equipo: tienes todo como en Orquesta para probar la página: sin límite de EnerX, imágenes y búsquedas sin tope propio, A.L.I.A.S. (menú «⋯») y los colores Aurora y Oro negro.' : 'Cuando lleguen los pagos verás aquí cuánto te queda de cada cosa, y podrás cancelar con un clic.') + '</p>'
     + '<div class="tbtn"><button class="btn sm" type="button" data-close>Listo</button></div></div></div>';
   document.body.appendChild(o); requestAnimationFrame(() => o.classList.add('on'));
   const close = () => { o.classList.remove('on'); setTimeout(() => o.remove(), 420); };
+  plansDoor(o);
   $('[data-close]', o).addEventListener('click', close); o.addEventListener('pointerdown', e => { if (e.target === o) close(); });
   addEventListener('keydown', function k(e){ if (e.key === 'Escape'){ close(); removeEventListener('keydown', k); } });
+}
+
+/* v3.8 · Fase 3 · los planes de pago son una puerta falsa: «Me interesa» pide el correo; v4.2 (Sammuel, 3 nov) solo cuenta como interesado
+   quien DEJA SU CORREO (el clic se guarda aparte y no se muestra), en el mismo lugar que los votos de «El laboratorio» de la portada (api/config.js › puertas). Nunca se cobra nada. */
+const PL_VK = 'synthz:puertas';
+let plCuentas = {};
+function plansDoor(o){
+  let votos = {}; try{ votos = JSON.parse(localStorage.getItem(PL_VK) || '{}') || {}; }catch(e){}
+  let ultimo = '';
+  const nom = id => (PLANS.find(P => P.id === id) || {}).n || '';
+  const pinta = () => {
+    $$('.pl-quiero', o).forEach(b => { const k = 'plan-' + b.dataset.plan, si = !!votos[k];
+      b.textContent = si ? '✓ Te avisamos' : '✦ Me interesa'; b.classList.toggle('si', si); b.setAttribute('aria-pressed', si); });
+    $$('.pl-n', o).forEach(s => { const n = plCuentas['plan-' + s.dataset.plan] || 0; s.textContent = n ? (n === 1 ? '1 persona dejó su correo' : n + ' personas dejaron su correo') : ''; });
+  };
+  pinta();
+  fetch('/api/config?puertas=1').then(r => r.ok ? r.json() : null).then(d => { if (d && d.puertas){ plCuentas = d.puertas; pinta(); } }).catch(() => {});
+  const manda = (id, email) => fetch('/api/config', { method:'POST', headers:{ 'content-type':'application/json' }, body:JSON.stringify({ action:'puerta', id, email:email || undefined, lang:(window.SZ && SZ.lang && SZ.lang()) || 'es' }) })
+    .then(r => r.ok ? r.json() : Promise.reject()).then(d => { if (d && typeof d.n === 'number') plCuentas[id] = d.n; if (email && d && d.saved){ votos[id] = Date.now(); try{ localStorage.setItem(PL_VK, JSON.stringify(votos)); }catch(er){} } pinta(); return true; });
+  const f = $('.pl-correo', o), av = $('.pl-aviso', f);
+  o.addEventListener('click', e => {
+    const b = e.target.closest('.pl-quiero'); if (!b) return;
+    const id = 'plan-' + b.dataset.plan; ultimo = id;
+    if (votos[id]) return;
+    manda(id).catch(() => {});   /* solo el clic, aparte: todavía no cuenta como interesado */
+    $('label', f).textContent = 'Para contar tu interés en ' + nom(b.dataset.plan) + ', déjanos tu correo. Te escribimos solo cuando abra.';
+    av.textContent = ''; $('div', f).hidden = false; f.hidden = false; $('input', f).focus({ preventScroll:true });
+  });
+  f.addEventListener('submit', e => {
+    e.preventDefault(); const c = $('input', f).value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(c)){ av.textContent = 'Ese correo no parece válido.'; return; }
+    av.textContent = '…';
+    manda(ultimo, c).then(() => { av.textContent = 'Listo: te escribimos solo cuando abra. Nada se cobra.'; $('input', f).value = ''; $('div', f).hidden = true; const b = $('.pl-quiero[data-plan="' + ultimo.slice(5) + '"]', o); if (b){ const r = b.getBoundingClientRect(); try{ if (!document.documentElement.classList.contains('noanim')) burst(r.left + r.width / 2, r.top + r.height / 2, ['#ffd27a', '#9fffd6', '#a98bff', '#ff3d9a'], 22); }catch(er){} } }).catch(() => { av.textContent = 'No pudimos guardarlo ahora. Intenta más tarde.'; });
+  });
+}
+/* ---------- v3.8 · CTAs que chispean (recurso de estilo Uiverse #54, «Generate Site» con partículas) ----------
+   Solo en los botones de CREAR o EMPEZAR algo: al pasar el mouse (o tocar) saltan estrellitas de cuatro puntas que suben y se apagan.
+   No cambia lo que hace el botón. Con Animaciones apagado no sale nada. Para sumar un botón: agrega su selector a CHISPA_SEL. */
+const CHISPA_SEL = '#startBtn,.flowbtn,.pl-quiero,.pj-form .btn[type=submit],#imgBtn,.chispea';
+const CHISPA_COL = ['#ffd27a', '#9fffd6', '#b48cff', '#ff7ac0', '#7fe3ff'];
+const chispaQuieto = () => document.documentElement.classList.contains('noanim') || (typeof reduce !== 'undefined' && reduce);
+function chispas(el, n = 9){
+  if (chispaQuieto() || !el.isConnected) return;
+  const r = el.getBoundingClientRect(); if (!r.width) return;
+  for (let i = 0; i < n; i++){
+    const s = document.createElement('i'); s.className = 'sz-chispa'; s.setAttribute('aria-hidden', 'true');
+    const x = r.left + Math.random() * r.width, y = r.top + r.height * (.2 + Math.random() * .6), z = 9 + Math.random() * 8;
+    s.style.cssText = 'left:' + x.toFixed(1) + 'px;top:' + y.toFixed(1) + 'px;width:' + z.toFixed(1) + 'px;height:' + z.toFixed(1) + 'px;color:' + CHISPA_COL[i % CHISPA_COL.length]
+      + ';--dx:' + (Math.random() * 40 - 20).toFixed(1) + 'px;--dy:' + (-20 - Math.random() * 34).toFixed(1) + 'px;animation-delay:' + (i * 45) + 'ms';
+    document.body.appendChild(s); setTimeout(() => s.remove(), 1100 + i * 45);
+  }
+}
+let chispaUlt = null, chispaT = 0;
+addEventListener('pointerover', e => {
+  const b = e.target.closest && e.target.closest(CHISPA_SEL); if (!b || b === chispaUlt) return;
+  chispaUlt = b; const now = Date.now(); if (now - chispaT < 350) return; chispaT = now; chispas(b);
+}, { passive:true });
+addEventListener('pointerout', e => { if (chispaUlt && !chispaUlt.contains(e.relatedTarget)) chispaUlt = null; }, { passive:true });
+addEventListener('click', e => { const b = e.target.closest && e.target.closest(CHISPA_SEL); if (b) chispas(b, 10); }, true);
+addEventListener('focusin', e => { const b = e.target.closest && e.target.closest(CHISPA_SEL); if (b && b.matches(':focus-visible')) chispas(b, 5); });
+/* ---------- v4.1 · la portada (index.html) es solo para gente nueva ----------
+   Quien ya tiene cuenta o ya entró antes va directo a SynthFlow (eso lo hace el guardián que está
+   en el <head> de index.html, antes de pintar nada). La única forma de volver a ver la portada es la
+   pantallita «Ya tengo el Flow / Soy nuevo»: «Soy nuevo» la abre, «Ya tengo el Flow» entra directo.
+   La decisión vive en este dispositivo (synthz:portada = { v:'app'|'nuevo', t }) y viaja con la cuenta
+   (prefs.portada): gana la más reciente. Si no hay ningún dato, es la primera visita de verdad. */
+const PORTADA_KEY = 'synthz:portada';
+function portadaGet(){
+  try{ const d = JSON.parse(localStorage.getItem(PORTADA_KEY) || 'null'); if (d && (d.v === 'app' || d.v === 'nuevo')) return { v:d.v, t:+d.t || 0 }; }catch(e){}
+  return null;
+}
+function portadaSet(v, t){
+  if (v !== 'app' && v !== 'nuevo') return;
+  try{ localStorage.setItem(PORTADA_KEY, JSON.stringify({ v, t:t || Date.now() })); }catch(e){}
+  if (!t) try{ accSchedule(); }catch(e){}   /* decisión nueva de esta persona: que viaje a su cuenta */
+}
+/* lo que trae la cuenta: solo se acepta si es más nuevo que lo de este dispositivo */
+function portadaMerge(p){
+  if (!p || (p.v !== 'app' && p.v !== 'nuevo')) return;
+  const mine = portadaGet();
+  if (!mine || (+p.t || 0) > mine.t) portadaSet(p.v, +p.t || 1);
+}
+/* ya entró a la app de verdad: SynthFlow lo marca al abrir (sirve aunque nunca haya contestado la pantallita) */
+const PAGE_NOW = (location.pathname.split('/').pop() || 'index.html').replace(/\.html$/, '') || 'index';
+if (PAGE_NOW === 'chat') try{ localStorage.setItem('synthz:entro', String(Date.now())); }catch(e){}
+/* ¿esta persona ya es conocida? (lo mismo que mira el guardián de index.html, para el resto del sitio) */
+function portadaKnown(){
+  const d = portadaGet(); if (d) return d.v === 'app';
+  try{ return !!(localStorage.getItem('synthz:sess') || localStorage.getItem('synthz:entro')); }catch(e){ return false; }
 }
 window.SZ = { I18N, LANGS, t, lang, setLang, onLang, i18nApply, root, $, $$, clamp, fmt, reduce, today, sleepRaw, esc, est, Z_PATH, ICONS, ico, zWord, API, MANUAL, ALL, byId,
   get state(){ return state; }, set state(v){ state = v; normalize(); },
   normalize, cleanUsage, cleanChats, cleanStrMap, save, total, addUsage, resetUsage, estAll, todayEst, todayReq, providerBalance, balanceHtml, splitHtml, syncNote, helpGuide, smoothDetails, szPrompt, swapDir, swapDir, get face(){ return face; }, get FACE_GOOD(){ return FACE_GOOD; }, get randomGoodFace(){ return randomGoodFace; }, get welcomeBack(){ return welcomeBack; }, get wasAway(){ return wasAway; }, accSignOutAll, accClaim, ROLE_NAME, trialGet, trialSet, trialStart, legacyRow, cleanLedger, mergeLedger, DEV, hooks, toast, hydrateIcons, md, countTo,
-  BRAND, SPACE, AURORA, isFlow, flowWord, flowOrb, LOGO_Z, fileIco, gIcon, giFill, giFile, zMark, get synBody(){ return synBody; }, get synSet(){ return synSet; }, get SPOSE(){ return SPOSE; }, charify, typeIn, showAll, getJSON, parseModels, loadCatalog, fetchCatalog, vendorLabel, vendorColor, burst, friendly, netMsg, fetchModels, refreshModels, verify, ask, metaOf, history, S, mirrorType, thud, portalOut, portalBack, portalArrive, portalFill, portalReveal, waterIn, ctxMenu, SXC, coins, ACC, accHooks, accStart, accPush, accSignOut, accName, accHandle, securityModal, recoveryPanel, MARK_HTML, expertOf, EXP_LABEL, surveyModal, surveyPicks, surveyScore, orGuide, profileModal, puterLogo, PUTER_LOGO, api, accConfig, accDelete, saveProfile, avatarHtml, myAvatar, grad, tint, TINTS, loadGsi, SESS_get:() => SESS, CFG, PERF, saveCfg, cfgModal, cfgChooser, applyCfg, smoothWheel, orbitBg, authBox, isBlocked, lowEnd, askStream, mkReveal, reveals, chatsReady, IDB, provOf, totalAll, todayAll, BRANDS, brandOf, glassIcon, PIXART, pixelRun, pixelGrid, workView, workSaved, mdLoad, MDLIB, SZ_P, SZQ, SZ_AUTO, szqSet, msgsLeft, msgsTotal, coinsOf, coinsLeft, coinsTotal, coinsFmt, coinsShort, coinNote, limTxt, limShort, limLvl, limPct, limRing, battPct, limBar, szCatalog, szHeaders, guestGate, guestFull, isGuestQ, setTurn, puterOut, puterOutNote, TEL, telEv, telBeat, DEVH, szConfirm, cfgPreset, CFG_KEYS, cfgClasses, get SND(){ return SND; }, get HAND(){ return HAND; }, get feedbackModal(){ return feedbackModal; }, get guideChooser(){ return guideChooser; }, DRIVE, isBad, markBad, markGood, modelGone, badReady, GROQ_P, get BOT(){ return BOTAPI; }, get EV(){ return EV; }, get lipSync(){ return lipSync; }, get ballFace(){ return ballFace; }, get guideAsk(){ return guideAsk; }, get GTOPICS(){ return GTOPICS; }, get whatsNew(){ return whatsNew; }, signedish, cfgLinks, memAddCore, memPanel, menuOpen, menuClose, MICO, appInstall, appPromo, appStandalone, appPhone, plansModal, planOf };
+  BRAND, SPACE, AURORA, isFlow, flowWord, flowOrb, LOGO_Z, fileIco, gIcon, giFill, giFile, zMark, get synBody(){ return synBody; }, get synSet(){ return synSet; }, get SPOSE(){ return SPOSE; }, charify, typeIn, showAll, getJSON, parseModels, loadCatalog, fetchCatalog, vendorLabel, vendorColor, burst, friendly, netMsg, fetchModels, refreshModels, verify, ask, metaOf, history, S, mirrorType, thud, portalOut, portalBack, portalArrive, portalFill, portalReveal, waterIn, ctxMenu, SXC, coins, ACC, accHooks, accStart, accPush, accSignOut, accName, accHandle, securityModal, recoveryPanel, MARK_HTML, expertOf, EXP_LABEL, surveyModal, surveyPicks, surveyScore, orGuide, profileModal, puterLogo, PUTER_LOGO, api, accConfig, accDelete, saveProfile, avatarHtml, myAvatar, grad, tint, TINTS, loadGsi, SESS_get:() => SESS, CFG, PERF, saveCfg, cfgModal, cfgChooser, applyCfg, smoothWheel, orbitBg, authBox, isBlocked, lowEnd, askStream, mkReveal, reveals, chatsReady, IDB, provOf, totalAll, todayAll, BRANDS, brandOf, glassIcon, PIXART, pixelRun, pixelGrid, workView, workSaved, mdLoad, MDLIB, SZ_P, SZQ, SZ_AUTO, szqSet, msgsLeft, msgsTotal, coinsOf, coinsLeft, coinsTotal, coinsFmt, coinsShort, coinNote, limTxt, limShort, limLvl, limPct, limRing, battPct, limBar, szCatalog, szHeaders, guestGate, guestFull, guestLeft, isGuestQ, setTurn, puterOut, puterOutNote, TEL, telEv, telBeat, DEVH, szConfirm, cfgPreset, CFG_KEYS, cfgClasses, get SND(){ return SND; }, get HAND(){ return HAND; }, get feedbackModal(){ return feedbackModal; }, get guideChooser(){ return guideChooser; }, DRIVE, isBad, markBad, markSick, markGood, modelGone, badReady, GROQ_P, get BOT(){ return BOTAPI; }, get EV(){ return EV; }, get lipSync(){ return lipSync; }, get ballFace(){ return ballFace; }, get guideAsk(){ return guideAsk; }, get GTOPICS(){ return GTOPICS; }, get whatsNew(){ return whatsNew; }, signedish, cfgLinks, memAddCore, memList, memPanel, menuOpen, menuClose, MICO, appInstall, appPromo, appStandalone, appPhone, plansModal, planOf };
 /* v3.4 · el «turno» del mensaje actual: la revisión de calidad viaja en el mismo turno (no cuenta como otro mensaje sin cuenta) */
 /* v3.4 · SynthonIA (synthonia.js): lo que necesita de core, y cuándo se carga */
 window.SZ.synReady = synReady;
-window.SZ.__syn = { root, $, $$, clamp, CFG, PERF, reduce, sleepRaw, esc, isFlow, BRAND, zWord, t, onLang, ENERX, trStr, ACC, accHooks, api, accName, toast, pixelGrid, pixelRun, typeIn, SZQ, szCatalog, telPage, telEv, burst, portalOut, portalLock, authBox, cfgModal, plansModal,
-  get LANG(){ return LANG; }, get SESS(){ return SESS; }, ready:synArrive };
+window.SZ.portada = { get:portadaGet, set:portadaSet, known:portadaKnown };   /* v4.1 · portada solo para gente nueva */
+window.SZ.__syn = { root, $, $$, clamp, CFG, PERF, reduce, sleepRaw, esc, isFlow, BRAND, zWord, t, onLang, ENERX, trStr, ACC, accHooks, api, accName, toast, pixelGrid, pixelRun, typeIn, SZQ, szCatalog, telPage, telEv, burst, portalOut, portalLock, authBox, cfgModal, plansModal, memAddCore, memList,
+  cfgFetch, get LANG(){ return LANG; }, get SESS(){ return SESS; }, ready:synArrive };
 /* la portada la trae con su propia etiqueta (SynthonIA es la portada); las demás páginas, cuando ya cargaron */
 if (document.readyState === 'complete') setTimeout(synLoad, 300); else addEventListener('load', () => (window.requestIdleCallback || setTimeout)(synLoad, { timeout:1200 }), { once:true });
 window.SZ.turnNow = () => TURN && Date.now() - TURN.at < 600000 ? TURN.id : '';

@@ -1,9 +1,9 @@
 User-agent: *
 Allow: /
 Disallow: /api/
-Disallow: /pulsem.html
+Disallow: /pulsem
 Disallow: /pulso
 Disallow: /alias
-Disallow: /alias.html
+Disallow: /sintetico
 
-Sitemap: https://synthz-style.vercel.app/sitemap.xml
+Sitemap: https://symphoria.pages.dev/sitemap.xml

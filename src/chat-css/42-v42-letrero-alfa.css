@@ -1,0 +1,82 @@
+/* ===== v4.2 · Letrero «¡BIENVENIDO A LA ALFA!» (next/componentes/synthflow/LetreroAlfa.jsx) =====
+   Letrero de teatro con bombillos que corren, letras que se prenden una por una y, por detrás, el Pase Alfa holográfico.
+   Usa los colores del tema activo (--gold/--wine), Simple (--sacc/--sbg) y se queda quieto con html.noanim o reduced-motion. */
+.la{position:fixed;inset:0;z-index:440;display:grid;place-items:center;padding:16px;background:rgba(6,5,12,0);backdrop-filter:blur(0);transition:background .4s ease,backdrop-filter .4s ease}
+.la.on{background:rgba(6,5,12,.62);backdrop-filter:blur(6px)}
+.la-stage{position:relative;width:min(640px,100%);perspective:1600px;opacity:0;transform:translateY(-40px) rotateX(18deg) scale(.94);transition:opacity .45s ease,transform .7s cubic-bezier(.2,1.3,.4,1)}
+.la.on .la-stage{opacity:1;transform:none}
+.la-card{position:relative;display:grid;transform-style:preserve-3d;transition:transform .8s cubic-bezier(.3,1.2,.4,1)}
+.la-card.flip{transform:rotateY(180deg)}
+.la-front,.la-back{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:26px;padding:42px 34px 28px;color:var(--text,#f3eef8);text-align:center}
+.la-back{transform:rotateY(180deg);padding:28px}
+/* el letrero: madera oscura con marco dorado, como marquesina de teatro */
+.la-front{position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:center;align-items:center;background:radial-gradient(120% 80% at 50% 0%,rgba(var(--gold-rgb,230,182,95),.22),transparent 60%),linear-gradient(170deg,#1d1426,#120c19 70%);border:3px solid var(--gold,#e6b65f);box-shadow:0 0 0 6px #120c19,0 0 0 8px rgba(var(--gold-rgb,230,182,95),.55),0 30px 90px rgba(0,0,0,.6),0 0 80px rgba(var(--gold-rgb,230,182,95),.25)}
+.la-back{background:linear-gradient(170deg,#18121f,#0f0b15);border:1px solid rgba(var(--gold-rgb,230,182,95),.4);box-shadow:0 30px 90px rgba(0,0,0,.6)}
+/* bombillos: 13 arriba y 13 abajo, se prenden en cadena */
+.la-bulbs{position:absolute;inset:12px 18px;pointer-events:none}
+.la-bulbs i{position:absolute;top:0;left:calc(var(--i) * 100% / 12);width:9px;height:9px;margin-left:-4.5px;border-radius:50%;background:#fff3c4;box-shadow:0 0 8px 2px rgba(255,214,120,.85),0 0 18px rgba(var(--gold-rgb,230,182,95),.7);animation:laBulb 1.3s steps(1) infinite;animation-delay:calc(var(--i) * -.1s)}
+.la-bulbs i:nth-child(n+14){top:auto;bottom:0;left:calc((25 - var(--i)) * 100% / 12)}
+@keyframes laBulb{0%,100%{opacity:1}50%{opacity:.18;box-shadow:none}}
+.la-kick{margin:6px 0 10px;font:700 11.5px/1 var(--sans,inherit);letter-spacing:.24em;text-transform:uppercase;color:var(--gold,#e6b65f);opacity:0;animation:laUp .6s .2s ease forwards}
+/* las letras de neón: cada una «se enciende» con un parpadeo */
+.la-word{margin:0 0 14px;gap:0 .3em;font:900 clamp(30px,7.2vw,54px)/1.05 var(--sans,'Inter',system-ui,sans-serif);letter-spacing:.01em;display:flex;flex-wrap:wrap;justify-content:center}
+.la-word .w span{display:inline-block;color:#fff8e6;opacity:.12;text-shadow:none;animation:laNeon .9s var(--d) forwards}
+.la-word .w{display:inline-flex;white-space:nowrap}
+@keyframes laNeon{0%{opacity:.12}10%{opacity:1;text-shadow:0 0 6px #fff,0 0 18px var(--gold,#e6b65f)}20%{opacity:.25;text-shadow:none}34%,100%{opacity:1;text-shadow:0 0 4px rgba(255,255,255,.9),0 0 14px var(--gold,#e6b65f),0 0 34px rgba(var(--wine-rgb,201,86,108),.85)}}
+.la.on .la-word .w span{animation-play-state:running}
+.la-sub{max-width:460px;margin:0 auto 16px;color:var(--soft,#d6cfe0);font-size:15.5px;line-height:1.55;opacity:0;animation:laUp .6s 1.15s ease forwards}
+.la-perks{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:0 0 22px;padding:0;list-style:none}
+.la-perks li{padding:7px 13px;border-radius:999px;border:1px solid rgba(var(--gold-rgb,230,182,95),.4);background:rgba(var(--gold-rgb,230,182,95),.08);font-size:13px;color:var(--text,#f3eef8);opacity:0;animation:laUp .5s var(--d) ease forwards}
+.la-perks li::before{content:'✦ ';color:var(--gold,#e6b65f)}
+@keyframes laUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.la-acts{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.la-b{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:10px 20px;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.18));background:rgba(255,255,255,.06);color:var(--text,#f3eef8);font:600 15px var(--sans,inherit);cursor:pointer;transition:background .2s,transform .2s,box-shadow .2s}
+.la-b svg{width:20px;height:20px}
+.la-b:hover{background:rgba(255,255,255,.12);transform:translateY(-1px)}
+.la-b:focus-visible,.la-x:focus-visible{outline:3px solid #b8c4ff;outline-offset:3px}
+.la-go{border-color:transparent;color:#1b1220;background:linear-gradient(120deg,var(--gold,#e6b65f),color-mix(in srgb,var(--gold,#e6b65f) 55%,var(--wine,#c9566c)));box-shadow:0 8px 26px rgba(var(--gold-rgb,230,182,95),.35)}
+.la-go:hover{background:linear-gradient(120deg,var(--gold,#e6b65f),color-mix(in srgb,var(--gold,#e6b65f) 55%,var(--wine,#c9566c)));box-shadow:0 12px 32px rgba(var(--gold-rgb,230,182,95),.5)}
+.la-x{position:absolute;top:-14px;right:-10px;z-index:2;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;border:1px solid var(--line,rgba(255,255,255,.2));background:#1a1420;color:var(--text,#fff);cursor:pointer}
+.la-x svg{width:18px;height:18px}
+/* el pase holográfico: el brillo se mueve con --mx/--my (mouse o inclinación del celular) */
+.la-pase{--mx:.5;--my:.5;position:relative;overflow:hidden;aspect-ratio:1.62;max-width:520px;margin:0 auto;padding:24px 26px;border-radius:22px;text-align:left;background:linear-gradient(140deg,#1b1328,#2a1630);border:1.5px solid rgba(255,255,255,.18);box-shadow:0 18px 50px rgba(0,0,0,.5);transform:perspective(900px) rotateX(calc((var(--my) - .5) * -10deg)) rotateY(calc((var(--mx) - .5) * 14deg));transition:transform .15s ease-out;display:flex;flex-direction:column;justify-content:space-between}
+.la-holo{position:absolute;inset:-40%;pointer-events:none;mix-blend-mode:color-dodge;opacity:.55;background:conic-gradient(from calc(var(--mx) * 360deg) at calc(var(--mx) * 100%) calc(var(--my) * 100%),rgba(var(--gold-rgb,230,182,95),.0),rgba(var(--gold-rgb,230,182,95),.55),rgba(159,231,255,.5),rgba(var(--wine-rgb,201,86,108),.55),rgba(190,140,255,.45),rgba(var(--gold-rgb,230,182,95),.0));filter:blur(18px)}
+.la-pase::after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(115deg,rgba(255,255,255,.05) 0 2px,transparent 2px 9px);mix-blend-mode:overlay}
+.la-ph{position:relative;display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.la-ph small{display:block;font:600 11px/1 var(--serif,Georgia,serif);letter-spacing:.3em;color:var(--gold,#e6b65f)}
+.la-ph b{display:block;margin:8px 0 4px;font:900 clamp(26px,6vw,38px)/1 var(--sans,inherit);background:linear-gradient(90deg,var(--gold,#e6b65f),#9fe7ff,var(--wine,#c9566c));-webkit-background-clip:text;background-clip:text;color:transparent}
+.la-ph span{font-size:14px;color:#efe9f7}
+.la-syn{flex:none;width:104px;height:138px;margin:-14px -6px -30px 0;pointer-events:none}
+.la-syn .szbody{--sz:104px}
+.la-pd{position:relative;display:flex;flex-wrap:wrap;gap:6px 28px;margin:0}
+.la-pd dt{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:#b3abc4}
+.la-pd dd{margin:2px 0 0;font-size:15px;color:#fff}
+.la-code{font:700 clamp(17px,4.4vw,24px)/1.1 var(--mono,ui-monospace,monospace) !important;letter-spacing:.08em}
+.la-wink{position:relative;margin:0;font-size:13px;color:var(--gold,#e6b65f);min-height:1.2em}
+.la-note{margin:14px 0 16px;font-size:13px;color:var(--mute,#a79fb8)}
+@media (max-width:520px){
+  .la-front{padding:36px 18px 22px}.la-back{padding:18px 14px}
+  .la-pase{aspect-ratio:auto;min-height:220px;padding:18px}
+  .la-acts .la-b{flex:1 1 140px;justify-content:center}
+  .la-x{top:-10px;right:-4px}
+  .la-bulbs{inset:10px 12px}.la-bulbs i{width:7px;height:7px;margin-left:-3.5px}
+}
+/* Simple: plano y con su acento */
+html.simple .la-front{background:var(--sbg,#252422);border-color:var(--sacc);box-shadow:0 0 0 6px var(--sbg,#252422),0 0 0 7px var(--sline),0 30px 80px rgba(0,0,0,.5)}
+html.simple .la-word{font-family:var(--serif,Georgia,serif);font-weight:400}
+html.simple .la-word .w span{color:var(--stext,#fff)}
+html.simple .la-go{background:var(--sacc);box-shadow:none}
+html.simple .la-back{background:var(--sbg,#252422)}
+/* sin animaciones: todo prendido y quieto desde el principio */
+html.noanim .la,html.noanim .la-stage,html.noanim .la-card,html.noanim .la-pase,html.noanim .la-b{transition:none}
+html.noanim .la-bulbs i{animation:none}
+html.noanim .la-word span,html.noanim .la-kick,html.noanim .la-sub,html.noanim .la-perks li{animation:none;opacity:1}
+html.noanim .la-word span{text-shadow:0 0 4px rgba(255,255,255,.9),0 0 14px var(--gold,#e6b65f)}
+html.noanim .la-pase{transform:none}
+@media (prefers-reduced-motion:reduce){
+  .la,.la-stage,.la-card,.la-pase{transition:none}
+  .la-bulbs i{animation:none}
+  .la-word span,.la-kick,.la-sub,.la-perks li{animation:none;opacity:1}
+  .la-word span{text-shadow:0 0 4px rgba(255,255,255,.9),0 0 14px var(--gold,#e6b65f)}
+  .la-pase{transform:none}
+}

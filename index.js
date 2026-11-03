@@ -357,20 +357,25 @@ async function heroSeq(){
   if (heroDone) return; heroDone = true;
   /* v2.6: SynthonIA saluda mientras se escribe el título (antes aparecía 5 segundos después) */
   $$('.hstage.hero-fade').forEach(el => setTimeout(() => el.classList.add('show'), 350));
-  await typeIn($('#h1'), { cps:22, max:2.8 });
+  /* v4.0 · quien saltó la intro quiere usar la página ya: el título se escribe rápido */
+  const q = introSkipped ? .35 : 1;
+  /* v4.0 · la caja de escribir y «Empezar gratis» salen al terminar el título (antes, después de las 3 frases:
+     una persona nueva esperaba ~12 s en su primera visita antes de tener algo que tocar) */
+  const showCta = () => $$('.hero-fade').forEach((el, i) => setTimeout(() => el.classList.add('show'), i * 160));
+  await typeIn($('#h1'), { cps:22 / q, max:2.8 * q });
+  showCta();
   /* v2.9: «En sintonía con la IA.» se escribe después del título (antes ya estaba ahí desde el principio) */
-  const hs2 = $('.hsub2'); if (hs2) await typeIn(hs2, { cps:40, max:1 });
-  await typeIn($('#heroSub'), { cps:120, max:2.4 });
-  $$('.hero-fade').forEach((el, i) => setTimeout(() => el.classList.add('show'), i * 160));
+  const hs2 = $('.hsub2'); if (hs2) await typeIn(hs2, { cps:40 / q, max:1 * q });
+  await typeIn($('#heroSub'), { cps:120 / q, max:2.4 * q });
 }
 
 /* ---------- intro: la Z se dibuja y se pinta de arriba-derecha a abajo-izquierda ---------- */
-let pulsed = false;
+let pulsed = false, introSkipped = false;
 const afterHero = () => { if (FIRST && !$('#authm') && !$('#ptour')) setTimeout(welcomed ? pageTour : firstRun, 700); else if (!FIRST && SZ.wasAway()) setTimeout(() => SZ.welcomeBack({ learn:openGuide }), 600); };
 function pulseThenHero(){
   if (pulsed) return; pulsed = true;
   try{
-    if (reduce){ root.classList.add('pulsed'); heroSeq().then(afterHero); return; }
+    if (reduce || introSkipped){ root.classList.add('pulsed'); heroSeq().then(afterHero); return; }
     const nb = $('#navWord').getBoundingClientRect();
     if (!FIRST) SZ.thud(nb.left + nb.width / 2, nb.top + nb.height / 2);
     setTimeout(() => root.classList.add('pulsed'), 380);
@@ -391,21 +396,27 @@ async function intro(){
   const k = FIRST ? 1 : .7;
   const sleep = ms => sleepRaw(skip ? 0 : ms * k);
   ov.style.setProperty('--izd', (1.15 * k).toFixed(2) + 's');
-  if (matchMedia('(pointer: coarse)').matches) $('span', skipEl).textContent = SZ.t('ix.skipTouch');
-  /* se salta manteniendo la barra espaciadora 1,5 s (en pantallas táctiles, manteniendo el dedo) */
+    /* se salta manteniendo la barra espaciadora 1,5 s (en pantallas táctiles, manteniendo el dedo) */
   const HOLD = 1500; let holdT0 = 0, holding = false;
   function holdTick(now){
     if (!holding || skip) return;
     const q = clamp((now - holdT0) / HOLD, 0, 1);
     holdBar.style.transform = 'scaleX(' + q + ')';
-    if (q >= 1){ skip = true; return; }
+    if (q >= 1){ skip = introSkipped = true; return; }
     requestAnimationFrame(holdTick);
   }
-  const startHold = () => { if (holding || FIRST) return; holding = true; holdT0 = performance.now(); skipEl.style.opacity = '1'; requestAnimationFrame(holdTick); };
+  const startHold = () => { if (holding) return; holding = true; holdT0 = performance.now(); skipEl.style.opacity = '1'; requestAnimationFrame(holdTick); };
   const stopHold = () => { holding = false; holdBar.style.transform = 'scaleX(0)'; };
   addEventListener('keydown', e => { if (e.code === 'Space' && $('#intro')){ e.preventDefault(); if (!e.repeat) startHold(); } });
   addEventListener('keyup', e => { if (e.code === 'Space') stopHold(); });
   if (matchMedia('(pointer: coarse)').matches){ ov.addEventListener('pointerdown', startHold); ov.addEventListener('pointerup', stopHold); ov.addEventListener('pointercancel', stopHold); }
+  /* v4.0 · revisión de accesibilidad (3 nov): mantener 1,5 s era difícil para quien tiene poca motricidad o no entiende la instrucción,
+     y en la PRIMERA visita no se podía saltar nada (hasta ~9 s mirando sin poder hacer nada). Ahora, primera visita o no,
+     un toque, un clic, Esc o Enter la saltan, y el aviso aparece desde el principio. */
+  const skipNow = () => { if (!skip && $('#intro')){ skip = introSkipped = true; holdBar.style.transform = 'scaleX(1)'; } };
+  ov.addEventListener('click', skipNow);
+  addEventListener('keydown', e => { if ((e.key === 'Escape' || e.key === 'Enter') && $('#intro')) skipNow(); });
+  { const sk = $('span', skipEl), key = matchMedia('(pointer: coarse)').matches ? 'ix.skipTap' : 'ix.skipClick'; sk.dataset.i18nHtml = key; sk.innerHTML = SZ.t(key); }
 
   /* la marca y el nombre guardan las mismas proporciones que en la barra: así el vuelo final calza exacto */
   const navImg = $('#nav .logo .lgz'), navW = $('#navWord .zw') || $('#navWord');
@@ -421,7 +432,7 @@ async function intro(){
 
   await Promise.race([document.fonts ? document.fonts.ready : sleepRaw(0), sleepRaw(1200)]);
   await sleep(200);
-  setTimeout(() => { if (!skip && !FIRST) skipEl.style.opacity = '1'; }, 700);
+  setTimeout(() => { if (!skip) skipEl.style.opacity = '1'; }, 400);
   /* 1. un cometa de luz dibuja la S de un solo trazo y el vidrio aparece detrás de él */
   void ov.offsetWidth; ov.classList.add('draw');
   await sleep(1150);
@@ -449,6 +460,8 @@ async function intro(){
 
 /* ---------- entrar, ayuda con bloqueadores, configuración y recorrido ---------- */
 let FIRST = false, welcomed = false; try{ FIRST = !localStorage.getItem('synthz:visited'); }catch(e){}
+/* v4.1 · llegó por «Soy nuevo» (la pantallita): se le muestra la portada como a alguien nuevo, con su recorrido */
+try{ const u = new URL(location.href); if (u.searchParams.get('nuevo') === '1'){ FIRST = true; u.searchParams.delete('nuevo'); history.replaceState(null, '', u.pathname + u.search + u.hash); } }catch(e){}
 const markVisited = () => { try{ localStorage.setItem('synthz:visited', '1'); }catch(e){} };
 function puterSignIn(opts){
   if (!window.puter){ showBlockHelp('script'); return Promise.reject(Object.assign(new Error('sin puter'), { shown:true })); }
@@ -658,8 +671,14 @@ boot();
   b.addEventListener('mouseenter', () => { put('flow'); b.classList.add('cool'); });
 })();
 let seen = false, backIn = '';
-/* v2.4: la intro sale una vez por visita; si alguien la saltó, ya no se le vuelve a mostrar (salvo que pida «Siempre» en Ajustes) */
-try{ const im = SZ.CFG.intro || 'session', skipped = localStorage.getItem('synthz:introSkip') === '1'; seen = !FIRST && (!SZ.CFG.anim || im === 'never' || (im !== 'always' && skipped) || (im === 'session' && sessionStorage.getItem('synthz:intro') === '1')); }catch(e){}
+/* v3.7 · «Intro de la página» en Ajustes manda: Nunca = nunca; Cada vez = siempre; Una vez por visita = una vez por pestaña.
+   Antes, quien no terminaba el recorrido de bienvenida seguía siendo «primera vez» para siempre y veía la intro aunque eligiera «Nunca».
+   Con Animaciones apagadas no hay intro (es una animación); la primera visita de alguien que no eligió nada sí la ve. */
+try{
+  const im = SZ.CFG.intro || 'session', once = sessionStorage.getItem('synthz:intro') === '1';
+  seen = im === 'never' || !SZ.CFG.anim || (im === 'session' && once);
+  if (!seen) sessionStorage.setItem('synthz:intro', '1');
+}catch(e){}
 /* de vuelta desde SynthFlow: «SymphorIA» ya llegó volando a su esquina; sin intro, la página aparece suave */
 try{ backIn = sessionStorage.getItem('synthz:back') || ''; sessionStorage.removeItem('synthz:back'); }catch(e){}
 if (backIn){ seen = !FIRST; requestAnimationFrame(() => requestAnimationFrame(() => { root.classList.add('backout'); setTimeout(() => root.classList.remove('backin', 'backout'), 950); })); }
@@ -808,6 +827,9 @@ const fig = el.querySelector('.rb-fig'), bub = el.querySelector('.rb-say');
 const hero = document.getElementById('top');
 let cur = '', said = new Set(), sayT = 0, heroOn = true, posed = '';
 const small = () => matchMedia('(max-width:760px)').matches;
+/* v3.8 · ancho visible de verdad: en el celular innerWidth crece si algo se sale un poco, y ella se paraba más afuera todavía
+   (cada vez 28 px menos, pero ya fuera de la pantalla); clientWidth no cambia con eso */
+const vw = () => document.documentElement.clientWidth || innerWidth;
 function paint(k){
   const S = STOPS[k]; if (!S) return;
   const side = el.dataset.side || S.side, key = S.mood + S.pose + side;
@@ -826,7 +848,7 @@ const nearOf = h => [...document.querySelectorAll('main h2,main h3,main h4,main 
 const hitsIn = (near, x0, y0, ww, hh) => near.some(e => { const r = e.getBoundingClientRect(); return r.width && r.height && Math.min(x0 + ww, r.right) - Math.max(x0, r.left) > 4 && Math.min(y0 + hh, r.bottom) - Math.max(y0, r.top) > 4; });
 /* celular: ya no flota fija tapando tarjetas; se para en el espacio libre encima del título de cada sección */
 function standSmall(t, w, H){
-  const near = nearOf(document.createElement('i')), x = innerWidth - w - 28, top = t.top - H * .9;   /* 28 px: deja espacio a su brazo cuando lo levanta */
+  const near = nearOf(document.createElement('i')), x = vw() - w - 28, top = t.top - H * .9;   /* 28 px: deja espacio a su brazo cuando lo levanta */
   el.hidden = hitsIn(near, x + w * .15, top + H * .04, w * .7, H * .92) || top + scrollY < 90; if (el.hidden) return;
   el._mute = true; bub.style.marginLeft = ''; el.classList.add('abs'); el.classList.remove('bside'); el.dataset.side = 'r';
   el._x = Math.round(x + scrollX); el._top = Math.round(top + scrollY); stick();
@@ -835,7 +857,11 @@ function standAt(S, sec, h){
   /* el título se escribe letra por letra: se mide el texto completo (no lo que ya se ve) */
   const cs = getComputedStyle(h), R = h.getBoundingClientRect(), fs = parseFloat(cs.fontSize) || 40;
   const cx = (anchor.cv || (anchor.cv = document.createElement('canvas'))).getContext('2d'); cx.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
-  const txt = h.textContent.trim(), ls = parseFloat(cs.letterSpacing) || 0, tw = Math.min(R.width, cx.measureText(txt).width + ls * txt.length);
+  const txt = h.textContent.trim(), ls = parseFloat(cs.letterSpacing) || 0;
+  /* v4.2 · si la letra de la página aún no cargó, el lienzo mide con otra letra (más angosta) y ella quedaba encima del título:
+     se usa lo más ancho entre esa medida y lo que el texto ocupa de verdad en pantalla */
+  const rg = document.createRange(); rg.selectNodeContents(h); const seen = rg.getBoundingClientRect().width || 0;
+  const tw = Math.min(R.width, Math.max(seen, cx.measureText(txt).width + ls * txt.length));
   const lh = Math.min(R.height, parseFloat(cs.lineHeight) || fs * 1.1), al = cs.textAlign;
   const l0 = al === 'center' ? R.left + (R.width - tw) / 2 : al === 'right' || al === 'end' ? R.right - tw : R.left;
   const t = { left:l0, right:l0 + tw, top:R.top, height:lh };
@@ -843,12 +869,12 @@ function standAt(S, sec, h){
   if (small()) return standSmall(t, w, H);
   /* la frase va al lado de ella (no encima), así no tapa lo que hay arriba; se mide con el texto ya puesto */
   bub.textContent = S.say; const bw = Math.min(230, bub.offsetWidth || 200) + 10;
-  const roomR = innerWidth - t.right - gap, roomL = t.left - gap;
+  const roomR = vw() - t.right - gap, roomL = t.left - gap;
   /* primero el lado donde caben ella y su frase; si no, donde quepa ella sola */
   const need = w + bw + 12, pr = S.side === 'r' ? roomR : roomL, ot = S.side === 'r' ? roomL : roomR, other = S.side === 'r' ? 'l' : 'r';
   const pick = pr >= need ? S.side : ot >= need ? other : pr >= w ? S.side : ot >= w ? other : S.side;
   const top = t.top + t.height - H + 14 + H * .08;   /* v2.9: sin cuerpo, lo de abajo de su caja es solo sombra: baja un poco */
-  const xOf = sd => Math.max(8, Math.min(innerWidth - w - 8, sd === 'r' ? t.right + gap : t.left - gap - w));
+  const xOf = sd => Math.max(8, Math.min(vw() - w - 8, sd === 'r' ? t.right + gap : t.left - gap - w));
   /* v2.6: nunca encima de nada: si de un lado pisa un texto, una tarjeta o una etiqueta, prueba el otro; si pisa en los dos, esa sección no la muestra */
   const near = nearOf(h);
   const hits = (x0, y0, ww, hh) => hitsIn(near, x0, y0, ww, hh);
@@ -857,13 +883,13 @@ function standAt(S, sec, h){
   el.hidden = figHits(side); if (el.hidden) return;
   const x = xOf(side);
   /* la frase va a su lado solo si cabe sin tapar nada; si no, no habla sola (si la tocas, te contesta en su ventanita) */
-  const bside = (side === 'r' ? innerWidth - (x + w) - 12 >= bw : x - 12 >= bw) && !hits(side === 'r' ? x + w + 6 : x - bw - 6, top + H * .15, bw, 64);
+  const bside = (side === 'r' ? vw() - (x + w) - 12 >= bw : x - 12 >= bw) && !hits(side === 'r' ? x + w + 6 : x - bw - 6, top + H * .15, bw, 64);
   el._mute = !bside; bub.style.marginLeft = '';
   el.classList.add('abs'); el.classList.toggle('bside', bside); el.dataset.side = side;
   /* parada sobre la línea del título: los pies a la altura de las letras, nunca encima del texto de abajo */
   el._x = Math.round(x + scrollX); el._top = Math.round(top + scrollY); stick();
   /* v3.0: la frase encima de ella se corre lo justo para no salirse de la pantalla (en inglés es más larga) */
-  if (!bside){ const bw2 = bub.offsetWidth, L = x + w * (side === 'r' ? .3 : .7) - bw2 / 2; bub.style.marginLeft = Math.round(Math.min(0, innerWidth - 8 - L - bw2) || Math.max(0, 8 - L)) + 'px'; }
+  if (!bside){ const bw2 = bub.offsetWidth, L = x + w * (side === 'r' ? .3 : .7) - bw2 / 2; bub.style.marginLeft = Math.round(Math.min(0, vw() - 8 - L - bw2) || Math.max(0, 8 - L)) + 'px'; }
 }
 /* se queda junto a su título y sube con él: nunca flota encima de las tarjetas ni del texto */
 function stick(){
@@ -1089,11 +1115,16 @@ document.querySelectorAll('.uscene[data-scene]').forEach(el => {
 const { $ } = SZ;
 const form = $('#heroAsk'), inp = $('#heroInp');
 if (form && inp){
-  const SUG = [['birrete', SZ.t('ix.sug1')], ['estrella', SZ.t('ix.sug2')], ['codigo', SZ.t('ix.sug3')]];
   const box = document.createElement('div');
-  box.className = 'hsug'; box.id = 'heroSug'; box.setAttribute('role', 'listbox'); box.setAttribute('aria-label', SZ.t('ix.sugAria')); box.hidden = true;
-  box.innerHTML = '<p class="hsug-t">' + SZ.t('ix.sugT') + '</p>' + SUG.map(([ic, t], i) => '<button type="button" class="hsug-i" role="option" style="--i:' + i + '"><i class="gi" data-gi="' + ic + '"></i><span>' + t + '</span></button>').join('');
-  form.appendChild(box); SZ.giFill(box);
+  box.className = 'hsug'; box.id = 'heroSug'; box.setAttribute('role', 'listbox'); box.hidden = true;
+  /* v3.7 · se vuelve a escribir si cambias el idioma (aquí o en otra pestaña), sin recargar */
+  const fill = () => {
+    const SUG = [['birrete', SZ.t('ix.sug1')], ['estrella', SZ.t('ix.sug2')], ['codigo', SZ.t('ix.sug3')]];
+    box.setAttribute('aria-label', SZ.t('ix.sugAria'));
+    box.innerHTML = '<p class="hsug-t">' + SZ.t('ix.sugT') + '</p>' + SUG.map(([ic, t], i) => '<button type="button" class="hsug-i" role="option" style="--i:' + i + '"><i class="gi" data-gi="' + ic + '"></i><span>' + t + '</span></button>').join('');
+    SZ.giFill(box);
+  };
+  fill(); form.appendChild(box); if (SZ.onLang) SZ.onLang(fill);
   inp.setAttribute('aria-controls', 'heroSug'); inp.setAttribute('aria-autocomplete', 'list');
   let y0 = 0;
   const show = on => { if (on && box.hidden) y0 = scrollY; box.hidden = !on; inp.setAttribute('aria-expanded', on ? 'true' : 'false'); form.classList.toggle('sugon', on); };
@@ -1119,13 +1150,15 @@ if (form && inp){
 }
 /* «Ver demo» decía demo pero bajaba a los pasos: ahora dice lo que hace */
 const demo = $('#demoBtn');
-if (demo && demo.firstChild && demo.firstChild.nodeType === 3) demo.firstChild.textContent = SZ.t('ix.demo') + ' ';
+const demoTxt = () => { if (demo && demo.firstChild && demo.firstChild.nodeType === 3) demo.firstChild.textContent = SZ.t('ix.demo') + ' '; };
+demoTxt(); if (SZ.onLang) SZ.onLang(demoTxt);
 /* el botón principal en el menú de arriba, solo cuando el de la portada ya no se ve */
 const nav = $('#nav'), start = $('#startBtn'), navr = nav && nav.querySelector('.navr');
 if (nav && start && navr && 'IntersectionObserver' in window){
   const go = document.createElement('a');
-  go.className = 'navgo'; go.href = 'chat.html'; go.innerHTML = '<span class="ng-l">' + SZ.t('ix.020') + '</span><span class="ng-s">' + SZ.t('tour.start') + '</span>';
-  go.setAttribute('aria-label', SZ.t('ix.goAria')); go.tabIndex = -1;
+  go.className = 'navgo'; go.href = 'chat.html'; go.tabIndex = -1;
+  const goTxt = () => { go.innerHTML = '<span class="ng-l">' + SZ.t('ix.020') + '</span><span class="ng-s">' + SZ.t('tour.start') + '</span>'; go.setAttribute('aria-label', SZ.t('ix.goAria')); };
+  goTxt(); if (SZ.onLang) SZ.onLang(goTxt);
   navr.insertBefore(go, $('#accBtn') || navr.firstChild);
   new IntersectionObserver(([e]) => {
     const on = !e.isIntersecting && e.boundingClientRect.top < 0;
@@ -1153,4 +1186,342 @@ const pause = on => { try{ if (svg && svg.pauseAnimations) on ? svg.unpauseAnima
 pause(false);
 if ('IntersectionObserver' in window) new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) sec.classList.add('on'); pause(en.isIntersecting); }), { threshold:.25 }).observe(sec);
 else sec.classList.add('on');
+})();
+/* v3.8 · el cuadro de la portada, ahora al centro (ver src/index-css/11-v38-caja-centro.css):
+   - la luz que lo rodea acelera mientras escribes
+   - la tecla «/» te lleva al cuadro (como en los buscadores), salvo si ya estás escribiendo en otro lado
+   - al enviar, la flecha despega como avión de papel mientras el cuadro se abre hacia SynthFlow */
+(() => {
+const form = document.getElementById('heroAsk'), inp = document.getElementById('heroInp');
+if (!form || !inp) return;
+const send = form.querySelector('.send');
+
+/* avión de papel escondido detrás de la flecha */
+if (send && !send.querySelector('.hk-avion')){
+  send.insertAdjacentHTML('beforeend', '<svg class="hk-avion" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 21 3l-6.5 18-3.2-7.3L3 11.5Z"/><path d="m11.3 13.7 4-4"/></svg>');
+}
+/* la tecla «/» dentro del cuadro, antes de la flecha */
+if (send && !form.querySelector('.hk-tecla')){
+  const k = document.createElement('kbd'); k.className = 'hk-tecla'; k.textContent = '/'; k.setAttribute('aria-hidden', 'true');
+  form.insertBefore(k, send);
+}
+
+/* v3.8b · el cuadro deja de ser una barra: es una consola con la esfera de SynthFlow a la izquierda (gira y se agita
+   mientras escribes) y, abajo, tres ideas que se escriben solas en el cuadro al tocarlas. */
+if (!form.querySelector('.hk-orbe')){
+  const o = document.createElement('span'); o.className = 'hk-orbe'; o.setAttribute('aria-hidden', 'true');
+  o.innerHTML = '<svg viewBox="0 0 64 64" fill="none"><defs><linearGradient id="hkOG" x1="0" x2="1"><stop offset="0" stop-color="#3de0ff"/><stop offset=".4" stop-color="#7b3ff2"/><stop offset=".72" stop-color="#ff3d9a"/><stop offset="1" stop-color="#ff7a45"/></linearGradient></defs><path class="hk-ola" d="M-24 32c5-12 10-12 14 0s9 12 14 0 9-12 14 0 9 12 14 0 9-12 14 0 9 12 14 0 9-12 14 0" stroke="url(#hkOG)" stroke-width="5" stroke-linecap="round"/></svg>';
+  form.insertBefore(o, inp);
+}
+const ideas = document.createElement('div');
+ideas.className = 'hk-ideas';
+const pintaIdeas = () => {
+  const L = [['birrete', SZ.t('ix.sug1')], ['estrella', SZ.t('ix.sug2')], ['codigo', SZ.t('ix.sug3')]];
+  ideas.setAttribute('aria-label', SZ.t('ix.sugT'));
+  ideas.innerHTML = L.map(([ic, t], i) => '<button type="button" class="hk-idea" style="--i:' + i + '"><i class="gi" data-gi="' + ic + '"></i><span>' + t + '</span></button>').join('');
+  if (SZ.giFill) SZ.giFill(ideas);
+};
+if (!form.querySelector('.hk-ideas')){ pintaIdeas(); form.appendChild(ideas); if (SZ.onLang) SZ.onLang(pintaIdeas); }
+/* tocar una idea la escribe letra por letra en el cuadro (con sus chispas); luego solo falta enviar */
+let escribiendo = 0;
+ideas.addEventListener('click', e => {
+  const b = e.target.closest('.hk-idea'); if (!b) return;
+  const t = b.textContent.trim(); clearInterval(escribiendo);
+  inp.focus();
+  if (document.documentElement.classList.contains('noanim')){ inp.value = t; inp.dispatchEvent(new Event('input', { bubbles:true })); return; }
+  let n = 0; inp.value = '';
+  escribiendo = setInterval(() => { n++; inp.value = t.slice(0, n); inp.dispatchEvent(new Event('input', { bubbles:true })); if (n >= t.length){ clearInterval(escribiendo); form.classList.add('lista'); setTimeout(() => form.classList.remove('lista'), 1200); } }, 22);
+});
+
+let tq = 0;
+const quieto = () => document.documentElement.classList.contains('noanim');
+const bot = document.getElementById('heroBot');
+const cv = document.createElement('canvas').getContext('2d');
+/* dónde va el cursor de texto (en px desde la izquierda del cuadro) */
+const caretX = () => {
+  const cs = getComputedStyle(inp), ir = inp.getBoundingClientRect();
+  cv.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
+  const w = cv.measureText(inp.value.slice(0, inp.selectionStart == null ? inp.value.length : inp.selectionStart)).width - inp.scrollLeft;
+  return ir.left + Math.max(0, Math.min(ir.width, w));
+};
+const COL = ['#3de0ff', '#b48cff', '#ff3d9a', '#ffb36b', '#ffc857'];
+let ci = 0;
+/* chispas que saltan del cursor al escribir (recurso de estilo Uiverse #54) */
+const chispa = x => {
+  if (quieto()) return;
+  const fr = form.getBoundingClientRect();
+  for (let k = 0; k < 2; k++){
+    const i = document.createElement('i'); i.className = 'hk-chispa'; i.setAttribute('aria-hidden', 'true');
+    const ir = inp.getBoundingClientRect(); i.style.left = (x - fr.left) + 'px'; i.style.setProperty('--y', (ir.top + ir.height / 2 - fr.top).toFixed(1) + 'px'); i.style.background = COL[ci++ % COL.length];
+    i.style.setProperty('--dx', (Math.random() * 44 - 22).toFixed(1) + 'px'); i.style.setProperty('--dy', (-18 - Math.random() * 30).toFixed(1) + 'px');
+    form.appendChild(i); setTimeout(() => i.remove(), 750);
+  }
+};
+/* SynthonIA mira lo que escribes y asiente con cada letra */
+const mira = x => {
+  if (!bot) return;
+  const r = bot.getBoundingClientRect(), ir = inp.getBoundingClientRect();
+  if (!r.width) return;
+  const ex = Math.max(-1, Math.min(1, (x - r.left - r.width / 2) / 500)), ey = Math.max(-1, Math.min(1, (ir.top - r.top - 90) / 500));
+  bot.style.setProperty('--ex', (ex * 3.2).toFixed(2) + 'px'); bot.style.setProperty('--ey', (ey * 2.4).toFixed(2) + 'px');
+  if (!quieto()){ bot.classList.remove('hk-asiente'); void bot.offsetWidth; bot.classList.add('hk-asiente'); }
+};
+inp.addEventListener('input', () => {
+  form.classList.add('tecleo'); clearTimeout(tq); tq = setTimeout(() => form.classList.remove('tecleo'), 700);
+  /* la luz crece mientras más escribes (hasta ~80 letras) */
+  form.style.setProperty('--hkF', Math.min(1, inp.value.length / 80).toFixed(2));
+  const x = caretX(); chispa(x); mira(x);
+});
+
+addEventListener('keydown', e => {
+  if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
+  const a = document.activeElement;
+  if (a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) return;
+  if (document.querySelector('dialog[open],.modal.on,#szWin.on')) return;
+  e.preventDefault();
+  form.scrollIntoView({ behavior:document.documentElement.classList.contains('noanim') ? 'auto' : 'smooth', block:'center' });
+  inp.focus({ preventScroll:true });
+});
+
+/* va en captura: corre antes que el envío de siempre (01-lanzador), que abre SynthFlow */
+form.addEventListener('submit', () => { if (send && inp.value.trim()) send.classList.add('vuela'); }, true);
+addEventListener('pageshow', () => send && send.classList.remove('vuela'));
+})();
+/* v3.8c · Pedido de Sammuel (2-nov-2026, eligió «B y C juntas»):
+   B · «SynthonIA te lo muestra en vivo»: en «Así de fácil», una ventanita de SynthFlow de mentira que SynthonIA maneja sola con su
+       manita (escribe, elige 3 IAs, envía, las respuestas llegan y elige la mejor). No llama a ninguna IA ni gasta EnerX.
+       Arriba tiene pestañas con candado (Voz, Chats en grupo): son puertas falsas que llevan a votar.
+   C · «El laboratorio»: sección nueva con tubos de ensayo, uno por función que todavía no existe. Arrastras tu batería de EnerX
+       (o tocas «Votar») al tubo que quieres y el líquido sube con los votos de todos. Correo opcional para avisarte. Nada se cobra.
+   Votos: /api/config (GET ?puertas=1 · POST { action:'puerta', id, email? }). Sin servidor, el voto queda en este equipo. */
+(() => {
+const como = document.getElementById('como');
+if (!como || document.getElementById('szDemo')) return;
+const L = () => (SZ.lang && SZ.lang() === 'en') ? 'en' : 'es';
+const quieto = () => document.documentElement.classList.contains('noanim');
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+const dormir = ms => new Promise(r => setTimeout(r, ms));
+
+const T = {
+  es:{ demoT:'Mírala hacerlo', demoS:'SynthonIA usa SynthFlow por ti. Es una demostración: no gasta tu EnerX.', ejemplo:'Ejemplo',
+    tabs:['Chat', 'Comparar', 'Voz', 'Chats en grupo'], q:'¿Cómo aprendo a programar desde cero?', escribe:'Pregúntale lo que sea…',
+    resp:['Empieza con Python: es claro y sirve para todo. 20 minutos al día y un proyecto pequeño cada semana.', 'Elige algo que quieras crear (un juego, una página) y aprende solo lo que ese proyecto te pida.', 'Primero lógica con juegos como Scratch, luego Python. Repite poco cada día, no mucho un solo día.'],
+    elige:'Esta', mejor:'La mejor', listo:'lista', pensando:'pensando…', candado:'Aún no existe. ¿La quieres?', quiero:'La quiero', gracias:'¡Anotado! Te escribimos solo cuando esté.', alLab:'Ver el laboratorio',
+    votos:n => n === 0 ? 'Aún nadie dejó su correo' : n === 1 ? '1 persona dejó su correo' : n + ' personas dejaron su correo',
+    labK:'El laboratorio', labT:'Tú decides qué inventamos después', labS:'Arrastra tu batería al tubo de la función que más quieres (o toca «La quiero») y déjanos tu correo. Cada correo llena el tubo. No cuesta nada.',
+    bat:'Tu voto', votar:'La quiero', votado:'Anotado', correoT:'Para que cuente, déjanos tu correo: te avisamos solo cuando esté lista.', correoF:n => 'Para que tu voto por «' + n + '» cuente, déjanos tu correo. Te avisamos solo cuando esté lista.', correo:'Tu correo', avisame:'Avísame', correoOk:'Listo, te escribimos solo cuando esté.', correoMal:'Ese correo no parece válido.', fallo:'No pudimos guardarlo ahora. Intenta más tarde.', gratis:'Nada se cobra: solo queremos saber qué quieres.', soltar:'Suelta aquí',
+    f:{ voz:['Hablar en voz alta', 'Pregunta con tu voz y escucha la respuesta.'], grupo:['Chats en grupo', 'Tú, tus amigos y las IAs en la misma conversación.'], agenda:['Tareas que se hacen solas', 'Un agente que trabaja a la hora que le digas.'], extension:['Extensión del navegador', 'Pregúntale a varias IAs desde cualquier página.'], escritorio:['App de escritorio', 'SymphorIA en tu computador, con un atajo.'] } },
+  en:{ demoT:'Watch her do it', demoS:'SynthonIA uses SynthFlow for you. It is a demo: it does not use your EnerX.', ejemplo:'Example',
+    tabs:['Chat', 'Compare', 'Voice', 'Group chats'], q:'How do I learn to code from scratch?', escribe:'Ask it anything…',
+    resp:['Start with Python: it is clear and works for everything. 20 minutes a day and a small project every week.', 'Pick something you want to build (a game, a page) and learn only what that project needs.', 'First logic with games like Scratch, then Python. A little every day beats a lot in one day.'],
+    elige:'This one', mejor:'The best', listo:'done', pensando:'thinking…', candado:'This does not exist yet. Want it?', quiero:'I want it', gracias:'Got it! We will only write when it is ready.', alLab:'See the lab',
+    votos:n => n === 0 ? 'Nobody has left their email yet' : n === 1 ? '1 person left their email' : n + ' people left their email',
+    labK:'The lab', labT:'You decide what we build next', labS:'Drag your battery to the tube of the feature you want most (or tap «I want it») and leave your email. Every email fills the tube. It costs nothing.',
+    bat:'Your vote', votar:'I want it', votado:'Counted', correoT:'For it to count, leave your email: we will only write when it is ready.', correoF:n => 'For your vote for «' + n + '» to count, leave your email. We will only write when it is ready.', correo:'Your email', avisame:'Let me know', correoOk:'Done, we will only write when it is ready.', correoMal:'That email does not look right.', fallo:'We could not save it right now. Try again later.', gratis:'Nothing is charged: we just want to know what you want.', soltar:'Drop it here',
+    f:{ voz:['Talk out loud', 'Ask with your voice and hear the answer.'], grupo:['Group chats', 'You, your friends and the AIs in one conversation.'], agenda:['Tasks that run themselves', 'An agent that works at the time you choose.'], extension:['Browser extension', 'Ask several AIs from any web page.'], escritorio:['Desktop app', 'SymphorIA on your computer, one shortcut away.'] } }
+};
+const t = () => T[L()];
+const IAS = [['Llama', '#ff7a45'], ['Mistral', '#3de0ff'], ['Gemini', '#ff3d9a']];
+const FUNCS = ['voz', 'grupo', 'agenda', 'extension', 'escritorio'];
+const COLF = { voz:'#3de0ff', grupo:'#ff3d9a', agenda:'#ffc857', extension:'#b48cff', escritorio:'#ff7a45' };
+
+/* ---------- votos (compartidos por la demo y el laboratorio) ---------- */
+const VK = 'synthz:puertas';
+let votos = {}; try{ votos = JSON.parse(localStorage.getItem(VK)) || {}; }catch(e){}
+let cuentas = {};
+const pintores = [];
+const repinta = () => pintores.forEach(f => { try{ f(); }catch(e){} });
+fetch('/api/config?puertas=1').then(r => r.ok ? r.json() : null).then(d => { if (d && d.puertas){ cuentas = d.puertas; repinta(); } }).catch(() => {});
+/* v4.2 (Sammuel, 3 nov): un clic NO es «se interesó». Sin correo solo se anota el clic aparte (no se muestra);
+   el tubo y el «N personas» cuentan solo a quien dejó su correo, y «Anotado» sale solo cuando el correo se guardó. */
+async function votar(id, email){
+  try{
+    const r = await fetch('/api/config', { method:'POST', headers:{ 'content-type':'application/json' }, body:JSON.stringify({ action:'puerta', id, email:email || undefined, lang:L() }) });
+    const d = await r.json().catch(() => null);
+    if (r.ok && d && typeof d.n === 'number'){ cuentas[id] = d.n; }
+    if (r.ok && email && d && d.saved){ votos[id] = Date.now(); try{ localStorage.setItem(VK, JSON.stringify(votos)); }catch(e){} }
+    repinta();
+    return r.ok;
+  }catch(e){ return false; }
+}
+
+/* =================== B · la demo =================== */
+const demo = document.createElement('div');
+demo.className = 'dm'; demo.id = 'szDemo';
+const grid = como.querySelector('.how-grid');
+(grid ? grid.nextSibling : null) ? como.insertBefore(demo, grid.nextSibling) : como.appendChild(demo);
+const MANO = '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M11 3.5c1.4 0 2.5 1.1 2.5 2.5v8.2l1-.2V11c0-1.3 1-2.3 2.3-2.3s2.3 1 2.3 2.3v3.2l.9-.1V12.6c0-1.2 1-2.2 2.2-2.2s2.2 1 2.2 2.2v3.6l.6-.1c1.2-.1 2.2.9 2.2 2.1v3.6c0 4.6-3.7 8.3-8.3 8.3h-1.6c-2.5 0-4.8-1.1-6.4-3.1l-4.6-5.8c-.8-1-.6-2.4.4-3.1.9-.7 2.2-.6 3 .2l1.8 1.9V6c0-1.4 1.1-2.5 2.5-2.5Z" fill="url(#dmMG)" stroke="rgba(255,255,255,.75)" stroke-width="1.1"/><defs><linearGradient id="dmMG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd2c2"/><stop offset="1" stop-color="#ff8fb8"/></linearGradient></defs></svg>';
+function pintaDemo(){
+  const x = t();
+  demo.innerHTML =
+    '<div class="dm-cab"><h3>' + esc(x.demoT) + '</h3><p>' + esc(x.demoS) + '</p></div>' +
+    '<div class="dm-win lqg">' +
+      '<div class="dm-bar"><i></i><i></i><i></i><div class="dm-tabs" role="tablist">' +
+        x.tabs.map((n, i) => i < 2
+          ? '<span class="dm-tab' + (i === 1 ? ' on' : '') + '" role="tab" aria-selected="' + (i === 1) + '">' + esc(n) + '</span>'
+          : '<button type="button" class="dm-tab lock" data-f="' + (i === 2 ? 'voz' : 'grupo') + '"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>' + esc(n) + '</button>').join('') +
+      '</div><span class="dm-tag">' + esc(x.ejemplo) + '</span></div>' +
+      '<div class="dm-pop" hidden></div>' +
+      '<div class="dm-in"><span class="dm-orb">' + (SZ.flowOrb ? SZ.flowOrb() : '') + '</span><span class="dm-q" data-ph="' + esc(x.escribe) + '"></span><b class="dm-car"></b><span class="dm-send"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>' +
+      '<div class="dm-ias">' + IAS.map(([n, c], i) => '<span class="dm-ia" style="--c:' + c + '" data-i="' + i + '"><i></i>' + n + '</span>').join('') + '</div>' +
+      '<div class="dm-cols">' + IAS.map(([n, c], i) => '<div class="dm-col" style="--c:' + c + '" data-i="' + i + '"><header><i></i><b>' + n + '</b><small class="dm-st"></small></header><p class="dm-r"></p><footer><span class="dm-pick">' + esc(x.elige) + '</span></footer></div>').join('') + '</div>' +
+      '<span class="dm-mano" aria-hidden="true">' + MANO + '<span class="dm-cara"></span></span>' +
+    '</div>';
+  const cara = demo.querySelector('.dm-cara'); if (cara && SZ.face) cara.innerHTML = SZ.face('feliz', 30);
+}
+pintaDemo();
+
+/* pestañas con candado: puerta falsa */
+demo.addEventListener('click', e => {
+  const b = e.target.closest('.dm-tab.lock'), pop = demo.querySelector('.dm-pop');
+  if (b){
+    const f = b.dataset.f, x = t(), r = b.getBoundingClientRect(), w = demo.querySelector('.dm-win').getBoundingClientRect();
+    pop.dataset.f = f; pop.style.left = Math.max(8, Math.min(w.width - 250, r.left - w.left)) + 'px';
+    const pinta = () => { const y = t(), av = pop.querySelector('.dm-aviso'), m = av ? av.textContent : ''; pop.innerHTML = '<p><b>' + esc(x.tabs[f === 'voz' ? 2 : 3]) + '</b> · ' + esc(y.candado) + '</p>' + (votos[f] ? '<p class="dm-ok">' + esc(y.gracias) + '</p>' : pop.dataset.form === f ? '<form class="dm-form" novalidate><label for="dmMail">' + esc(y.correoT) + '</label><div><input id="dmMail" type="email" inputmode="email" autocomplete="email" maxlength="254" placeholder="' + esc(y.correo) + '"><button type="submit">' + esc(y.avisame) + '</button></div><p class="dm-aviso" role="status">' + esc(m) + '</p></form>' : '<button type="button" class="dm-quiero">♥ ' + esc(y.quiero) + '</button>') + '<small>' + esc(y.votos(cuentas[f] || 0)) + '</small><a href="#szLab">' + esc(y.alLab) + ' ↓</a>'; };
+    pop.dataset.form = ''; pinta(); pop.hidden = false; pop._pinta = () => { const i = pop.querySelector('#dmMail'), v = i ? i.value : '', foco = i && document.activeElement === i; pinta(); const j = pop.querySelector('#dmMail'); if (j){ j.value = v; if (foco) j.focus(); } };
+    return;
+  }
+  if (e.target.closest('.dm-quiero')){ const f = pop.dataset.f; votar(f); pop.dataset.form = f; pop._pinta && pop._pinta(); const i = pop.querySelector('#dmMail'); if (i) i.focus({ preventScroll:true }); return; }
+  if (!e.target.closest('.dm-pop')) pop.hidden = true;
+});
+demo.addEventListener('submit', async e => {
+  const fm = e.target.closest('.dm-form'); if (!fm) return; e.preventDefault();
+  const pop = demo.querySelector('.dm-pop'), av = fm.querySelector('.dm-aviso'), x = t(), c = fm.querySelector('input').value.trim().toLowerCase();
+  if (!/^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,}$/.test(c)){ av.textContent = x.correoMal; return; }
+  av.textContent = '…';
+  const ok = await votar(pop.dataset.f, c);
+  if (!ok){ const a = pop.querySelector('.dm-aviso'); if (a) a.textContent = x.fallo; }
+});
+pintores.push(() => { const p = demo.querySelector('.dm-pop'); if (p && !p.hidden && p._pinta) p._pinta(); });
+
+/* la película: SynthonIA maneja la ventanita */
+let corrida = 0, visible = false;
+const $d = s => demo.querySelector(s);
+function manoA(el, dx = .5, dy = .55){
+  const w = $d('.dm-win'), m = $d('.dm-mano'); if (!w || !m || !el) return;
+  const a = w.getBoundingClientRect(), b = el.getBoundingClientRect();
+  m.style.transform = 'translate(' + (b.left - a.left + b.width * dx - 6).toFixed(0) + 'px,' + (b.top - a.top + b.height * dy - 4).toFixed(0) + 'px)';
+}
+const clic = async () => { const m = $d('.dm-mano'); if (!m) return; m.classList.remove('clic'); void m.offsetWidth; m.classList.add('clic'); await dormir(260); };
+function final(){
+  const x = t(); $d('.dm-q').textContent = x.q;
+  demo.querySelectorAll('.dm-ia').forEach(i => i.classList.add('on'));
+  demo.querySelectorAll('.dm-col').forEach((c, i) => { c.querySelector('.dm-r').textContent = x.resp[i]; c.classList.add('lista'); c.querySelector('.dm-st').textContent = x.listo; });
+  const best = demo.querySelectorAll('.dm-col')[1]; best.classList.add('mejor'); best.querySelector('.dm-pick').textContent = '★ ' + x.mejor;
+}
+async function pelicula(){
+  const mi = ++corrida, sigue = () => mi === corrida && visible;
+  /* v4.2 · si la ventanita del candado está abierta (quizá escribiendo el correo), la película espera: no se borra lo que escribes */
+  const abierta = () => { const p = demo.querySelector('.dm-pop'); return p && !p.hidden; };
+  while (sigue() && abierta()) await dormir(800);
+  if (!sigue()) return;
+  pintaDemo();
+  if (quieto()){ final(); return; }
+  const x = t(), m = $d('.dm-mano');
+  m.classList.add('on'); m.style.transition = 'none'; manoA($d('.dm-cols'), .9, .9); void m.offsetWidth; m.style.transition = '';
+  await dormir(500); if (!sigue()) return;
+  manoA($d('.dm-q'), .1); await dormir(800); if (!sigue()) return; await clic();
+  const q = $d('.dm-q'); q.classList.add('escribe');
+  for (let n = 1; n <= x.q.length; n++){ q.textContent = x.q.slice(0, n); await dormir(38 + Math.random() * 40); if (!sigue()) return; }
+  q.classList.remove('escribe');
+  for (const ia of demo.querySelectorAll('.dm-ia')){ manoA(ia); await dormir(520); if (!sigue()) return; await clic(); ia.classList.add('on'); }
+  manoA($d('.dm-send')); await dormir(600); if (!sigue()) return; await clic();
+  $d('.dm-send').classList.add('vuela');
+  const cols = [...demo.querySelectorAll('.dm-col')], vel = [1, .8, .9];
+  cols.forEach(c => { c.classList.add('piensa'); c.querySelector('.dm-st').textContent = x.pensando; });
+  manoA($d('.dm-cols'), .5, 1.05);
+  await dormir(700); if (!sigue()) return;
+  const t0 = performance.now();
+  await new Promise(res => { const tic = () => { if (!sigue()) return res(); const ms = performance.now() - t0; let fin = true;
+    cols.forEach((c, i) => { const p = Math.min(1, ms / (2600 / vel[i])), r = x.resp[i]; c.querySelector('.dm-r').textContent = r.slice(0, Math.round(r.length * p)); if (p >= 1 && !c.classList.contains('lista')){ c.classList.remove('piensa'); c.classList.add('lista'); c.querySelector('.dm-st').textContent = x.listo; } if (p < 1) fin = false; });
+    fin ? res() : requestAnimationFrame(tic); }; requestAnimationFrame(tic); });
+  if (!sigue()) return;
+  await dormir(500); manoA(cols[1].querySelector('.dm-pick')); await dormir(900); if (!sigue()) return; await clic();
+  cols[1].classList.add('mejor'); cols[1].querySelector('.dm-pick').textContent = '★ ' + x.mejor;
+  cols.forEach((c, i) => i !== 1 && c.classList.add('apagada'));
+  if (SZ.burst){ const b = cols[1].getBoundingClientRect(); SZ.burst(b.left + b.width / 2, b.top + 20, undefined, 14); }
+  manoA($d('.dm-tab.lock'), .5, 1.4); await dormir(1200); if (!sigue()) return;
+  await dormir(3600); if (!sigue()) return;
+  pelicula();
+}
+if ('IntersectionObserver' in window){
+  new IntersectionObserver(([e]) => { const v = e.isIntersecting; if (v && !visible){ visible = true; pelicula(); } else if (!v && visible){ visible = false; corrida++; } }, { threshold:.35 }).observe(demo);
+}else final();
+
+/* =================== C · el laboratorio =================== */
+const lab = document.createElement('section');
+lab.id = 'szLab'; lab.className = 'lab';
+const ancla = document.getElementById('faq');
+ancla && ancla.parentNode ? ancla.parentNode.insertBefore(lab, ancla) : como.parentNode.appendChild(lab);
+const BAT = '<svg viewBox="0 0 40 22" aria-hidden="true"><rect x="1" y="1" width="34" height="20" rx="5" fill="rgba(20,12,44,.7)" stroke="rgba(255,255,255,.7)" stroke-width="1.6"/><rect x="36" y="7" width="3" height="8" rx="1.5" fill="rgba(255,255,255,.7)"/><rect x="4" y="4" width="28" height="14" rx="3" fill="url(#labBG)"/><path d="M20 5.5 15 12h4l-1.5 5 5.5-7h-4l1-4.5Z" fill="#fff"/><defs><linearGradient id="labBG" x1="0" x2="1"><stop offset="0" stop-color="#3de0ff"/><stop offset="1" stop-color="#7fe0b8"/></linearGradient></defs></svg>';
+function pintaLab(){
+  const x = t();
+  lab.setAttribute('aria-label', x.labK);
+  lab.innerHTML = '<div class="head"><p class="lab-k">' + esc(x.labK) + '</p><h2>' + esc(x.labT) + '</h2><p class="lab-s">' + esc(x.labS) + '</p></div>' +
+    '<div class="lab-mesa lqg">' +
+      '<div class="lab-bat" tabindex="-1" aria-hidden="true">' + BAT + '<span>' + esc(x.bat) + '</span></div>' +
+      '<div class="lab-tubos">' + FUNCS.map(f => '<div class="lab-tubo" data-f="' + f + '" style="--c:' + COLF[f] + '">' +
+        '<div class="lab-vidrio"><span class="lab-liq"><i></i><i></i><i></i></span><span class="lab-soltar">' + esc(x.soltar) + '</span></div>' +
+        '<strong>' + esc(x.f[f][0]) + '</strong><small>' + esc(x.f[f][1]) + '</small>' +
+        '<span class="lab-n"></span><button type="button" class="lab-votar"></button></div>').join('') + '</div>' +
+      '<form class="lab-correo" hidden novalidate><label for="labMail">' + esc(x.correoT) + '</label><div><input id="labMail" type="email" inputmode="email" autocomplete="email" maxlength="254" placeholder="' + esc(x.correo) + '"><button type="submit">' + esc(x.avisame) + '</button></div><p class="lab-aviso" role="status"></p></form>' +
+      '<p class="lab-gratis">' + esc(x.gratis) + '</p>' +
+    '</div>';
+  niveles();
+}
+function niveles(){
+  const x = t(), max = Math.max(20, ...FUNCS.map(f => cuentas[f] || 0));
+  lab.querySelectorAll('.lab-tubo').forEach(tb => {
+    const f = tb.dataset.f, n = cuentas[f] || 0;
+    tb.style.setProperty('--nivel', (12 + 80 * n / max).toFixed(1) + '%');
+    tb.querySelector('.lab-n').textContent = x.votos(n);
+    const b = tb.querySelector('.lab-votar'); b.textContent = votos[f] ? '✓ ' + x.votado : x.votar; b.disabled = !!votos[f];
+    tb.classList.toggle('votado', !!votos[f]);
+  });
+}
+pintaLab(); pintores.push(niveles);
+let ultimo = null;
+async function votoTubo(tb){
+  const f = tb.dataset.f; if (votos[f]) return;
+  ultimo = f;
+  tb.classList.add('burbujea'); setTimeout(() => tb.classList.remove('burbujea'), 1400);
+  if (SZ.burst && !quieto()){ const r = tb.querySelector('.lab-vidrio').getBoundingClientRect(); SZ.burst(r.left + r.width / 2, r.top + 10, [COLF[f], '#ffffff', '#ffc857'], 12); }
+  votar(f);   /* solo el clic, aparte: todavía no cuenta */
+  const fm = lab.querySelector('.lab-correo'); fm.hidden = false; fm.querySelector('div').hidden = false; fm.querySelector('.lab-aviso').textContent = '';
+  fm.querySelector('label').textContent = t().correoF(t().f[f][0]);
+  lab.querySelectorAll('.lab-tubo').forEach(x => x.classList.toggle('elegido', x === tb));
+  fm.querySelector('input').focus({ preventScroll:true });
+}
+lab.addEventListener('click', e => { const b = e.target.closest('.lab-votar'); if (b) votoTubo(b.closest('.lab-tubo')); });
+lab.addEventListener('submit', async e => {
+  e.preventDefault();
+  const fm = e.target, inp = fm.querySelector('input'), av = fm.querySelector('.lab-aviso'), x = t(), c = inp.value.trim().toLowerCase();
+  if (!/^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,}$/.test(c)){ av.textContent = x.correoMal; return; }
+  if (!ultimo){ av.textContent = x.correoT; return; }
+  av.textContent = '…';
+  const ok = await votar(ultimo, c);
+  const fm2 = lab.querySelector('.lab-correo'), av2 = fm2.querySelector('.lab-aviso');
+  fm2.hidden = false; av2.textContent = ok ? x.correoOk : x.fallo; if (ok){ fm2.querySelector('div').hidden = true; fm2.querySelector('label').textContent = x.correoT; }
+});
+/* arrastrar la batería a un tubo (mouse o dedo) */
+lab.addEventListener('pointerdown', e => {
+  const bat = e.target.closest('.lab-bat'); if (!bat) return;
+  e.preventDefault(); bat.setPointerCapture(e.pointerId);
+  const r0 = bat.getBoundingClientRect(), ox = e.clientX - r0.left, oy = e.clientY - r0.top;
+  bat.classList.add('arrastra'); lab.classList.add('arrastrando');
+  let sobre = null;
+  const mover = ev => {
+    bat.style.transform = 'translate(' + (ev.clientX - ox - r0.left).toFixed(0) + 'px,' + (ev.clientY - oy - r0.top).toFixed(0) + 'px)';
+    const el = document.elementsFromPoint(ev.clientX, ev.clientY).find(n => n.classList && n.classList.contains('lab-tubo'));
+    if (el !== sobre){ sobre && sobre.classList.remove('sobre'); sobre = el || null; sobre && sobre.classList.add('sobre'); }
+  };
+  const soltar = () => {
+    bat.removeEventListener('pointermove', mover); bat.removeEventListener('pointerup', soltar); bat.removeEventListener('pointercancel', soltar);
+    bat.classList.remove('arrastra'); lab.classList.remove('arrastrando'); bat.style.transform = '';
+    if (sobre){ sobre.classList.remove('sobre'); votoTubo(sobre); }
+  };
+  bat.addEventListener('pointermove', mover); bat.addEventListener('pointerup', soltar); bat.addEventListener('pointercancel', soltar);
+});
+
+if (SZ.onLang) SZ.onLang(() => { pintaLab(); corrida++; pintaDemo(); if (visible) pelicula(); else if (quieto()) final(); });
 })();

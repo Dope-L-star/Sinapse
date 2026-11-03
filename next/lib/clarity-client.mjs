@@ -22,7 +22,37 @@ export function isClarityAllowed({ enabled, audience18Plus, adultOnlyRelease, ag
     && validProjectId(projectId);
 }
 
-export function readClarityChoice(storage, now = Date.now()) {
+/*
+ * v3.8 · Second, separate mode for the public site: a short cookie notice («Aceptar cookies» / «Rechazar»).
+ * The team only wants click/scroll heatmaps, so the whole page is masked (data-clarity-mask on <body>):
+ * no readable text is captured. Off by default; needs its own flag plus privacy review.
+ * Older 'minor' answers (from the earlier age question) are still read and treated as a refusal.
+ */
+export function isClarityHeatmapsAllowed({ enabled, heatmaps, privacyReviewed, projectId }) {
+  return enabled === true && heatmaps === true && privacyReviewed === true && validProjectId(projectId);
+}
+
+/** 'adult' (adult-only edition), 'heatmaps' (public site, simple cookie notice, page fully masked) or null (Clarity off). */
+export function clarityModeFromEnv(env = {}) {
+  const on = k => env[k] === 'true';
+  const projectId = env.NEXT_PUBLIC_CLARITY_PROJECT_ID || CLARITY_PROJECT_ID_DEFAULT;
+  const enabled = on('NEXT_PUBLIC_CLARITY_ENABLED'), privacyReviewed = on('NEXT_PUBLIC_CLARITY_PRIVACY_REVIEWED');
+  if (isClarityAllowed({ enabled, audience18Plus: on('NEXT_PUBLIC_CLARITY_AUDIENCE_18_PLUS'), adultOnlyRelease: on('NEXT_PUBLIC_SYMPHORIA_ADULT_ONLY_RELEASE'),
+    ageControlVerified: on('NEXT_PUBLIC_SYMPHORIA_AGE_CONTROL_VERIFIED'), privacyReviewed, projectId })) return 'adult';
+  if (isClarityHeatmapsAllowed({ enabled, heatmaps: on('NEXT_PUBLIC_CLARITY_HEATMAPS'), privacyReviewed, projectId })) return 'heatmaps';
+  return null;
+}
+
+/** Heatmaps only: masks every text on the page before Clarity starts (Clarity honours data-clarity-mask). */
+export function maskWholePage(documentObject) {
+  const body = documentObject && documentObject.body;
+  if (!body || typeof body.setAttribute !== 'function') return false;
+  try { body.setAttribute('data-clarity-mask', 'true'); return true; } catch { return false; }
+}
+
+/* maxAgeMs: how long a «granted» lasts. In 'heatmaps' mode Sammuel wants the notice ONCE for the whole site,
+   so it is called with { maxAgeMs: null } (never expires); the adult mode keeps the 180-day renewal. */
+export function readClarityChoice(storage, now = Date.now(), { maxAgeMs = CLARITY_GRANT_MAX_AGE_MS } = {}) {
   if (!storage) return null;
   try {
     const raw = storage.getItem(CLARITY_CONSENT_KEY);
@@ -30,9 +60,10 @@ export function readClarityChoice(storage, now = Date.now()) {
     const record = JSON.parse(raw);
     if (record?.version !== CLARITY_CONSENT_VERSION) return null;
     if (record.choice === 'denied') return 'denied';
+    if (record.choice === 'minor') return 'minor';
     if (record.choice !== 'granted' || !Number.isFinite(record.updatedAt)) return null;
     // A future-dated record is invalid; a stale grant must be requested again.
-    if (record.updatedAt > now + 5 * 60 * 1000 || now - record.updatedAt > CLARITY_GRANT_MAX_AGE_MS) {
+    if (record.updatedAt > now + 5 * 60 * 1000 || (maxAgeMs != null && now - record.updatedAt > maxAgeMs)) {
       try { storage.removeItem(CLARITY_CONSENT_KEY); } catch {}
       return null;
     }
@@ -43,7 +74,7 @@ export function readClarityChoice(storage, now = Date.now()) {
 }
 
 export function writeClarityChoice(storage, choice, now = Date.now()) {
-  if (!storage || !['granted', 'denied'].includes(choice)) return false;
+  if (!storage || !['granted', 'denied', 'minor'].includes(choice)) return false;
   try {
     storage.setItem(CLARITY_CONSENT_KEY, JSON.stringify({
       version: CLARITY_CONSENT_VERSION,

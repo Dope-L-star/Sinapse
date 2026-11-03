@@ -5,7 +5,9 @@
 const MT = { el:null, hist:[], timer:0, mood:'feliz', busy:false, since:0, idle:0 };
 const MT_LOVE = /(gracias|te quiero|te amo|te adoro|eres (muy |la |una )?(linda|bonita|hermosa|genial|la mejor|incre[ií]ble|tierna|buena|top)|qu[eé] (linda|bonita|tierna|genial)|me (caes|encantas|gustas)|eres lo m[aá]ximo|abrazo|besito|❤|♥|💖|😍|🥰)/i;
 const MT_FUN = /(ja(ja)+|je(je)+|xd|😂|🤣|chiste|gracios)/i;
-const MT_SAD = /(fe[ao]|tonta|in[uú]til|odio|aburr|mala|est[uú]pida)/i;
+const MT_SAD = /(fe[ao]|odio|aburr|mala|lent[ao]|demora|cu[aá]ndo vuelve)/i;
+/* v3.7 · falta de respeto: ya no pide perdón; pone el límite con firmeza y elegancia (el servidor responde igual, sin gastar IA) */
+const MT_RUDE = /\b(idiota|est[uú]pid[ao]|imb[eé]cil|pendej[ao]|malparid[ao]|gonorrea|hijueputa|hp|hdp|puta|maric[oó]n|perra|zorra|mierda|c[aá]llate|idiot|stupid|moron|bitch|fuck\w*|shit\w*|asshole|shut up)\b|\b(eres|you'?re|you are)\s+(una?\s+|muy\s+|so\s+|a\s+)?(tonta|in[uú]til|basura|fea|dumb|useless|trash|ugly)\b/i;
 const mtOff = () => /pulsem/.test(location.pathname);
 const mtAdmin = () => !!(ACC && ACC.user && ['owner', 'admin'].includes(ACC.user.role));
 const mtTeam = () => !!(ACC && ACC.user && ['owner', 'admin', 'staff'].includes(ACC.user.role));
@@ -15,12 +17,13 @@ const mtSkipped = () => { try{ return sessionStorage.getItem('synthz:mtskip') ==
 const MT_LOCAL = {
   love:['¡Ay, me sonrojé! 💛 Gracias, de verdad. Tú también eres lo máximo.', '¡Me hiciste el día! Ya casi vuelvo con todo, gracias por esperarme.', 'Awww 🥰 Con gente como tú da gusto arreglar cosas.'],
   fun:['¡Jajaja! Me dio risa hasta en los circuitos.', 'Jaja, ¿te sabes otro? Mientras tanto el equipo sigue arreglando.', '¡Me hiciste reír! Eso me recarga más que la electricidad.'],
+  rude:['Así no. Con respeto te ayudo en lo que quieras.', 'Ese tono no va conmigo. Si quieres seguimos, pero con respeto.'],
   sad:['Uy… tienes razón en estar molesto. Estamos trabajando para que vuelva pronto y mejor.', 'Perdón por la espera. El equipo está en ello, te lo prometo.'],
   any:['¡Te escucho! Ahora mismo no puedo pensar muy profundo porque estamos arreglando cosas, pero aquí sigo contigo.', 'Mientras se arregla todo, cuéntame: ¿qué es lo primero que quieres hacer cuando vuelva SynthFlow?', 'Buena pregunta. En cuanto termine el mantenimiento te respondo mejor. ¿Me cuentas algo más?']
 };
 const mtPick = L => L[Math.floor(Math.random() * L.length)];
-const mtKind = q => MT_LOVE.test(q) ? 'love' : MT_FUN.test(q) ? 'fun' : MT_SAD.test(q) ? 'sad' : 'any';
-const MT_MOOD_OF = { love:'encantada', fun:'riendo', sad:'disculpa', any:'feliz' };
+const mtKind = q => MT_RUDE.test(q) ? 'rude' : MT_LOVE.test(q) ? 'love' : MT_FUN.test(q) ? 'fun' : MT_SAD.test(q) ? 'sad' : 'any';
+const MT_MOOD_OF = { love:'encantada', fun:'riendo', sad:'disculpa', rude:'neutral', any:'feliz' };
 
 function mtSetMood(m, hop){
   if (!MT.el) return;
@@ -41,7 +44,7 @@ function mtBurst(kind){
 function mtAdd(role, text, mood){
   const L = $('.mt-msgs', MT.el), d = document.createElement('div');
   d.className = 'mt-m ' + (role === 'user' ? 'me' : 'ia');
-  d.innerHTML = '<p></p>'; $('p', d).textContent = text; L.appendChild(d);
+  d.innerHTML = '<p></p>'; if (role === 'user') $('p', d).textContent = text; else $('p', d).innerHTML = synMd(text); L.appendChild(d);
   L.scrollTo({ top:L.scrollHeight, behavior:reduce ? 'auto' : 'smooth' });
   MT.hist.push({ role, content:text });
   if (role !== 'user'){
@@ -59,7 +62,7 @@ async function mtSend(q){
   MT.busy = true; $('.mt-send', MT.el).disabled = true; MT.el.classList.add('thinking');
   let text = '', mood = MT_MOOD_OF[kind];
   try{
-    const r = await fetch('/api/help', { method:'POST', headers:Object.assign({ 'content-type':'application/json' }, B.SESS ? { authorization:'Bearer ' + B.SESS } : {}), body:JSON.stringify({ action:'ask', ctx:'maint', q, hist:MT.hist.slice(-7, -1) }) });
+    const r = await fetch('/api/help', { method:'POST', headers:Object.assign({ 'content-type':'application/json' }, B.SESS ? { authorization:'Bearer ' + B.SESS } : {}), body:JSON.stringify({ action:'ask', ctx:'maint', q, lang:B.LANG, hist:MT.hist.slice(-7, -1) }) });
     const d = await r.json().catch(() => ({}));
     if (r.ok && d.text){ text = d.text; if (d.mood && FACE[d.mood]) mood = d.mood; }
   }catch(e){}
@@ -124,17 +127,22 @@ function mtClose(){
   document.documentElement.classList.remove('mt-on');
   if (reduce) el.remove(); else el.animate([{ opacity:1 }, { opacity:0 }], { duration:380 }).onfinish = () => el.remove();
 }
+let mtLastCheck = 0;
 async function mtCheck(){
   try{
-    const r = await fetch('/api/config', { cache:'no-store' }); if (!r.ok) return;
-    const m = (await r.json()).maint || {};
+    mtLastCheck = Date.now();
+    const { ok, d } = B.cfgFetch ? await B.cfgFetch() : await fetch('/api/config', { cache:'no-store' }).then(async r => ({ ok:r.ok, d:r.ok ? await r.json() : {} })); if (!ok) return;
+    const m = d.maint || {};
     if (m.on && !mtSkipped()) mtOpen({ text:m.text || 'Estamos presentando fallas o actualizaciones. Espera un momento.', t:m.t });
     else if (!m.on){ mtClose(); try{ sessionStorage.removeItem('synthz:mtskip'); }catch(e){} }
   }catch(e){}
 }
 if (!mtOff()){
-  const go = () => { mtCheck(); MT.timer = setInterval(() => { if (!document.hidden) mtCheck(); mtAgo(); }, 45000); };
+  /* v3.7 · costo cero: con el aviso encendido se revisa cada 45 s (para saber cuándo termina); apagado, cada 5 min */
+  let mtLast = 0;
+  const go = () => { mtCheck(); mtLast = Date.now(); MT.timer = setInterval(() => { mtAgo(); if (document.hidden) return; if (MT.el || Date.now() - mtLast > 300000){ mtLast = Date.now(); mtCheck(); } }, 45000); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
   addEventListener('synthz-acc', mtExit); accHooks.push(() => setTimeout(mtExit, 0));
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) mtCheck(); });
+  /* Fase 4 · al volver a la pestaña se revisa, pero no más de una vez por minuto (antes: cada cambio de pestaña era una llamada) */
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && (MT.el || Date.now() - mtLastCheck > 60e3)) mtCheck(); });
 }

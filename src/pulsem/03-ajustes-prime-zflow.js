@@ -14,11 +14,17 @@ function renderSettings(){
   if (can) $('#setG').insertAdjacentHTML('beforeend', '<div class="set' + (mt.on ? ' mton' : '') + '"><b>Aviso de mantenimiento' + (mt.on ? ' <span class="mtlive">● Encendido</span>' : '') + '</b><p>Cubre toda la página con este aviso y SynthonIA en el centro para charlar mientras arreglan. Pulsem nunca se cubre; Prime y ZFlow pueden «Entrar igual».</p>'
     + '<label class="field"><textarea id="sMaint" rows="3" maxlength="300" placeholder="Estamos presentando fallas o actualizaciones. Espera un momento.">' + esc(mt.text || '') + '</textarea></label>'
     + '<div class="acts" style="margin-top:8px">' + (mt.on ? '<button class="btn sm" type="button" data-set="maint" data-on="1">Cambiar texto</button><button class="btn sm ghost" type="button" data-set="maint" data-on="0">Apagar aviso</button>' : '<button class="btn sm" type="button" data-set="maint" data-on="1">Encender aviso</button>') + '</div></div>');
+  /* v3.7 · «Qué estamos arreglando ahora»: lo escribe cualquiera del equipo y SynthonIA lo cuenta a quien pregunte (ayudante y mantenimiento) */
+  const nw = (T && T.now) || null;
+  $('#setG').insertAdjacentHTML('afterbegin', '<div class="set setnow"><b>Qué estamos arreglando ahora' + (nw ? ' <span class="mtlive">● SynthonIA lo cuenta</span>' : '') + '</b><p>Escríbelo en una o dos frases. Si alguien le pregunta a SynthonIA qué se está arreglando, o reporta algo de esto, ella lo responde con sus palabras (en español o inglés). Déjalo vacío para que no diga nada.</p>'
+    + '<label class="field"><textarea id="sNow" rows="2" maxlength="300" placeholder="Ej.: Estamos arreglando que las fotos tarden en subir en el celular.">' + esc(nw ? nw.text : '') + '</textarea></label>'
+    + '<div class="acts" style="margin-top:8px"><button class="btn sm" type="button" data-set="now">Guardar</button>' + (nw ? '<button class="btn sm ghost" type="button" data-set="now" data-clear="1">Borrar</button><small style="color:var(--mute)">' + esc(nw.by || 'equipo') + ' · ' + new Date(nw.t).toLocaleString(document.documentElement.lang === 'en' ? 'en-US' : 'es-CO', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) + '</small>' : '') + '</div></div>');
   $('#setNote').hidden = can;
 }
 $('#setG').addEventListener('click', async e => {
   const b = e.target.closest('[data-set]'); if (!b) return; const k = b.dataset.set, l = b.textContent; b.disabled = true; b.textContent = 'Guardando…';
   try{
+    if (k === 'now'){ const v = b.dataset.clear ? '' : ($('#sNow').value || '').trim(); const d = await api('trial', { method:'POST', body:{ action:'now', text:v }, keep:true }); T = Object.assign({}, T, { now:d.now }); toast(d.now ? 'Listo: SynthonIA ya sabe qué estamos arreglando.' : 'Borrado: SynthonIA ya no lo menciona.'); renderSettings(); return; }
     if (k === 'maint'){ const on = b.dataset.on === '1'; const d = await api('trial', { method:'POST', body:{ action:'maint', on, text:($('#sMaint') ? $('#sMaint').value : '') }, keep:true }); T = Object.assign({}, T, { maint:d.maint }); toast(on ? 'Aviso encendido: la página ya muestra el mantenimiento.' : 'Aviso apagado.'); renderSettings(); return; }
     if (k === 'sbsync'){ let cur = 0, n = 0, c = 0; for (let i = 0; i < 200; i++){ const d = await api('trial', { method:'POST', body:{ action:'sbsync', cursor:cur }, keep:true }); n += d.accounts; c += d.chats; b.textContent = 'Copiando… ' + n + ' cuentas'; cur = d.cursor; if (d.done) break; } toast('Listo: copié ' + n + ' cuentas y ' + c + ' chats a Supabase.'); renderSettings(); return; }
     if (k === 'img'){ const d = await api('trial', { method:'POST', body:{ action:'limit', imgDay:+$('#sImg').value }, keep:true }); if (T) T.imgDay = d.imgDay; toast(d.imgDay ? 'Imágenes: ' + d.imgDay + ' al día por persona.' : 'Imágenes pausadas.'); }
@@ -30,9 +36,11 @@ $('#setG').addEventListener('click', async e => {
 
 /* ---------- ayuda: bandeja, conversación y «Contactar» ---------- */
 function renderHelp(){
-  const H = P.help || [];
-  $('#hN').textContent = H.filter(r => r.status === 'open').length + ' esperando';
-  $('#hList').innerHTML = H.length ? H.map((r, i) => '<div class="row" style="--i:' + i + '"><span class="av r-' + rc(r.user && r.user.rank) + '">' + ini(r.user && (r.user.username || r.user.name)) + '</span><div class="tx"><b>@' + esc(r.user ? r.user.username || r.user.name : '') + '</b><small>' + esc(r.text) + ' · ' + ago(r.t) + '</small></div><div class="tags">' + (r.status === 'open' ? '<span class="tag ' + (r.urgent ? 'bad' : 'warn') + '">' + (r.urgent ? '⏰ +15 min' : 'nuevo') + '</span>' : '<span class="tag ok">con ' + esc((r.by || {}).name || '') + '</span>') + '<button class="mini gold" type="button" data-open="' + esc(r.id) + '">Abrir</button></div></div>').join('') : '<div class="empty">No hay pedidos de ayuda abiertos. ✨</div>';
+  /* v3.7 · primero los que llevan +15 min sin respuesta, luego los nuevos y al final los que ya atiende alguien */
+  const w = r => r.status === 'open' ? (r.urgent ? 0 : 1) : 2;
+  const H = (P.help || []).slice().sort((a, b) => w(a) - w(b) || a.t - b.t), late = H.filter(r => r.urgent).length;
+  $('#hN').textContent = H.filter(r => r.status === 'open').length + ' esperando' + (late ? ' · ' + late + ' sin respuesta +15 min' : '');
+  $('#hList').innerHTML = H.length ? H.map((r, i) => '<div class="row' + (r.urgent ? ' urg' : '') + '" style="--i:' + i + '"><span class="av r-' + rc(r.user && r.user.rank) + '">' + ini(r.user && (r.user.username || r.user.name)) + '</span><div class="tx"><b>@' + esc(r.user ? r.user.username || r.user.name : '') + '</b><small>' + esc(r.text) + ' · ' + ago(r.t) + '</small></div><div class="tags">' + (r.status === 'open' ? '<span class="tag ' + (r.urgent ? 'bad' : 'warn') + '">' + (r.urgent ? '⏰ +15 min' : 'nuevo') + '</span>' : '<span class="tag ok">con ' + esc((r.by || {}).name || '') + '</span>') + '<button class="mini gold" type="button" data-open="' + esc(r.id) + '">Abrir</button></div></div>').join('') : '<div class="empty">No hay pedidos de ayuda abiertos. ✨</div>';
   if (helpCur) openHelp(helpCur.id, true);
 }
 async function openHelp(id, quiet){

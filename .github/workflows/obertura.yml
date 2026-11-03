@@ -1,0 +1,43 @@
+# SymphorIA · Obertura: arma el instalador de Windows y lo publica como «release» de GitHub (gratis).
+# Se dispara al subir una etiqueta obertura-vX.Y.Z, o a mano desde Actions › Obertura › Run workflow.
+# Las apps ya instaladas ven el release nuevo (cada 6 horas como mucho), revisan la huella .sha256 y se cambian solas.
+name: Obertura
+on:
+  push:
+    tags: ['obertura-v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versión (X.Y.Z)'
+        required: true
+permissions:
+  contents: write
+jobs:
+  armar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: escritorio/go.mod
+          cache-dependency-path: escritorio/go.sum
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Versión
+        id: v
+        run: |
+          V="${{ github.event.inputs.version }}"
+          [ -z "$V" ] && V="${GITHUB_REF_NAME#obertura-v}"
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+      - name: Armar SymphorIA-Obertura.exe
+        run: node escritorio/armar.mjs "${{ steps.v.outputs.version }}"
+      - name: Publicar el release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          T="obertura-v${{ steps.v.outputs.version }}"
+          gh release create "$T" escritorio/salida/SymphorIA-Obertura.exe escritorio/salida/SymphorIA-Obertura.exe.sha256 \
+            --target "$GITHUB_SHA" --title "SymphorIA · Obertura ${{ steps.v.outputs.version }}" \
+            --notes "Instalador de SymphorIA para Windows 10 y 11. Descárgalo, ábrelo y listo: crea el acceso directo, abre la app y se actualiza sola."

@@ -1,0 +1,43 @@
+# Fase 4 · vigía gratis: cada 30 minutos revisa que la página y el servidor respondan.
+# Si algo falla, abre (o comenta) un aviso en Issues con la etiqueta «caida»: GitHub le manda un correo al dueño.
+# Cuando todo vuelve a estar bien, cierra el aviso solo. No usa claves ni secretos.
+name: Vigía
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+jobs:
+  vigia:
+    if: github.repository == 'Dope-L-star/SynthZ-Style'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Revisar
+        id: revisar
+        run: node ops/vigia.mjs https://symphoria.pages.dev | tee vigia.txt
+        continue-on-error: true
+      - name: Avisar o cerrar el aviso
+        uses: actions/github-script@v7
+        env:
+          FALLO: ${{ steps.revisar.outcome == 'failure' }}
+        with:
+          script: |
+            const fs = require('fs');
+            const texto = fs.existsSync('vigia.txt') ? fs.readFileSync('vigia.txt', 'utf8') : '(sin detalle)';
+            const { owner, repo } = context.repo;
+            const abiertos = (await github.rest.issues.listForRepo({ owner, repo, state: 'open', labels: 'caida' })).data;
+            if (process.env.FALLO === 'true') {
+              const cuerpo = 'La vigía encontró un problema (' + new Date().toISOString() + '):\n\n```\n' + texto.slice(0, 3000) + '\n```';
+              if (abiertos.length) await github.rest.issues.createComment({ owner, repo, issue_number: abiertos[0].number, body: cuerpo });
+              else await github.rest.issues.create({ owner, repo, title: 'SymphorIA no responde bien', labels: ['caida'], body: cuerpo });
+            } else for (const i of abiertos) {
+              await github.rest.issues.createComment({ owner, repo, issue_number: i.number, body: 'Volvió a responder bien (' + new Date().toISOString() + '). Cierro el aviso.' });
+              await github.rest.issues.update({ owner, repo, issue_number: i.number, state: 'closed' });
+            }

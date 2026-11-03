@@ -55,7 +55,7 @@ function paintLock(){
     const done = trialOn && trialLeft() <= 0;
     const gm = (SZ.SZQ.guest && SZ.SZQ.guest.max) || 5;
     $('#lockT').textContent = gst ? 'Para seguir FlowIAndo, entra a tu cuenta' : done ? 'Se acabaron tus mensajes de prueba' : SZ.SZQ.on === false ? 'Las IAs gratis están descansando' : 'Usaste tu límite gratis de hoy';
-    $('#lockS').textContent = gst ? 'Ya usaste tus ' + gm + ' mensajes de prueba de hoy sin cuenta. Crear tu cuenta es gratis, sin correo ni tarjeta, y te da mucho más límite cada día.' : done ? 'Para seguir chateando conecta tu cuenta de Puter (gratis, con un clic).' : 'Vuelve en un momento, o sigue ya con Puter. Conecta tu versión pro de las IAs más usadas.';
+    $('#lockS').textContent = gst ? 'Ya usaste tus mensajes de hoy sin cuenta. Crear tu cuenta es gratis, sin correo ni tarjeta, y te da mucho más límite cada día.' : done ? 'Para seguir chateando conecta tu cuenta de Puter (gratis, con un clic).' : 'Vuelve en un momento, o sigue ya con Puter. Conecta tu versión pro de las IAs más usadas.';
     SZ.telEv('noai', 'sin IA: la de SymphorIA está apagada y no hay Puter');
     if (side.classList.contains('open')) closeSide();
   } else { wHide(); }
@@ -181,7 +181,7 @@ function needsConn(){ return (mode === 'cmp' ? st().cmp : [selId()]).some(id => 
 async function puterSignIn(opts){
   if (!window.puter){ showBlockHelp(window.__puterBlocked ? 'script' : 'script'); throw Object.assign(new Error('sin puter'), { shown:true }); }
   try{ return await puter.auth.signIn(opts || {}); }
-  catch(e){ if (e && (e.error === 'popup_blocked' || e.code === 'popup_blocked')){ showBlockHelp('popup'); throw Object.assign(new Error('popup'), { shown:true }); } throw e; }
+  catch(e){ if (e && (e.error === 'popup_blocked' || e.code === 'popup_blocked')){ window.__popupBlocked = true; showBlockHelp('popup'); throw Object.assign(new Error('popup'), { shown:true }); } throw e; }
 }
 function mScore(m){ const b = (m.id.match(/(\d{2,3})b/i) || [])[1]; return (b ? +b : 20) + (m.reasoning ? 25 : 0) + Math.min(m.ctx, 262144) / 8000 + (/gpt-oss|deepseek|qwen|llama-3\.3|gemini|kimi|glm/i.test(m.id) ? 15 : 0) + (/^pu:/.test(m.id) && /gpt-5|gemini-3|claude|deepseek/i.test(m.id) ? 40 : 0) - (/nano|lite|mini/i.test(m.id) ? 10 : 0) + (/gpt-5\.6-luna$/i.test(m.id) ? 30 : 0) + (/^or:openrouter\/free$/.test(m.id) ? 20 : 0) + (/^gq:/.test(m.id) && gqOn() ? 60 : 0) + (m.id === 'sz:auto' ? 140 : /^sz:/.test(m.id) ? 10 : 0) - (/allam/i.test(m.id) ? 999 : 0) - (SZ.isBad(m.id) ? 999 : 0); }
 function bestOf(prefix){ const l = cat.list.filter(m => m.id.startsWith(prefix + ':') && (m.free || prefix === 'pu')); if (prefix === 'sz' || prefix === 'or'){ const ap = l.find(m => m.id === APODEX); if (ap) return ap; } return l.length ? l.slice().sort((a, b) => mScore(b) - mScore(a))[0] : null; }

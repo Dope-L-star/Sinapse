@@ -9,7 +9,12 @@ let lockOff = null;
 function portalLock(on){
   if (lockOff){ lockOff(); lockOff = null; }
   if (!on) return;
-  const stop = e => { if (e.key === 'F5' || (e.key === 'r' && (e.ctrlKey || e.metaKey))) return; e.preventDefault(); e.stopPropagation(); };
+  const stop = e => {
+    if (e.key === 'F5' || (e.key === 'r' && (e.ctrlKey || e.metaKey))) return;
+    /* el aviso de mantenimiento (encima de todo) siempre se puede usar */
+    const m = document.getElementById('szMaint'); if (m && (m.contains(e.target) || m.contains(document.activeElement))) return;
+    e.preventDefault(); e.stopPropagation();
+  };
   const ev = ['keydown', 'keypress', 'wheel', 'touchmove', 'mousedown', 'click', 'pointerdown'];
   ev.forEach(t => addEventListener(t, stop, { capture:true, passive:false }));
   lockOff = () => ev.forEach(t => removeEventListener(t, stop, { capture:true }));

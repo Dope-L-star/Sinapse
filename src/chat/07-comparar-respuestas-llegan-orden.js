@@ -8,14 +8,14 @@ function flipAdd(grid, el){
   if (SZ.reduce || root.classList.contains('noanim')) return;
   kids.forEach((k, i) => { const a = before[i], b = k.getBoundingClientRect(), dx = a.left - b.left, dy = a.top - b.top, sx = a.width / (b.width || 1); if (Math.abs(dx) + Math.abs(dy) > 1 || Math.abs(sx - 1) > .01) k.animate([{ transform:'translate(' + dx + 'px,' + dy + 'px) scaleX(' + sx + ')', transformOrigin:'left top' }, { transform:'none', transformOrigin:'left top' }], { duration:700, easing:'cubic-bezier(.22,1,.36,1)' }); });
 }
-function newCmpRun(text){
+function newCmpRun(text, at){
   const run = ++cmpRun, node = document.createElement('div'); node.className = 'cmp-run';
-  node.appendChild(userEl(text));
+  node.appendChild(userEl(text, at && at.files));
   const wait = document.createElement('div'); wait.className = 'cmp-wait';
   const grid = document.createElement('div'); grid.className = 'cmp-grid';
   const note = document.createElement('p'); note.className = 'cmp-note'; note.textContent = 'Para ahorrar, en Comparar cada IA responde más corto y sin el historial. Si repites la misma pregunta, sale de la caché gratis.';
   node.append(wait, grid, note);
-  cmpLast = { run, text, node, grid, wait, cards:new Map(), done:[], blind:!!st().battle, n:0, faces:new Set() };
+  cmpLast = { run, text:at ? at.ask : text, node, grid, wait, cards:new Map(), done:[], blind:!!st().battle, n:0, faces:new Set() };
   parkComposer(); setFresh(false); lane.innerHTML = ''; lane.appendChild(node); jump();
   return cmpLast;
 }
@@ -79,16 +79,29 @@ function cmpJob(mid, C){
 }
 async function compare(){
   if (isLocked()){ lockNudge(); return; }
-  const text = inp.value.trim(); if (!text) return;
+  const text = inp.value.trim(), ready = files.filter(f => f.state === 'ok'); if (!text && !ready.length) return;
   if (Object.keys(busy).length){ toast('Espera a que terminen de responder, o detenlas con el botón ■.'); return; }
   const ids = st().cmp.slice();
   if (ids.length < 2){ toast('Agrega otra IA con el botón +.'); openSide('add'); return; }
-  if (files.length){ toast('Los archivos funcionan con una sola IA. Quítalos para comparar.'); return; }
+  /* v3.8 · Comparar también con archivos: cada IA recibe el mismo texto sacado de los archivos (las fotos, descritas por una IA que ve) */
+  if (files.some(f => f.state === 'load')){ toast('Espera a que terminen de cargar los archivos.'); return; }
   if (!budgetOk()) return;
   try{ SZ.setTurn(text + '|' + Date.now()); }catch(e){}
   if (!(await ensureConn())) return;
+  if (ready.some(f => f.kind === 'img' && !f.seen)){
+    const v = visionPick();
+    if (!v || !(await seeForMe(ready, v, text))) ready.filter(f => f.kind === 'img' && !f.seen).forEach(f => { f.text = (f.text ? f.text + '\n\n' : '') + '[Foto adjunta: ' + f.name + ' (no se pudo describir ahora)]'; f.seen = true; });
+  }
+  const sent = files.splice(0).filter(f => f.state === 'ok'); renderTray();
+  const ask = (text || 'Mira los archivos adjuntos.') + sent.map(f => f.text ? '\n\n[Archivo adjunto: ' + f.name + ']\n```\n' + f.text.slice(0, Math.floor(24000 / sent.length)) + '\n```' : '').join('');
   inp.value = ''; autoGrow(); updateHint();
-  const C = newCmpRun(text);
+  /* v4.2 · Comparar sigue la MISMA regla de internet que el chat normal: si toca buscar, se busca una sola vez y todas las IAs reciben los mismos resultados */
+  const wd = text ? webTake(text) : { go:false }, wm = { role:'user', content:text };
+  if (wd.go) await webPrep(wm, text, wd.why);
+  const ask2 = wm.ask ? wm.ask + (ask.length > text.length ? ask.slice(text.length) : '') : ask;
+  const C = newCmpRun(text, sent.length || wm.sources ? { ask:ask2, files:sent.map(f => ({ name:f.name, kind:f.kind, thumb:f.thumb })) } : null);
+  if (sent.length || wm.sources) C.msg = Object.assign({ role:'user', content:text }, sent.length ? { files:sent.map(f => ({ name:f.name, kind:f.kind, text:f.text, thumb:f.thumb })) } : {}, wm.sources ? { sources:wm.sources, web:wm.web, webWhy:wm.webWhy } : {});
+  if (wm.sources){ const u = C.node.querySelector('.m.user'); const se = sourcesEl(wm); if (u) u.after(se); else C.node.prepend(se); }
   ids.forEach(id => cmpJob(id, C));
 }
 /* entrar a Comparar con las IA marcadas (desde los temas) */
@@ -163,7 +176,7 @@ function pickWinner(card){
     (st().thread || (st().thread = {}))[mid] = 't' + Date.now().toString(36);
     st().cmp = []; cmpLast = null; st().model.openrouter = mid; st().pinned = mid;
     const arr = st().chats[ckey()] = [];
-    arr.push({ role:'user', content:C.text }, { role:'assistant', content:card._raw || '', meta:(card._meta || '') + ' · la elegiste en Comparar', model:mid });
+    arr.push(C.msg || { role:'user', content:C.text }, { role:'assistant', content:card._raw || '', meta:(card._meta || '') + ' · la elegiste en Comparar', model:mid });
     touchThread(); save(); setMode('solo');
     toast(info(mid).name + ' tiene más Flow 😎 Sigues con ella.');
   }, 700);

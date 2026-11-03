@@ -3,6 +3,7 @@
    POST { action:'keys', groq?, mistral?, cloudflare?, cfAccount?, openrouter? } → tus llaves (Prime, ZFlow y Symmetrix: cada uno las suyas)
    POST { action:'delkey', id }              → quitar una llave de la lista (la tuya; Prime/ZFlow cualquiera menos las de Vercel)
    POST { action:'check' }                     → probar llaves (Prime/ZFlow todas; Symmetrix solo las suyas)
+   POST { action:'now', text }                 → «Qué estamos arreglando ahora» (equipo); SynthonIA lo cuenta a quien pregunte
    POST { action:'limit', dayLimit }           → tope de SynXCoin's al día por persona (Prime/ZFlow)
    POST { action:'google', clientId }          → «ID de cliente» de Google para entrar con Google y Drive (Prime/ZFlow)
    POST { action:'drive', clientId }           → (opcional) otro ID solo para Drive (Prime/ZFlow)
@@ -33,8 +34,8 @@ export default route({
     const [st, set, owners, cat, gg, dv] = await Promise.all([status(), settings(), ownersRaw(), models(false).catch(() => ({ list:[], provs:[] })), getJ('cfg:google'), getJ('cfg:drive')]);
     const mine = owners[me.sub] || { keys:{} };
     const genv = (process.env.GOOGLE_CLIENT_ID || '').trim(), denv = (process.env.GOOGLE_DRIVE_CLIENT_ID || '').trim();
-    const mt = await getJ('cfg:maint').catch(() => null);
-    return json({ rank:RANK[roleOf(me)], canEdit:boss(me), maint:mt || { on:false }, dayLimit:set.dayLimit,
+    const [mt, nw] = await Promise.all([getJ('cfg:maint').catch(() => null), getJ('cfg:now').catch(() => null)]);
+    return json({ rank:RANK[roleOf(me)], canEdit:boss(me), maint:mt || { on:false }, now:nw || null, dayLimit:set.dayLimit,
       keys:st.map(k => Object.assign(k, { mine:!!(k.owner && k.owner.sub === me.sub) })),
       mine:Object.fromEntries(KEY_PROVS.map(p => [p, mine.keys && mine.keys[p] ? 'guardada' : ''])), cfAccount:mine.cfAccount || '',
       models:{ n:cat.list.length, byProv:ORDER.map(p => ({ id:p, name:PROV[p].name, n:cat.list.filter(m => m.prov === p).length })) }, imgDay:set.imgDay,
@@ -72,6 +73,16 @@ export default route({
       const on = !!b.on; const cur = { on, text:String(b.text || '').trim().slice(0, 300) || 'Estamos presentando fallas o actualizaciones. Espera un momento.', t:Date.now(), by:RANK[roleOf(me)] || 'equipo' };
       await setJ('cfg:maint', cur);
       return json({ ok:true, maint:cur });
+    }
+    /* v3.7 · «Qué estamos arreglando ahora»: el equipo lo escribe y SynthonIA se lo cuenta a quien pregunte (vacío = se borra) */
+    if (a === 'now'){
+      const me = await auth(req); if (!team(me)) return fail(403, 'Solo el equipo de SymphorIA puede escribir esto.');
+      await limit('trial-admin:' + me.sub, 30, 600);
+      const text = String(b.text || '').replace(/\s+/g, ' ').trim().slice(0, 300);
+      if (!text){ await redis('DEL', 'cfg:now'); return json({ ok:true, now:null }); }
+      const cur = { text, t:Date.now(), by:RANK[roleOf(me)] || 'equipo' };
+      await setJ('cfg:now', cur);
+      return json({ ok:true, now:cur });
     }
     if (a === 'limit'){
       const me = await auth(req); if (!boss(me)) return fail(403, 'Solo Prime y ZFlow pueden cambiar el tope.');

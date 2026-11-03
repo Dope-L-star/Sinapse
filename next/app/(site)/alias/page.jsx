@@ -1,13 +1,20 @@
-import LegacyPage from '../../../componentes/LegacyPage';
-import { inlineStyle } from '../../../contenido/legado/alias';
-import reactTree from '../../../contenido/arboles-react/alias.json';
+import LegacyRuntime from '../../../componentes/LegacyRuntime';
+import AliasApp from '../../../componentes/alias/AliasApp';
 
 export const metadata = {
   title: 'A.L.I.A.S. · SymphorIA',
   robots: { index: false, follow: false },
-  alternates: { canonical: '/alias.html' },
+  alternates: { canonical: '/alias' },
 };
 
+/* v3.8 · A.L.I.A.S. ya es React de verdad (next/componentes/alias/*). alias.js ya no se carga aquí:
+   solo el motor (alias-tools.js → window.ALIAS) y la capa de animaciones. */
 export default function AliasPage() {
-  return <LegacyPage page="alias" tree={reactTree.nodes} inlineStyle={inlineStyle} stylesheets={['alias.css', 'movimiento.css']} scripts={['alias-tools.js', 'alias.js', 'movimiento.js']} />;
+  return (
+    <>
+      {['alias.css', 'alias-mision.css', 'movimiento.css'].map((href) => <link rel="stylesheet" href={`/${href}`} precedence="default" key={href} />)}
+      <AliasApp />
+      <LegacyRuntime page="alias" scripts={['alias-tools.js', 'movimiento.js']} />
+    </>
+  );
 }

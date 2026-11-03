@@ -327,3 +327,12 @@ html.noglass .card,html.noglass .ptop{backdrop-filter:none;-webkit-backdrop-filt
   .dn-i{width:auto;flex:none;padding:9px 12px}
   .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+/* v3.7 · pedidos de ayuda con más de 15 min sin respuesta: se notan y van primero */
+#hList .row.urg{border-color:rgba(255,95,87,.5);background:rgba(255,95,87,.07);box-shadow:0 0 0 1px rgba(255,95,87,.18) inset}
+/* ===== v3.8 · Pulsem en React (next/componentes/pulsem + admin) =====
+   · Botón de idioma en la cabecera de la puerta (ES/EN al instante).
+   (la barra de secciones del panel en el celular va sobre el blurry desde admin.css) */
+.ibtn.plang{width:auto;min-width:38px;padding:0 11px;border-radius:999px;font:600 12px/1 var(--sans);letter-spacing:.06em}
+.ptop .pmw{white-space:nowrap}
+@media (max-width:480px){.ptop{gap:6px}.ptop .ibtn{width:34px;height:34px}.ibtn.plang{min-width:0;padding:0;font-size:11px}}

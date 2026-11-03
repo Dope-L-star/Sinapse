@@ -16,7 +16,8 @@ try{ const u = JSON.parse(localStorage.getItem(UI_KEY)) || {}; ['free', 'fav', '
 const saveUI = () => { try{ localStorage.setItem(UI_KEY, JSON.stringify(ui)); }catch(e){} };
 
 let mode = params.get('mode') === 'cmp' ? 'cmp' : 'solo';
-let pickMode = 'set';            /* 'set' = cambiar la IA · 'add' = sumar otra IA para comparar */
+let pickMode = 'set';
+let pickCmp = false;             /* v3.7 · «Comparar IAs» (su propio lugar en la barra): marcas 2 a 4 y empiezas */            /* 'set' = cambiar la IA · 'add' = sumar otra IA para comparar */
 let cmpLast = null;              /* la última pregunta de Comparar: sus tarjetas siguen ahí aunque se repinte */
 const jobOwn = {};               /* qué trabajo es dueño de cada «pensando…» */
 const isMobile = () => matchMedia('(max-width:760px)').matches;
@@ -64,7 +65,7 @@ function tags(m, full){
   return h;
 }
 const exC = new Map();
-const expert = m => { let e = exC.get(m.id); if (!e){ e = SZ.expertOf(m); exC.set(m.id, e); } return e; };
+const expert = m => { const k = SZ.lang() + m.id; let e = exC.get(k); if (!e){ e = SZ.expertOf(m); exC.set(k, e); } return e; };
 const STAR = '<svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9 6.8 19.7l1-5.9L3.5 9.7l5.9-.8z"/></svg>';
 
 /* familia de cada IA, con el nombre que la gente conoce */
@@ -101,12 +102,12 @@ function itemHtml(m, i, q, anim){
   const pay = payOf(m.id), ok = connected(m.id), ck = pickSel.has(m.id);
   const badge = '<i class="mpay ' + pay[0] + (ok ? '' : ' lock') + '">' + esc(ok ? pay[2] : (/^pu:/.test(m.id) ? 'Conecta tu Puter' : /^sz:/.test(m.id) ? 'Descansando' : 'No disponible')) + '</i>';
   const why = (rec ? '<b class="pti">Para ' + esc(TOPIC[tk].l) + '</b> · ' : forMe().has(m.id) && ptab === 'forme' ? '<b class="pti">Para ti</b> · ' : '') + esc(expert(m).line);
-  const act = inCmp ? '<span class="mya">ya está</span>' : '<button type="button" class="btn sm' + (ok ? '' : ' ghost') + ' muse" data-use>' + (add ? (ok ? 'Sumar' : 'Conectar') : sel ? 'En uso' : ok ? 'Usar' : 'Conectar') + '</button>';
+  const act = pickCmp ? '' : inCmp ? '<span class="mya">ya está</span>' : '<button type="button" class="btn sm' + (ok ? '' : ' ghost') + ' muse" data-use>' + (add ? (ok ? 'Sumar' : 'Conectar') : sel ? 'En uso' : ok ? 'Usar' : 'Conectar') + '</button>';
   return '<div class="mi' + (sel ? ' sel' : '') + (on ? ' on' : '') + (fav ? ' fav' : '') + (ck ? ' ck' : '') + (inCmp ? ' cmpd' : '') + (busy[m.id] ? ' busy' : '') + (anim ? ' in' : '') + '" role="option" tabindex="' + (sel || (mode === 'cmp' && i === 0) ? 0 : -1) + '" data-hover data-id="' + esc(m.id) + '" aria-selected="' + (sel || on) + '" style="--vc:' + vendorColor(m.vendor) + ';--i:' + i + '">' +
     av(m).replace('<i class="n"></i>', '<i class="n">' + n + '</i>') +
     '<div class="mi-t"><div class="mi-name"><span>' + hl(m.name, q) + '</span>' + badge + spendTag(m) + '</div><div class="mi-ex">' + why + '</div></div>' +
     '<div class="mi-a"><button class="star" type="button" aria-label="' + (fav ? 'Quitar de favoritos' : 'Añadir a favoritos') + '" aria-pressed="' + fav + '">' + STAR + '</button>' +
-    (add ? '' : '<label class="ckb"><input type="checkbox" data-ck' + (ck ? ' checked' : '') + '><span>Comparar</span></label>') + act + '</div></div>';
+    (!pickCmp ? '' : '<label class="ckb"><input type="checkbox" data-ck' + (ck ? ' checked' : '') + '><span>Comparar</span></label>') + act + '</div></div>';
 }
 function paintProv(){
   $$('.pdot[data-pd]').forEach(d => d.classList.toggle('on', d.dataset.pd === 'sz' ? szOn() : d.dataset.pd === 'pu' ? puterOn() : d.dataset.pd === 'gq' ? gqOn() : orOn()));
@@ -224,8 +225,9 @@ async function refresh(silent){
   }finally{ loading = false; }
 }
 $('#refreshBtn').addEventListener('click', () => refresh(false));
-setInterval(() => { if (!document.hidden) refresh(true); }, 600000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - cat.t > 60000) refresh(true); });
+setInterval(() => { if (!document.hidden) refresh(true); }, 1200000);   /* Fase 4: cada 20 min (antes 10); tu EnerX igual se actualiza con cada respuesta */
+/* v3.7 · costo cero: al volver a la pestaña solo se actualiza si la lista tiene más de 5 min (antes 1 min) */
+document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - cat.t > 300000) refresh(true); });
 
 /* filtros y orden */
 const FILTERS = [
@@ -293,6 +295,7 @@ listEl.addEventListener('click', e => {
   if (star){ toggleFav(star.closest('.mi'), star); return; }
   if (e.target.closest('.ckb')) return;                  /* la casilla «Comparar» se maneja en «change» */
   const mi = e.target.closest('.mi'); if (!mi || mi.classList.contains('cmpd')) return;
+  if (pickCmp){ const c = $('[data-ck]', mi); if (c){ c.checked = !c.checked; c.dispatchEvent(new Event('change', { bubbles:true })); } return; }
   pickModel(mi.dataset.id, mi);
 });
 /* marcar varias para compararlas (hasta 4; de OpenRouter, máximo 2) */
@@ -309,8 +312,10 @@ listEl.addEventListener('change', e => {
 });
 function paintPGo(){
   const b = $('#pGo'), n = pickSel.size;
-  b.hidden = pickMode === 'add' || n < 2;
-  if (!b.hidden){ b.textContent = 'Comparar estas ' + n + ' →'; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
+  b.hidden = !pickCmp;
+  b.disabled = n < 2;
+  b.textContent = n < 2 ? (n ? 'Marca una más' : 'Marca 2 a 4 IA') : 'Comparar estas ' + n + ' →';
+  if (n >= 2){ b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
 }
 $('#pGo').addEventListener('click', () => {
   const ids = [...pickSel]; if (ids.length < 2) return;
@@ -325,7 +330,7 @@ let ptopAll = false;
 function renderPTopics(){
   const L = ptopAll ? TOPICS : TOPICS.slice(0, 8);
   $('#pTopics').innerHTML = L.map(([k, e, l], i) => '<button type="button" class="tchip sm" data-ptk="' + k + '" aria-pressed="' + (ptopic === k) + '" style="--i:' + i + '">' + esc(l) + '</button>').join('')
-    + '<button type="button" class="tchip sm more" data-ptmore>' + (ptopAll ? 'Menos temas' : '+ ' + (TOPICS.length - 8) + ' temas') + '</button>';
+    + '<button type="button" class="tchip sm more" data-ptmore>' + (ptopAll ? (SZ.lang() === 'en' ? 'Fewer topics' : 'Menos temas') : '+ ' + (TOPICS.length - 8) + (SZ.lang() === 'en' ? ' topics' : ' temas')) + '</button>';
 }
 $('#pTopics').addEventListener('click', e => {
   if (e.target.closest('[data-ptmore]')){ ptopAll = !ptopAll; smoothSwap($('#pTopics'), renderPTopics); return; }
@@ -337,11 +342,12 @@ $('#pTopics').addEventListener('click', e => {
 function paintPNote(){
   const note = $('#pNote'), q = query.trim(), tq = ptopic || (q ? topicFor(q) : null);
   note.hidden = false; note.classList.toggle('warn', pickMode === 'add');
-  if (pickMode === 'add') note.innerHTML = (cmpLast && cmpLast.text ? 'La que sumes responde a tu última pregunta y aparece al lado, sin volver a enviarla. ' : 'Responde la misma pregunta que las demás y aparece al lado. ') + '<b>Ojo:</b> cada IA cuenta como un mensaje de tu límite de hoy. Puedes poner hasta 4 a la vez.';
-  else if (tq) note.innerHTML = 'Para <b>' + esc(TOPIC[tq].l) + '</b> te recomiendo estas. Marca dos para compararlas lado a lado.';
+  if (pickCmp) note.innerHTML = 'Marca de <b>2 a 4 IA</b> y toca «Comparar». Todas responden la misma pregunta, lado a lado. <b>Ojo:</b> cada una cuenta como un mensaje.';
+  else if (pickMode === 'add') note.innerHTML = (cmpLast && cmpLast.text ? 'La que sumes responde a tu última pregunta y aparece al lado, sin volver a enviarla. ' : 'Responde la misma pregunta que las demás y aparece al lado. ') + '<b>Ojo:</b> cada IA cuenta como un mensaje de tu límite de hoy. Puedes poner hasta 4 a la vez.';
+  else if (tq) note.innerHTML = 'Para <b>' + esc(TOPIC[tq].l) + '</b> te recomiendo estas.';
   else if (ptab === 'fav') note.innerHTML = st().fav.length ? 'Tus IA favoritas. Toca la estrella de cualquier IA para guardarla aquí.' : 'Aún no tienes favoritas: toca la ★ de una IA para guardarla aquí.';
-  else if (ptab === 'all') note.innerHTML = 'Todas las IA que puedes usar. Marca dos o más para compararlas.';
-  else note.innerHTML = 'Tus IA recomendadas van arriba ✦. Marca dos o más para compararlas lado a lado.';
+  else if (ptab === 'all') note.innerHTML = 'Todas las IA que puedes usar. Toca una para empezar.';
+  else note.innerHTML = 'Tus IA recomendadas van arriba ✦. Toca una para usarla.';
 }
 /* cambia un bloque con una transición suave de altura (para «+ temas») */
 function smoothSwap(box, paint){
@@ -379,15 +385,17 @@ function pickModel(id, node){
     const base = mode === 'cmp' ? st().cmp : [selId()].filter(x => x !== TRIAL_ID), why = cmpWhyNot(id, base);
     if (why === 'ya'){ toast('Esa IA ya está en la comparación.'); return; }
     if (why){ toast(why); return; }
-    addToCompare(id, node); return;
+    if (node !== null) iaThenAdd(id, node); else addToCompare(id, node);   /* v3.8 · solo se suma si de verdad responde */
+    return;
   }
   if (trialOn && id !== TRIAL_ID) exitTrial(true);
-  const same = id === selId();
+  const same = id === selId(), prev = selId();
   if (node) st().pinned = id;
   st().model.openrouter = id; save(); paintSel(); renderTop(!same); paintAccent();
   if (!same && node){ const r = node.getBoundingClientRect(); burst(r.left + 32, r.top + 24, [vendorColor(info(id).vendor), '#ffffff', vendorColor(info(id).vendor)], 8); }
   renderMsgs();
   closeSide();
+  if (node !== null && !same) iaAfterPick(id, prev);   /* v3.8 · ¿responde? si no, vuelves a la de antes y te pregunto para qué la querías */
 }
 
 /* ---------- cabecera ---------- */
@@ -416,7 +424,7 @@ function renderTop(animate){
     row.classList.remove('n3', 'n4');
     const m = info(selId()), open = $('#side').classList.contains('open') && pickMode === 'set';
     row.innerHTML = '<button type="button" class="mchip" id="curChip" aria-haspopup="dialog" aria-expanded="' + open + '" title="Cambiar de IA" style="--vc:' + vendorColor(m.vendor) + '">' + av(m) + '<b id="curName"></b>' + CARET + '</button>'
-      + (trialOn ? '' : '<button type="button" class="addb" data-add aria-label="Agregar otra IA para comparar">' + PLUS + '<span>Agregar otra IA</span></button>')
+      /* v3.7 · «Agregar otra IA» ya no va aquí: Comparar tiene su propio lugar en la barra («Comparar IAs») */
       + '<span class="paym" id="payM"></span>';
     const h1 = $('#curName'); h1.setAttribute('aria-label', m.name);
     if (animate) retype(h1, m.name, { cps:70, max:.7 }); else h1.textContent = m.name;
@@ -456,7 +464,7 @@ function paintPay(){
   if (P){ P.className = 'payl ' + c; P.innerHTML = '<i aria-hidden="true"></i>' + esc(l) + (ex ? '<button type="button" class="lnk" data-tx="exit">Salir</button>' : ''); }
   if (M){
     const bar = !document.body.classList.contains('fresh') && mode !== 'cmp' && !trialOn && (c === 'sz' || agentOn());
-    if (bar){ const k = Math.max(0, 1 - SZ.limPct()), pc = Math.round(k * 100), lv = SZ.limLvl();
+    if (bar){ const pc = SZ.battPct(), lv = SZ.limLvl();
       M.className = 'paym tlim ' + lv; M.setAttribute('role', 'img'); M.setAttribute('aria-label', SZ.isGuestQ() ? SZ.limTxt() : 'Tu EnerX de hoy: ' + SZ.battPct() + ' %');
       M.innerHTML = '<span class="tl-l">Hoy</span>' + SZ.limRing(16) + '<em>' + pc + ' %</em>'; }
     else { M.className = 'paym ' + c; M.removeAttribute('role'); M.removeAttribute('aria-label'); M.innerHTML = '<i aria-hidden="true"></i>' + esc(s); }
@@ -502,7 +510,7 @@ function renderNow(){
 function renderFoot(){
   const left = SZ.msgsLeft(), lv = SZ.limLvl();
   /* v3.0 · «Medidor del día» como batería: la pila se descarga mientras chateas y se carga a medianoche */
-  const k = Math.max(0, 1 - SZ.limPct()), g = SZ.isGuestQ(), big = g ? Math.max(0, (SZ.SZQ.guest.max || 5) - (SZ.SZQ.guest.used || 0)) + '' : Math.round(k * 100) + ' %', of = g ? 'de ' + (SZ.SZQ.guest.max || 5) + ' mensajes de prueba' : SZ.SZQ.team ? 'sin límite · equipo' : k > 0 ? 'se carga a medianoche' : 'sin EnerX · se carga a medianoche';
+  const k = Math.max(0, 1 - SZ.limPct()), g = SZ.isGuestQ(), big = g ? SZ.guestLeft() + '' : SZ.battPct() + ' %', of = g ? SZ.t('enerx.of', { n:SZ.SZQ.guest.max || 5 }) : SZ.SZQ.team ? 'sin límite · equipo' : k > 0 ? 'se carga a medianoche' : 'sin EnerX · se carga a medianoche';
   $('#sideFoot').innerHTML = '<button class="sxfoot lim gauge gbatt ' + lv + '" id="sxBtn" type="button" title="Tu EnerX de hoy (tu batería): toca para ver el detalle">'
     + '<span class="gz-t">EnerX de hoy</span>' + SZ.limRing(40)
     + '<span class="gz-n"><b>' + esc(big) + '</b><small>' + esc(of) + '</small></span><span class="sr">' + esc(SZ.limTxt()) + '</span></button>';
@@ -538,6 +546,9 @@ function thinkEl(mid){
   const m = info(mid), el = document.createElement('div'); el.className = 'm bot brand think-wrap'; el.style.cssText = brandVars(m);
   el.innerHTML = '<div class="who">' + av(m, 'xs') + '<b>' + esc(m.name) + '</b><span class="md">' + esc(m.vlabel || '') + '</span></div>';
   if (!works[mid]) works[mid] = SZ.workView({ model:m.name });
+  /* v3.8 · con SynthFlow en React, mientras la IA piensa sale la lluvia Matrix (#47) con su nombre; el detalle (segundos, pasos) queda debajo */
+  const fx = document.createElement('div'); fx.className = 'fxhost';
+  if (window.SZFx && window.SZFx.mount(fx, 'matrix', { lang:SZ.lang(), ia:SZ.lang() === 'en' && SZ.__syn && SZ.__syn.trStr ? SZ.__syn.trStr(m.name) : m.name })){ el.classList.add('fxm'); el.appendChild(fx); }
   el.appendChild(works[mid].el);
   return el;
 }
@@ -549,7 +560,11 @@ function cnvMeta(pre){
   const txt = code ? code.textContent : pre.textContent, L = CNV_LANG[k] || (k ? [k.toUpperCase(), k.replace(/[^\w]/g, '') || 'txt'] : [/^\s*</.test(txt) ? 'HTML' : 'Texto', /^\s*</.test(txt) ? 'html' : 'txt']);
   /* si la IA puso el nombre del archivo justo antes («index.html», `app.py`…), se usa ese */
   let name = '', prev = pre.parentElement && /\b(cnv|fcard)\b/.test(pre.parentElement.className) ? pre.parentElement.previousElementSibling : pre.previousElementSibling;
-  if (prev){ const f = (prev.textContent || '').match(/([\w.-]+\.(?:[a-z0-9]{1,6}))\s*[:：]?\s*$/i); if (f && !/^\d+\.\d+$/.test(f[1])) name = f[1]; }
+  /* v4.1 · con su carpeta («css/estilos.css»), así la página encuentra su CSS y su JS */
+  if (prev){ const f = (prev.textContent || '').match(/([\w.\/-]+\.(?:[a-z0-9]{1,6}))\s*[`*)]*\s*[:：]?\s*$/i); if (f && !/^\d+\.\d+$/.test(f[1])) name = f[1]; }
+  /* o en un comentario en la primera línea del código: <!-- index.html -->, /* css/estilos.css *\/, // js/app.js, # app.py */
+  if (!name){ const f = txt.split('\n', 1)[0].match(/^\s*(?:<!--|\/\*|\/\/|#)\s*(?:(?:archivo|file|filename|nombre)\s*[:：]\s*)?([\w.\/-]+\.([a-z0-9]{1,6}))\s*(?:-->|\*\/)?\s*$/i); if (f && (!k || f[2].toLowerCase() === L[1] || (L[1] === 'html' && /^htm$/i.test(f[2])) || (L[1] === 'js' && /^(mjs|cjs)$/i.test(f[2])))) name = f[1]; }
+  name = name.replace(/^\.?\/+/, '');
   if (!name) name = (L[1] === 'Dockerfile' ? 'Dockerfile' : (k === 'md' || k === 'markdown' || k === 'txt' || k === 'text' || !k ? 'documento' : 'codigo') + '.' + L[1]);
   const named = !/^(documento|codigo)\./.test(name) && name !== 'Dockerfile', ext = (name.split('.').pop() || L[1] || 'txt').toLowerCase();
   return { label:L[0], name, named, ext, text:txt.replace(/\n$/, ''), lines:txt.replace(/\n$/, '').split('\n').length };
@@ -580,17 +595,19 @@ function codeButtons(body){
       w.innerHTML = '<button type="button" class="cnv-b cnv-cp" data-cv="copy" title="Copiar" aria-label="Copiar">' + CNV_ICO.copy + '<span>Copiar</span></button>';
       pre.before(w); w.appendChild(pre);
     }
-  });
+  });  try{ webGroup(body); }catch(e){}   /* v4.1 · varios archivos de una página → una sola tarjeta «Página web» */
 }
 const MIME = { html:'text/html', htm:'text/html', css:'text/css', js:'text/javascript', json:'application/json', svg:'image/svg+xml', md:'text/markdown', csv:'text/csv', xml:'application/xml' };
 function cnvDownload(M){
-  try{ const blob = new Blob([M.text], { type:(MIME[M.ext] || 'text/plain') + ';charset=utf-8' }), u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = M.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); toast('Descargué ' + M.name + '.'); }
+  try{ const blob = new Blob([M.text], { type:(MIME[M.ext] || 'text/plain') + ';charset=utf-8' }), u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = M.name.split('/').pop(); document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); toast('Descargué ' + M.name + '.'); }
   catch(e){ toast('No pude descargarlo. Usa «Copiar».'); }
 }
 /* los otros archivos del mismo mensaje (para que un HTML use su style.css y su script.js en la vista previa) */
 function siblingsOf(card){ const b = card.closest('.body') || card.parentElement; return $$('.fcard pre', b).map(cnvMeta); }
 const escRx = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 function previewDoc(M, sibs){
+  /* v4.1 · si es parte de una página de varios archivos, se arma con sus rutas (css/…, js/…) */
+  if (/^(html|htm)$/.test(M.ext) && sibs && sibs.length){ const P = webProject(sibs.some(x => x.name === M.name) ? sibs : [M, ...sibs]); if (P && webFind(P, webNorm(M.name))) return webDoc(P, webNorm(M.name)); }
   if (M.ext === 'svg') return '<!doctype html><meta charset="utf-8"><style>html,body{margin:0;height:100%;display:grid;place-items:center;background:#fff}svg{max-width:96vw;max-height:96vh}svg:not([width]){width:96vw;height:96vh}</style>' + M.text;
   let h = M.text;
   if (!/<html[\s>]|<body[\s>]|<!doctype/i.test(h)) h = '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>' + h + '</body></html>';
@@ -652,6 +669,7 @@ function openCanvas(M, sibs, tab){
    En el celular no se abre solo (taparía todo): queda la tarjeta para tocarla */
 function synAuto(el){
   if (!el || !matchMedia('(min-width:900px)').matches) return;
+  { const w = $('.wproj', el); if (w && w._web){ webOpen(w._web, { tab:'prev' }); return; } }
   const cards = $$('.fcard:not(.deck)', el); if (!cards.length) return;
   const pv = cards.filter(c => canPreview(cnvMeta($('pre', c)))), c = (pv.length ? pv : cards).pop(), M = cnvMeta($('pre', c));
   openCanvas(M, siblingsOf(c), canPreview(M) ? 'prev' : 'code');
@@ -662,6 +680,7 @@ document.addEventListener('click', async e => {
   const f = e.target.closest && e.target.closest('.fcard [data-fv]');
   if (f){
     const card = f.closest('.fcard'), M = cnvMeta($('pre', card));
+    if (f.dataset.fv !== 'down' && webOf(card)){ const P = webOf(card); webOpen(P, { path:webNorm(M.name), tab:f.dataset.fv === 'prev' ? 'prev' : 'code' }); return; }
     if (f.dataset.fv === 'down') cnvDownload(M);
     else openCanvas(M, siblingsOf(card), f.dataset.fv === 'prev' ? 'prev' : 'code');
     return;
@@ -1164,6 +1183,229 @@ function hlCode(text, ext){
   text.replace(HL_RX[k], (m, ...g) => { const at = g[g.length - 2]; const i = g.findIndex((x, j) => j < 5 && x !== undefined); out += esc(text.slice(last, at)) + (i > -1 ? '<span class="' + cls[i + 1] + '">' + esc(m) + '</span>' : esc(m)); last = at + m.length; return m; });
   return out + esc(text.slice(last));
 }
+/* ---------- v4.1 · Páginas web de varios archivos: se juntan y se ven funcionando (Sammuel, 3 nov) ----------
+   Cuando la IA da una página en varios bloques (index.html, css/estilos.css, js/app.js, otra.html…):
+   1) se agrupan como un proyecto con sus rutas (la tarjeta «Página web · N archivos»);
+   2) cada HTML se arma con su CSS, su JS, sus SVG y sus JSON aunque vengan en bloques separados (rutas relativas resueltas);
+   3) los enlaces entre páginas navegan DENTRO de la vista previa; los de afuera piden permiso para abrirse;
+   4) todo se descarga en un .zip con sus carpetas.
+   La vista previa sigue corriendo en /sintetico.html dentro de un iframe sandbox (sin allow-same-origin): no ve tu sesión ni tus chats.
+   La ventana (pestañas, pantalla completa…) es React: next/componentes/synthflow/VistaWeb.jsx. Aquí solo va la lógica. */
+const WEB_EXT = new Set(['html', 'htm', 'css', 'js', 'mjs', 'svg', 'json', 'md', 'txt', 'csv', 'xml']);
+const webIsPage = p => /\.html?$/i.test(p);
+/* «./css/../css/estilos.css» → «css/estilos.css» */
+function webNorm(p){
+  const out = [];
+  String(p || '').replace(/\\/g, '/').split('/').forEach(s => { if (!s || s === '.') return; if (s === '..') out.pop(); else out.push(s); });
+  return out.join('/');
+}
+const webDir = p => p.includes('/') ? p.slice(0, p.lastIndexOf('/') + 1) : '';
+/* ¿a qué archivo del proyecto apunta «ref» escrito dentro de «from»? null si es de internet, un #ancla, data:, mailto:… */
+function webRef(from, ref){
+  ref = String(ref || '').trim();
+  if (!ref || /^(?:[a-z][\w+.-]*:|\/\/|#)/i.test(ref)) return null;
+  const hash = ref.includes('#') ? ref.slice(ref.indexOf('#')) : '';
+  const clean = ref.replace(/[?#].*$/, '');
+  if (!clean) return null;
+  let path; try{ path = decodeURI(clean); }catch(e){ path = clean; }
+  return { path:webNorm(clean.startsWith('/') ? path : webDir(from) + path), hash };
+}
+/* busca el archivo: ruta exacta, sin importar mayúsculas, o por su nombre si solo hay uno así (la IA a veces titula «estilos.css» y enlaza «css/estilos.css») */
+function webFind(P, path){
+  if (!path) return null;
+  const F = P.files;
+  return F.find(f => f.path === path) || F.find(f => f.path.toLowerCase() === path.toLowerCase())
+    || (() => { const base = path.split('/').pop().toLowerCase(), m = F.filter(f => f.path.split('/').pop().toLowerCase() === base); return m.length === 1 ? m[0] : null; })();
+}
+/* junta los archivos de una respuesta; solo es «página web» si hay al menos un HTML y dos archivos web */
+function webProject(metas){
+  const map = new Map();
+  (metas || []).forEach(M => {
+    if (!M || !WEB_EXT.has(M.ext)) return;
+    const path = webNorm(M.name) || M.name;
+    map.set(path, { path, name:path.split('/').pop(), ext:M.ext, text:M.text, label:M.label, lines:M.lines, named:M.named });
+  });
+  const files = [...map.values()];
+  const pages = files.filter(f => webIsPage(f.path));
+  if (!pages.length || files.length < 2) return null;
+  const entry = (pages.find(f => /^index\.html?$/i.test(f.path)) || pages.find(f => /(^|\/)index\.html?$/i.test(f.path)) || pages[0]).path;
+  const t = (pages.find(f => f.path === entry).text.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1];
+  const title = t ? t.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 80) : '';
+  return { files, pages:pages.map(f => f.path), entry, title };
+}
+/* lo que usa cada página: para saber qué CSS o JS quedó sin enlazar (la IA lo dio pero olvidó el <link> o lo nombró distinto) */
+function webUsed(P){
+  const used = new Set();
+  P.files.filter(f => webIsPage(f.path)).forEach(f => {
+    f.text.replace(/<(?:link|script|img|source|use|a|iframe)\b[^>]*?\s(?:href|src)\s*=\s*["']([^"']+)["']/gi, (m, u) => { const r = webRef(f.path, u), x = r && webFind(P, r.path); if (x) used.add(x.path); return m; });
+  });
+  P.files.filter(f => f.ext === 'css').forEach(f => f.text.replace(/@import\s+(?:url\()?\s*["']?([^"')\s;]+)/gi, (m, u) => { const r = webRef(f.path, u), x = r && webFind(P, r.path); if (x) used.add(x.path); return m; }));
+  return used;
+}
+const webB64 = s => { try{ return btoa(unescape(encodeURIComponent(s))); }catch(e){ return ''; } };
+const webData = f => 'data:' + (f.ext === 'svg' ? 'image/svg+xml' : f.ext === 'json' ? 'application/json' : f.ext === 'css' ? 'text/css' : /^m?js$/.test(f.ext) ? 'text/javascript' : 'text/plain') + ';charset=utf-8;base64,' + webB64(f.text);
+/* url(…) dentro de un CSS: los SVG del proyecto van en línea */
+function webCssUrls(P, from, css){
+  return css.replace(/url\(\s*(["']?)([^"')]+)\1\s*\)/gi, (m, q, u) => { const r = webRef(from, u), f = r && webFind(P, r.path); return f && f.ext === 'svg' ? 'url("' + webData(f) + '")' : m; });
+}
+function webCss(P, f, seen = new Set()){
+  if (seen.has(f.path)) return ''; seen.add(f.path);
+  let css = f.text.replace(/@import\s+(?:url\(\s*)?["']?([^"')\s;]+)["']?\s*\)?[^;]*;/gi, (m, u) => { const r = webRef(f.path, u), x = r && webFind(P, r.path); return x && x.ext === 'css' ? webCss(P, x, seen) : m; });
+  return webCssUrls(P, f.path, css);
+}
+const webScriptText = t => String(t).replace(/<\/script/gi, '<\\/script');
+/* un mismo renglón al principio: no mueve los números de línea de los errores. Avisa a SynthFlow de los clics en enlaces y formularios */
+const WEB_NAV = (id, files, hash) => '<script>(function(){var I=' + JSON.stringify(id) + ',H=' + JSON.stringify(hash || '') + ',F=' + JSON.stringify(files).replace(/<\//g, '<\\/') + ';'
+  + 'function S(t,d){try{parent.postMessage({szw:I,t:t,d:d},"*")}catch(e){}}'
+  + 'function ext(h){return /^(https?:|mailto:|tel:)/i.test(h)}'
+  + 'function local(h){return h&&!/^(#|javascript:|data:|blob:|about:)/i.test(h)&&!ext(h)&&!/^\\/\\//.test(h)}'
+  + 'document.addEventListener("click",function(e){if(e.defaultPrevented||e.button)return;var a=e.target&&e.target.closest&&e.target.closest("a[href]");if(!a)return;var h=a.getAttribute("href")||"";if(a.hasAttribute("download"))return;'
+  + 'if(ext(h)){e.preventDefault();S("ext",h);return}if(local(h)){e.preventDefault();S("nav",h)}},false);'
+  + 'addEventListener("submit",function(e){if(e.defaultPrevented)return;var f=e.target,h=(f.getAttribute&&f.getAttribute("action"))||"";e.preventDefault();if(ext(h))S("ext",h);else if(local(h))S("nav",h);else S("form","")},false);'
+  /* fetch("datos.json") y similares: los archivos del proyecto responden sin salir a internet */
+  + 'var of=window.fetch;if(of)window.fetch=function(u,o){try{var s=typeof u==="string"?u:u&&u.url||"";if(!/^[a-z][\\w+.-]*:|^\\/\\//i.test(s)){var p=s.replace(/[?#].*$/,"").replace(/^\\.?\\//,"");for(var k in F){if(k===p||k.split("/").pop()===p.split("/").pop()){return Promise.resolve(new Response(F[k][1],{status:200,headers:{"content-type":F[k][0]}}))}}}}catch(e){}return of.apply(this,arguments)};'
+  + 'if(H)addEventListener("load",function(){try{var e=document.getElementById(decodeURIComponent(H.slice(1)));if(e)e.scrollIntoView()}catch(x){}});'
+  + '})();<\/script>';
+/* arma una página del proyecto en un solo HTML que corre aislado */
+function webDoc(P, path, o = {}){
+  const f = webFind(P, path) || webFind(P, P.entry);
+  let h = f.text;
+  if (!/<html[\s>]|<body[\s>]|<!doctype/i.test(h)) h = '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>' + h + '</body></html>';
+  const from = f.path, used = new Set();
+  /* <link rel="stylesheet" href="css/estilos.css"> → <style> con el CSS */
+  h = h.replace(/<link\b[^>]*>/gi, tag => {
+    const href = (tag.match(/\shref\s*=\s*["']([^"']+)["']/i) || [])[1]; const r = href && webRef(from, href), x = r && webFind(P, r.path);
+    if (!x) return tag;
+    if (x.ext === 'css' && (/rel\s*=\s*["']?[^"'>]*stylesheet/i.test(tag) || !/\srel\s*=/i.test(tag))){ used.add(x.path); return '<style data-sz-file="' + esc(x.path) + '">' + webCss(P, x) + '</style>'; }
+    if (x.ext === 'svg') return tag.replace(/\shref\s*=\s*["'][^"']+["']/i, ' href="' + webData(x) + '"');
+    return tag;
+  });
+  /* <script src="js/app.js"></script> → el código en línea (con sus otros atributos: type="module", defer…) */
+  h = h.replace(/<script\b([^>]*?)\ssrc\s*=\s*["']([^"']+)["']([^>]*)>\s*<\/script>/gi, (m, a, src, b) => {
+    const r = webRef(from, src), x = r && webFind(P, r.path); if (!x || !/^m?js$/.test(x.ext)) return m;
+    used.add(x.path); const attrs = (a + b).replace(/\s(?:defer|async)\b(?:\s*=\s*["'][^"']*["'])?/gi, '');
+    return '<script' + attrs + ' data-sz-file="' + esc(x.path) + '">' + webScriptText(x.text) + '</script>';
+  });
+  /* imágenes y fondos SVG del proyecto */
+  h = h.replace(/(<(?:img|source|use|image)\b[^>]*?\s(?:src|href|xlink:href)\s*=\s*["'])([^"']+)(["'])/gi, (m, a, u, z) => { const r = webRef(from, u), x = r && webFind(P, r.path); return x && x.ext === 'svg' ? a + webData(x) + (r.hash || '') + z : m; });
+  h = h.replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi, (m, a, css, z) => /data-sz-file/.test(a) ? m : a + webCssUrls(P, from, css) + z);
+  h = h.replace(/(\sstyle\s*=\s*")([^"]*url\([^"]*)(")/gi, (m, a, css, z) => a + webCssUrls(P, from, css).replace(/"/g, '&quot;') + z);
+  /* lo que la IA dio pero no enlazó: igual se usa (CSS arriba, JS al final), si ninguna página lo enlaza */
+  const all = webUsed(P);
+  const orphanCss = P.files.filter(x => x.ext === 'css' && !all.has(x.path) && !used.has(x.path));
+  const orphanJs = P.files.filter(x => /^m?js$/.test(x.ext) && !all.has(x.path) && !used.has(x.path) && !/^\s*(import|export)\s/m.test(x.text) && !/require\(|module\.exports|process\.env/.test(x.text));
+  if (orphanCss.length){ const st = orphanCss.map(x => '<style data-sz-file="' + esc(x.path) + '">' + webCss(P, x) + '</style>').join(''); h = /<\/head>/i.test(h) ? h.replace(/<\/head>/i, m => st + m) : st + h; }
+  if (orphanJs.length){ const sc = orphanJs.map(x => '<script data-sz-file="' + esc(x.path) + '">' + webScriptText(x.text) + '</script>').join(''); h = /<\/body>(?![\s\S]*<\/body>)/i.test(h) ? h.replace(/<\/body>(?![\s\S]*<\/body>)/i, m => sc + m) : h + sc; }
+  /* el ayudante de navegación va primero que todo, en un solo renglón */
+  if (o.nav !== false){
+    const fx = {}; P.files.filter(x => !webIsPage(x.path) && !/^(css|m?js)$/.test(x.ext)).forEach(x => { if (x.text.length < 400000) fx[x.path] = [MIME[x.ext] || 'text/plain', x.text]; });
+    const n = WEB_NAV(o.navId || '', fx, o.hash);
+    if (/<head[^>]*>/i.test(h)) h = h.replace(/<head[^>]*>/i, m => m + n); else if (/<html[^>]*>/i.test(h)) h = h.replace(/<html[^>]*>/i, m => m + n); else h = n + h;
+  }
+  return o.probeId ? probeDoc(h, o.probeId, false) : h;
+}
+/* a qué página va un enlace tocado dentro de la vista previa */
+function webGo(P, from, href){
+  const r = webRef(from, href); if (!r) return null;
+  let path = r.path;
+  if (!path || /\/$/.test(href.replace(/[?#].*$/, ''))) path = webNorm(path + '/index.html');
+  let x = webFind(P, path);
+  if (!x && !/\.[a-z0-9]{1,5}$/i.test(path)) x = webFind(P, path + '.html') || webFind(P, webNorm(path + '/index.html'));
+  return x ? { path:x.path, hash:r.hash, page:webIsPage(x.path) } : { path, hash:r.hash, missing:true };
+}
+
+/* ---------- el .zip (sin librerías: formato «stored», con carpetas y nombres UTF-8) ---------- */
+const WEB_CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++){ let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function webCrc(u8){ let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = WEB_CRC[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function webZipBytes(entries){
+  const enc = new TextEncoder(), parts = [], central = []; let off = 0;
+  const d = new Date(), dt = ((d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1)) & 0xFFFF, dd = (((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate()) & 0xFFFF;
+  entries.forEach(([name, text]) => {
+    const nm = enc.encode(name), data = enc.encode(text), crc = webCrc(data);
+    const h = new DataView(new ArrayBuffer(30));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true); h.setUint16(10, dt, true); h.setUint16(12, dd, true);
+    h.setUint32(14, crc, true); h.setUint32(18, data.length, true); h.setUint32(22, data.length, true); h.setUint16(26, nm.length, true); h.setUint16(28, 0, true);
+    parts.push(new Uint8Array(h.buffer), nm, data);
+    const c = new DataView(new ArrayBuffer(46));
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, 0, true); c.setUint16(12, dt, true); c.setUint16(14, dd, true);
+    c.setUint32(16, crc, true); c.setUint32(20, data.length, true); c.setUint32(24, data.length, true); c.setUint16(28, nm.length, true); c.setUint32(42, off, true);
+    central.push(new Uint8Array(c.buffer), nm);
+    off += 30 + nm.length + data.length;
+  });
+  const size = central.reduce((s, x) => s + x.length, 0), e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, entries.length, true); e.setUint16(10, entries.length, true); e.setUint32(12, size, true); e.setUint32(16, off, true);
+  return [...parts, ...central, new Uint8Array(e.buffer)];
+}
+const webSlug = P => (P.title || P.entry.replace(/\.html?$/i, '') || 'pagina-web').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'pagina-web';
+function webZip(P){
+  const en = SZ.lang() === 'en';
+  try{
+    const blob = new Blob(webZipBytes(P.files.map(f => [f.path, f.text])), { type:'application/zip' }), u = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = u; a.download = webSlug(P) + '.zip'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000);
+    toast(en ? 'Downloaded ' + a.download + ' (' + P.files.length + ' files).' : 'Descargué ' + a.download + ' (' + P.files.length + ' archivos).');
+  }catch(e){ toast(en ? 'I couldn’t make the .zip. Download the files one by one.' : 'No pude armar el .zip. Descarga los archivos uno por uno.'); }
+}
+
+/* ---------- la tarjeta «Página web» en el mensaje ---------- */
+const WEB_ICO = {
+  web:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18"/><circle cx="6.5" cy="6.5" r=".6" fill="currentColor"/><circle cx="9" cy="6.5" r=".6" fill="currentColor"/><path d="M9.5 13l-2 2 2 2M14.5 13l2 2-2 2"/></svg>',
+  play:'<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.8v12.4a.8.8 0 0 0 1.2.7l9.8-6.2a.8.8 0 0 0 0-1.4L9.2 5.1a.8.8 0 0 0-1.2.7z"/></svg>',
+  zip:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg>'
+};
+const webTxt = en => en
+  ? { kind:'Website', files:n => n + (n === 1 ? ' file' : ' files'), pages:n => n + (n === 1 ? ' page' : ' pages'), run:'See it working', zip:'Download .zip', open:'Open the website' }
+  : { kind:'Página web', files:n => n + (n === 1 ? ' archivo' : ' archivos'), pages:n => n + (n === 1 ? ' página' : ' páginas'), run:'Ver funcionando', zip:'Descargar .zip', open:'Abrir la página web' };
+function webCardPaint(c, P){
+  const T = webTxt(SZ.lang() === 'en');
+  c.dataset.lang = SZ.lang();
+  $('.wp-h', c).innerHTML = '<button type="button" class="wp-main" data-wp="prev" title="' + esc(T.open) + '"><span class="wp-ic">' + WEB_ICO.web + '</span><span class="wp-t"><small>' + esc(T.kind) + '</small><b>' + esc(P.title || P.entry) + '</b><span>' + esc(T.files(P.files.length)) + (P.pages.length > 1 ? ' · ' + esc(T.pages(P.pages.length)) : '') + ' · ' + P.files.slice(0, 4).map(f => esc(f.path)).join(', ') + (P.files.length > 4 ? '…' : '') + '</span></span></button>'
+    + '<div class="wp-acts"><button type="button" class="wp-b go" data-wp="prev">' + WEB_ICO.play + '<span>' + esc(T.run) + '</span></button><button type="button" class="wp-b" data-wp="zip" title="' + esc(T.zip) + '">' + WEB_ICO.zip + '<span>' + esc(T.zip) + '</span></button></div>';
+}
+/* mete las tarjetas de los archivos dentro de una sola tarjeta de proyecto */
+function webGroup(body){
+  if (!body) return null;
+  const cards = $$('.fcard:not(.deck)', body).filter(c => !c.closest('.wproj'));
+  const old = $('.wproj', body);
+  const metas = [...(old ? $$('.fcard pre', old) : []), ...cards.map(c => $('pre', c))].map(cnvMeta);
+  const P = webProject(metas); if (!P) return null;
+  const web = cards.filter(c => WEB_EXT.has(cnvMeta($('pre', c)).ext));
+  let box = old;
+  if (!box){
+    box = document.createElement('div'); box.className = 'wproj notr';
+    box.innerHTML = '<div class="wp-h"></div><div class="wp-files"></div>';
+    web[0].before(box);
+  }
+  /* los títulos sueltos «📄 index.html» antes de cada tarjeta ya no hacen falta: la tarjeta trae el nombre */
+  web.forEach(c => { const h = c.previousElementSibling; if (h && h.classList.contains('fname-h')) h.remove(); else { const t = c.previousElementSibling; if (t && /^(P|H[1-6])$/.test(t.tagName) && t.textContent.length < 90 && /[\w-]+\.[a-z0-9]{1,5}/i.test(t.textContent) && P.files.some(f => t.textContent.includes(f.name))) t.remove(); } $('.wp-files', box).appendChild(c); });
+  { const t = box.previousElementSibling; if (t && /^(P|H[1-6])$/.test(t.tagName) && t.textContent.length < 90 && P.files.some(f => t.textContent.includes(f.name))) t.remove(); }
+  box._web = P; webCardPaint(box, P);
+  return P;
+}
+const webOf = el => { const b = el && (el.classList && el.classList.contains('wproj') ? el : el.closest && el.closest('.wproj')); return b ? b._web || null : null; };
+/* abre la ventana React; si no está (chat.html viejo), el lienzo de siempre con la página principal */
+function webOpen(P, o = {}){
+  if (!P) return;
+  if (window.SZWeb && window.SZWeb.open){ closeCanvas(true); window.SZWeb.open(P, o); return; }
+  const M = { label:'HTML', name:o.path || P.entry, named:true, ext:'html', text:(webFind(P, o.path || P.entry) || {}).text || '', lines:0 };
+  openCanvas(M, P.files.map(f => ({ label:f.label, name:f.path, named:true, ext:f.ext, text:f.text, lines:f.lines })), o.tab === 'code' ? 'code' : 'prev');
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('.wproj [data-wp]'); if (!b) return;
+  const P = webOf(b); if (!P) return;
+  if (b.dataset.wp === 'zip') webZip(P); else webOpen(P, { tab:'prev' });
+}, true);
+/* al cambiar el idioma, las tarjetas se vuelven a escribir */
+try{ SZ.onLang(() => $$('.wproj').forEach(c => { if (c._web) webCardPaint(c, c._web); })); }catch(e){}
+/* el código con colores para React, en trocitos [clase, texto] (React lo escribe como texto: nada de HTML crudo) */
+function webTokens(text, ext){
+  const k = /^(py)$/.test(ext) ? 'py' : /^(css|scss)$/.test(ext) ? 'css' : /^(html|htm|xml|svg|vue)$/.test(ext) ? 'html' : /^(js|mjs|jsx|ts|tsx|json)$/.test(ext) ? 'c' : '';
+  if (!k || text.length > 200000) return [['', text]];
+  const cls = ['', 'hc', 'hs', 'hk', 'hn', 'hf'], out = [], rx = new RegExp(HL_RX[k].source, HL_RX[k].flags);
+  let last = 0;
+  text.replace(rx, (m, ...g) => { const at = g[g.length - 2]; const i = g.findIndex((x, j) => j < 5 && x !== undefined); if (at > last) out.push(['', text.slice(last, at)]); out.push([i > -1 ? cls[i + 1] : '', m]); last = at + m.length; return m; });
+  if (last < text.length) out.push(['', text.slice(last)]);
+  return out;
+}
 /* ---------- temas: «¿qué quieres hacer?» con IA recomendadas para cada uno ---------- */
 const TOPICS = [
   ['escribir', '✍️', 'Escribir', { write:30, lang:10 }, [['Mejora un texto mío', 'Mejora este texto: hazlo más claro y natural, sin cambiar lo que quiero decir:\n\n'], ['Escribe un mensaje difícil', 'Ayúdame a escribir un mensaje amable pero firme para: ']]],
@@ -1305,7 +1547,7 @@ function renderCPick(){
   const m = info(selId());
   b.style.setProperty('--vc', vendorColor(m.vendor));
   b.innerHTML = av(m) + '<b>' + esc(m.name) + '</b>' + (!st().pinned && m.id !== TRIAL_ID ? '<i class="sug">sugerida</i>' : '') + CARET;
-  $('#cCmp').hidden = trialOn;
+  $('#cCmp').hidden = true;   /* v3.7 · Comparar salió de la caja de escribir: ahora está en la barra («Comparar IAs») */
 }
 function renderMsgs(){
   parkComposer();
@@ -1579,7 +1821,7 @@ const files = []; let fid = 0;
 const TEXTX = /\.(txt|md|markdown|csv|tsv|json|jsonl|xml|html?|css|scss|less|js|cjs|mjs|jsx|ts|tsx|py|ipynb|java|c|h|cpp|hpp|cs|go|rs|rb|php|sh|bat|ps1|sql|yml|yaml|toml|ini|cfg|conf|env|log|tex|swift|kt|kts|dart|scala|pl|r|lua|vue|svelte|astro|graphql|gql|proto|srt|vtt|rtf|svg|gradle|properties)$/i;
 /* v3.4 · Word, Excel, PowerPoint y OpenDocument: se sacan sus textos en el navegador (son un .zip con XML adentro) */
 const OFFX = /\.(docx|xlsx|pptx|odt|ods|odp)$/i;
-const CAP = 40000, clip = t => t.length > CAP ? t.slice(0, CAP) + '\n…(archivo recortado)' : t;
+const FILES_MAX = 10, CAP = 40000, clip = t => t.length > CAP ? t.slice(0, CAP) + '\n…(archivo recortado)' : t;
 function readImg(file){
   return new Promise((ok, no) => {
     const url = URL.createObjectURL(file), im = new Image();
@@ -1603,7 +1845,14 @@ function loadPdf(){
   })().catch(e => { pdfP = null; throw e; }));
 }
 async function readPdf(file){
-  const lib = await loadPdf(), pdf = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  const lib = await loadPdf(), task = lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
+  /* v3.8 · PDF con contraseña: se la pide a la persona (antes salía «No pude leer el PDF») */
+  task.onPassword = (give, why) => {
+    const en = SZ.lang() === 'en', nm = file.name || 'PDF';
+    const pw = prompt(why === 2 ? (en ? 'That password did not work. Try again for «' + nm + '»:' : 'Esa contraseña no sirvió. Prueba otra vez para «' + nm + '»:') : (en ? '«' + nm + '» is locked. Type its password:' : '«' + nm + '» tiene contraseña. Escríbela para abrirlo:'));
+    if (pw == null) task.destroy(); else give(pw);
+  };
+  const pdf = await task.promise;
   let t = '';
   for (let i = 1; i <= Math.min(pdf.numPages, 60) && t.length < CAP; i++){
     const tc = await (await pdf.getPage(i)).getTextContent();
@@ -1623,30 +1872,42 @@ async function readPdf(file){
   }
   return clip(t.trim());
 }
-/* lector mínimo de .zip (sin librerías): lee el índice del final y descomprime con DecompressionStream */
-async function zipOpen(buf){
-  const dv = new DataView(buf), td = new TextDecoder();
-  let e = buf.byteLength - 22; while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+/* lector mínimo de .zip (sin librerías): lee el índice del final y descomprime con DecompressionStream.
+   v3.8 · trabaja por pedazos del archivo (Blob.slice): un .zip de 500 MB ya no se carga entero en memoria */
+async function zipOpen(src){
+  const file = src instanceof Blob ? src : new Blob([src]), size = file.size, td = new TextDecoder();
+  const tn = Math.min(size, 65557), tail = new DataView(await file.slice(size - tn).arrayBuffer());
+  let e = tn - 22; while (e >= 0 && tail.getUint32(e, true) !== 0x06054b50) e--;
   if (e < 0) throw new Error('El archivo está dañado.');
-  const n = dv.getUint16(e + 10, true), ent = {}; let p = dv.getUint32(e + 16, true);
-  for (let i = 0; i < n && p + 46 <= buf.byteLength; i++){
+  let n = tail.getUint16(e + 10, true), cdLen = tail.getUint32(e + 12, true), cdAt = tail.getUint32(e + 16, true);
+  if ((cdAt === 0xffffffff || n === 0xffff) && e >= 20 && tail.getUint32(e - 20, true) === 0x07064b50){   /* zip64 (más de 4 GB o 65.535 archivos) */
+    const at = Number(tail.getBigUint64(e - 12, true)), z = new DataView(await file.slice(at, at + 56).arrayBuffer());
+    n = Number(z.getBigUint64(32, true)); cdLen = Number(z.getBigUint64(40, true)); cdAt = Number(z.getBigUint64(48, true));
+  }
+  const dv = new DataView(await file.slice(cdAt, cdAt + cdLen).arrayBuffer()), ent = {};
+  for (let i = 0, p = 0; i < n && p + 46 <= dv.byteLength; i++){
     const nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true);
-    ent[td.decode(new Uint8Array(buf, p + 46, nl))] = { m:dv.getUint16(p + 10, true), cs:dv.getUint32(p + 20, true), lo:dv.getUint32(p + 42, true) };
+    let cs = dv.getUint32(p + 20, true), us = dv.getUint32(p + 24, true), lo = dv.getUint32(p + 42, true);
+    if (cs === 0xffffffff || us === 0xffffffff || lo === 0xffffffff){   /* tamaños de zip64 en el campo extra */
+      for (let q = p + 46 + nl, end = q + xl; q + 4 <= end;){ const id = dv.getUint16(q, true), ln = dv.getUint16(q + 2, true); if (id === 1){ let r = q + 4; if (us === 0xffffffff){ us = Number(dv.getBigUint64(r, true)); r += 8; } if (cs === 0xffffffff){ cs = Number(dv.getBigUint64(r, true)); r += 8; } if (lo === 0xffffffff) lo = Number(dv.getBigUint64(r, true)); break; } q += 4 + ln; }
+    }
+    ent[td.decode(new Uint8Array(dv.buffer, p + 46, nl))] = { m:dv.getUint16(p + 10, true), fl:dv.getUint16(p + 8, true), cs, us, lo };
     p += 46 + nl + xl + cl;
   }
-  const read = async name => {
-    const x = ent[name]; if (!x) return '';
-    const at = x.lo + 30 + dv.getUint16(x.lo + 26, true) + dv.getUint16(x.lo + 28, true), raw = new Uint8Array(buf, at, x.cs);
-    if (x.m === 0) return td.decode(raw);
+  const blob = async (name, max = 60 * 1048576) => {
+    const x = ent[name]; if (!x) return new Blob([]);
+    if (x.fl & 1) throw new Error('Ese archivo tiene contraseña.');
+    const h = new DataView(await file.slice(x.lo, x.lo + 30).arrayBuffer()), at = x.lo + 30 + h.getUint16(26, true) + h.getUint16(28, true), raw = file.slice(at, at + x.cs);
+    if (x.m === 0) return raw;
     if (x.m !== 8 || typeof DecompressionStream === 'undefined') throw new Error('Tu navegador no puede abrir este archivo. Guárdalo como PDF y súbelo otra vez.');
-    return new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+    return inflate(raw.stream().pipeThrough(new DecompressionStream('deflate-raw')), max);
   };
-  return { names:Object.keys(ent), read };
+  return { names:Object.keys(ent), size:k => (ent[k] || {}).us || 0, locked:k => !!((ent[k] || {}).fl & 1), blob, read:async name => (await blob(name, 24 * 1048576)).text() };
 }
 const xmlTxt = x => x.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(+d)).replace(/&amp;/g, '&');
 const byNum = (a, b) => (+(a.match(/(\d+)\.xml$/) || [])[1] || 0) - (+(b.match(/(\d+)\.xml$/) || [])[1] || 0);
 async function readOffice(file){
-  const z = await zipOpen(await file.arrayBuffer()), ext = file.name.split('.').pop().toLowerCase();
+  const z = await zipOpen(file), ext = file.name.split('.').pop().toLowerCase();
   let t = '';
   if (ext === 'docx'){
     const x = await z.read('word/document.xml');
@@ -1676,27 +1937,17 @@ async function readOffice(file){
   return clip(t);
 }
 function renderTray(){
-  $('#tray').innerHTML = files.map(f => '<span class="fc ' + f.state + '" data-id="' + f.id + '">' + (f.thumb ? '<img src="' + esc(f.thumb) + '" alt="">' : (SZ.fileIco(f.name.split('.').pop()) ? '<i class="ic img">' + SZ.fileIco(f.name.split('.').pop()) + '</i>' : '<i class="ic">' + esc((f.name.split('.').pop() || 'file').slice(0, 4)) + '</i>')) + '<b>' + esc(f.name) + '</b><button class="x" type="button" aria-label="Quitar archivo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>').join('');
+  $('#tray').innerHTML = files.map(f => '<span class="fc ' + f.state + '" data-id="' + f.id + '">' + (f.thumb ? '<img src="' + esc(f.thumb) + '" alt="">' : (SZ.fileIco(f.name.split('.').pop()) ? '<i class="ic img">' + SZ.fileIco(f.name.split('.').pop()) + '</i>' : '<i class="ic">' + esc((f.name.split('.').pop() || 'file').slice(0, 4)) + '</i>')) + '<b>' + esc(f.name) + '</b>' + (f.prog ? '<small class="fcp">' + esc(f.prog) + '</small>' : '') + '<button class="x" type="button" aria-label="Quitar archivo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>').join('');
 }
 async function addFiles(list){
-  if (mode === 'cmp'){ toast('Los archivos funcionan en el modo Individual.'); return; }
+  /* v3.8 · cualquier archivo, en Individual y en Comparar: readAny nunca falla (lo que no sea texto se convierte o se describe) */
   for (const file of [...list]){
-    if (files.length >= 6){ toast('Máximo 6 archivos por mensaje.'); break; }
-    const f = { id:++fid, name:file.name || 'archivo', state:'load', kind:'text' }; files.push(f); renderTray();
-    try{
-      if (/^image\//.test(file.type)){ f.kind = 'img'; Object.assign(f, await readImg(file)); }
-      else if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf'){
-        f.kind = 'pdf'; const p = await readPdf(file);
-        if (p && p.scanned){ f.kind = 'img'; f.dataUrl = p.pics[0]; f.dataUrls = p.pics; f.thumb = p.pics[0]; f.scan = p.pages; } else f.text = p;
-      }
-      else if (OFFX.test(file.name)){ f.kind = 'doc'; f.text = await readOffice(file); }
-      else if (TEXTX.test(file.name) || /^text\//.test(file.type) || file.type === 'application/json'){ f.text = clip(await file.text()); }
-      else throw new Error('Tipo de archivo no compatible: ' + f.name);
-      f.state = 'ok';
-    }catch(e){
-      f.state = 'err'; toast(f.kind === 'pdf' && !/compatible/.test(e.message || '') ? 'No pude leer el PDF «' + f.name + '». Puede estar dañado o protegido con contraseña.' : f.kind === 'img' && !/compatible/.test(e.message || '') ? 'No pude abrir la imagen «' + f.name + '».' : f.kind === 'doc' && !/navegador|texto|dañado/.test(e.message || '') ? 'No pude leer «' + f.name + '». Guárdalo como PDF y súbelo otra vez.' : e.message);
-      setTimeout(() => { const i = files.indexOf(f); if (i > -1){ files.splice(i, 1); renderTray(); } }, 2200);
-    }
+    if (files.length >= FILES_MAX){ toast('Máximo ' + FILES_MAX + ' archivos por mensaje.'); break; }
+    const f = { id:++fid, name:file.name || 'archivo', state:'load', kind:'text', size:file.size }; files.push(f); renderTray();
+    try{ await readAny(file, f); }
+    catch(e){ console.warn('[archivos]', e); f.kind = 'text'; f.text = fichaTxt(file); }
+    if (!f.text && f.kind !== 'img') f.text = fichaTxt(file);
+    f.state = 'ok'; delete f.prog;
     renderTray();
   }
 }
@@ -1705,8 +1956,8 @@ $('#tray').addEventListener('click', e => { const x = e.target.closest('.x'); if
 const attMenu = $('#attMenu'), attBtn = $('#attachBtn');
 function attOpen(){ attMenu.hidden = false; attMenu.classList.remove('bye'); attBtn.setAttribute('aria-expanded', 'true'); }
 function attClose(){ if (attMenu.hidden) return; attBtn.setAttribute('aria-expanded', 'false'); attMenu.classList.add('bye'); setTimeout(() => { if (attMenu.classList.contains('bye')){ attMenu.hidden = true; attMenu.classList.remove('bye'); } }, 260); }
-attBtn.addEventListener('click', () => { if (mode === 'cmp'){ toast('Los archivos funcionan con una sola IA. Quita las demás para adjuntar.'); return; } if (attMenu.hidden) attOpen(); else attClose(); });
-attMenu.addEventListener('click', e => { const b = e.target.closest('[data-att]'); if (!b) return; attClose(); const k = b.dataset.att; if (k === 'mkimg') return setImgMode(!imgMode); if (k === 'web'){ if (imgMode) setImgMode(false); return setWeb(!webOn); } $({ file:'#fileIn', img:'#imgIn', cam:'#camIn' }[k]).click(); });
+attBtn.addEventListener('click', () => { if (attMenu.hidden) attOpen(); else attClose(); });
+attMenu.addEventListener('click', e => { const b = e.target.closest('[data-att]'); if (!b) return; attClose(); const k = b.dataset.att; if (k === 'mkimg') return setImgMode(!imgMode); if (k === 'web'){ if (imgMode) setImgMode(false); return setWebMode(webMode === 'on' ? 'auto' : 'on'); } if (k === 'noweb') return setWebMode(webMode === 'off' ? 'auto' : 'off'); $({ file:'#fileIn', img:'#imgIn', cam:'#camIn' }[k]).click(); });
 document.addEventListener('pointerdown', e => { if (!attMenu.hidden && !e.target.closest('.attw')) attClose(); });
 addEventListener('keydown', e => { if (e.key === 'Escape' && !attMenu.hidden){ e.preventDefault(); attClose(); attBtn.focus(); } });
 ['#fileIn', '#imgIn', '#camIn'].forEach(s => $(s).addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; }));
@@ -1740,11 +1991,20 @@ function apiMsgs(chat, vision, o = {}){
   }).filter(Boolean);
   while (h.length && h[0].role !== 'user') h.shift();
   const sys = [];
-  if (!o.naive) sys.push(qualitySystem(saver));   /* v3.4 · calidad: piensa, revisa la lógica y no inventa */
+  /* v4.0 · con las IAs conectadas (sz:) el servidor pone unas instrucciones mejores para cada tipo de trabajo (api/_cerebro.js): aquí no se repiten */
+  if (!o.naive && !o.srv){ const lu = [...chat].reverse().find(m => m.role === 'user'); sys.push(qualitySystem(saver, lu && String(lu.ask || lu.content || ''), o.mid)); }
+  /* v4.0 · el hilo: si la charla es más larga de lo que viaja, la IA igual sabe de qué se habló antes (sin gastar otra IA) */
+  if (!o.naive && start > 0){
+    const old = chat.slice(0, start).filter(m => m.role === 'user' && !m.imgId).map(m => String(m.ask || m.content || '').replace(/\s+/g, ' ').trim()).filter(Boolean);
+    const first = old[0], rest = old.slice(1).slice(-8);
+    if (first) sys.push('Contexto de esta conversación (mensajes anteriores que ya no se reenvían): empezó con «' + first.slice(0, 300) + '»' + (rest.length ? ' y después la persona preguntó: ' + rest.map(x => '«' + x.slice(0, 140) + '»').join('; ') : '') + '. Mantén coherencia con eso.');
+  }
+  if (o.webAsk) sys.push(webAskSys());   /* v3.8 · la IA puede pedir una búsqueda en internet ella sola */   /* v3.4 · calidad: piensa, revisa la lógica y no inventa */
   if (saver) sys.push('Responde en el idioma del usuario, de forma clara y breve, sin relleno.');
   { const cs = o.naive ? '' : codeSystem(chat, saver); if (cs) sys.push(cs); }   /* v2.4 · SynthCode: manual de programación cuando pides código */
   { const ef = effortHint(); if (ef && !o.naive) sys.push(ef); }   /* v2.3.1 · esfuerzo */
   { const mm = memSystem(); if (mm && !o.naive) sys.push(mm); }
+  if (!o.naive && !o.noMarks) sys.push(marcasSystem(chat));   /* v4.0 · título con sentido y memoria redactada por la IA */
   { const ps = o.naive ? '' : projSystem(chat, saver); if (ps) sys.push(ps); }   /* v2.6 · proyectos: instrucciones y archivos del proyecto */
   if (SZ.CFG.beginner) sys.push('Modo principiante: la persona no sabe nada del tema. Usa palabras sencillas y frases cortas, explica paso a paso, evita los tecnicismos (si usas uno, explícalo) y pon un ejemplo de la vida diaria.');
   if (sys.length) h.unshift({ role:'system', content:sys.join(' ') });
@@ -1761,6 +2021,319 @@ function cachePut(k, r){
   const ks = Object.keys(c).sort((a, b) => c[b].t - c[a].t); ks.slice(60).forEach(x => delete c[x]);
   try{ localStorage.setItem(CACHE_KEY, JSON.stringify(c)); }catch(e){}
 }
+/* ---------- v3.8 · adjuntar CUALQUIER archivo, sin errores ----------
+   Antes, lo que no era texto, PDF, Office o foto salía «Tipo de archivo no compatible» y se borraba de la bandeja.
+   Ahora todo se lee aquí, en el navegador y gratis, y la IA elegida recibe algo que entiende:
+   · fotos (también HEIC del iPhone), PDF (con texto, escaneado o con contraseña), Word/Excel/PowerPoint/OpenDocument,
+     .doc/.xls/.ppt viejos, RTF, EPUB, código y cualquier texto;
+   · .zip (y .jar, .apk…), .tar, .gz y .tgz: se abren y se lee lo que traen adentro;
+   · audio y video: se pasan a texto (Whisper, gratis, en /api/ai) y del video se sacan 3 fotos;
+   · lo demás (programas, bases de datos, formatos raros): qué es, su tamaño y el texto que se pueda rescatar.
+   readAny nunca lanza un error: si un camino falla, prueba el siguiente y al final siempre queda una ficha del archivo. */
+const MB = 1048576;
+const sizeTxt = n => n < 1024 ? n + ' B' : n < MB ? (n / 1024).toFixed(1).replace('.0', '') + ' KB' : n < 1024 * MB ? (n / MB).toFixed(1).replace('.0', '') + ' MB' : (n / 1024 / MB).toFixed(2) + ' GB';
+const extOf = n => { const m = /\.([a-z0-9]{1,10})$/i.exec(String(n || '')); return m ? m[1].toLowerCase() : ''; };
+const IMGX = /\.(png|jpe?g|jfif|pjpeg|gif|webp|bmp|ico|avif|apng|tiff?|heic|heif)$/i;
+const AUDX = /\.(mp3|wav|wave|m4a|aac|ogg|oga|opus|flac|weba|amr|aiff?|wma|mid|midi|3ga)$/i;
+const VIDX = /\.(mp4|m4v|mov|webm|mkv|avi|wmv|3gp|ogv|mpe?g|flv)$/i;
+const ZIPX = /\.(zip|jar|apk|aab|xpi|crx|ipa|nupkg|whl|vsix|sketch|xd|kmz|cbz|odg|key|numbers|pages|xps|oxps|3mf)$/i;
+const OLDX = /\.(doc|dot|xls|xlt|ppt|pps|pot|wps|wpd|pub|vsd|msg|mdb|accdb)$/i;
+/* qué es un archivo según sus primeros bytes (sirve cuando el nombre no tiene extensión o miente) */
+function magicOf(u){
+  const s = (a, b) => String.fromCharCode(...u.slice(a, b)), h = (...x) => x.every((v, i) => u[i] === v);
+  if (h(0xff, 0xfe) || h(0xfe, 0xff) || h(0xef, 0xbb, 0xbf)) return 'text';   /* marca de texto UTF-8/16 (FF FE se parece al comienzo de un mp3) */
+  if (h(0x25, 0x50, 0x44, 0x46)) return 'pdf';
+  if (h(0x50, 0x4b, 0x03, 0x04) || h(0x50, 0x4b, 0x05, 0x06)) return 'zip';
+  if (h(0x1f, 0x8b)) return 'gz';
+  if (u.length > 262 && s(257, 262) === 'ustar') return 'tar';
+  if (h(0x49, 0x49, 0x2a, 0) || h(0x4d, 0x4d, 0, 0x2a)) return 'img';
+  if (h(0x89, 0x50, 0x4e, 0x47) || h(0xff, 0xd8, 0xff) || s(0, 4) === 'GIF8' || (s(0, 4) === 'RIFF' && s(8, 12) === 'WEBP') || h(0x42, 0x4d)) return 'img';
+  if (s(4, 8) === 'ftyp'){ const b = s(8, 12); return /^(heic|heix|hevc|mif1|msf1|avif)/.test(b) ? 'img' : /^(M4A |M4B |mp42?|isom|dash|M4V |qt  |3gp)/.test(b) ? 'av' : 'av'; }
+  if (s(0, 3) === 'ID3' || (u[0] === 0xff && (u[1] & 0xe0) === 0xe0) || s(0, 4) === 'OggS' || s(0, 4) === 'fLaC' || (s(0, 4) === 'RIFF' && /WAVE|AVI /.test(s(8, 12))) || h(0x1a, 0x45, 0xdf, 0xa3)) return 'av';
+  if (s(0, 5) === '{\\rtf') return 'rtf';
+  if (h(0xd0, 0xcf, 0x11, 0xe0)) return 'ole';
+  return '';
+}
+const KIND_TXT = { exe:'programa de Windows', msi:'instalador de Windows', dll:'librería de Windows', dmg:'imagen de disco de Mac', iso:'imagen de disco', deb:'paquete de Linux', rpm:'paquete de Linux', apk:'app de Android', ipa:'app de iPhone',
+  sqlite:'base de datos SQLite', db:'base de datos', mdb:'base de datos de Access', accdb:'base de datos de Access', psd:'diseño de Photoshop', ai:'diseño de Illustrator', sketch:'diseño de Sketch', fig:'diseño de Figma', xd:'diseño de Adobe XD',
+  rar:'archivo comprimido RAR', '7z':'archivo comprimido 7-Zip', bz2:'archivo comprimido', xz:'archivo comprimido', ttf:'fuente de letra', otf:'fuente de letra', woff:'fuente de letra', woff2:'fuente de letra',
+  stl:'modelo 3D', obj:'modelo 3D', fbx:'modelo 3D', glb:'modelo 3D', gltf:'modelo 3D', blend:'proyecto de Blender', dwg:'plano de AutoCAD', dxf:'plano de AutoCAD', kml:'mapa', gpx:'ruta GPS', eml:'correo', msg:'correo de Outlook', ics:'evento de calendario', vcf:'contacto' };
+function kindTxt(name, type, magic){
+  const e = extOf(name);
+  return KIND_TXT[e] || (magic === 'ole' ? 'documento viejo de Office' : type ? type : e ? 'archivo .' + e : 'archivo sin extensión');
+}
+function fichaTxt(file, extra){
+  return '[Archivo adjunto: ' + (file.name || 'archivo') + ' · ' + kindTxt(file.name, file.type) + ' · ' + sizeTxt(file.size || 0) + (file.lastModified ? ' · modificado el ' + new Date(file.lastModified).toISOString().slice(0, 10) : '') + ']' + (extra ? '\n' + extra : '');
+}
+/* ¿es texto? Mira los primeros bytes: sin ceros y con pocos caracteres de control → texto (UTF-8, UTF-16 o Windows-1252) */
+async function sniffText(blob, max = 1.2 * MB){
+  const buf = new Uint8Array(await blob.slice(0, max).arrayBuffer()); if (!buf.length) return '';
+  if (buf[0] === 0xff && buf[1] === 0xfe) return new TextDecoder('utf-16le').decode(buf.subarray(2));
+  if (buf[0] === 0xfe && buf[1] === 0xff) return new TextDecoder('utf-16be').decode(buf.subarray(2));
+  const n = Math.min(buf.length, 8192); let bad = 0;
+  for (let i = 0; i < n; i++){ const b = buf[i]; if (b === 0) return null; if (b < 9 || (b > 13 && b < 32 && b !== 27)) bad++; }
+  if (bad > n * .01) return null;
+  let t = new TextDecoder('utf-8').decode(buf), rep = (t.match(/�/g) || []).length;
+  if (rep > t.length * .002 + 2){ try{ t = new TextDecoder('windows-1252').decode(buf); }catch(e){} }
+  if (blob.size > max) t += '\n…(archivo recortado: solo se lee el comienzo)';
+  return t;
+}
+/* rescatar el texto legible de un archivo binario (como el comando «strings»): sirve para .doc/.xls/.ppt viejos, programas, bases de datos… */
+async function binStrings(blob, min = 5){
+  const u = new Uint8Array(await blob.slice(0, 12 * MB).arrayBuffer()), out = [], seen = new Set(), td = new TextDecoder('utf-8'), tw = new TextDecoder('windows-1252');
+  let len = 0;
+  const push = s => { s = s.replace(/\s+/g, ' ').trim(); if (s.length >= min && /\p{L}{3}/u.test(s) && (s.match(/[\p{L}\d\s.,;:!?¿¡()'"-]/gu) || []).length > s.length * .8 && !seen.has(s)){ seen.add(s); out.push(s); len += s.length + 1; } };
+  /* primero el texto en UTF-16 (así guardan Word, Excel y PowerPoint viejos lo que escribiste): letra, 0, letra, 0… */
+  for (const o of [0, 1]){
+    let w = '';
+    for (let i = o; i + 1 < u.length && len < CAP / 2; i += 2){
+      const c = u[i] | (u[i + 1] << 8);
+      if ((c >= 32 && c < 0x2000) || c === 9 || c === 10 || c === 13) w += String.fromCharCode(c);
+      else { if (w.length >= min) push(w); w = ''; }
+    }
+    if (w.length >= min) push(w);
+  }
+  let a = -1;
+  const ok = b => (b >= 32 && b < 127) || b === 9 || b >= 0xa0;
+  for (let i = 0; i <= u.length && len < CAP; i++){
+    if (i < u.length && ok(u[i])){ if (a < 0) a = i; continue; }
+    if (a >= 0 && i - a >= min){ const sl = u.subarray(a, i), t = td.decode(sl); push(/�/.test(t) ? tw.decode(sl) : t); }
+    a = -1;
+  }
+  return out.join('\n');
+}
+/* RTF → texto: fuera las palabras de control, los grupos ocultos y las llaves; acentos con \'e1 y \u225 */
+function rtfTxt(r){
+  let t = r.replace(/\{\\\*[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g, '').replace(/\{\\(fonttbl|colortbl|stylesheet|info|pict|header|footer)[\s\S]*?\}\s*\}/g, '');
+  t = t.replace(/\\par[d]?\b ?|\\line\b ?|\\row\b ?/g, '\n').replace(/\\tab\b ?|\\cell\b ?/g, '\t');
+  t = t.replace(/\\'([0-9a-f]{2})/gi, (_, h) => new TextDecoder('windows-1252').decode(new Uint8Array([parseInt(h, 16)])));
+  t = t.replace(/\\u(-?\d+)\??/g, (_, d) => String.fromCharCode(d < 0 ? +d + 65536 : +d));
+  t = t.replace(/\\[a-z]+-?\d* ?/gi, '').replace(/\\([{}\\])/g, '$1').replace(/[{}]/g, '');
+  return t.replace(/\n{3,}/g, '\n\n').trim();
+}
+const htmlTxt = h => xmlTxt(String(h).replace(/<(script|style|head)[\s\S]*?<\/\1>/gi, '').replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|h\d|li|tr|section|article)>/gi, '\n').replace(/&nbsp;/g, ' ')).replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+/* bytes descomprimidos con un tope (un .gz de 20 KB puede esconder 2 GB) */
+async function inflate(stream, max = 40 * MB){
+  const rd = stream.getReader(), parts = []; let n = 0;
+  try{ for (;;){ const { done, value } = await rd.read(); if (done) break; parts.push(value); n += value.length; if (n >= max){ rd.cancel().catch(() => {}); break; } } }catch(e){ if (!n) throw e; }
+  return new Blob(parts);
+}
+async function readEpub(file){
+  const z = await zipOpen(file); let order = [];
+  try{
+    const root = (/full-path="([^"]+)"/.exec(await z.read('META-INF/container.xml')) || [])[1];
+    if (root){
+      const opf = await z.read(root), dir = root.includes('/') ? root.replace(/[^/]+$/, '') : '', man = {};
+      for (const m of opf.matchAll(/<item\b[^>]*>/g)){ const id = (/\bid="([^"]+)"/.exec(m[0]) || [])[1], hr = (/\bhref="([^"]+)"/.exec(m[0]) || [])[1]; if (id && hr) man[id] = dir + decodeURIComponent(hr); }
+      order = [...opf.matchAll(/<itemref\b[^>]*idref="([^"]+)"/g)].map(m => man[m[1]]).filter(Boolean);
+    }
+  }catch(e){}
+  if (!order.length) order = z.names.filter(n => /\.x?html?$/i.test(n)).sort();
+  let t = '';
+  for (const n of order){ if (t.length >= CAP) break; try{ const x = htmlTxt(await z.read(n)); if (x) t += x + '\n\n'; }catch(e){} }
+  return t.trim();
+}
+/* dentro de un .zip/.tar: cada archivo se lee con las mismas reglas (hasta 30, y sin pasarse del tope de texto) */
+async function readInner(blob, name, depth){
+  const e = extOf(name);
+  if (/\.pdf$/i.test(name)){ const p = await readPdf(blob); return typeof p === 'string' ? p : '(PDF escaneado de ' + p.pages + ' páginas: adjúntalo solo para verlo)'; }
+  if (OFFX.test(name)) return readOffice(new File([blob], name.split('/').pop()));
+  if (/\.epub$/i.test(name)) return readEpub(blob);
+  if (/\.rtf$/i.test(name)) return rtfTxt(await blob.text());
+  if (/\.x?html?$/i.test(name)) return htmlTxt(await sniffText(blob) || '');
+  if (depth < 2 && (ZIPX.test(name) || /\.(tar|tgz|gz)$/i.test(name))) return (await readArchive(blob, name, depth + 1)).text;
+  if (IMGX.test(name) || AUDX.test(name) || VIDX.test(name)) return null;   /* fotos, audio y video de adentro: se nombran en la lista */
+  const t = await sniffText(blob, 400000);
+  if (t != null) return t;
+  if (OLDX.test(name) || e === 'sqlite' || e === 'db'){ const s = await binStrings(blob); return s || null; }
+  return null;
+}
+async function readArchive(file, name, depth = 0){
+  let list = [], get;
+  if (/\.(tgz|gz)$/i.test(name) || magicOf(new Uint8Array(await file.slice(0, 4).arrayBuffer())) === 'gz'){
+    if (typeof DecompressionStream === 'undefined') throw new Error('gz');
+    const inner = await inflate(file.stream().pipeThrough(new DecompressionStream('gzip'))), iname = /\.tgz$/i.test(name) ? name.replace(/\.tgz$/i, '.tar') : name.replace(/\.gz$/i, '') || 'archivo';
+    if (/\.tar$/i.test(iname) || magicOf(new Uint8Array(await inner.slice(0, 264).arrayBuffer())) === 'tar') return readArchive(inner, iname, depth);
+    const t = await readInner(inner, iname, depth);
+    return { text:'--- ' + iname + ' (' + sizeTxt(inner.size) + ' descomprimido) ---\n' + (t || '(sin texto legible)'), count:1 };
+  }
+  if (/\.tar$/i.test(name) || magicOf(new Uint8Array(await file.slice(0, 264).arrayBuffer())) === 'tar'){
+    const td = new TextDecoder(), ents = {};
+    for (let p = 0, k = 0; p + 512 <= file.size && k < 2000; k++){
+      const h = new Uint8Array(await file.slice(p, p + 512).arrayBuffer()); if (!h[0]) break;
+      const cut = (a, b) => td.decode(h.subarray(a, b)).replace(/\0[\s\S]*$/, ''), sz = parseInt(cut(124, 136).trim(), 8) || 0, ty = String.fromCharCode(h[156] || 48), pre = cut(345, 500);
+      const nm = (pre ? pre + '/' : '') + cut(0, 100);
+      if (ty === '0' || ty === '\0' || ty === '7') ents[nm] = { at:p + 512, size:sz };
+      p += 512 + Math.ceil(sz / 512) * 512;
+    }
+    list = Object.keys(ents).map(n => ({ name:n, size:ents[n].size }));
+    get = n => Promise.resolve(file.slice(ents[n].at, ents[n].at + ents[n].size));
+  } else {
+    const z = await zipOpen(file);
+    list = z.names.filter(n => !/\/$/.test(n)).map(n => ({ name:n, size:z.size(n), locked:z.locked(n) }));
+    get = n => z.blob(n);
+  }
+  const shown = list.filter(x => !/(^|\/)(__MACOSX|\.DS_Store|Thumbs\.db)/.test(x.name));
+  let t = 'Contiene ' + shown.length + (shown.length === 1 ? ' archivo' : ' archivos') + ':\n' + shown.slice(0, 200).map(x => '· ' + x.name + ' (' + sizeTxt(x.size) + ')' + (x.locked ? ' · con contraseña' : '')).join('\n') + (shown.length > 200 ? '\n· …y ' + (shown.length - 200) + ' más' : '');
+  let n = 0;
+  for (const x of shown){
+    if (n >= 30 || t.length >= CAP) break;
+    if (x.locked || !x.size || x.size > 60 * MB) continue;
+    try{ const c = await readInner(await get(x.name), x.name, depth); if (c && c.trim()){ t += '\n\n--- ' + x.name + ' ---\n' + c.trim().slice(0, Math.max(2000, CAP - t.length)); n++; } }catch(e){}
+  }
+  return { text:t, count:shown.length };
+}
+/* ---------- fotos: HEIC del iPhone con heic2any (cdnjs, solo si hace falta) ---------- */
+let heicP, tiffP;
+/* TIFF: Chrome y Firefox no lo abren; UTIF.js (MIT, en /lib, sin internet extra) lo pasa a una foto normal */
+function loadTiff(){
+  return tiffP || (tiffP = new Promise((ok, no) => { const s = document.createElement('script'); s.src = '/lib/utif.min.js'; s.onload = () => window.UTIF ? ok(window.UTIF) : no(new Error('tiff')); s.onerror = () => { tiffP = null; no(new Error('tiff')); }; document.head.appendChild(s); }));
+}
+async function tiffToPng(file){
+  const U = await loadTiff(), buf = await file.arrayBuffer(), ifds = U.decode(buf); if (!ifds.length) throw new Error('tiff');
+  U.decodeImage(buf, ifds[0]); const rgba = U.toRGBA8(ifds[0]), w = ifds[0].width, h = ifds[0].height;
+  const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba.buffer, 0, w * h * 4), w, h), 0, 0);
+  return new Promise((ok, no) => c.toBlob(b => b ? ok(b) : no(new Error('tiff')), 'image/png'));
+}
+function loadHeic(){
+  return heicP || (heicP = new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.4/heic2any.min.js'; s.onload = () => window.heic2any ? ok(window.heic2any) : no(new Error('heic')); s.onerror = () => { heicP = null; no(new Error('heic')); }; document.head.appendChild(s); }));
+}
+async function readAnyImg(file){
+  try{ return await readImg(file); }
+  catch(e){
+    const mg = magicOf(new Uint8Array(await file.slice(0, 16).arrayBuffer()));
+    if (/\.tiff?$/i.test(file.name) || /tiff/.test(file.type) || (mg === 'img' && /^(II\*|MM\0\*)/.test(String.fromCharCode(...new Uint8Array(await file.slice(0, 4).arrayBuffer()))))) return readImg(await tiffToPng(file));
+    if (!/\.(heic|heif)$/i.test(file.name) && !/hei[cf]/.test(file.type) && magicOf(new Uint8Array(await file.slice(0, 16).arrayBuffer())) !== 'img') throw e;
+    const conv = await (await loadHeic())({ blob:file, toType:'image/jpeg', quality:.85 });
+    return readImg(Array.isArray(conv) ? conv[0] : conv);
+  }
+}
+/* ---------- audio y video ---------- */
+const STT_SEC = 60, STT_MAX = 20;   /* trozos de 1 minuto (≈1,9 MB cada uno); hasta 20 minutos por archivo */
+function wavOf(pcm, rate){
+  const b = new ArrayBuffer(44 + pcm.length * 2), v = new DataView(b), w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + pcm.length * 2, true); w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, pcm.length * 2, true);
+  for (let i = 0; i < pcm.length; i++){ const s = Math.max(-1, Math.min(1, pcm[i])); v.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true); }
+  return new Uint8Array(b);
+}
+function b64(u){ let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); }
+const clock = s => { s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = s % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(x).padStart(2, '0'); };
+async function decodePcm(file){
+  /* archivos enormes: se decodifica el comienzo (en mp3/webm funciona aunque se corte) */
+  const big = file.size > 120 * MB, src = big ? file.slice(0, 120 * MB) : file;
+  const AC = window.OfflineAudioContext || window.webkitOfflineAudioContext; if (!AC) throw new Error('audio');
+  const ac = new AC(1, 16000, 16000), buf = await ac.decodeAudioData(await src.arrayBuffer());
+  const ch = buf.numberOfChannels, n = buf.length, pcm = new Float32Array(n);
+  for (let c = 0; c < ch; c++){ const d = buf.getChannelData(c); for (let i = 0; i < n; i++) pcm[i] += d[i] / ch; }
+  return { pcm, rate:buf.sampleRate, dur:buf.duration, big };
+}
+async function sttChunk(pcm, rate, i){
+  const part = pcm.subarray(i * STT_SEC * rate, (i + 1) * STT_SEC * rate);
+  let e = 0; for (let k = 0; k < part.length; k += 16) e += part[k] * part[k];
+  if (Math.sqrt(e / Math.max(1, part.length / 16)) < .004) return '';   /* silencio: no se manda */
+  const r = await fetch('/api/ai', { method:'POST', headers:SZ.szHeaders(), body:JSON.stringify({ action:'transcribe', audio:b64(wavOf(part, rate)), lang:SZ.lang() === 'en' ? 'en' : '' }) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(j.error || 'stt'), { status:r.status });
+  return String(j.text || '').trim();
+}
+async function transcribe(file, f){
+  const { pcm, rate, dur, big } = await decodePcm(file), n = Math.min(STT_MAX, Math.ceil(dur / STT_SEC)), out = new Array(n).fill(null);
+  let next = 0, fails = 0, stop = null;
+  f.prog = SZ.lang() === 'en' ? 'Transcribing…' : 'Pasando a texto…'; renderTray();
+  const worker = async () => {
+    while (next < n && !stop && files.includes(f)){
+      const i = next++;
+      try{ out[i] = await sttChunk(pcm, rate, i); }
+      catch(e){ fails++; if (e.status === 429 || e.status === 401 || e.status === 503 || fails > 2) stop = e; }
+      f.prog = (SZ.lang() === 'en' ? 'Transcribing ' : 'Pasando a texto ') + Math.min(n, out.filter(x => x != null).length) + '/' + n; renderTray();
+    }
+  };
+  await Promise.all([worker(), worker()]);
+  delete f.prog;
+  const got = out.map((t, i) => t ? '[' + clock(i * STT_SEC) + '] ' + t : '').filter(Boolean).join('\n');
+  const done = out.filter(x => x != null).length;
+  return { dur, got, done, n, big, stopped:!!stop, more:dur > STT_MAX * STT_SEC };
+}
+function videoFrames(file){
+  return new Promise(ok => {
+    const url = URL.createObjectURL(file), v = document.createElement('video'), pics = [];
+    let i = 0, stamps = [], meta = null, quit = setTimeout(() => end(), 20000);
+    const end = () => { clearTimeout(quit); v.removeAttribute('src'); try{ v.load(); }catch(e){} URL.revokeObjectURL(url); ok({ pics, meta }); };
+    v.muted = true; v.playsInline = true; v.preload = 'auto';
+    v.onloadedmetadata = () => { meta = { dur:v.duration, w:v.videoWidth, h:v.videoHeight }; if (!v.videoWidth || !isFinite(v.duration)) return end(); stamps = [.1, .5, .9].map(p => Math.max(0, Math.min(v.duration - .05, v.duration * p))); v.currentTime = stamps[0]; };
+    v.onseeked = () => {
+      try{ const s = Math.min(1, 960 / Math.max(v.videoWidth, v.videoHeight)), c = document.createElement('canvas'); c.width = Math.round(v.videoWidth * s); c.height = Math.round(v.videoHeight * s); c.getContext('2d').drawImage(v, 0, 0, c.width, c.height); pics.push(c.toDataURL('image/jpeg', .78)); }catch(e){}
+      if (++i < stamps.length) v.currentTime = stamps[i]; else end();
+    };
+    v.onerror = () => end();
+    v.src = url;
+  });
+}
+async function readMedia(file, f, isVideo){
+  const parts = [];
+  if (isVideo){
+    const fr = await videoFrames(file).catch(() => ({ pics:[], meta:null }));
+    if (fr.pics.length){ f.kind = 'img'; f.dataUrls = fr.pics; f.dataUrl = fr.pics[0]; f.thumb = fr.pics[0]; f.frames = fr.pics.length; }
+    if (fr.meta && fr.meta.w) parts.push('Video de ' + clock(fr.meta.dur) + ', ' + fr.meta.w + '×' + fr.meta.h + ' px.' + (fr.pics.length ? ' Van ' + fr.pics.length + ' fotos sacadas del video (al comienzo, a la mitad y al final).' : ''));
+  }
+  let tr = null;
+  try{ tr = await transcribe(file, f); }catch(e){ delete f.prog; }
+  if (tr){
+    if (!isVideo) parts.push('Audio de ' + clock(tr.dur) + '.');
+    if (tr.got) parts.push('Lo que se dice' + (tr.done < tr.n || tr.more ? ' (transcrito hasta el minuto ' + Math.round(tr.done * STT_SEC / 60) + ')' : '') + ':\n' + tr.got);
+    else if (tr.done) parts.push('No se escucha voz: es música, ruido o silencio.');
+    else parts.push('No se pudo pasar el audio a texto ahora (límite de hoy o sin conexión). Pídele a la persona que diga qué hay en el audio si lo necesitas.');
+  } else parts.push((isVideo ? 'El sonido del video' : 'Este audio') + ' no se pudo abrir en el navegador.' + (isVideo ? '' : ' Formato: ' + (file.type || extOf(file.name))));
+  return parts.join('\n');
+}
+/* ---------- el lector de todo ---------- */
+async function readAny(file, f, o = {}){
+  const name = file.name || 'archivo', type = String(file.type || '').toLowerCase();
+  const head = new Uint8Array(await file.slice(0, 264).arrayBuffer().catch(() => new ArrayBuffer(0))), magic = magicOf(head);
+  const tryIt = async fn => { try{ return await fn(); }catch(e){ return null; } };
+  let t = null;
+  if (!file.size){ f.text = fichaTxt(file, 'El archivo está vacío (0 bytes).'); return; }
+  /* fotos */
+  if (!o.textOnly && (/^image\//.test(type) && !/svg/.test(type) || IMGX.test(name) || (magic === 'img' && !TEXTX.test(name)))){
+    const r = await tryIt(() => readAnyImg(file));
+    if (r){ f.kind = 'img'; Object.assign(f, r); return; }
+    /* foto que el navegador no abre: se manda su ficha (y si es TIFF/BMP raros, el texto que tenga) */
+    f.kind = 'text'; f.text = fichaTxt(file, 'Es una imagen que este navegador no puede mostrar.'); return;
+  }
+  /* PDF: con texto → texto; escaneado → fotos de sus páginas; con contraseña → la pide; dañado → el texto que se rescate */
+  if (/\.pdf$/i.test(name) || type === 'application/pdf' || magic === 'pdf'){
+    f.kind = 'pdf';
+    const p = await tryIt(() => readPdf(file));
+    if (p && p.scanned){ if (o.textOnly){ f.text = fichaTxt(file, 'PDF escaneado de ' + p.pages + ' páginas (sin texto que copiar).'); return; } f.kind = 'img'; f.dataUrl = p.pics[0]; f.dataUrls = p.pics; f.thumb = p.pics[0]; f.scan = p.pages; return; }
+    if (p){ f.text = p; return; }
+    t = await tryIt(() => binStrings(file, 4));
+    f.text = fichaTxt(file, t && t.length > 40 ? 'El PDF venía dañado; esto es lo que se pudo rescatar:\n' + clip(t) : 'El PDF está dañado o protegido y no se pudo abrir.'); return;
+  }
+  if (OFFX.test(name)){ f.kind = 'doc'; t = await tryIt(() => readOffice(file)); if (t){ f.text = t; return; } }
+  if (/\.epub$/i.test(name)){ f.kind = 'doc'; t = await tryIt(() => readEpub(file)); if (t){ f.text = clip(t); return; } }
+  if (/\.rtf$/i.test(name) || magic === 'rtf'){ f.kind = 'doc'; t = await tryIt(async () => rtfTxt(await sniffText(file, 8 * MB) || '')); if (t){ f.text = clip(t); return; } }
+  /* audio y video */
+  if (!o.textOnly && magic !== 'text' && (/^(audio|video)\//.test(type) || AUDX.test(name) || VIDX.test(name) || (magic === 'av' && !TEXTX.test(name)))){
+    const isV = /^video\//.test(type) || VIDX.test(name);
+    f.kind = 'media'; f.text = fichaTxt(file, await readMedia(file, f, isV).catch(() => '')); return;
+  }
+  /* comprimidos */
+  if (ZIPX.test(name) || /\.(tar|tgz|gz)$/i.test(name) || /zip|x-tar|gzip/.test(type) || magic === 'zip' || magic === 'gz' || magic === 'tar'){
+    f.kind = 'zip';
+    const r = await tryIt(() => readArchive(file, name));
+    if (r){ f.text = fichaTxt(file, clip(r.text)); return; }
+  }
+  /* código y cualquier texto (también sin extensión o con una que no conocemos) */
+  if (magic !== 'ole' && !OLDX.test(name)){
+    t = await tryIt(() => sniffText(file));
+    if (t != null){ f.kind = 'text'; f.text = clip(/\.x?html?$/i.test(name) && t.length > CAP ? htmlTxt(t) : t); return; }
+  }
+  /* .doc/.xls/.ppt viejos, programas, bases de datos, formatos raros: qué es + el texto que se pueda rescatar */
+  f.kind = magic === 'ole' || OLDX.test(name) ? 'doc' : 'bin';
+  t = await tryIt(() => binStrings(file));
+  f.text = fichaTxt(file, t && t.length > 30 ? (f.kind === 'doc' ? 'Documento de Office viejo; este es su texto:\n' : 'Texto legible que trae adentro:\n') + clip(t) : 'Es un archivo binario sin texto legible: puedes hablar de qué es, pero no de su contenido.');
+}
 /* ---------- v2.0 · crear imágenes (Pollinations): solo con cuenta, con su propio límite diario ----------
    La imagen se guarda en este equipo (IndexedDB) para no llenar tu espacio en la nube; el chat guarda solo la referencia. */
 const IMGK = 'imagen';
@@ -1773,10 +2346,11 @@ const imgDB = (() => {
   return { put:(id, blob) => tx('readwrite', s => s.put(blob, id)), get:id => tx('readonly', s => s.get(id)) };
 })();
 /* botón «Crear imagen» junto al clip */
-const imgBtn = document.createElement('button');
-imgBtn.type = 'button'; imgBtn.className = 'attach imgb'; imgBtn.id = 'imgBtn'; imgBtn.setAttribute('aria-pressed', 'false'); imgBtn.setAttribute('aria-label', 'Crear una imagen'); imgBtn.dataset.tip = 'Crear una imagen';
+/* v3.7 · en la versión React el botón ya viene en CajaEscribir.jsx; aquí solo si falta */
+const imgBtn = $('#imgBtn') || document.createElement('button');
+if (!imgBtn.isConnected){ imgBtn.type = 'button'; imgBtn.className = 'attach imgb'; imgBtn.id = 'imgBtn'; imgBtn.setAttribute('aria-pressed', 'false'); imgBtn.setAttribute('aria-label', 'Crear una imagen'); imgBtn.dataset.tip = 'Crear una imagen';
 imgBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 9"/></svg>';
-{ const ab = $('#attachBtn'); if (ab) ab.after(imgBtn); }
+{ const ab = $('#attachBtn'); if (ab) ab.after(imgBtn); } }
 function setImgMode(on){
   if (on && !SZ.ACC.ready){ toast('Para crear imágenes entra a tu cuenta (es gratis).'); SZ.guestGate({ mode:'signup' }); return; }
   imgMode = !!on; imgBtn.setAttribute('aria-pressed', String(imgMode)); document.body.classList.toggle('imaging', imgMode);
@@ -1869,47 +2443,107 @@ document.addEventListener('click', e => { const b = e.target.closest && e.target
 addEventListener('pagehide', vozParar);
 /* ---------- v2.1 · «Buscar en internet»: la IA responde con información de hoy y te muestra sus fuentes ----------
    Se activa con el botón del globo, sola cuando la pregunta lo pide (hoy, precio, noticias…) o cuando el agente lo decide. */
-const WEB_RX = /\b(hoy|ahora mismo|actualmente|actual(es)?|[uú]ltim[oa]s?|esta semana|este mes|este a[ñn]o|noticias?|precio|cu[aá]nto (cuesta|vale)|cotizaci[oó]n|d[oó]lar|clima|resultado|qui[eé]n gan[oó]|en vivo|202[5-9]|busca(r|me)? en (internet|google|la web)|seg[uú]n internet|fuentes?)\b/i;
-let webOn = false;
-const webBtn = document.createElement('button');
-webBtn.type = 'button'; webBtn.className = 'attach webb'; webBtn.id = 'webBtn'; webBtn.setAttribute('aria-pressed', 'false'); webBtn.setAttribute('aria-label', 'Buscar en internet'); webBtn.dataset.tip = 'Buscar en internet';
+/* v4.2 · REGLA FIJA (pedido de Sammuel, 3 nov: «las IAs buscan porque sí y porque no, ESO NO PUEDE PASAR»).
+   Ya no decide la IA ni el azar: la misma pregunta da SIEMPRE la misma decisión, con cualquier IA, en Comparar y en A.L.I.A.S.
+   · Se busca: si lo pides («busca en internet», «con fuentes», «investiga»), o si preguntas algo que cambia con el tiempo
+     (noticias, precios, cotizaciones, clima, resultados, horarios, «hoy», «esta semana», lo más reciente…).
+   · No se busca: charla, opinión, código, tareas, explicaciones generales, escribir o crear algo.
+   · Tú mandas: en «+» puedes forzar «Buscar en internet» o «No buscar» para el próximo mensaje, y en Ajustes apagar la búsqueda sola.
+   La misma regla está en api/_web-regla.js (servidor, A.L.I.A.S.); t/web/regla.test.mjs revisa que las dos digan lo mismo. */
+function webRule(text){
+  let s = String(text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (/```/.test(s) || (s.split('\n').filter(l => /[;{}]\s*$|^\s*(def|function|const|let|var|import|class|return|if|for|while|<\w+)/.test(l)).length >= 3)) return { go:false, why:'codigo' };
+  /* frases que nombran la conversación o saludan no cuentan («tu última respuesta», «¿cómo estás hoy?») */
+  s = s.replace(/\b(tu|la|el|lo|mi|su) (ultim[oa]|anterior) (respuesta|mensaje|parrafo|linea|punto|pregunta|version que (me )?diste)\b|\blo ultimo que (dijiste|escribiste)\b|\b(your|the|my) (last|latest|previous) (answer|message|reply|paragraph|line|point)\b/g, ' ')
+       .replace(/\b(como|que tal) (estas|te va|andas|amaneciste|te sientes)\b[^?.!]*|\bhow (are|r) (you|u)\b[^?.!]*|\bhow('s| is) (your|it going)\b[^?.!]*/g, ' ');
+  for (const [why, rx] of WEB_RULES) if (rx.test(s)) return { go:true, why };
+  return { go:false, why:'general' };
+}
+const WEB_RULES = [
+  ['pedido', /\b(busca(r|me|lo)?|buscame|investiga(r|me)?|averigua(r|me)?)\b[^.?!]{0,40}\b(en )?(internet|google|la web|linea|online)\b|\b(investiga|averigua)\b|\bcon (sus )?fuentes\b|\b(dame|pasame|necesito|quiero) (las )?(fuentes|links?|enlaces?)\b|\b(pagina|sitio|web) oficial\b|\bsegun internet\b|\b(search|look up|google)\b[^.?!]{0,30}\b(web|online|internet|it)\b|\bwith sources\b|\b(find|give) me (the )?(sources|links)\b|\bofficial (site|website|page)\b/],
+  ['hoy', /\b(noticias?|titulares|ultima hora|que (paso|esta pasando|ha pasado)|hoy en dia no|hoy|ayer|esta semana|este mes|este ano|ahora mismo|en este momento|actualmente|en vivo|news|headlines|breaking|what('s| is) happening|today|yesterday|this (week|month|year)|right now|currently|live)\b/],
+  ['reciente', /\b(lo mas (nuevo|reciente)|mas recientes?|recientes?|ultim[oa]s? (version|versiones|modelo|modelos|actualizacion|novedades?|lanzamientos?|estrenos?|episodios?|temporadas?)|novedades|estrenos?|latest|newest|most recent|recent(ly)?|new release)\b/],
+  ['precio', /\b(precios?|cuanto (cuesta|vale|sale|cobra)|cotizacion|tipo de cambio|a como (esta|va)|dolar|dolares|euros?|bitcoin|criptos?|acciones de|bolsa de valores|tarifa|prices?|how much (is|does|do|are)|cost of|exchange rate|stock price|crypto)\b/],
+  ['evento', /\b(clima|pronostico|temperatura (en|de hoy)|va a llover|quien gano|ganador(es)? de|resultados? (del|de la|de los|de las) (partido|juego|elecciones?|sorteo|loteria|carrera|final|mundial)|marcador|tabla de posiciones|elecciones|weather|forecast|who won|winner of|score of|standings|election results?)\b/],
+  ['lugar', /\b(horarios? de|a que hora (abre|cierra)|esta abierto|direccion de|telefono de|donde queda|como llego a|opening hours|is it open|address of|phone number of|how do i get to)\b/]
+];
+let webMode = 'auto';   /* 'auto' (sigue la regla) · 'on' (busca sí o sí) · 'off' (no busca); vale para el próximo mensaje */
+const webBtn = $('#webBtn') || document.createElement('button');
+if (!webBtn.isConnected){ webBtn.type = 'button'; webBtn.className = 'attach webb'; webBtn.id = 'webBtn'; webBtn.setAttribute('aria-pressed', 'false'); webBtn.setAttribute('aria-label', 'Buscar en internet'); webBtn.dataset.tip = 'Buscar en internet';
 webBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.8 3.8 5.8 3.8 9s-1.2 6.2-3.8 9c-2.6-2.8-3.8-5.8-3.8-9S9.4 5.8 12 3z"/></svg>';
-{ const ib = $('#imgBtn') || $('#attachBtn'); if (ib) ib.after(webBtn); }
-function setWeb(on){ webOn = !!on; webBtn.setAttribute('aria-pressed', String(webOn)); document.body.classList.toggle('webbing', webOn); if (webOn) toast('Buscar en internet: tu próximo mensaje se responde con información de hoy y sus fuentes.'); }
-webBtn.addEventListener('click', () => { if (imgMode) setImgMode(false); setWeb(!webOn); });
-const needsWeb = text => webOn || (SZ.CFG.autoWeb !== false && WEB_RX.test(text));
+{ const ib = $('#imgBtn') || $('#attachBtn'); if (ib) ib.after(webBtn); } }
+function setWebMode(m, quiet){
+  webMode = m === 'on' || m === 'off' ? m : 'auto';
+  webBtn.setAttribute('aria-pressed', String(webMode === 'on')); document.body.classList.toggle('webbing', webMode === 'on'); document.body.classList.toggle('nowebbing', webMode === 'off');
+  if (quiet) return;
+  if (webMode === 'on') toast(SZ.lang() === 'en' ? 'Search the web: your next message is answered with today\'s information and its sources.' : 'Buscar en internet: tu próximo mensaje se responde con información de hoy y sus fuentes.');
+  if (webMode === 'off') toast(SZ.lang() === 'en' ? 'No web search: your next message is answered only with what the AI knows.' : 'Sin internet: tu próximo mensaje se responde solo con lo que sabe la IA.');
+}
+function setWeb(on){ setWebMode(on ? 'on' : 'auto'); }
+webBtn.addEventListener('click', () => { if (imgMode) setImgMode(false); setWebMode(webMode === 'on' ? 'auto' : 'on'); });
+/* la decisión para un mensaje: qué se hace y por qué (se guarda en el mensaje para mostrarlo) */
+function webDecide(text){
+  if (webMode === 'on') return { go:true, why:'tu' };
+  if (webMode === 'off') return { go:false, why:'apagado' };
+  if (SZ.CFG.autoWeb === false) return { go:false, why:'ajustes' };
+  return webRule(text);
+}
+const needsWeb = text => webDecide(text).go;
+/* al enviar: se toma la decisión UNA vez, se anota en tu mensaje y lo que forzaste vuelve a «automático» */
+function webTake(text){ const d = webDecide(text); if (webMode !== 'auto') setWebMode('auto', true); return d; }
+/* v3.8 · la IA decide sola: si le falta un dato de hoy, en vez de inventar pide una búsqueda con [BUSCAR: …] y SynthFlow busca, lee y le vuelve a preguntar */
+const webAskSys = () => 'Hoy es ' + new Date().toLocaleDateString('es-CO', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) + '. Tienes una herramienta de búsqueda en internet. Si para responder bien necesitas información actual o que no conoces con certeza (noticias, precios, resultados, clima, versiones o lanzamientos recientes, personas, empresas o hechos posteriores a lo que aprendiste), NO inventes ni digas que no tienes internet: responde ÚNICAMENTE con una línea exacta así: [BUSCAR: consulta corta para un buscador, en el idioma de la persona] y nada más. Si no hace falta buscar, responde normal sin mencionar esta herramienta.';
+const WEB_Q_RX = /^\s*\[(?:BUSCAR|SEARCH)\s*:\s*([^\]\n]{2,200})\]?/i;
+const CUTOFF_RX = /(no tengo acceso a (internet|la web|informaci[oó]n (en tiempo real|actual(izada)?)|datos (en tiempo real|actuales))|no puedo (navegar|buscar en internet|acceder a internet|consultar internet)|mi (conocimiento|informaci[oó]n|entrenamiento) (llega|est[aá] actualizad[oa]|se actualiz[oó]|tiene fecha de corte) hasta|fecha de corte de mi|as of my (last )?(knowledge|training)|knowledge cut-?off|i (don'?t|do not|can'?t|cannot) (have )?(access|browse|search)( to)? (the )?(internet|real-time|current|web))/i;
+/* mientras llega la respuesta: ¿empieza como «[BUSCAR…»? entonces no se muestra (se queda «pensando») */
+const webMaybe = t => { t = String(t || '').replace(/^\s+/, ''); return !t || /^\[(?:B(?:U(?:S(?:C(?:A(?:R)?)?)?)?)?|S(?:E(?:A(?:R(?:C(?:H)?)?)?)?)?)?$/i.test(t) || /^\[(BUSCAR|SEARCH)\b/i.test(t); };
 function webCard(){
   const el = document.createElement('div'); el.className = 'agrun webrun';
   el.innerHTML = '<div class="ag-h"><span class="pxw">' + SZ.pixelGrid() + '</span><span class="ag-t"><b>Buscando en internet</b><small>Leo varias páginas para responderte con datos de hoy…</small></span></div>';
+  /* v3.8 · con SynthFlow en React la búsqueda se ve como un radar (#41) y, al llegar, las fuentes aparecen como chips */
+  const fx = document.createElement('div'); fx.className = 'fxhost';
+  if (window.SZFx && window.SZFx.mount(fx, 'radar', { lang:SZ.lang(), modo:'web' })){ el.innerHTML = ''; el.classList.add('fxr'); el.appendChild(fx); el._fx = fx; el._px = { stop(){} }; return el; }
   el._px = SZ.pixelRun($('.pxw', el)); return el;
 }
 async function webSearch(q){
-  const r = await fetch('/api/ai', { method:'POST', headers:SZ.szHeaders(), body:JSON.stringify({ action:'search', q:q.slice(0, 300) }) });
+  const r = await fetch('/api/ai', { method:'POST', headers:SZ.szHeaders(), body:JSON.stringify({ action:'search', q:q.slice(0, 300), lang:SZ.lang() === 'en' ? 'en' : 'es' }) });
   const d = await r.json().catch(() => ({}));
   if (!r.ok) throw Object.assign(new Error(d.error || 'No pude buscar en internet ahora.'), { code:d.code, status:r.status });
   return d;
 }
 /* lo que le llega a la IA: tu mensaje + los resultados numerados (tú sigues viendo solo tu mensaje) */
 function webAsk(text, R){
-  const day = new Date().toLocaleDateString('es-CO', { day:'numeric', month:'long', year:'numeric' });
-  return text + '\n\n---\nResultados de una búsqueda en internet hecha hoy (' + day + ')' + (R.via === 'wikipedia' ? ', en Wikipedia' : '') + '. Úsalos si sirven, cita cada dato con su número entre corchetes, por ejemplo [1], y no inventes datos que no estén aquí:\n'
-    + R.results.map((x, i) => '[' + (i + 1) + '] ' + x.t + ' — ' + x.u + '\n' + x.s).join('\n\n');
+  const day = new Date().toLocaleDateString('es-CO', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  /* v3.8 · además del resumen del buscador, va el texto que se leyó de las primeras páginas (cabe en ~9.000 letras) */
+  return text + '\n\n---\nResultados de una búsqueda en internet hecha hoy, ' + day + (R.via === 'wikipedia' ? ' (en Wikipedia)' : R.via === 'noticias' ? ' (noticias)' : '') + '. Responde con estos datos, que son más nuevos que lo que sabes; cita cada dato con su número entre corchetes, por ejemplo [1]; si los resultados no lo dicen, dilo, y no inventes nada que no esté aquí:\n'
+    + R.results.map((x, i) => '[' + (i + 1) + '] ' + x.t + ' — ' + x.u + '\n' + String(x.s || '').slice(0, 320) + (x.c ? '\nLo que dice la página:\n' + x.c.slice(0, 1900) : '')).join('\n\n');
 }
 /* busca antes de enviar; si falla, se envía igual (sin fuentes) */
-async function webPrep(msg, text){
+async function webPrep(msg, text, why){
   const card = webCard(); lane.appendChild(card); jump();
   try{
     const R = await webSearch(text);
-    if (R.results && R.results.length){ msg.ask = webAsk(msg.ask || text, R); msg.sources = R.results.map(x => ({ t:x.t, u:x.u })); msg.web = R.via; }
+    if (R.results && R.results.length){
+      msg.ask = webAsk(msg.ask || text, R); msg.sources = R.results.map(x => ({ t:x.t, u:x.u })); msg.web = R.via; if (why) msg.webWhy = why;
+      if (card._fx){ const host = u => { try{ return new URL(u).hostname.replace(/^www\./, ''); }catch(e){ return ''; } }, hs = [...new Set(R.results.map(x => host(x.u)).filter(Boolean))];
+        window.SZFx.mount(card._fx, 'radar', { lang:SZ.lang(), modo:'web', hallazgos:hs }); await new Promise(r => setTimeout(r, !SZ.CFG.anim ? 0 : 900)); }
+    }
     else toast('No encontré nada en internet para eso; te respondo con lo que sabe la IA.');
   }catch(e){ toast(e.message + (e.code === 's_guest' ? '' : ' Te respondo con lo que sabe la IA.')); if (e.code === 's_guest') setTimeout(() => SZ.guestGate({ mode:'signup' }), 400); }
-  finally{ try{ card._px.stop(); }catch(e){} card.remove(); if (webOn) setWeb(false); }
+  finally{ try{ card._px.stop(); }catch(e){} card.remove(); }
 }
 const hostOf = u => { try{ return new URL(u).hostname.replace(/^www\./, ''); }catch(e){ return ''; } };
+/* v4.2 · por qué se buscó, dicho claro (y en el idioma de la página) */
+const WEB_WHY = { es:{ tu:'porque lo pediste', pedido:'porque lo pediste', hoy:'porque preguntaste por algo de hoy', reciente:'porque preguntaste por algo reciente', precio:'porque los precios cambian', evento:'porque preguntaste por un resultado o el clima', lugar:'porque preguntaste por un lugar u horario' },
+  en:{ tu:'because you asked', pedido:'because you asked', hoy:'because you asked about something current', reciente:'because you asked about something recent', precio:'because prices change', evento:'because you asked about a result or the weather', lugar:'because you asked about a place or opening hours' } };
+function webSaid(m){
+  const en = SZ.lang() === 'en', n = m.sources.length, why = (WEB_WHY[en ? 'en' : 'es'] || {})[m.webWhy];
+  return (en ? (m.web === 'wikipedia' ? 'Searched Wikipedia' : 'Searched the web') : (m.web === 'wikipedia' ? 'Busqué en Wikipedia' : 'Busqué en internet')) + (why ? ' ' + why : '') + ' · <b>' + n + (en ? (n === 1 ? ' source' : ' sources') : (n === 1 ? ' fuente' : ' fuentes')) + '</b>';
+}
 /* debajo de tu mensaje: «Busqué en internet · 5 fuentes ▸» */
 function sourcesEl(m){
   const el = document.createElement('div'); el.className = 'agsum websum';
-  el.innerHTML = '<button type="button" class="ag-row" aria-expanded="false"><span class="ag-ic">' + webBtn.innerHTML + '</span><span class="ag-tx">' + (m.web === 'wikipedia' ? 'Busqué en Wikipedia' : 'Busqué en internet') + ' · <b>' + m.sources.length + (m.sources.length === 1 ? ' fuente' : ' fuentes') + '</b></span><svg class="ag-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button><div class="ag-d" hidden><ol class="srcl"></ol></div>';
+  el.innerHTML = '<button type="button" class="ag-row" aria-expanded="false"><span class="ag-ic">' + webBtn.innerHTML + '</span><span class="ag-tx">' + webSaid(m) + '</span><svg class="ag-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button><div class="ag-d" hidden><ol class="srcl"></ol></div>';
   const ol = $('.srcl', el);
   m.sources.forEach((x, i) => { const li = document.createElement('li'), a = document.createElement('a'); a.href = x.u; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.innerHTML = '<b></b><small></small>'; $('b', a).textContent = '[' + (i + 1) + '] ' + (x.t || hostOf(x.u)); $('small', a).textContent = hostOf(x.u); li.appendChild(a); ol.appendChild(li); });
   const row = $('.ag-row', el), d = $('.ag-d', el);
@@ -2015,8 +2649,12 @@ function memSystem(){ const m = memSt(); if (!m.on || !m.items.length) return ''
 /* «¿Quieres que lo recuerde?» después de un mensaje que lo pide */
 function memOffer(text){
   const i = text.search(MEM_RX); if (i < 0) return;
-  let fact = text.slice(i).replace(MEM_RX, '').replace(/^[,.:;\s]+/, '').split(/(?<=[.!?])\s/)[0].trim();
-  if (fact.length < 3) fact = text.trim(); fact = fact.slice(0, 300);
+  /* v4.0 · el dato lo redacta la IA ([recordar: …]); si no lo dio, se limpia aquí (tercera persona, sin «recuerda que») */
+  const ai = memNext; memNext = null;
+  if (ai === '?') return;   /* la IA no entendió qué recordar y te lo preguntó: no se ofrece guardar nada todavía */
+  let fact = ai && ai.length >= 3 ? ai : text.slice(i).replace(MEM_RX, '').replace(/^[,.:;\s]+/, '').split(/(?<=[.!?])\s/)[0].trim();
+  if (fact.length < 3) fact = text.trim();
+  fact = (ai && ai.length >= 3 ? fact : memLimpia(fact)).slice(0, 300); if (fact.length < 3) return;
   $$('.memoff', lane).forEach(x => x.remove());
   const d = document.createElement('div'); d.className = 'agkeep memoff';
   d.innerHTML = '<span>¿Quieres que lo recuerde para tus próximos chats? «<b></b>»</span><div class="agk-b"><button type="button" class="btn sm" data-mm="yes">Recordar</button><button type="button" class="btn sm ghost" data-mm="no">No</button></div><small>Lo ves y lo borras cuando quieras en Ajustes › IAs y memoria.</small>';
@@ -2025,6 +2663,76 @@ function memOffer(text){
 }
 /* v2.2 · «Lo que recuerdo de ti» vive en Ajustes › IAs y memoria */
 function memModal(){ SZ.cfgModal('mem'); }
+/* ---------- v4.0 · Títulos con sentido y memoria con lógica (pedido de Sammuel, 3 nov 2026) ----------
+   La IA que responde hace dos trabajitos más, en la misma respuesta (sin gastar otra IA):
+   1) TÍTULO: al final escribe [titulo: …] con el tema real del chat en 2 a 6 palabras. Se le dice el título actual:
+      si el tema sigue igual, lo repite (el título no cambia en cada mensaje); si el tema cambió de verdad
+      (dejó los documentos y ahora pide una web), escribe uno nuevo. Un saludo solo → «-» (queda «Charla nueva»).
+      Si tú le pusiste el nombre al chat a mano, la IA nunca lo cambia.
+   2) MEMORIA: si pides «recuerda…», la IA saca el dato real y lo redacta corto y en tercera persona: [recordar: Se llama Ana.]
+      Si no está claro qué recordar, escribe [recordar: ?] y te pregunta. La página te pregunta «¿Lo recuerdo?» como antes,
+      y si ya había algo parecido (otro nombre, otra ciudad) se ACTUALIZA en vez de duplicarse (memAddCore en core 14).
+   Las marcas nunca se ven: se quitan mientras la respuesta llega. */
+const MK_RX = /\s*\[(titulo|título|title|recordar|remember)\s*:\s*([^\]\n]{0,240})\]/gi;
+/* mientras llega: también se esconde una marca a medio escribir al final («[tit…») */
+const MK_TAIL = /\s*\[(?:t(?:[ií](?:t(?:u(?:l(?:o)?)?|l(?:e)?)?)?)?|r(?:e(?:c(?:o(?:r(?:d(?:a(?:r)?)?)?)?)?|m(?:e(?:m(?:b(?:e(?:r)?)?)?)?)?)?)?)?(?:\s*:[^\]\n]*)?$/i;
+const sinMarcas = t => String(t || '').replace(MK_RX, '').replace(MK_TAIL, '');
+function marcas(t){
+  let title = null, mem = null;
+  const text = String(t || '').replace(MK_RX, (m, k, v) => { v = v.replace(/^["'«“\s]+|["'»”\s]+$/g, '').trim(); if (/^t/i.test(k)){ if (title == null) title = v.replace(/[.\s]+$/, ''); } else if (mem == null) mem = v === '?' || !v ? v : /[.!?]$/.test(v) ? v : v + '.'; return ''; }).replace(MK_TAIL, '').trim();
+  return { text, title, mem };
+}
+/* lo que se le pide a la IA (va en el mensaje de sistema de apiMsgs) */
+function marcasSystem(chat){
+  const e = thMeta(thModel(), curT(), false), cur = e && e.title && !e.auto0 ? e.title : '', en = SZ.lang() === 'en';
+  const lu = [...chat].reverse().find(m => m.role === 'user'), q = lu ? String(lu.ask || lu.content || '') : '';
+  let s = (en ? 'At the very end of your answer add one line: [titulo: the real topic of THIS chat in 2 to 6 words, in the chat\'s language, no quotes] (for example [titulo: Website for a bakery]). '
+              : 'Al final de tu respuesta agrega una línea: [titulo: el tema real de ESTE chat en 2 a 6 palabras, en el idioma del chat, sin comillas] (por ejemplo [titulo: Página web para una panadería]). ')
+    + (cur ? (en ? 'The current title is «' + cur + '»: if the topic is still the same, repeat it exactly; change it only if the topic really changed. ' : 'El título actual es «' + cur + '»: si el tema sigue siendo el mismo, repítelo exacto; cámbialo solo si el tema de verdad cambió. ') : '')
+    + (en ? 'If so far it is only a greeting or small talk, write [titulo: -]. Never mention this line.' : 'Si hasta ahora solo es un saludo o charla, escribe [titulo: -]. Nunca menciones esta línea.');
+  if (MEM_RX.test(q)) s += en
+    ? ' The person asked you to remember something: confirm it in one sentence and add on the last line [recordar: the fact rewritten short and clear in third person, without "remember that", e.g. Is called Ana and studies design.]. If it is not clear what to remember, ask, and write [recordar: ?].'
+    : ' La persona te pidió recordar algo: confírmalo en una frase y agrega en la última línea [recordar: el dato reescrito corto y claro en tercera persona, sin «recuerda que», por ejemplo Se llama Ana y estudia diseño.]. Si no está claro qué recordar, pregúntale y escribe [recordar: ?].';
+  return s;
+}
+/* sin marca (o con «-»): un título sacado del primer mensaje que no sea un saludo */
+const SALUDO = /^\W*((hola+|holi|buenas|buen(os)? d[ií]as|buenas (tardes|noches)|hey|hi|hello|qu[eé] (tal|m[aá]s|onda)|c[oó]mo (est[aá]s|vas|va todo)|how are you|what'?s up|gracias|thanks|ok|vale|listo)[\s,.!?¡¿]*)+/i;
+function titleLocal(chat){
+  const en = SZ.lang() === 'en';
+  for (const m of chat || []){
+    if (m.role !== 'user') continue;
+    let t = String(m.ask || m.content || '').replace(/\s+/g, ' ').trim().replace(SALUDO, '').replace(/^(por favor|please|oye|mira|necesito que|quiero que|puedes|podr[ií]as|can you|could you|i want you to|me ayudas a|ay[uú]dame a)\s+/i, '').replace(/^[\s,.!?¡¿]+/, '');
+    if (t.length < 4) { if (m.files && m.files[0]) return (en ? 'File: ' : 'Archivo: ') + m.files[0].name.slice(0, 40); continue; }
+    const words = t.split(' '); t = words.slice(0, 7).join(' ').replace(/[\s,.;:!?¡¿]+$/, '');
+    return t.charAt(0).toUpperCase() + t.slice(1) + (words.length > 7 ? '…' : '');
+  }
+  return en ? 'New chat' : 'Charla nueva';
+}
+/* pone el título que dio la IA en el chat donde respondió (no en el que estés mirando si cambiaste) */
+function titleSet(chat, title){
+  const k = Object.keys(st().chats).find(x => st().chats[x] === chat); if (!k) return;
+  const { model, id } = parseKey(k), e = thMeta(model, id, true); if (e.manual) return;
+  const t = String(title || '').replace(/[*_`#"«»“”]/g, '').replace(/\s+/g, ' ').trim().replace(/[.,;:!?]+$/, '');
+  const fromAi = !!t && t !== '-' && t.length >= 3;
+  if (!fromAi && e.title && !e.auto0) return;   /* ya tenía un título con sentido: un «-» no lo borra */
+  const next = fromAi ? t.charAt(0).toUpperCase() + t.slice(1, 60) : titleLocal(chat);
+  if (next === e.title && !!e.auto0 === !fromAi) return;
+  e.title = next; if (fromAi) delete e.auto0; else e.auto0 = true; save(); renderThBtn();
+}
+/* «recuerda que me llamo Ana» → «Se llama Ana.» si la IA no dio el dato redactado */
+function memLimpia(fact){
+  let s = String(fact || '').replace(/\s+/g, ' ').trim().replace(/^(que|de que|esto|:)\s+/i, '').replace(/^(that|this|:)\s+/i, '');
+  const R = [[/\bme llamo\b/gi, 'se llama'], [/\bll[aá]mame\b/gi, 'quiere que le digan'], [/\bdime\b/gi, 'quiere que le digan'], [/\bsoy\b/gi, 'es'], [/\bestoy\b/gi, 'está'], [/\btengo\b/gi, 'tiene'], [/\bvivo\b/gi, 'vive'],
+    [/\btrabajo\b/gi, 'trabaja'], [/\bestudio\b/gi, 'estudia'], [/\bprefiero\b/gi, 'prefiere'], [/\bquiero\b/gi, 'quiere'], [/\bnecesito\b/gi, 'necesita'], [/\bhablo\b/gi, 'habla'], [/\bme gustan\b/gi, 'le gustan'], [/\bme gusta\b/gi, 'le gusta'],
+    [/\bmis\b/gi, 'sus'], [/\bmi\b/gi, 'su'], [/\byo\s+/gi, ''], [/\bmy name is\b/gi, 'name is'], [/\bcall me\b/gi, 'wants to be called'], [/\bI am\b|\bI'm\b/g, 'is'], [/\bI live\b/g, 'lives'], [/\bI work\b/g, 'works'], [/\bI study\b/g, 'studies'],
+    [/\bI like\b/g, 'likes'], [/\bI prefer\b/g, 'prefers'], [/\bI have\b/g, 'has'], [/\bI need\b/g, 'needs'], [/\bmy\b/gi, 'their']];
+  for (const [rx, to] of R) s = s.replace(rx, to);
+  s = s.replace(/\s+/g, ' ').trim().replace(/[\s,;:]+$/, '');
+  if (!s) return '';
+  s = s.charAt(0).toUpperCase() + s.slice(1);
+  return /[.!?]$/.test(s) ? s : s + '.';
+}
+let memNext = null;   /* el dato que redactó la IA en la última respuesta (lo usa memOffer) */
 /* ---------- v1.8 · modo agente: tú escribes; el agente entiende y mejora tu pedido, elige la IA que más sabe de eso
    y te muestra cada paso. Al final decides: quedarte con esa IA o seguir en modo agente ---------- */
 let agentBusy = false;
@@ -2156,8 +2864,9 @@ async function send(){
   if (files.some(f => f.state === 'load')){ toast('Espera a que terminen de cargar los archivos.'); return; }
   try{ SZ.setTurn(text + '|' + Date.now()); }catch(e){}
   if (trialOn && trialLeft() <= 0){ toast('Se acabaron tus mensajes de prueba.'); const tb = $('#trialBar'); tb.classList.remove('pulse'); void tb.offsetWidth; tb.classList.add('pulse'); return; }
-  if (trialOn && files.length){ toast('La prueba guiada es solo de texto. Conecta una IA para enviar archivos.'); return; }
   if (!budgetOk()) return;
+  /* v3.8 · si todavía se está comprobando la IA que elegiste, espera esa respuesta (1-2 s); si no responde, tu texto se queda en la caja */
+  { const h = HEALTH.get(selId()), m1 = selId(); if (h && h.p){ sendBtn.disabled = true; try{ await h.p; }finally{ sendBtn.disabled = false; } if (selId() !== m1) return; } }
   /* modo agente: no eliges IA; el agente entiende tu pedido, lo mejora, elige la IA experta y te muestra los pasos */
   if (agentOn() && mode === 'solo' && text && !files.length){
     if (agentBusy) return;
@@ -2183,6 +2892,7 @@ async function send(){
     card.set(1, same ? 'Tu pedido ya era claro: lo paso tal cual' : 'Mejoré tu pedido para que la IA lo entienda mejor');
     await SZ.sleepRaw(550);
     const tl = plan.tema && TOPIC[plan.tema] ? TOPIC[plan.tema].l.toLowerCase() : '';
+    const wd = webTake(text);
     const light = isSimple(text, plan) ? lightPick() : null;
     card.set(2, light ? 'Es algo sencillo: uso una IA rápida que gasta menos' : tl ? 'Eligiendo la IA que más sabe de ' + tl : 'Eligiendo la mejor IA para esto');
     const pick = light || agentPick(plan.tema);
@@ -2192,7 +2902,8 @@ async function send(){
     unlock();
     if (g0 !== gen){ card.el.remove(); return; }                /* cambiaste de chat mientras tanto */
     if (!same) msg.ask = plan.pedido;
-    if (plan.web || needsWeb(text)){ card.el.remove(); await webPrep(msg, plan.pedido || text); if (g0 !== gen) return; }
+    /* v4.2 · internet: decide la regla fija (no el plan de la IA), con lo que escribiste tú */
+    if (wd.go){ card.el.remove(); await webPrep(msg, plan.pedido || text, wd.why); if (g0 !== gen) return; }
     if (wantsDeck(text)) msg.deck = true;
     msg.agent = { pick, name:info(pick).name, tl:light ? 'cosas sencillas (gasta menos)' : tl, ask:same ? '' : plan.pedido };
     st().model.openrouter = pick; save(); paintSel(); renderTop(false); paintAccent();
@@ -2213,12 +2924,14 @@ async function send(){
   /* si la ventanita de Puter tardó o cambiaste de chat o de IA mientras tanto, no envío solo: tu texto sigue en la caja */
   if (needed && (ckey() !== th0 || selId() !== m0 || Date.now() - at0 > 15000 || inp.value.trim() !== text)){ toast('¡Listo! Revisa tu mensaje y toca enviar.'); inp.focus(); return; }
   /* v3.4 · si la IA elegida no ve fotos, ya no te bloquea: esta respuesta la da una que sí ve (antes salía «Este modelo no ve imágenes» y no podías enviar) */
+  /* v3.7 · y solo por esta respuesta: tu IA elegida se queda elegida (antes te la cambiaba para siempre al adjuntar una foto) */
+  let oneModel = null;
+  /* v3.8 · foto (o PDF escaneado, o video) con una IA que no ve: una IA que sí ve la describe en texto y responde TU IA elegida.
+     Solo si eso falla, responde esa vez la que ve (como antes). Y si ninguna ve, se manda la ficha de la foto: nunca te bloquea. */
   if (ready.some(f => f.kind === 'img') && !info(selId()).vision){
     const v = visionPick();
-    if (!v){ toast('Ninguna de tus IAs conectadas ve fotos ahora. Conecta Puter o envía tu pregunta sin la imagen.'); return; }
-    const was = info(selId()).name;
-    st().model.openrouter = v.id; save(); paintSel(); renderTop(false); paintAccent();
-    toast(was + ' no ve fotos: te responde ' + v.name + ', que sí las ve.');
+    if (v && !(await seeForMe(ready, v, text))){ oneModel = v.id; toast(info(selId()).name + ' no ve fotos: esta vez te responde ' + v.name + ', que sí las ve. Después sigues con ' + info(selId()).name + '.'); }
+    else if (!v) ready.filter(f => f.kind === 'img' && !f.seen).forEach(f => { f.text = (f.text ? f.text + '\n\n' : '') + '[Foto adjunta: ' + f.name + '. Ahora no hay ninguna IA conectada que vea fotos; si la necesitas, pídele a la persona que cuente qué muestra.]'; });
   }
   try{ localStorage.setItem('synthz:sent', String(sentN() + 1)); }catch(e){}
   try{ frustration(text, false); }catch(e){}
@@ -2230,19 +2943,40 @@ async function send(){
   if (imgs.length) Object.defineProperty(msg, '_imgs', { value:imgs, enumerable:false, writable:true });
   if (text && wantsDeck(text)) msg.deck = true;
   chat.push(msg); touchThread(); save();
-  if (text && needsWeb(text)){ renderMsgs(); await webPrep(msg, text); save(); }
+  { const wd = text ? webTake(text) : { go:false }; if (wd.why === 'apagado') msg.webNo = true; if (wd.go){ renderMsgs(); await webPrep(msg, text, wd.why); save(); } }
   let okSent = true;
-  await runSolo(err => { okSent = false; chat.pop(); save(); renderMsgs(); showErr(err); inp.value = text; files.push(...sent); autoGrow(); updateHint(); renderTray(); });
+  await runSolo(err => { okSent = false; chat.pop(); save(); renderMsgs(); showErr(err); inp.value = text; files.push(...sent); autoGrow(); updateHint(); renderTray(); }, oneModel ? { model:oneModel } : {});
   if (okSent && text && MEM_RX.test(text)) memOffer(text);
 }
 
+/* v3.8 · «mirar por ti»: una IA que ve describe las fotos (y lee su texto) para que la IA elegida, que no ve, entienda igual */
+const SEE_PROMPT = 'Describe estas imágenes para alguien que no puede verlas, con todo el detalle útil: copia EXACTO todo el texto que aparezca (letreros, documentos, capturas de pantalla, código, tablas con sus números), y describe personas, objetos, colores, gráficos y lo que esté pasando. Si son páginas de un documento, transcríbelas completas. No respondas la pregunta: solo describe. Escribe en el idioma de esta pregunta: ';
+async function seeForMe(list, v, text){
+  const todo = list.filter(f => f.kind === 'img' && !f.seen);
+  if (!todo.length) return true;
+  const wait = setTimeout(() => toast(v.name + ' está mirando tu foto para que ' + info(selId()).name + ' la entienda…'), 600);
+  sendBtn.disabled = true; todo.forEach(f => { f.state = 'load'; f.prog = SZ.lang() === 'en' ? 'Looking…' : 'Mirando…'; }); renderTray();
+  try{
+    for (const f of todo){
+      const pics = (f.dataUrls || [f.dataUrl]).filter(Boolean).slice(0, 4), ctl = new AbortController(); ctls.add(ctl);
+      let r;
+      try{ r = await SZ.askStream(OR, [{ role:'user', content:[{ type:'text', text:SEE_PROMPT + '«' + (text || 'qué hay en la imagen') + '»' }, ...pics.map(u => ({ type:'image_url', image_url:{ url:u } }))] }], { model:v.id, maxTokens:1200, signal:ctl.signal }, () => {}); }finally{ ctls.delete(ctl); }
+      if (!r || r.aborted || !String(r.text || '').trim()) return false;
+      addUsage(r.prov || SZ.provOf(v.id), r.prompt, r.completion, true, { est:r.est, free:/:free$/.test(v.id) || r.prov === 'synthz', rid:r.rid });
+      f.text = (f.text ? f.text + '\n\n' : '') + '[' + (f.scan ? 'PDF escaneado' : f.frames ? 'Fotos del video' : 'Foto') + ' «' + f.name + '», descrita por ' + v.name + ' porque esta IA no ve imágenes]\n' + String(r.text).trim();
+      f.seen = true;
+    }
+    return true;
+  }catch(e){ console.warn('[ver foto]', e); return false; }
+  finally{ clearTimeout(wait); sendBtn.disabled = false; todo.forEach(f => { f.state = 'ok'; delete f.prog; }); renderTray(); }
+}
 /* v3.4 · la mejor IA conectada que ve fotos: primero la Automática de SymphorIA (elige sola una que ve), luego cualquiera de la lista */
 function visionPick(){
   if (szOn()) return info('sz:auto');
   return cat.list.find(m => m.vision && connected(m.id) && !SZ.isBad(m.id)) || null;
 }
 /* ---------- v1.3 · SynthonIA te rescata cuando una IA falla o cuando notas que no te entiende ---------- */
-const TOPIC_RX = [['codigo', /c[oó]digo|program|funci[oó]n|javascript|python|html|css|sql|bug|error de|script/i], ['mate', /ecuaci|matem|calcul|derivad|integral|\d+\s*[x×*+\/-]\s*\d+/i], ['estudiar', /explica|estudi|examen|tarea|aprend|resum/i], ['correo', /correo|email|e-mail/i], ['marketing', /marketing|publicidad|anuncio|vender|ventas|campa[ñn]a/i], ['redes', /instagram|tiktok|reel|post|redes/i], ['idiomas', /traduc|ingl[eé]s|franc[eé]s|idioma/i], ['negocios', /negocio|emprend|empresa|cliente/i], ['ideas', /idea|nombre para|lluvia de/i], ['escribir', /escrib|texto|carta|historia|poema|redact/i]];
+const TOPIC_RX = [['codigo', /c[oó]digo|program|funci[oó]n|javascript|python|html|css|sql|bug|error de|script|coding|code\b|website|app\b/i], ['mate', /ecuaci|matem|calcul|derivad|integral|math|equation|algebra|\d+\s*[x×*+\/-]\s*\d+/i], ['estudiar', /explica|estudi|examen|tarea|aprend|resum|homework|study|exam|learn|explain|summar/i], ['correo', /correo|email|e-mail/i], ['marketing', /marketing|publicidad|anuncio|vender|ventas|campa[ñn]a|advert|\bads?\b|sell|sales/i], ['redes', /instagram|tiktok|reel|post|redes|social media/i], ['idiomas', /traduc|ingl[eé]s|franc[eé]s|idioma|translat|english|spanish|french|language/i], ['negocios', /negocio|emprend|empresa|cliente|business|startup|company|customer/i], ['ideas', /idea|nombre para|lluvia de/i], ['escribir', /escrib|texto|carta|historia|poema|redact|writ|essay|letter|story|poem/i]];
 function guessTopic(t){ const f = TOPIC_RX.find(([k, rx]) => TOPIC[k] && rx.test(t)); return f ? f[0] : null; }
 function altFor(mid, text){
   const tk = guessTopic(text || '');
@@ -2273,10 +3007,31 @@ function frustration(text, regen){
   const { alt } = altFor(mid, (q && typeof q.content === 'string' ? q.content : '') + ' ' + (text || '')); if (!alt) return;
   SZ.BOT.offer('Mmm… parece que ' + info(mid).name + ' no tiene el flow para esto. ' + alt.name + ' tiene más flow 😎 ¿Probamos con ella?', 'guino', 'Cambiar a ' + alt.name, () => { pickModel(alt.id, null); toast('Ahora hablas con ' + alt.name + '. Vuelve a enviar tu mensaje o escribe uno nuevo.'); inp.focus(); });
 }
+/* v4.0 · las IAs pequeñas a veces se quedan en bucle y repiten la misma frase o el mismo párrafo: se deja una sola vez (fuera de los bloques de código) */
+function limpiaBucles(t){
+  const s = String(t || ''); if (s.length < 200) return s;
+  let inCode = false, prev = '', n = 0; const out = [];
+  for (const line of s.split('\n')){
+    if (/^\s*```/.test(line)) inCode = !inCode;
+    const k = line.trim();
+    if (!inCode && k.length > 20 && k === prev){ n++; if (n >= 1) continue; } else { n = 0; }
+    if (k) prev = k;
+    out.push(line);
+  }
+  let r = out.join('\n');
+  /* el mismo párrafo largo repetido seguido (separado por líneas en blanco) */
+  r = r.replace(/(^|\n\n)([^\n`][^\n]{60,})(?:\n\n\2)+(?=\n\n|$)/g, '$1$2');
+  return r;
+}
 async function runSolo(onFail, o = {}){
-  const mid = selId(), chat = chatArr(), g = gen, vis = info(mid).vision, saver = st().sx.saver;
+  const mid = o.model || selId(), chat = chatArr(), g = gen, vis = info(mid).vision, saver = st().sx.saver;
   const slowT = setTimeout(() => { if (busy[mid] === 'think' && SZ.BOT.react) SZ.BOT.react('slow', { auto:mid === 'sz:auto' }); }, 14000);
-  const sent = apiMsgs(chat, vis), naive = apiMsgs(chat, vis, { naive:true }), ck = hashStr(mid + '|' + saver + '|' + effKey() + '|' + JSON.stringify(sent));
+  /* v4.2 · la IA ya NO decide sola si busca (eso la hacía buscar «porque sí y porque no»): decide la regla fija al enviar.
+     Si igual responde que no sabe datos de hoy, SynthonIA te OFRECE buscar; nunca se busca a escondidas. */
+  const lastU = [...chat].reverse().find(x => x.role === 'user'), webAuto = false, webOffer = !o.noWeb && mode === 'solo' && !!lastU && !lastU.sources && !lastU.webTried && !lastU.imgId && !lastU.webNo;
+  const sent = apiMsgs(chat, vis, { webAsk:webAuto, srv:/^sz:/.test(mid), mid }), naive = apiMsgs(chat, vis, { naive:true }), ck = hashStr(mid + '|' + saver + '|' + effKey() + '|' + JSON.stringify(sent));
+  let hold = webAuto ? null : false, webQ = null;
+  const holdWeb = txt => { if (hold === false) return false; if (webMaybe(txt)){ hold = true; return true; } hold = false; return false; };
   const canCache = !sent.some(m => Array.isArray(m.content));
   if (works[mid]) works[mid].stop();
   works[mid] = SZ.workView({ model:info(mid).name, inTok:msgCost(sent) });
@@ -2300,20 +3055,21 @@ async function runSolo(onFail, o = {}){
     if (r){ r = Object.assign({}, r, { ms:0, cached:true }); st().sx.saved += r.prompt + r.completion; st().sx.hits += 1; save(); mount(); if (rv) rv.push(r.text); }
     else {
       const ctl = new AbortController(); ctls.add(ctl);
-      try{ r = await SZ.askStream(OR, sent, Object.assign({ model:mid, maxTokens: saver ? 700 : 0, signal:ctl.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { mount(); W.write(txt); if (rv) rv.push(txt); }); }finally{ ctls.delete(ctl); }
+      try{ r = await SZ.askStream(OR, sent, Object.assign({ model:mid, maxTokens: saver ? 700 : 0, signal:ctl.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { if (holdWeb(txt)) return; txt = sinMarcas(txt); mount(); W.write(txt); if (rv) rv.push(txt); }); }finally{ ctls.delete(ctl); }
       addUsage(r.prov || SZ.provOf(mid), r.prompt, r.completion, true, { est:r.est, free:/:free$/.test(mid) || r.prov === 'synthz', rid:r.rid });
+      if (webOffer && !r.aborted && String(r.text || '').length < 2500 && CUTOFF_RX.test(r.text || '')) setTimeout(() => offerWeb(lastU, onFail, o), 1200);
       if (!r.aborted && !r.swapped) SZ.markGood(mid);
       SZ.TEL.msgs++; SZ.TEL.ai = (r.prov || SZ.provOf(mid)).slice(0, 12);
       st().sx.saved += Math.max(0, msgCost(naive) - msgCost(sent)); save();
-      if (canCache && !r.aborted) cachePut(ck, r);
+      if (canCache && !r.aborted && !webQ) cachePut(ck, r);
       /* si la IA se quedó sin espacio (o se cortó la conexión), sigue sola donde quedó: la persona recibe la respuesta completa sin tocar «Continuar» */
-      for (let n = 0; n < 3 && !r.aborted && !r.swapped && g === gen && (r.finish === 'length' || r.cut); n++){
+      for (let n = 0; n < 3 && !webQ && !r.aborted && !r.swapped && g === gen && (r.finish === 'length' || r.cut); n++){
         const base = r.text, ctl2 = new AbortController(); ctls.add(ctl2);
         const glue = t => (!base || /\s$/.test(base) || /^[\s.,;:!?)\]]/.test(t) || !/[.!?:;)\]*_`]$/.test(base)) ? '' : ' ';
         let r2 = null;
         try{
           r2 = await SZ.askStream(OR, [...sent, { role:'assistant', content:base }, { role:'user', content:'Continúa exactamente donde te quedaste: sigue desde la última palabra, sin repetir nada de lo anterior, sin saludar y sin decir que continúas. Escribe solo lo que falta.' }],
-            Object.assign({ model:mid, maxTokens:0, signal:ctl2.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { mount(); const full = base + glue(txt) + txt; W.write(full); if (rv) rv.push(full); });
+            Object.assign({ model:mid, maxTokens:0, signal:ctl2.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { mount(); const full = sinMarcas(base + glue(txt) + txt); W.write(full); if (rv) rv.push(full); });
         }catch(e){ r2 = null; }
         finally{ ctls.delete(ctl2); }
         if (!r2 || r2.aborted && !r2.text) break;
@@ -2323,6 +3079,23 @@ async function runSolo(onFail, o = {}){
       }
     }
     if (g !== gen){ if (rv) rv.skip(); return; }
+    /* v3.8 · la IA pidió buscar (o dijo que no tiene internet): se busca, se leen las páginas y se le vuelve a preguntar, ya con los datos */
+    if (webQ){
+      const rv0 = rv; rv = null; W.stop && W.stop(); if (live && live.chat === chat) live = null; if (el) el.remove(); { const t = $('.think-wrap', lane); if (t) t.remove(); } try{ rv0 && rv0.skip(); }catch(e){} if (el) el.remove();
+      lastU.webTried = true; delete busy[mid]; renderNow();
+      await webPrep(lastU, webQ); save();
+      if (g !== gen) return;
+      return await runSolo(onFail, Object.assign({}, o, { noWeb:true, fresh:true }));
+    }
+    /* v4.0 · respuesta vacía: se pide otra vez UNA vez (el servidor ya cambia de IA si una contesta vacío; esto cubre Puter y las demás) */
+    if (!r.aborted && !o.retried && /^\(La IA devolvió una respuesta vacía\.\)$/.test(String(r.text || '').trim())){
+      const rv0 = rv; rv = null; W.stop && W.stop(); if (live && live.chat === chat) live = null; try{ rv0 && rv0.skip(); }catch(e){} if (el) el.remove();
+      delete busy[mid]; renderNow();
+      return await runSolo(onFail, Object.assign({}, o, { fresh:true, retried:true }));
+    }
+    if (!r.aborted) r.text = limpiaBucles(r.text);
+    /* v4.0 · las marcas de título y memoria se quitan del texto y se usan */
+    { const mk = marcas(r.text); r.text = mk.text || r.text; if (!r.aborted){ titleSet(chat, mk.title); memNext = mk.mem; } }
     const tail = r.aborted ? ' · detenido' : r.cut ? ' · se cortó la conexión' : r.finish === 'length' ? ' · se cortó porque era muy larga (toca «Continuar»)' : '';
     const who = r.swapped ? ' · se acabó tu saldo de Puter este mes; respondió ' + (r.real || 'otra IA') : '';
     W.write(r.text); W.finish({ ms:r.ms, real:r.real || '' });
@@ -2381,6 +3154,14 @@ async function regen(){
   await runSolo(err => { chat.push(last); save(); renderMsgs(); showErr(err, { regen:true }); }, { fresh:true });
 }
 
+
+/* v4.2 · la IA dijo que no tiene datos de hoy: SynthonIA te pregunta antes de buscar (tú decides; no se busca a escondidas) */
+function offerWeb(lastU, onFail, o){
+  if (!lastU || lastU.sources || lastU.webTried || !SZ.BOT || !SZ.BOT.offer) return;
+  const en = SZ.lang() === 'en';
+  SZ.BOT.offer(en ? 'This AI says it has no current data for that. Want me to search the web and answer with sources?' : 'Esta IA dice que no tiene datos de hoy para eso. ¿Lo busco en internet y te respondo con fuentes?', 'pensando',
+    en ? 'Search the web' : 'Buscar en internet', async () => { lastU.webTried = true; await webPrep(lastU, String(lastU.content || '').slice(0, 300), 'tu'); save(); renderMsgs(); await runSolo(onFail, Object.assign({}, o, { noWeb:true, fresh:true })); });
+}
 /* ---------- v3.4 · Calidad de las respuestas (pedido de Sammuel, 28 oct) ----------
    Dos pasos, para que todas las IAs respondan con lógica y se entiendan:
    1) qualitySystem(): unas instrucciones cortas de «experto» que viajan con cada mensaje (las pone apiMsgs).
@@ -2389,15 +3170,37 @@ async function regen(){
       Si está bien → «✓ Revisada». Si tiene errores → la respuesta se cambia por la corregida («✨ Mejorada» · Ver original).
       Tiene 28 s como máximo; si tarda más o falla, se queda la respuesta de antes (nunca se pierde nada).
    Se apaga en Ajustes › IAs y memoria › «Revisión de calidad». Las instrucciones del revisor viven en el servidor (api/ai.js). */
-function qualitySystem(saver){
-  if (saver) return 'Piensa en silencio antes de responder; revisa cálculos y lógica. No inventes datos.';
-  return 'Responde como un experto de primer nivel en el tema. Antes de escribir, piensa en silencio qué pide de verdad la persona y cuál es la mejor respuesta.'
-    + ' Empieza por la respuesta directa (sin saludos ni relleno) y luego explica lo necesario en orden lógico, paso a paso cuando ayude.'
-    + ' Rehaz cada cálculo antes de darlo y comprueba que no te contradigas. No inventes datos, citas, enlaces ni funciones: si algo no lo sabes o depende de información que no tienes, dilo claro.'
-    + ' Si la pregunta se puede entender de varias formas, elige la más probable, dilo en una frase y responde.'
-    + ' Usa Markdown limpio: títulos cortos, listas, tablas cuando compares y bloques de código con su lenguaje.'
-    + ' Si hay imágenes o archivos, básate en lo que de verdad se ve o dice en ellos y menciona detalles concretos.'
-    + ' Responde siempre en el idioma en que te escribe la persona.';
+/* v4.0 · las mismas reglas del «cerebro» del servidor (api/_cerebro.js) para CUALQUIER IA que elijas (Puter, OpenRouter, Groq…):
+   la fecha de hoy, cómo responde un experto en ese tipo de trabajo y, si es difícil, pensar → resolver → revisar antes de responder. */
+const Q_HARD = /\b(demuestra|resuelve|calcula|deriva|integral|ecuaci[oó]n|probabilidad|optimiza|algoritmo|depura|debug|refactor|por qu[eé] (falla|no funciona)|paso a paso|a fondo|analiza|compara|eval[uú]a|estrategia|dise[nñ]a|arquitectura|acertijo|l[oó]gica|cu[aá]nt[oa]s?|prove|solve|calculate|equation|probability|algorithm|step by step|in depth|analy[sz]e|compare|evaluate|strategy|design|riddle|puzzle|how (many|much))\b/i;
+const Q_EASY = /^\W*(hola+|holi|buenas|buen(os)? d[ií]as|hey|hi|hello|gracias|thanks|thank you|ok(ay)?|vale|listo|s[ií]|no|dale|c[oó]mo est[aá]s|how are you|qu[eé] tal|chao|bye)\b[\s\W]*$/i;
+const Q_KIND = [['code', /\b(c[oó]digo|code|programa|funci[oó]n|function|script|python|javascript|html|css|sql|bug|error|react|node|java|api)\b|```/i],
+  ['translate', /\b(traduc\w*|translat\w*)\b/i], ['data', /\b(calcul\w*|porcentaje|percent|promedio|average|tabla|datos|data|matem\w*|math|ecuaci[oó]n|equation|\d+\s*[-+*/^x×÷]\s*\d+)\b/i],
+  ['summary', /\b(resum\w*|summar\w*|puntos clave|key points|tl;?dr)\b/i], ['write', /\b(escrib\w*|redact\w*|write|correo|email|carta|ensayo|essay|art[ií]culo|historia|story|poema|poem|post|discurso)\b/i]];
+const Q_JOB = {
+  code:'Como ingeniero de software sénior: código COMPLETO que funcione a la primera, en bloques con su lenguaje, sin «…»; explica la causa exacta de los errores y considera casos raros. No inventes funciones ni librerías.',
+  translate:'Como traductor profesional: traduce el sentido, natural y con el mismo tono y formato; conserva nombres, código y cifras.',
+  data:'Como experto en matemáticas y datos: plantea, resuelve paso a paso mostrando cada operación, RECALCULA cada número y termina con el resultado en negrita y con unidades.',
+  summary:'Como experto en síntesis: la idea central en una frase y luego los puntos clave en viñetas cortas con datos concretos; nada que no esté en el material.',
+  write:'Como escritor profesional: voz natural, ritmo, adaptado a quién lo lee; sin clichés ni relleno; texto listo para usar.',
+  reason:'Como analista experto: primero la conclusión o recomendación, luego las razones más fuertes con sus supuestos; si hay opciones, compáralas con criterios concretos y elige.'
+};
+const Q_NATIVE = /gpt-oss|qwen3|deepseek-r1|qwq|gemini-(2\.5|[3-9])|claude|gpt-[5-9]|\bo[34]\b|grok|kimi|glm-4\.[5-9]|magistral/i;
+function qualitySystem(saver, ask, mid){
+  const day = new Date().toLocaleDateString(SZ.lang() === 'en' ? 'en-US' : 'es-CO', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  if (saver) return 'Hoy es ' + day + '. Piensa en silencio antes de responder; revisa cálculos y lógica. No inventes datos.';
+  const q = String(ask || '').trim(), easy = !q || Q_EASY.test(q);
+  const kind = (Q_KIND.find(([, rx]) => rx.test(q)) || ['reason'])[0];
+  const hard = !easy && (st().sx && st().sx.effort === 'high' || (Q_HARD.test(q) ? 2 : 0) + (/\d\s*[-+*/^=]\s*\d/.test(q) ? 2 : 0) + (/```/.test(q) ? 2 : 0) + (q.length > 400 ? 1 : 0) + (/code|data/.test(kind) ? 1 : 0) >= 3);
+  const base = 'Hoy es ' + day + '. Responde como los mejores asistentes del mundo, con precisión y criterio. Empieza por la respuesta (sin saludos, sin repetir la pregunta, sin relleno) y luego explica lo necesario.'
+    + ' No inventes datos, citas, enlaces ni funciones: si no lo sabes con certeza o pudo cambiar después de lo que aprendiste, dilo en una frase. Si la pregunta es ambigua, elige la lectura más probable y dilo.'
+    + ' Mantén el hilo de la conversación. Markdown limpio (listas, tablas al comparar, código en bloques con su lenguaje); el largo justo. Responde siempre en el idioma en que te escribe la persona.'
+    + ' Si hay imágenes o archivos, básate en lo que de verdad se ve o dice en ellos.';
+  if (easy) return base + ' Esto es sencillo: responde directo y breve, con calidez.';
+  const think = !hard ? '' : Q_NATIVE.test(String(mid || ''))
+    ? ' ES DIFÍCIL: razona con cuidado paso a paso antes de responder y revisa el resultado (rehaz los cálculos, prueba el código con un ejemplo, busca casos raros). En la respuesta muestra los pasos clave.'
+    : ' ES DIFÍCIL: escribe PRIMERO tu razonamiento dentro de <think> y </think> (qué se pide, plan, resolverlo paso a paso y REVISARLO: rehaz los cálculos por otro camino, prueba el código con un ejemplo, busca contradicciones). Cierra </think> y DESPUÉS escribe la respuesta final limpia.';
+  return base + ' ' + Q_JOB[kind] + think;
 }
 const REV_MS = 28000;
 /* las IAs de primer nivel no necesitan que otra más pequeña las revise */
@@ -2439,6 +3242,8 @@ function revBadge(el, m){
 async function qualityAfter(el, chat, msg, mid, r){
   if (!revWanted(mid, msg, r)) return;
   const pk = revPacket(chat, msg); if (!pk) return;
+  /* v3.7 · un saludo o charla corta («hola», «gracias», «cómo estás») no se revisa aunque la respuesta sea larga */
+  if (pk.q.length < 40 && /^\W*(hola|holi|buenas|buenos d[ií]as|hey|hi|hello|gracias|thanks|thank you|ok|vale|listo|c[oó]mo est[aá]s|how are you|qu[eé] tal|chao|adi[oó]s|bye)\b/i.test(pk.q.trim())) return;
   if (SZ.isGuestQ() && !SZ.turnNow()) return;   /* sin el mensaje que la pidió, la revisión costaría otro mensaje de prueba: no se hace */
   const g0 = gen, draft = msg.content;
   revChip(el, 'run', '<i class="qspin" aria-hidden="true"></i><span>' + RL('Revisando la lógica de la respuesta…', 'Checking the logic of the answer…') + '</span>');
@@ -2451,7 +3256,7 @@ async function qualityAfter(el, chat, msg, mid, r){
   finally{ clearTimeout(tm); ctls.delete(ctl); }
   if (d && d.limit) try{ SZ.szqSet({ used:+d.used || 0, limit:+d.limit }); }catch(e){}
   /* v3.6 · sin cuenta, la revisión cuenta en el mismo mensaje: igual se pinta lo que dice el servidor */
-  if (d && /^\d+\/\d+$/.test(String(d.guest || ''))) try{ const [u, m] = String(d.guest).split('/'); SZ.szqSet({ guest:{ used:+u, max:+m } }); }catch(e){}
+  if (d && /^\d+\/\d+(\/\d+)?$/.test(String(d.guest || ''))) try{ const [u, m, l] = String(d.guest).split('/'); SZ.szqSet({ guest:{ used:+u, max:+m, left:l != null ? +l : null } }); }catch(e){}
   /* si cambiaste de chat, la respuesta se borró o ya llegó otra encima, no se toca nada */
   const alive = chat.includes(msg) && msg.content === draft;
   if (!d || !alive || !d.verdict){ const c = $('.qrev', el); if (c) c.remove(); return; }
@@ -2473,6 +3278,96 @@ document.addEventListener('click', e => {
   body.innerHTML = md(showO ? m.orig : m.content); codeButtons(body);
   b.setAttribute('aria-pressed', String(showO)); b.textContent = showO ? RL('Ver mejorada', 'See improved') : RL('Ver original', 'See original');
 });
+/* ---------- v3.8 · ¿la IA que elegiste funciona de verdad? ----------
+   Al elegir una IA (o sumarla a Comparar) se le hace una pregunta mínima. Si no responde:
+   · se esconde de la lista (si ya no existe, 12 h y para todos; si está llena, 10 min y vuelve sola),
+   · vuelves a la IA que tenías, y una ventana te pregunta para qué la querías:
+     «Solo quería probar» → sigues navegando, sin las IAs caídas;  «La quiero para…» → te recomienda la que sí funciona y mejor sirve para eso.
+   Para no gastar: el resultado se guarda (bien 10 min, llena 2 min, caída 30 min) y en el servidor se comparte entre todos.
+   Las de SymphorIA se prueban en /api/ai (no gasta tu batería); Puter y tus llaves, con una respuesta de 4 palabras como mucho. */
+const HEALTH = new Map(), H_TTL = { ok:10 * 60e3, busy:2 * 60e3, down:30 * 60e3 };
+function iaCached(id){ const h = HEALTH.get(id); return h && h.v && Date.now() - h.t < H_TTL[h.v] ? h.v : null; }
+const iaSkip = id => !id || id === 'sz:auto' || /^tr:/.test(id) || !connected(id);
+function iaNote(id, v, shared){
+  HEALTH.set(id, { v, t:Date.now() });
+  if (v === 'ok'){ SZ.markGood(id); return; }
+  if (v === 'down') SZ.markBad(id, !shared); else SZ.markSick(id, 10 * 60e3);
+  iaDrop(id);
+}
+/* sacarla de todo: lista, Comparar, la fijada y los filtros (los filtros leen de cat.list) */
+function iaDrop(id){
+  if (!cat.list.some(m => m.id === id)) return;
+  setCatalog(cat.list.filter(m => m.id !== id), cat.t, cat.status);
+  if (st().pinned === id) delete st().pinned;
+  if (st().cmp.includes(id) && mode !== 'cmp') st().cmp = st().cmp.filter(x => x !== id);
+  save();
+  try{ renderList({ keep:true }); }catch(e){}
+}
+async function szPing(ids){
+  const r = await fetch('/api/ai', { method:'POST', headers:SZ.szHeaders(), body:JSON.stringify({ action:'ping', ids }) });
+  if (!r.ok) throw new Error('ping ' + r.status);
+  return (await r.json()).status || {};
+}
+function iaProbe(id){
+  if (iaSkip(id)) return Promise.resolve('ok');
+  const c = iaCached(id); if (c) return Promise.resolve(c);
+  const h = HEALTH.get(id); if (h && h.p) return h.p;
+  const p = (async () => {
+    if (/^sz:/.test(id)){
+      try{ const v = (await szPing([id]))[id]; return v === 'down' || v === 'busy' ? v : 'ok'; }
+      catch(e){ return 'ok'; }   /* sin conexión con SymphorIA: no es culpa de la IA, no se esconde */
+    }
+    const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 15000);
+    try{ const r = await SZ.askStream(OR, [{ role:'user', content:'Responde solo: ok' }], { model:id, maxTokens:4, signal:ctl.signal }, () => {}); return r && r.aborted ? 'busy' : 'ok'; }
+    catch(e){ return e && e.gone ? 'down' : e && (e.aborted || e.name === 'AbortError') ? 'busy' : 'ok'; }   /* un error de tu cuenta o tu saldo no es «IA caída» */
+    finally{ clearTimeout(tm); }
+  })();
+  HEALTH.set(id, { p });
+  return p.then(v => { iaNote(id, v, /^sz:/.test(id)); return v; });
+}
+/* al abrir la lista: las de SymphorIA se revisan de a 4 (una vez cada 10 min; el servidor guarda la respuesta para todos) */
+let iaSweepT = 0;
+async function iaSweep(){
+  if (Date.now() - iaSweepT < 10 * 60e3 || !szOn()) return; iaSweepT = Date.now();
+  const ids = cat.list.filter(m => /^sz:/.test(m.id) && !iaSkip(m.id) && !iaCached(m.id)).map(m => m.id);
+  for (let i = 0; i < ids.length; i += 4){
+    try{ const st0 = await szPing(ids.slice(i, i + 4)); Object.keys(st0).forEach(id => { if (['ok', 'busy', 'down'].includes(st0[id])) iaNote(id, st0[id], true); }); }
+    catch(e){ break; }
+  }
+}
+/* la IA que mejor sirve para lo que escribiste, entre las que SÍ responden ahora */
+async function iaFor(text, not){
+  const tk = guessTopic(text || ''), seen = new Set([not]);
+  const list = [...(tk ? recommendTop(tk, 12) : []), bestUsable(true), bestUsable(false), ...cat.list.filter(m => m.free)].filter(m => m && !seen.has(m.id) && (seen.add(m.id), true) && connected(m.id) && !SZ.isBad(m.id));
+  const tr = x => SZ.lang() === 'en' && SZ.__syn && SZ.__syn.trStr ? SZ.__syn.trStr(x) : x, topic = tk ? tr(TOPIC[tk].l) : '';
+  for (const m of list.filter(m => m.id !== 'sz:auto').slice(0, 4)){ if ((await iaProbe(m.id)) === 'ok') return { id:m.id, name:tr(m.name), topic }; }
+  return szOn() ? { id:'sz:auto', name:tr(info('sz:auto').name), topic } : null;
+}
+function iaAsk(id, why, from, name){
+  name = name || (info(id) || {}).name || id;
+  if (SZ.lang() === 'en' && SZ.__syn && SZ.__syn.trStr) name = SZ.__syn.trStr(name);
+  try{ dispatchEvent(new CustomEvent('sz-ia-caida', { detail:{ id, name, why, from } })); }
+  catch(e){ toast(name + ' no está respondiendo ahora. La quité de la lista: elige otra.'); }
+}
+/* elegiste una IA: se queda elegida mientras se comprueba (sin esperar); si no responde, vuelves a la de antes */
+function iaAfterPick(id, prev){
+  if (iaSkip(id)) return;
+  const name = info(id).name;
+  iaProbe(id).then(v => {
+    if (v === 'ok' || selId() !== id) return;
+    const back = prev && prev !== id && !SZ.isBad(prev) && connected(prev) ? prev : (bestUsable(true) || bestUsable(false) || {}).id;
+    if (back) pickModel(back, null);
+    iaAsk(id, v, 'solo', name);
+  });
+}
+/* Comparar: primero se comprueba y solo se suma si responde */
+async function iaThenAdd(id, node){
+  if (iaSkip(id) || iaCached(id) === 'ok') return addToCompare(id, node);
+  const name = info(id).name, slow = setTimeout(() => toast('Comprobando que ' + name + ' responde…'), 450);
+  const v = await iaProbe(id); clearTimeout(slow);
+  if (v === 'ok') return addToCompare(id, node);
+  closeSide(); iaAsk(id, v, 'cmp', name);
+}
 /* ---------- comparar: las respuestas llegan en orden, sin cajas vacías, y puedes sumar IA después ---------- */
 /* «Esta tiene más Flow»: cada respuesta trae una carita buena de SynthonIA, distinta a las demás */
 function flowBtn(C){ const f = SZ.randomGoodFace(C.faces); C.faces.add(f); return '<button class="flowb" type="button" title="Sigue la conversación con esta IA"><i aria-hidden="true">' + SZ.face(f, 24) + '</i>Esta tiene más Flow</button>'; }
@@ -2483,14 +3378,14 @@ function flipAdd(grid, el){
   if (SZ.reduce || root.classList.contains('noanim')) return;
   kids.forEach((k, i) => { const a = before[i], b = k.getBoundingClientRect(), dx = a.left - b.left, dy = a.top - b.top, sx = a.width / (b.width || 1); if (Math.abs(dx) + Math.abs(dy) > 1 || Math.abs(sx - 1) > .01) k.animate([{ transform:'translate(' + dx + 'px,' + dy + 'px) scaleX(' + sx + ')', transformOrigin:'left top' }, { transform:'none', transformOrigin:'left top' }], { duration:700, easing:'cubic-bezier(.22,1,.36,1)' }); });
 }
-function newCmpRun(text){
+function newCmpRun(text, at){
   const run = ++cmpRun, node = document.createElement('div'); node.className = 'cmp-run';
-  node.appendChild(userEl(text));
+  node.appendChild(userEl(text, at && at.files));
   const wait = document.createElement('div'); wait.className = 'cmp-wait';
   const grid = document.createElement('div'); grid.className = 'cmp-grid';
   const note = document.createElement('p'); note.className = 'cmp-note'; note.textContent = 'Para ahorrar, en Comparar cada IA responde más corto y sin el historial. Si repites la misma pregunta, sale de la caché gratis.';
   node.append(wait, grid, note);
-  cmpLast = { run, text, node, grid, wait, cards:new Map(), done:[], blind:!!st().battle, n:0, faces:new Set() };
+  cmpLast = { run, text:at ? at.ask : text, node, grid, wait, cards:new Map(), done:[], blind:!!st().battle, n:0, faces:new Set() };
   parkComposer(); setFresh(false); lane.innerHTML = ''; lane.appendChild(node); jump();
   return cmpLast;
 }
@@ -2554,16 +3449,29 @@ function cmpJob(mid, C){
 }
 async function compare(){
   if (isLocked()){ lockNudge(); return; }
-  const text = inp.value.trim(); if (!text) return;
+  const text = inp.value.trim(), ready = files.filter(f => f.state === 'ok'); if (!text && !ready.length) return;
   if (Object.keys(busy).length){ toast('Espera a que terminen de responder, o detenlas con el botón ■.'); return; }
   const ids = st().cmp.slice();
   if (ids.length < 2){ toast('Agrega otra IA con el botón +.'); openSide('add'); return; }
-  if (files.length){ toast('Los archivos funcionan con una sola IA. Quítalos para comparar.'); return; }
+  /* v3.8 · Comparar también con archivos: cada IA recibe el mismo texto sacado de los archivos (las fotos, descritas por una IA que ve) */
+  if (files.some(f => f.state === 'load')){ toast('Espera a que terminen de cargar los archivos.'); return; }
   if (!budgetOk()) return;
   try{ SZ.setTurn(text + '|' + Date.now()); }catch(e){}
   if (!(await ensureConn())) return;
+  if (ready.some(f => f.kind === 'img' && !f.seen)){
+    const v = visionPick();
+    if (!v || !(await seeForMe(ready, v, text))) ready.filter(f => f.kind === 'img' && !f.seen).forEach(f => { f.text = (f.text ? f.text + '\n\n' : '') + '[Foto adjunta: ' + f.name + ' (no se pudo describir ahora)]'; f.seen = true; });
+  }
+  const sent = files.splice(0).filter(f => f.state === 'ok'); renderTray();
+  const ask = (text || 'Mira los archivos adjuntos.') + sent.map(f => f.text ? '\n\n[Archivo adjunto: ' + f.name + ']\n```\n' + f.text.slice(0, Math.floor(24000 / sent.length)) + '\n```' : '').join('');
   inp.value = ''; autoGrow(); updateHint();
-  const C = newCmpRun(text);
+  /* v4.2 · Comparar sigue la MISMA regla de internet que el chat normal: si toca buscar, se busca una sola vez y todas las IAs reciben los mismos resultados */
+  const wd = text ? webTake(text) : { go:false }, wm = { role:'user', content:text };
+  if (wd.go) await webPrep(wm, text, wd.why);
+  const ask2 = wm.ask ? wm.ask + (ask.length > text.length ? ask.slice(text.length) : '') : ask;
+  const C = newCmpRun(text, sent.length || wm.sources ? { ask:ask2, files:sent.map(f => ({ name:f.name, kind:f.kind, thumb:f.thumb })) } : null);
+  if (sent.length || wm.sources) C.msg = Object.assign({ role:'user', content:text }, sent.length ? { files:sent.map(f => ({ name:f.name, kind:f.kind, text:f.text, thumb:f.thumb })) } : {}, wm.sources ? { sources:wm.sources, web:wm.web, webWhy:wm.webWhy } : {});
+  if (wm.sources){ const u = C.node.querySelector('.m.user'); const se = sourcesEl(wm); if (u) u.after(se); else C.node.prepend(se); }
   ids.forEach(id => cmpJob(id, C));
 }
 /* entrar a Comparar con las IA marcadas (desde los temas) */
@@ -2638,7 +3546,7 @@ function pickWinner(card){
     (st().thread || (st().thread = {}))[mid] = 't' + Date.now().toString(36);
     st().cmp = []; cmpLast = null; st().model.openrouter = mid; st().pinned = mid;
     const arr = st().chats[ckey()] = [];
-    arr.push({ role:'user', content:C.text }, { role:'assistant', content:card._raw || '', meta:(card._meta || '') + ' · la elegiste en Comparar', model:mid });
+    arr.push(C.msg || { role:'user', content:C.text }, { role:'assistant', content:card._raw || '', meta:(card._meta || '') + ' · la elegiste en Comparar', model:mid });
     touchThread(); save(); setMode('solo');
     toast(info(mid).name + ' tiene más Flow 😎 Sigues con ella.');
   }, 700);
@@ -2653,38 +3561,48 @@ function setMode(m){
 }
 /* ---------- selector de IA flotante (computador) u hoja que sube (celular) ---------- */
 const side = $('#side'), scrim = $('#scrim');
-/* ---------- selector en dos paneles: «Filtros» (en el centro) y «Las IA» (se abre a la derecha) ---------- */
-const LUPA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>';
+/* ---------- v3.7 · selector de IA nuevo (Sammuel: «ese panel de escoger es muy confuso»)
+   Antes abría con una pantalla llena de filtros y había que pulsar «Ver las IA» para ver alguna.
+   Ahora abre directo en las IA: arriba buscas, al lado eliges Para ti / Todas / Favoritas y abajo tocas la que quieres.
+   Los filtros (temas, en qué son buenas, de dónde, orden) quedan detrás de «Personalizar búsqueda».
+   Comparar ya no se mezcla aquí: tiene su propio lugar en la barra («Comparar IAs»). ---------- */
+const TUNE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>';
 (function twoPanels(){
-  const L = document.createElement('div'); L.className = 'pf-l'; L.setAttribute('role', 'group'); L.setAttribute('aria-label', 'Filtros');
+  /* v3.7 · la versión React (Selector.jsx) ya trae las dos columnas: no se mueve nada */
+  if ($('.pf-l', side)) return;
+  const L = document.createElement('div'); L.className = 'pf-l'; L.setAttribute('role', 'group'); L.setAttribute('aria-label', 'Personalizar búsqueda');
   const R = document.createElement('div'); R.className = 'pf-r'; R.setAttribute('role', 'group'); R.setAttribute('aria-label', 'Las IA');
   const head = $('.phead', side), fw = $('.fwrap', side) || $('#filters'), prov = $('#provSeg'), sortr = $('.sortrow', side), more = $('#pMore'), pfoot = $('.pfoot', side);
   const lbl = t => { const e = document.createElement('p'); e.className = 'plbl'; e.textContent = t; return e; };
-  head.insertAdjacentHTML('beforeend', '<button type="button" class="plupa" id="pLupa" aria-label="Buscar una IA" data-tip="Buscar una IA">' + LUPA + '</button>');
-  const go = document.createElement('div'); go.className = 'pl-go';
-  go.innerHTML = '<button type="button" class="btn sm flow" id="pSee">Ver las IA <span aria-hidden="true">→</span></button>';
-  L.append(head, lbl('Qué mostrar'), $('#pTabs'), lbl('¿Para qué la quieres?'), $('#pTopics'), lbl('En qué son buenas'), fw, lbl('De dónde'), prov, sortr, go);
-  const rh = document.createElement('div'); rh.className = 'pr-head';
-  rh.innerHTML = '<button type="button" class="pr-back" id="pBack" aria-label="Volver a los filtros"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg><span>Filtros</span></button><b>Las IA</b><span class="pr-n" id="prN"></span>';
-  R.append(rh, $('#searchBox'), $('#pNote'), $('#mlist'), pfoot);
+  head.insertAdjacentHTML('beforeend', '<span class="pr-n" id="prN"></span>');
+  head.appendChild($('#sideClose'));
+  const lh = document.createElement('div'); lh.className = 'pl-head';
+  lh.innerHTML = '<b>Personalizar búsqueda</b><button type="button" class="pr-back" id="pBack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>Listo</span></button>';
+  L.append(lh, lbl('¿Para qué la quieres?'), $('#pTopics'), lbl('En qué son buenas'), fw, lbl('De dónde'), prov, sortr);
+  const qr = document.createElement('div'); qr.className = 'pq';
+  qr.append($('#pTabs'));
+  qr.insertAdjacentHTML('beforeend', '<button type="button" class="pcust" id="pCust" aria-expanded="false" aria-controls="side">' + TUNE + '<span>Personalizar búsqueda</span><i class="pc-n" id="pCustN" hidden></i></button>');
+  R.append(head, $('#searchBox'), qr, $('#pNote'), $('#mlist'), pfoot);
   if (more) more.remove();
-  side.append(L, R); side.classList.add('two-p');
+  side.append(L, R); side.classList.add('two-p', 'v37', 'two');
 })();
 const sideL = $('.pf-l', side), sideR = $('.pf-r', side);
 const wide2 = () => matchMedia('(min-width:900px)').matches;
-function sideShift(){ const w = side.offsetWidth, lw = sideL.offsetWidth;   /* v1.8: medidas sin la animación de entrada (antes quedaba corrido a la izquierda) */ side.style.setProperty('--shift', Math.max(0, (w - lw) / 2).toFixed(0) + 'px'); }
-function sideStage(two, o = {}){
-  requestAnimationFrame(() => { try{ placePill($('#provSeg')); placePill($('#sortSeg')); placePill($('#pTabs')); }catch(e){} });
-  if (two === side.classList.contains('two')){ if (two && o.focus) setTimeout(() => $('#q').focus(), 50); return; }
-  sideShift(); side.classList.toggle('two', two); SZ.SND.expand && two && SZ.SND.expand();
-  if (two){ requestAnimationFrame(() => { V.hM = 0; renderList({ keep:true, animate:true }); }); if (o.focus) setTimeout(() => $('#q').focus(), wide2() ? 520 : 120); }
+function sideShift(){}
+/* cuántos filtros tienes puestos: se ve en el botón «Personalizar búsqueda» */
+function paintCust(){
+  const n = ['free', 'fav', 'reason', 'vision', 'long', 'forme', 'code', 'write', 'fast', 'math', 'newm'].filter(k => ui[k]).length + (ptopic ? 1 : 0) + (ui.prov !== 'all' ? 1 : 0);
+  const c = $('#pCustN'); if (c){ c.hidden = !n; c.textContent = n; }
 }
-addEventListener('resize', () => { if (side.classList.contains('open')) sideShift(); });
-$('#pLupa').addEventListener('click', () => sideStage(true, { focus:true }));
-$('#pSee').addEventListener('click', () => sideStage(true));
-$('#pBack').addEventListener('click', () => sideStage(false));
-/* elegir cualquier cosa en «Filtros» abre «Las IA» */
-sideL.addEventListener('click', e => { if (e.target.closest('[data-ptk],.fchip,#pTabs button,#provSeg button,#sortSeg button')) setTimeout(() => sideStage(true), 260); });
+function custOn(on){
+  side.classList.toggle('cust', on); $('#pCust').setAttribute('aria-expanded', String(on));
+  requestAnimationFrame(() => { try{ placePill($('#provSeg')); placePill($('#sortSeg')); placePill($('#pTabs')); }catch(e){} });
+  if (on && SZ.SND.expand) SZ.SND.expand();
+}
+function sideStage(two, o = {}){ custOn(!two); if (two && o.focus) setTimeout(() => $('#q').focus(), 60); }
+$('#pCust').addEventListener('click', () => custOn(!side.classList.contains('cust')));
+$('#pBack').addEventListener('click', () => { custOn(false); renderList({ keep:true, animate:true }); });
+sideL.addEventListener('click', e => { if (e.target.closest('[data-ptk],.fchip,#provSeg button,#sortSeg button')) setTimeout(() => { paintCust(); if (wide2()) renderList({ keep:true }); }, 60); });
 /* el selector se amplía desde donde lo tocaste hasta el centro, y al cerrarlo vuelve allí (animación al revés) */
 let sideFrom = null;
 function sideFlip(open){
@@ -2701,16 +3619,20 @@ function sideFlip(open){
 function placeSide(){}
 function openSide(kind, anchor){
   if (isLocked()){ lockNudge(); toast('Primero conecta Puter: es gratis y con un clic.'); return; }
-  if (agentOn() && mode === 'solo' && kind !== 'add'){ toast('Con SuperiorSynth la IA la elige él. Si quieres elegirla tú, vuelve a «Chats».'); return; }
+  if (agentOn() && mode === 'solo' && kind !== 'add' && kind !== 'cmp'){ toast('Con SuperiorSynth la IA la elige él. Si quieres elegirla tú, vuelve a «Chats».'); return; }
   pickMode = kind === 'add' || mode === 'cmp' ? 'add' : 'set';
-  $('#pTitle').textContent = pickMode === 'add' ? 'Suma otra IA a la mesa' : '¿Con quién fluyes hoy?';
+  pickCmp = kind === 'cmp' && mode !== 'cmp'; if (!pickCmp) pickSel.clear();
+  side.classList.toggle('pcmp', pickCmp);
+  $('#pTitle').textContent = pickCmp ? 'Compara IAs lado a lado' : pickMode === 'add' ? 'Suma otra IA a la mesa' : 'Elige tu IA';
   const a = anchor && anchor.isConnected ? anchor : $('#curChip') || $('#cPick') || $('#pickRow');
   sideFrom = a ? a.getBoundingClientRect() : null;
   if (pickMode === 'set' && !ptopic && curTopic) ptopic = curTopic;
   renderPTopics(); paintPNote(); paintPGo();
+  iaSweep();   /* v3.8 · las que no responden salen de la lista mientras la miras */
   const wasOpen = side.classList.contains('open');
-  if (!wasOpen) side.classList.toggle('two', !!(pickMode === 'add' && !wide2()));
-  side.classList.add('open'); { sideL.style.transition = 'none'; sideShift(); void sideL.offsetWidth; sideL.style.transition = ''; } requestAnimationFrame(sideShift);   /* v1.8: abre ya centrado, sin saltar desde la izquierda */ side.setAttribute('aria-hidden', 'false'); scrim.classList.add('on', 'pick');
+  if (!wasOpen) custOn(false);
+  paintCust();
+  side.classList.add('open'); side.setAttribute('aria-hidden', 'false'); scrim.classList.add('on', 'pick');
   $$('#pickRow .mchip').forEach(c => c.setAttribute('aria-expanded', String(pickMode === 'set')));
   setTab(isMobile() ? 'ia' : null);
   renderList({ keep:true });
@@ -2812,11 +3734,19 @@ function newChat(){
 /* volver a SymphorIA: la película del portal al revés */
 /* v1.4: con la barra lateral abierta, el logo «SynthFlow» NO lleva a la portada (solo hace un brillito) */
 document.addEventListener('click', e => { const w = e.target.closest && e.target.closest('#railWord'); if (w){ e.preventDefault(); e.stopPropagation(); w.classList.remove('tw'); void w.offsetWidth; w.classList.add('tw'); } }, true);
-document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('a[href="index.html"]'); if (!a || a.id === 'railWord' || (e.defaultPrevented && !/^(backLink|mLogo)$/.test(a.id)) || e.button || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); SZ.portalBack('index.html'); });
+document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('a[href="index.html"]'); if (!a || a.id === 'railWord' || (e.defaultPrevented && !/^(backLink|mLogo)$/.test(a.id)) || e.button || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); toPortada(); });
+/* v4.1 · la portada es solo para gente nueva: quien ya entró no vuelve a ella por el logo, sino por la pantallita
+   «Ya tengo el Flow / Soy nuevo» (Soy nuevo → la abre; Ya tengo el Flow → se queda aquí). Si ya eligió verla, va directo. */
+function toPortada(){
+  const d = SZ.portada && SZ.portada.get();
+  if (d && d.v === 'nuevo'){ SZ.portalBack('index.html'); return; }
+  SZ.synReady.then(() => SZ.welcomeBack({ from:'logo', flow:() => { if (matchMedia('(pointer: fine)').matches) inp.focus(); } }));
+}
 addEventListener('pageshow', e => { if (e.persisted){ root.classList.remove('bye'); const pp = document.getElementById('portal'); if (pp) pp.remove(); SZ.S.busy(false); } });
 SZ.hooks.usage = () => { renderFoot(); coinWatch(); };
 SZ.hooks.md = () => { if (!Object.keys(busy).length && mode === 'solo' && chatArr().length) renderMsgs(); };
 SZ.onLang(() => { if (!Object.keys(busy).length && mode === 'solo') renderMsgs(); });   /* v3.0 · el saludo cambia de idioma al momento */
+SZ.onLang(() => { try{ renderList({ keep:true }); }catch(e){} });   /* v3.7 · la lista de IA (y su «Experta en…») también cambia de idioma al momento */
 
 /* ---------- tutorial, mejor IA gratis y menú contextual ---------- */
 const APODEX_NAME = 'Automática';
@@ -3075,16 +4005,16 @@ async function runGuide(o = {}){
     gHud(3, 'La pantalla');
     await gWait(350);
     await gPoint(gAny('#cPick', '#curChip'), 'Aquí eliges con qué IA hablas. Tócalo y se abre su ventana, con temas, buscador y filtros.');
-    await gPoint(gAny('#cCmp', '#pickRow [data-add]'), 'Aquí sumas otra IA: hasta 4 a la vez. Todas responden la misma pregunta y las comparas. Ojo: cada una gasta lo suyo.');
+    await gPoint(gAny('#sNav [data-sn="cmp"]', '#pickRow [data-add]'), 'Aquí, aparte, comparas IAs: eliges hasta 4. Todas responden la misma pregunta y las comparas. Ojo: cada una gasta lo suyo.');
     await gPoint(gAny('#payPill', '#payL', '#payM'), 'Aquí ves cómo va tu límite gratis de hoy.', { pad:6 });
-    await gPoint(gT('#rail [data-r="chats"]', '#tabbar [data-tab="chats"]'), 'Tus chats y tus mensajes favoritos quedan aquí, en cualquier dispositivo si entras con tu cuenta.', { side:true });
+    await gPoint((gT('#thList', '#tabbar [data-tab="chats"]') || gT('#rail [data-r="chats"]', '#tabbar [data-tab="chats"]')), 'Tus chats y tus mensajes favoritos quedan aquí, en cualquier dispositivo si entras con tu cuenta.', { side:true });
     await gPoint(gT('.tchip[data-topic]', '.tchip[data-topic]'), 'Toca un tema cuando quieras y te recomiendo IA expertas en eso.');
     /* v3.0: lo nuevo, para que nadie se quede sin saber dónde está */
-    await gPoint(gT('#cNew', '#rail [data-r="new"]') || gT('#rail [data-r="new"]', '#tabbar [data-tab="chats"]'), 'Con «Nuevo chat» empiezas una conversación limpia cuando cambies de tema. La anterior queda guardada.', { side:true });
+    await gPoint(gT('#sNav [data-sn="new"]', '#rail [data-r="new"]') || gT('#cNew', '#rail [data-r="new"]') || gT('#rail [data-r="new"]', '#tabbar [data-tab="chats"]'), 'Con «Nuevo chat» empiezas una conversación limpia cuando cambies de tema. La anterior queda guardada.', { side:true });
     await gPoint(gAny('#cMode'), 'Aquí eliges el modo: «Automática» escoge la mejor IA por ti, «Chat» te deja elegirla, y «SuperiorSynth» trabaja por pasos como un agente.');
     await gPoint(gAny('#cEffort'), 'Y aquí, cuánto piensa: Auto, Bajo (rápido), Medio o Alto (con calma, para cosas difíciles).');
-    await gPoint(gT('#railProj', '#cProj') || gT('#cProj', '#cProj'), '«Proyectos» junta chats, instrucciones y archivos de un mismo tema. La IA los tiene en cuenta en cada chat del proyecto, como en Claude.', { side:true });
-    await gPoint(gT('#railSyn', '#cSyn') || gT('#cSyn', '#cSyn'), '«Sintéticos» guarda todo lo que la IA crea: páginas, juegos, dibujos y documentos. Cuando una respuesta trae uno, se abre solo al lado del chat.', { side:true });
+    await gPoint(gT('#sNav [data-sn="proj"]', '#cProj') || gT('#railProj', '#cProj') || gT('#cProj', '#cProj'), '«Proyectos» junta chats, instrucciones y archivos de un mismo tema. La IA los tiene en cuenta en cada chat del proyecto, como en Claude.', { side:true });
+    await gPoint(gT('#sNav [data-sn="syn"]', '#cSyn') || gT('#railSyn', '#cSyn') || gT('#cSyn', '#cSyn'), '«Sintéticos» guarda todo lo que la IA crea: páginas, juegos, dibujos y documentos. Cuando una respuesta trae uno, se abre solo al lado del chat.', { side:true });
     const cfgB = gT('#cfgBtn', '#tabbar [data-tab="cfg"]');
     const rr = await gPoint(cfgB, 'En «Ajustes» cambias cómo se ve todo. ¿Te muestro lo más útil?', { buttons:[{ label:'Muéstrame' }, { label:'Ahora no', ghost:true }], auto:15000, mood:'guino' });
     if (rr === 0 && cfgB){
@@ -3214,7 +4144,7 @@ const TOPIC_STEPS = {
   },
   comparar:async () => {
     if (agentOn()){ await gPoint(null, 'Comparar se usa sin SuperiorSynth: vuelve a «Chats» y verás el botón «Comparar con otra IA» abajo.'); return; }
-    await gPoint(gAny('#cCmp', '#pickRow [data-add]'), 'Aquí sumas otra IA, hasta 4. Todas responden la misma pregunta y aparecen lado a lado, en el orden en que llegan. Ojo: cada una gasta lo suyo.');
+    await gPoint(gAny('#sNav [data-sn="cmp"]', '#pickRow [data-add]'), 'Aquí, aparte, comparas IAs: eliges hasta 4. Todas responden la misma pregunta y aparecen lado a lado, en el orden en que llegan. Ojo: cada una gasta lo suyo.');
   },
   agente:async () => {
     await gPoint(gT('#cMode', '#cMode'), 'SuperiorSynth se elige aquí, en el botón de modo junto a la caja de escribir.');
@@ -3232,14 +4162,14 @@ const TOPIC_STEPS = {
     await gPoint(null, 'Un truco más: escribe «hazme una presentación de…» y te la entrego lista para PowerPoint.', { mood:'guino' });
   },
   chats:async () => {
-    await gPoint(gT('#rail [data-r="chats"]', '#tabbar [data-tab="chats"]'), 'Tus chats quedan aquí. Si entras con tu cuenta, los ves en cualquier celular o computador.', { side:true });
-    await gPoint(gT('#railFav', '#tabbar [data-tab="chats"]'), 'Y aquí tus favoritos: las respuestas que guardas con la estrella ★.', { side:true });
+    await gPoint((gT('#thList', '#tabbar [data-tab="chats"]') || gT('#rail [data-r="chats"]', '#tabbar [data-tab="chats"]')), 'Tus chats quedan aquí. Si entras con tu cuenta, los ves en cualquier celular o computador.', { side:true });
+    await gPoint((gT('#sNav [data-sn="more"]', '#tabbar [data-tab="chats"]') || gT('#railFav', '#tabbar [data-tab="chats"]')), 'Y aquí tus favoritos: las respuestas que guardas con la estrella ★.', { side:true });
   },
   limite:async () => {
-    await gPoint(gAny('#payPill', '#railCoin', '#payL', '#payM'), 'Aquí ves cómo va tu límite gratis de hoy: el anillo se va vaciando y a medianoche se llena otra vez. Sin cuenta son 5 mensajes de prueba; con tu cuenta gratis, mucho más.', { pad:6 });
+    await gPoint(gAny('#payPill', '#railCoin', '#payL', '#payM'), 'Aquí ves cómo va tu límite gratis de hoy: el anillo se va vaciando y a medianoche se llena otra vez. Sin cuenta son 5 mensajes al día; con tu cuenta gratis, mucho más.', { pad:6 });
   },
   cuenta:async () => {
-    await gPoint(gT('#accBtn', '#tabbar [data-tab="me"]'), 'Aquí entras o creas tu cuenta gratis: sin correo ni tarjeta. Tus chats y favoritos te siguen a todas partes.', { side:true });
+    await gPoint((gT('#sAcc', '#tabbar [data-tab="me"]') || gT('#accBtn', '#tabbar [data-tab="me"]')), 'Aquí entras o creas tu cuenta gratis: sin correo ni tarjeta. Tus chats y favoritos te siguen a todas partes.', { side:true });
     await gPoint(null, 'Y si quieres más, conecta Puter y usa la versión pro de las IAs más usadas (ChatGPT, Claude, Gemini…), gratis y con un clic.', { mood:'guino' });
   },
   ajustes:async () => {
@@ -3327,8 +4257,8 @@ function bPane1(){
   const keys = BF.all ? TOPICS.map(t => t[0]) : (isMobile() ? Object.keys(BICO).slice(0, 7) : Object.keys(BICO));
   const card = (k, i) => { const T = TOPIC[k], ic = BICO[k], c = BCOL[k] || '#e6b65f'; return '<button type="button" class="bf-card" data-bt="' + k + '" style="--i:' + i + ';--tc:' + c + '"><span class="bf-ic">' + (ic ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + ic + '"/></svg>' : '<i aria-hidden="true">' + T.e + '</i>') + '</span><b>' + esc(T.l) + '</b><small>' + esc(BEX[k] || T.ex.map(x => x[0]).join(' · ')) + '</small></button>'; };
   return '<div class="bf-h"><h1 class="greet">' + greetHtml(GREET[0]) + '</h1><p>Toca un tema. En el siguiente paso te muestro las IA que mejor lo hacen.</p></div>'
-    + '<div class="bf-grid' + (BF.all ? ' all' : '') + '">' + keys.map(card).join('') + (BF.all || !isMobile() ? '' : '<button type="button" class="bf-card more" data-bmore style="--i:' + keys.length + '"><span class="bf-ic"><i aria-hidden="true">✦</i></span><b>Más temas</b><small>Ver los ' + TOPICS.length + '</small></button>') + '</div>'
-    + (BF.all || isMobile() ? '' : '<p class="bf-skip"><button type="button" class="btn sm ghost" data-bmore>✦ Ver los ' + TOPICS.length + ' temas</button></p>')
+    + '<div class="bf-grid' + (BF.all ? ' all' : '') + '">' + keys.map(card).join('') + (BF.all || !isMobile() ? '' : '<button type="button" class="bf-card more" data-bmore style="--i:' + keys.length + '"><span class="bf-ic"><i aria-hidden="true">✦</i></span><b>' + (SZ.lang() === 'en' ? 'More topics' : 'Más temas') + '</b><small>' + (SZ.lang() === 'en' ? 'See all ' : 'Ver los ') + TOPICS.length + '</small></button>') + '</div>'
+    + (BF.all || isMobile() ? '' : '<p class="bf-skip"><button type="button" class="btn sm ghost" data-bmore>✦ ' + (SZ.lang() === 'en' ? 'See all ' + TOPICS.length + ' topics' : 'Ver los ' + TOPICS.length + ' temas') + '</button></p>')
     + '<p class="bf-skip">¿Ya sabes qué IA quieres? <button type="button" class="lnk" data-bskip>Ir directo al chat →</button></p>';
 }
 function bPane2(){
@@ -3462,7 +4392,7 @@ function paintLock(){
     const done = trialOn && trialLeft() <= 0;
     const gm = (SZ.SZQ.guest && SZ.SZQ.guest.max) || 5;
     $('#lockT').textContent = gst ? 'Para seguir FlowIAndo, entra a tu cuenta' : done ? 'Se acabaron tus mensajes de prueba' : SZ.SZQ.on === false ? 'Las IAs gratis están descansando' : 'Usaste tu límite gratis de hoy';
-    $('#lockS').textContent = gst ? 'Ya usaste tus ' + gm + ' mensajes de prueba de hoy sin cuenta. Crear tu cuenta es gratis, sin correo ni tarjeta, y te da mucho más límite cada día.' : done ? 'Para seguir chateando conecta tu cuenta de Puter (gratis, con un clic).' : 'Vuelve en un momento, o sigue ya con Puter. Conecta tu versión pro de las IAs más usadas.';
+    $('#lockS').textContent = gst ? 'Ya usaste tus mensajes de hoy sin cuenta. Crear tu cuenta es gratis, sin correo ni tarjeta, y te da mucho más límite cada día.' : done ? 'Para seguir chateando conecta tu cuenta de Puter (gratis, con un clic).' : 'Vuelve en un momento, o sigue ya con Puter. Conecta tu versión pro de las IAs más usadas.';
     SZ.telEv('noai', 'sin IA: la de SymphorIA está apagada y no hay Puter');
     if (side.classList.contains('open')) closeSide();
   } else { wHide(); }
@@ -3588,7 +4518,7 @@ function needsConn(){ return (mode === 'cmp' ? st().cmp : [selId()]).some(id => 
 async function puterSignIn(opts){
   if (!window.puter){ showBlockHelp(window.__puterBlocked ? 'script' : 'script'); throw Object.assign(new Error('sin puter'), { shown:true }); }
   try{ return await puter.auth.signIn(opts || {}); }
-  catch(e){ if (e && (e.error === 'popup_blocked' || e.code === 'popup_blocked')){ showBlockHelp('popup'); throw Object.assign(new Error('popup'), { shown:true }); } throw e; }
+  catch(e){ if (e && (e.error === 'popup_blocked' || e.code === 'popup_blocked')){ window.__popupBlocked = true; showBlockHelp('popup'); throw Object.assign(new Error('popup'), { shown:true }); } throw e; }
 }
 function mScore(m){ const b = (m.id.match(/(\d{2,3})b/i) || [])[1]; return (b ? +b : 20) + (m.reasoning ? 25 : 0) + Math.min(m.ctx, 262144) / 8000 + (/gpt-oss|deepseek|qwen|llama-3\.3|gemini|kimi|glm/i.test(m.id) ? 15 : 0) + (/^pu:/.test(m.id) && /gpt-5|gemini-3|claude|deepseek/i.test(m.id) ? 40 : 0) - (/nano|lite|mini/i.test(m.id) ? 10 : 0) + (/gpt-5\.6-luna$/i.test(m.id) ? 30 : 0) + (/^or:openrouter\/free$/.test(m.id) ? 20 : 0) + (/^gq:/.test(m.id) && gqOn() ? 60 : 0) + (m.id === 'sz:auto' ? 140 : /^sz:/.test(m.id) ? 10 : 0) - (/allam/i.test(m.id) ? 999 : 0) - (SZ.isBad(m.id) ? 999 : 0); }
 function bestOf(prefix){ const l = cat.list.filter(m => m.id.startsWith(prefix + ':') && (m.free || prefix === 'pu')); if (prefix === 'sz' || prefix === 'or'){ const ap = l.find(m => m.id === APODEX); if (ap) return ap; } return l.length ? l.slice().sort((a, b) => mScore(b) - mScore(a))[0] : null; }
@@ -3679,6 +4609,7 @@ const ICO = {
 };
 let blkEl = null;
 function showBlockHelp(kind){
+  if (kind === 'popup') window.__popupBlocked = true;   /* recuerda que de verdad hubo una ventanita bloqueada */
   if (blkEl) return;
   const br = browserName(), pop = kind === 'popup', brave = br === 'Brave';
   const steps = pop
@@ -3835,13 +4766,14 @@ function thMeta(model, id, create){
 }
 function touchThread(){
   const e = thMeta(thModel(), curT(), true); e.t = Date.now();
-  if (!e.title){ const u = chatArr().find(x => x.role === 'user'); if (u) e.title = (u.content || (u.files && u.files[0] && u.files[0].name) || 'Conversación').replace(/\s+/g, ' ').slice(0, 60); }
+  /* v4.0 · el primer título sale del primer mensaje con tema (no de «Hola, ¿cómo estás?»); luego la IA lo pone con sentido (05g) */
+  if (!e.title || e.auto0){ const t = titleLocal(chatArr()); if (t !== e.title){ e.title = t; e.auto0 = true; } }
   renderThBtn();
 }
 function allThreads(){
   return Object.keys(st().chats).filter(k => /^openrouter::./.test(k) && Array.isArray(st().chats[k]) && st().chats[k].length).map(k => {
     const { model, id } = parseKey(k), e = thMeta(model, id, false) || {}, u = st().chats[k].find(x => x.role === 'user');
-    return { k, model, id, title:e.title || (u ? (u.content || 'Conversación').replace(/\s+/g, ' ').slice(0, 60) : 'Conversación'), t:e.t || 0, n:st().chats[k].length };
+    return { k, model, id, title:e.title || (u ? titleLocal(st().chats[k]) : 'Conversación'), t:e.t || 0, n:st().chats[k].length };
   }).sort((a, b) => b.t - a.t);
 }
 /* ---------- tus chats y tus favoritos (panel de la izquierda) ---------- */
@@ -3916,7 +4848,7 @@ $('#thList').addEventListener('click', async e => {
   if (e.target.closest('[data-ren]')){
     const b = $('.tt b', it), inp2 = document.createElement('input'); inp2.value = b.textContent; inp2.maxLength = 60; b.replaceWith(inp2); inp2.focus(); inp2.select();
     let canceled = false;
-    const ok = () => { if (canceled) return; canceled = true; const v = inp2.value.trim(); if (v){ const m = thMeta(model, id, true); m.title = v; if (!m.t) m.t = Date.now(); save(); } renderChats(false); };
+    const ok = () => { if (canceled) return; canceled = true; const v = inp2.value.trim(); if (v){ const m = thMeta(model, id, true); m.title = v; m.manual = true; delete m.auto0; if (!m.t) m.t = Date.now(); save(); } renderChats(false); };
     inp2.addEventListener('keydown', ev => { if (ev.key === 'Enter'){ ev.preventDefault(); ok(); } if (ev.key === 'Escape'){ ev.preventDefault(); ev.stopPropagation(); canceled = true; renderChats(false); } });
     inp2.addEventListener('blur', ok); return;
   }
@@ -4100,7 +5032,7 @@ function pjPageHtml(p){
     + '<section class="pj-card" id="pjFiles"><div class="pj-ch"><h3>Archivos</h3><span class="pj-fb"><button type="button" class="lnk" data-pa="paste">Pegar texto</button><button type="button" class="btn sm ghost" data-pa="upload">' + PJ_PLUS + 'Subir</button></span></div>'
     + '<div class="pj-cap" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '" aria-label="Capacidad usada"><i style="width:' + Math.max(pct, size ? 2 : 0) + '%"></i></div><small class="pj-muted">' + (size ? 'Usas ' + (pct < 1 ? 'menos del 1 %' : 'el ' + pct + ' %') + ' del espacio · ' + pjNum(size) + ' de ' + pjNum(PJ_MAX) + ' caracteres. En cada mensaje la IA lee lo que más se relaciona con tu pregunta (hasta unas 1.300 palabras, que cuentan en tu límite).' : 'PDF, Word en texto, código, notas… La IA los usa como fuente en cada chat del proyecto.') + '</small>'
     + ((p.files || []).length ? '<ul class="pj-fl">' + p.files.map(f => '<li><span class="pj-fi">' + esc((f.name.split('.').pop() || 'txt').slice(0, 4).toUpperCase()) + '</span><span class="pj-fn"><b>' + esc(f.name) + '</b><small>' + (f.text ? pjNum(f.text.length) + ' caracteres' : 'Guardado en otro equipo') + '</small></span><button type="button" class="pj-fx" data-fdel="' + esc(f.id) + '" aria-label="Quitar ' + esc(f.name) + '">' + PJ_X + '</button></li>').join('') + '</ul>' : '')
-    + '<input type="file" id="pjFileIn" multiple hidden accept=".pdf,.docx,.xlsx,.pptx,.odt,.ods,.odp,.txt,.md,.csv,.tsv,.json,.xml,.html,.css,.js,.ts,.jsx,.tsx,.py,.java,.c,.cpp,.cs,.go,.rs,.php,.rb,.sql,.yml,.yaml,.log"></section>'
+    + '<input type="file" id="pjFileIn" multiple hidden></section>'
     + '</aside></div>';
 }
 
@@ -4166,7 +5098,7 @@ async function pjAddFiles(p, list){
       if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf'){ toast('Leyendo «' + file.name + '»…'); const lib = await loadPdf(), pdf = await lib.getDocument({ data:new Uint8Array(await file.arrayBuffer()) }).promise; t = ''; for (let i = 1; i <= Math.min(pdf.numPages, 300) && t.length < PJ_MAX; i++){ const tc = await (await pdf.getPage(i)).getTextContent(); t += '\n--- página ' + i + ' ---\n' + tc.items.map(x => x.str).join(' '); } if (t.replace(/--- página \d+ ---/g, '').trim().length < 20) throw new Error('«' + file.name + '» parece escaneado (sin texto que leer).'); }
       else if (TEXTX.test(file.name) || /^text\//.test(file.type) || file.type === 'application/json') t = await file.text();
       else if (OFFX.test(file.name)) t = await readOffice(file);   /* v3.4 · Word, Excel y PowerPoint también */
-      else throw new Error('Tipo de archivo no compatible: ' + file.name);
+      else { const f = {}; toast('Leyendo «' + file.name + '»…'); await readAny(file, f, { textOnly:true }); t = f.text || fichaTxt(file); }   /* v3.8 · cualquier otro archivo: zip, RTF, EPUB, .doc viejo… */
       if (!pjAddText(p, file.name, t.trim())) break;
     }catch(err){ toast(err.message || 'No pude leer «' + file.name + '».'); }
   }
@@ -4243,12 +5175,16 @@ function synAll(){
     st().chats[th.k].forEach((m, i) => {
       if (m.role !== 'assistant' || !/```/.test(m.content || '')) return;
       box.innerHTML = md(m.content);
-      $$('pre', box).forEach(pre => { const M = cnvMeta(pre); if (isFile(M, pre)) out.push({ M, th, i, sibs:() => { box.innerHTML = md(m.content); return $$('pre', box).map(cnvMeta).filter(x => x.name !== M.name); } }); });
+      const files = $$('pre', box).map(pre => [cnvMeta(pre), pre]).filter(([M, pre]) => isFile(M, pre));
+      /* v4.1 · una página de varios archivos sale como UN Sintético (se abre funcionando, con sus pestañas); el resto, archivo por archivo */
+      const P = webProject(files.map(x => x[0]));
+      if (P) out.push({ M:{ name:P.title || P.entry, label:'web', ext:'html', lines:P.files.length, key:'web:' + P.entry }, P, th, i });
+      files.forEach(([M]) => { if (P && WEB_EXT.has(M.ext)) return; out.push({ M, th, i, sibs:() => { box.innerHTML = md(m.content); return $$('pre', box).map(cnvMeta).filter(x => x.name !== M.name); } }); });
     });
   });
   /* la última versión de cada archivo de cada chat (si la IA lo arregló, sale el arreglado) */
   const seen = new Set();
-  return out.reverse().filter(x => { const k = x.th.k + '|' + x.M.name; if (seen.has(k)) return false; seen.add(k); return true; });
+  return out.reverse().filter(x => { const k = x.th.k + '|' + (x.M.key || x.M.name); if (seen.has(k)) return false; seen.add(k); return true; });
 }
 const SV = document.createElement('section'); SV.className = 'synv'; SV.id = 'synv'; SV.hidden = true; SV.setAttribute('aria-label', 'Sintéticos'); SV.tabIndex = -1;
 $('#shell .main').appendChild(SV);
@@ -4260,7 +5196,7 @@ function synOpen(){
   synList = synAll();
   SV.innerHTML = '<div class="pj-in"><div class="pj-bar"><span></span><button type="button" class="pj-close" data-sa="close">Volver al chat' + PJ_X + '</button></div>'
     + '<header class="pj-lh"><div><h1>Sintéticos</h1><p>Todo lo que la IA creó en tus chats: páginas, juegos, dibujos, código y documentos. Tócalo y se abre al lado.</p></div></header>'
-    + (synList.length ? '<div class="syn-l">' + synList.map((x, n) => '<div class="syn-w"><button type="button" class="syn-c" data-sn="' + n + '">' + fcIc(x.M.ext) + '<b>' + esc(x.M.name) + '</b><small>' + esc(x.M.label) + ' · ' + x.M.lines + (SZ.lang() === 'en' ? (x.M.lines === 1 ? ' line' : ' lines') : (x.M.lines === 1 ? ' línea' : ' líneas')) + '</small><small>' + esc(x.th.title) + (x.th.t ? ' · ' + pjAgo(x.th.t) : '') + '</small></button><button type="button" class="syn-go" data-sg="' + n + '" title="Ir al chat donde nació">Ir al chat</button></div>').join('') + '</div>'
+    + (synList.length ? '<div class="syn-l">' + synList.map((x, n) => '<div class="syn-w' + (x.P ? ' web' : '') + '"><button type="button" class="syn-c" data-sn="' + n + '">' + (x.P ? '<span class="fc-ic wp-ic" aria-hidden="true">' + WEB_ICO.web + '</span>' : fcIc(x.M.ext)) + '<b>' + esc(x.M.name) + '</b><small>' + (x.P ? '<span class="notr">' + esc(webTxt(SZ.lang() === 'en').kind + ' · ' + webTxt(SZ.lang() === 'en').files(x.P.files.length)) + '</span>' : esc(x.M.label) + ' · ' + x.M.lines + (SZ.lang() === 'en' ? (x.M.lines === 1 ? ' line' : ' lines') : (x.M.lines === 1 ? ' línea' : ' líneas'))) + '</small><small>' + esc(x.th.title) + (x.th.t ? ' · ' + pjAgo(x.th.t) : '') + '</small></button><button type="button" class="syn-go" data-sg="' + n + '" title="Ir al chat donde nació">Ir al chat</button></div>').join('') + '</div>'
       : '<div class="pj-empty"><span class="pj-big">' + SYN_ICO + '</span><b>Aún no hay Sintéticos</b><p>Pídele a la IA una página, un juego o un dibujo (por ejemplo «hazme una calculadora bonita») y aparecerá aquí.</p></div>')
     + '</div>';
   SV.scrollTop = 0; SV.focus({ preventScroll:true });
@@ -4270,7 +5206,7 @@ SV.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.sa === 'close'){ synClose(); return; }
   if (b.dataset.sg != null){ const x = synList[+b.dataset.sg]; if (x) openThread(x.th.model, x.th.id); return; }
-  if (b.dataset.sn != null){ const x = synList[+b.dataset.sn]; if (x) openCanvas(x.M, x.sibs(), canPreview(x.M) ? 'prev' : 'code'); }
+  if (b.dataset.sn != null){ const x = synList[+b.dataset.sn]; if (x && x.P) webOpen(x.P, { tab:'prev' }); else if (x) openCanvas(x.M, x.sibs(), canPreview(x.M) ? 'prev' : 'code'); }
 });
 addEventListener('keydown', e => { if (e.key === 'Escape' && !SV.hidden && !cvEl && !document.querySelector('.szm.on')) synClose(); });
 {
@@ -4295,12 +5231,19 @@ function mmOpen(){
   const L = [{ label:'Nuevo chat', ico:'new', fn:() => newChat() }];
   if (mode === 'solo') L.push({ label:'Copiar la conversación', ico:'copy', fn:() => { copyText(chatMd()); toast('Conversación copiada.'); } }, { label:'Descargar como texto', ico:'down', fn:exportMd });
   else L.push({ label:'Empezar otra comparación', ico:'cmp', fn:() => clearChat() }, { label:'Volver a una sola IA', ico:'exit', fn:() => removeCmp(st().cmp[st().cmp.length - 1]) });
-  L.push('—', { label:'Lo que recuerdo de ti', ico:'brain', fn:() => SZ.cfgModal('mem') }, { label:'Ajustes', ico:'cog', fn:() => SZ.cfgModal() }, { label:'Planes', ico:'trophy', fn:() => SZ.plansModal() }, ...(SZ.planOf() === 'orquesta' ? [{ label:'A.L.I.A.S. · equipo', ico:'ai', fn:() => { location.href = 'alias.html'; } }] : []), { label:SZ.lang() === 'en' ? 'Español' : 'English', ico:'globe', fn:() => SZ.setLang(SZ.lang() === 'en' ? 'es' : 'en') }, { label:'Ayuda: algo no carga', ico:'help', fn:() => showBlockHelp(window.__puterBlocked ? 'script' : 'popup') });
+  L.push('—', { label:'Lo que recuerdo de ti', ico:'brain', fn:() => SZ.cfgModal('mem') }, { label:'Ajustes', ico:'cog', fn:() => SZ.cfgModal() }, { label:'Planes', ico:'trophy', fn:() => SZ.plansModal() }, ...(SZ.planOf() === 'orquesta' ? [{ label:'A.L.I.A.S. · equipo', ico:'ai', fn:() => { location.href = 'alias.html'; } }] : []), { label:SZ.lang() === 'en' ? 'Español' : 'English', ico:'globe', fn:() => SZ.setLang(SZ.lang() === 'en' ? 'es' : 'en') }, { label:'Ayuda: algo no carga', ico:'help', fn:helpLoad });
   if (trialOn) L.push({ label:'Salir de la prueba guiada', ico:'exit', fn:() => exitTrial() });
   if (mode === 'solo') L.push('—', { label:'Borrar este chat', ico:'trash', danger:true, fn:() => clearChat(true) });
   const r = mb.getBoundingClientRect(), m = SZ.menuOpen(L, 0, r.bottom + 8, 'mm');
   m.style.left = Math.max(10, Math.min(r.right - m.offsetWidth, innerWidth - m.offsetWidth - 10)) + 'px';
   mb.setAttribute('aria-expanded', 'true'); const f = $('button', m); if (f) f.focus();
+}
+/* v3.7 · «Ayuda: algo no carga» revisa primero qué pasa de verdad: antes mostraba siempre el aviso de la ventanita de Puter,
+   aunque nada estuviera bloqueado (Sammuel lo vio al tocar el menú «⋯»). Ahora solo sale el aviso que corresponde. */
+function helpLoad(){
+  if (window.__puterBlocked || !window.puter) return showBlockHelp('script');
+  if (window.__popupBlocked) return showBlockHelp('popup');
+  toast('Todo está cargando bien. Si algo no funciona, pregúntale a SynthonIA o abre la Ayuda.');
 }
 $('#moreBtn').dataset.menuOwner = '1'; $('#moreBtn').setAttribute('aria-expanded', 'false');
 $('#moreBtn').addEventListener('click', mmOpen);
@@ -4506,35 +5449,40 @@ addEventListener('synthz-saver', () => { $$('#sxSw, #saverBtn').forEach(x => x.s
 /* el «+» trae todo: archivos, crear imagen, buscar en internet y respuestas cortas */
 {
   const am = $('#attMenu'), ab = $('#attachBtn');
-  if (ab){ ab.setAttribute('aria-label', 'Agregar: archivos, imagen, internet…'); ab.dataset.tip = 'Archivos, crear imagen, buscar en internet…'; ab.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'; }
+  const reactBox = !!(am && $('[data-att="saver"]', am));   /* v3.7 · React ya pinta el «+», «Respuestas cortas» y las bolitas */
+  if (ab && !reactBox){ ab.setAttribute('aria-label', 'Agregar: archivos, imagen, internet…'); ab.dataset.tip = 'Archivos, crear imagen, buscar en internet…'; ab.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'; }
   if (am){
-    $$('.only-small', am).forEach(x => x.classList.remove('only-small'));
-    const hint = $('.ahint', am), sv = document.createElement('button');
-    sv.type = 'button'; sv.setAttribute('role', 'menuitemcheckbox'); sv.dataset.att = 'saver';
-    sv.innerHTML = '<i aria-hidden="true">🍃</i><span><b>Respuestas cortas</b><small>Gastas menos de tu límite de hoy</small></span><em class="mck" aria-hidden="true"></em>';
-    am.insertBefore(sv, hint);
+    let sv = $('[data-att="saver"]', am);
+    if (!sv){
+      $$('.only-small', am).forEach(x => x.classList.remove('only-small'));
+      const hint = $('.ahint', am); sv = document.createElement('button');
+      sv.type = 'button'; sv.setAttribute('role', 'menuitemcheckbox'); sv.dataset.att = 'saver';
+      sv.innerHTML = '<i aria-hidden="true">🍃</i><span><b>Respuestas cortas</b><small>Gastas menos de tu límite de hoy</small></span><em class="mck" aria-hidden="true"></em>';
+      am.insertBefore(sv, hint);
+    }
     const paint = () => { const on = !!st().sx.saver; sv.setAttribute('aria-checked', String(on)); $('.mck', sv).textContent = on ? '✓' : ''; };
     paint(); addEventListener('synthz-saver', paint);
     sv.addEventListener('click', e => { e.stopPropagation(); setSaver(!st().sx.saver); paint(); attClose(); }, true);
-    const wb = $('[data-att="web"]', am), ib = $('[data-att="mkimg"]', am);
-    const mark = () => { if (wb) wb.setAttribute('aria-checked', String(webOn)); if (ib) ib.setAttribute('aria-checked', String(imgMode)); };
+    const wb = $('[data-att="web"]', am), nb = $('[data-att="noweb"]', am), ib = $('[data-att="mkimg"]', am);
+    const mark = () => { if (wb) wb.setAttribute('aria-checked', String(webMode === 'on')); if (nb) nb.setAttribute('aria-checked', String(webMode === 'off')); if (ib) ib.setAttribute('aria-checked', String(imgMode)); };
     new MutationObserver(mark).observe(document.body, { attributes:true, attributeFilter:['class'] }); mark();
   }
 }
 /* chips de lo que está encendido (imagen, internet, cortas): se apagan con un toque.
    v3.2 (Sammuel, 28 oct): ya no van en una fila aparte debajo de la caja; son bolitas junto al «+» que muestran su nombre al pasar el puntero. */
 {
-  const host = document.createElement('div'); host.className = 'onchips'; host.id = 'onChips';
-  const aw = $('.comp-in .attw'); if (aw) aw.appendChild(host); else { const ci = $('.comp-in'); if (ci) ci.appendChild(host); }
+  const host = $('#onChips') || document.createElement('div');
+  if (!host.isConnected){ host.className = 'onchips'; host.id = 'onChips'; const aw = $('.comp-in .attw'); if (aw) aw.appendChild(host); else { const ci = $('.comp-in'); if (ci) ci.appendChild(host); } }
   const paint = () => {
     const L = [];
     if (imgMode) L.push(['img', '🎨', 'Crear imagen']);
-    if (webOn) L.push(['web', '🌐', 'Internet']);
+    if (webMode === 'on') L.push(['web', '🌐', SZ.lang() === 'en' ? 'Web search' : 'Internet']);
+    if (webMode === 'off') L.push(['noweb', '🚫', SZ.lang() === 'en' ? 'No web search' : 'Sin internet']);
     if (st().sx.saver) L.push(['saver', '🍃', 'Respuestas cortas']);
     const have = $$('[data-off]', host).map(b => b.dataset.off).join(), want = L.map(x => x[0]).join(); if (have === want) return;
     host.innerHTML = L.map(([k, ic, t]) => '<button type="button" class="onchip" data-off="' + k + '" data-tip="' + t + ' · toca para apagar" aria-label="' + t + ': encendido. Toca para apagar"><i aria-hidden="true">' + ic + '</i><span class="oc-l">' + t + '</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg></button>').join('');
   };
-  host.addEventListener('click', e => { const b = e.target.closest('[data-off]'); if (!b) return; const k = b.dataset.off; if (k === 'img') setImgMode(false); else if (k === 'web') setWeb(false); else setSaver(false); paint(); });
+  host.addEventListener('click', e => { const b = e.target.closest('[data-off]'); if (!b) return; const k = b.dataset.off; if (k === 'img') setImgMode(false); else if (k === 'web' || k === 'noweb') setWebMode('auto', true); else setSaver(false); paint(); });
   new MutationObserver(paint).observe(document.body, { attributes:true, attributeFilter:['class'] });
   addEventListener('synthz-saver', paint); $('#saverBtn') && $('#saverBtn').addEventListener('click', () => setTimeout(paint, 0)); paint();
 }
@@ -4657,9 +5605,10 @@ function paintMode(){
   });
 })();
 /* ===== v3.2 · la barra de chats al estilo Claude en el modo Simple (pedido de Sammuel, 28 oct) =====
-   Solo en Simple: arriba Crear, Proyectos, Sintéticos, Personalización y Más; en medio tus chats («Recientes»);
+   Arriba Crear, Proyectos, Sintéticos, Personalización y Más; en medio tus chats («Recientes»);
    abajo tu cuenta y una lupa para buscar. La barrita de íconos se esconde mientras la lista está abierta.
-   En el estilo SynthFlow no cambia nada de esto (lo de arriba de la lista lo eligen en Ajustes › Atajos en tus chats). */
+   v3.7 · ahora también en el estilo SynthFlow (con los colores del tema): una sola barra, más simple, para todos. */
+let accInfo = { ready:false, name:'Entrar', plan:'Gratis' };
 {
   const cin = $('#chats .cin'), head = $('#chats .chead');
   const I = {
@@ -4674,19 +5623,26 @@ function paintMode(){
     batt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="16" height="9" rx="2.2"/><path d="M21 10.5v3"/><path d="M6 10.5v3M9 10.5v3" stroke-width="2.2"/></svg>',
     find:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg>',
     side:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M9.5 4.5v15"/></svg>',
+    cmp:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="7.5" height="14" rx="2"/><rect x="13.5" y="5" width="7.5" height="14" rx="2"/></svg>',
     chev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10l5 5 5-5"/></svg>'
   };
   const item = (k, ic, t, extra) => '<button type="button" class="sn-i" data-sn="' + k + '" style="--d:' + extra + '"><span class="sn-ic" aria-hidden="true">' + ic + '</span><span class="sn-t">' + t + '</span></button>';
-  const nav = document.createElement('nav'); nav.className = 'snav'; nav.id = 'sNav'; nav.setAttribute('aria-label', 'Menú de SynthFlow');
+  /* v3.7 · en la versión React el menú lo pinta y lo maneja el componente BarraNav (usa window.SZFlow); aquí solo si no está */
+  const reactNav = !!document.getElementById('sNav');
+  const nav = reactNav ? document.getElementById('sNav') : document.createElement('nav'); if (!reactNav){ nav.className = 'snav'; nav.id = 'sNav'; nav.setAttribute('aria-label', 'Menú de SynthFlow');
   nav.innerHTML = '<div class="sn-top"><a class="sn-logo" href="index.html" aria-label="Volver a SymphorIA">' + SZ.flowWord() + '</a><button type="button" class="sn-x" data-sn="hide" aria-label="Cerrar la barra" data-tip="Cerrar la barra">' + I.side + '</button></div>'
-    + item('new', I.new, 'Crear', 0) + item('proj', I.proj, 'Proyectos', 1) + item('syn', I.syn, 'Sintéticos', 2) + item('cfg', I.cfg, 'Personalización', 3)
-    + '<button type="button" class="sn-i sn-more" data-sn="more" aria-expanded="false" aria-controls="snMore" style="--d:4"><span class="sn-ic" aria-hidden="true">' + I.more + '</span><span class="sn-t">Más</span><span class="sn-chev" aria-hidden="true">' + I.chev + '</span></button>'
+    + item('new', I.new, 'Crear', 0) + item('cmp', I.cmp, 'Comparar IAs', 1) + item('proj', I.proj, 'Proyectos', 2) + item('syn', I.syn, 'Sintéticos', 3) + item('cfg', I.cfg, 'Personalización', 4)
+    + '<button type="button" class="sn-i sn-more" data-sn="more" aria-expanded="false" aria-controls="snMore" style="--d:5"><span class="sn-ic" aria-hidden="true">' + I.more + '</span><span class="sn-t">Más</span><span class="sn-chev" aria-hidden="true">' + I.chev + '</span></button>'
     + '<div class="sn-sub" id="snMore" hidden>' + item('favs', I.star, 'Mensajes favoritos', 0) + item('energy', I.batt, 'Tu EnerX de hoy', 1) + item('guide', I.guide, 'Guía de SynthFlow', 2) + item('help', I.help, 'Centro de ayuda', 3) + '</div>';
-  head.after(nav);
-  const rh = document.createElement('p'); rh.className = 'sn-h'; rh.textContent = 'Recientes'; $('#thList').before(rh);
-  const foot = document.createElement('div'); foot.className = 'sfoot'; foot.id = 'sFoot';
-  foot.innerHTML = '<button type="button" class="sf-acc" id="sAcc"></button><button type="button" class="sf-find" id="sFind" aria-label="Buscar en tus chats" data-tip="Buscar en tus chats" aria-pressed="false">' + I.find + '</button>';
-  cin.appendChild(foot);
+  head.after(nav); }
+  /* v3.7 · «Recientes» y el pie (tu cuenta + lupa) también los pinta React (PieBarra); aquí solo el motor de la cuenta */
+  const reactFoot = !!document.getElementById('sFoot');
+  if (!reactFoot){
+    const rh = document.createElement('p'); rh.className = 'sn-h'; rh.textContent = 'Recientes'; $('#thList').before(rh);
+    const foot = document.createElement('div'); foot.className = 'sfoot'; foot.id = 'sFoot';
+    foot.innerHTML = '<button type="button" class="sf-acc" id="sAcc"></button><button type="button" class="sf-find" id="sFind" aria-label="Buscar en tus chats" data-tip="Buscar en tus chats" aria-pressed="false">' + I.find + '</button>';
+    cin.appendChild(foot);
+  }
 
   /* tu cuenta: copia lo que muestra el botón de cuenta de la barrita (foto, nombre y plan) */
   const accPaint = () => {
@@ -4694,20 +5650,30 @@ function paintMode(){
     const plan = A.ready ? (SZ.ROLE_NAME && SZ.ROLE_NAME[u.role || 'user']) || 'Synther' : 'Gratis';
     const av = A.ready && SZ.myAvatar ? SZ.myAvatar() : '<span class="av-me" aria-hidden="true"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></span>';
     const nm = A.ready ? SZ.accName() : 'Entrar';
+    if (reactFoot){
+      /* React pinta nombre y plan; la foto (HTML del motor) va en su hueco */
+      const fa = $('#sAcc .sf-av'); if (fa) fa.innerHTML = av;
+      accInfo = { ready:!!A.ready, name:nm.slice(0, 22), plan:A.ready ? plan : 'Gratis' };
+      try{ dispatchEvent(new CustomEvent('synthflow-acc', { detail:accInfo })); }catch(e){}
+      return;
+    }
     sa.innerHTML = '<span class="sf-av">' + av + '</span><span class="sf-n"><b></b><small></small></span><span class="sf-chev" aria-hidden="true">' + I.chev + '</span>';
     $('.sf-n b', sa).textContent = nm.slice(0, 22); $('.sf-n small', sa).textContent = A.ready ? plan : 'Gratis';
     sa.setAttribute('aria-label', A.ready ? 'Tu cuenta: ' + nm : 'Entrar a tu cuenta');
   };
   accPaint();
   const ab = $('#accBtn'); if (ab) new MutationObserver(accPaint).observe(ab, { childList:true, subtree:true, attributes:true, attributeFilter:['class'] });
-  $('#sAcc').addEventListener('click', () => accModal());
 
-  /* la lupa muestra la búsqueda arriba de los chats (y la esconde si está vacía) */
-  const cs = $('#cSearch'), q = $('#thQ');
-  const findOn = on => { cin.classList.toggle('sfind', on); $('#sFind').setAttribute('aria-pressed', String(on)); if (on) setTimeout(() => q.focus(), 60); };
-  $('#sFind').addEventListener('click', () => { const on = !cin.classList.contains('sfind'); if (!on && q.value){ q.value = ''; q.dispatchEvent(new Event('input', { bubbles:true })); } findOn(on); });
-  q.addEventListener('keydown', e => { if (e.key === 'Escape' && root.classList.contains('simple') && !q.value) findOn(false); });
+  if (!reactFoot){
+    $('#sAcc').addEventListener('click', () => accModal());
+    /* la lupa muestra la búsqueda arriba de los chats (y la esconde si está vacía) */
+    const q = $('#thQ');
+    const findOn = on => { cin.classList.toggle('sfind', on); $('#sFind').setAttribute('aria-pressed', String(on)); if (on) setTimeout(() => q.focus(), 60); };
+    $('#sFind').addEventListener('click', () => { const on = !cin.classList.contains('sfind'); if (!on && q.value){ q.value = ''; q.dispatchEvent(new Event('input', { bubbles:true })); } findOn(on); });
+    q.addEventListener('keydown', e => { if (e.key === 'Escape' && root.classList.contains('simple') && !q.value) findOn(false); });
+  }
 
+  if (!reactNav){
   const more = $('#snMore'), mb = $('[data-sn="more"]', nav);
   const moreOn = on => { more.hidden = !on; mb.setAttribute('aria-expanded', String(on)); nav.classList.toggle('mopen', on); };
   nav.addEventListener('click', e => {
@@ -4716,6 +5682,7 @@ function paintMode(){
     if (k === 'more'){ moreOn(more.hidden); return; }
     if (k === 'hide'){ $('#chatsClose').click(); return; }
     if (k === 'new') newChat();
+    else if (k === 'cmp') cmpOpen(b);
     else if (k === 'proj') pjOpen('list');
     else if (k === 'syn') synOpen();
     else if (k === 'cfg') SZ.cfgModal();
@@ -4728,13 +5695,56 @@ function paintMode(){
   });
   /* el que está abierto se marca, como en Claude */
   const mark = () => {
-    const on = { proj:document.body.classList.contains('pjon'), syn:!$('#synv') || $('#synv').hidden ? false : true };
+    const on = { cmp:document.body.classList.contains('cmpm'), proj:document.body.classList.contains('pjon'), syn:!$('#synv') || $('#synv').hidden ? false : true };
     $$('.sn-i[data-sn]', nav).forEach(b => b.classList.toggle('on', !!on[b.dataset.sn]));
   };
   new MutationObserver(mark).observe(document.body, { attributes:true, attributeFilter:['class'] });
   const sv = $('#synv'); if (sv) new MutationObserver(mark).observe(sv, { attributes:true, attributeFilter:['hidden'] });
   mark();
+  }
 }
+/* v3.7 · «Comparar IAs», aparte del chat normal: marcas de 2 a 4 IA y responden la misma pregunta lado a lado.
+   Si ya estás comparando, te deja sumar otra (hasta 4). */
+function cmpOpen(anchor){
+  if (trialOn){ toast('La prueba guiada usa una sola IA. Para comparar, entra con tu cuenta o conecta Puter (es gratis).'); return; }
+  if (mode === 'cmp'){ if (st().cmp.length < CMP_MAX) openSide('add', anchor); else { toast('Ya estás comparando 4 IA, el máximo.'); inp.focus(); } return; }
+  openSide('cmp', anchor);
+}
+/* ===== v3.7 · puente entre el motor de SynthFlow (este chat.js) y sus componentes React =====
+   Los componentes de next/componentes/synthflow/ llaman a estas funciones en vez de depender de IDs y clics simulados.
+   Se avisa con el evento «synthflow-ready» (y queda en window.SZFlow) para que React sepa que ya puede usarlas. */
+window.SZFlow = Object.freeze({
+  newChat:() => newChat(),
+  compare:anchor => cmpOpen(anchor),
+  projects:() => pjOpen('list'),
+  synthetics:() => synOpen(),
+  settings:() => SZ.cfgModal(),
+  favorites:() => showChats('favs'),
+  energy:() => coinModal('panel'),
+  guide:() => openGuide(),
+  help:() => { location.href = 'ayuda.html'; },
+  account:() => accModal(),
+  hideBar:() => { const c = $('#chatsClose'); if (c) c.click(); },
+  closeSheet:() => { if (isMobile()) closeChatsSheet(); },
+  mode:() => mode,
+  accInfo:() => accInfo,
+  /* v3.8 · ventana «esta IA no responde»: la que mejor sirve para lo que escribiste, usarla, o seguir mirando */
+  iaFor:(text, not) => iaFor(text, not),
+  iaUse:id => { if (mode === 'cmp'){ if (!st().cmp.includes(id)) addToCompare(id, null); } else pickModel(id, null); setTimeout(() => inp.focus(), 60); },
+  iaList:() => openSide(mode === 'cmp' ? 'add' : 'set'),
+  lang:() => SZ.lang(),
+  /* v4.1 · la ventana «Ver funcionando» (next/componentes/synthflow/VistaWeb.jsx) usa la lógica de src/chat/02c-web-proyecto.js */
+  web:Object.freeze({
+    doc:(P, path, o) => webDoc(P, path, o),
+    go:(P, from, href) => webGo(P, from, href),
+    zip:P => webZip(P),
+    load:(f, html) => synLoad(f, html),
+    tokens:(text, ext) => webTokens(text, ext),
+    file:F => cnvDownload({ name:F.path, ext:F.ext, text:F.text })
+  })
+});
+{ const w = $('#sNav .snw'); if (w && !w.firstChild) w.innerHTML = SZ.flowWord(); }
+try{ dispatchEvent(new CustomEvent('synthflow-ready')); }catch(e){}
 /* ---------- arranque ---------- */
 const wantModel = params.get('model');
 if (wantModel && /^(pu|or):[\w.\/:@-]{2,120}$/.test(wantModel)){ st().model.openrouter = wantModel; save(); }

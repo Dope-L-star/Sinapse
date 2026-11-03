@@ -1,0 +1,33 @@
+/* ===== v3.8 · Avisos que no se pueden deshacer: tarjeta brutalista (idea del Uiverse #52, no copiada)
+   Papel claro, tinta oscura, borde grueso y sombra dura del color del tema. Sale con un golpe y la sombra «se aplasta» al tocar. ===== */
+.szm.szbru .tcard{--bru-acc:var(--wine,#ff3d9a);--bru-ink:#141018;--bru-paper:#fff6e9;
+  background:var(--bru-paper)!important;color:var(--bru-ink);border:3px solid var(--bru-ink)!important;border-radius:8px!important;
+  box-shadow:9px 9px 0 var(--bru-acc),9px 9px 0 3px var(--bru-ink)!important;padding:0 0 20px!important;overflow:hidden;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;max-width:min(440px,calc(100vw - 40px))}
+.szm.szbru .tcard::before,.szm.szbru .tcard::after{display:none!important}
+.szm.szbru.on .tcard{animation:bruIn .5s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes bruIn{0%{opacity:0;transform:translate(-6px,-14px) rotate(-1.5deg)}60%{opacity:1;transform:translate(2px,2px) rotate(.4deg)}100%{transform:none}}
+.szbru .bru-h{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--bru-acc);color:var(--bru-ink);border-bottom:3px solid var(--bru-ink);
+  font:800 13px/1 var(--brand,'Chakra Petch',system-ui,sans-serif);letter-spacing:.16em}
+.szbru .bru-h svg{width:18px;height:18px;flex:none}
+/* cinta de rayas que corre: «cuidado» sin palabras */
+.szbru .bru-h i{flex:1;height:10px;margin-left:6px;border:2px solid var(--bru-ink);border-radius:2px;
+  background:repeating-linear-gradient(-45deg,var(--bru-ink) 0 6px,transparent 6px 12px);background-size:17px 17px;animation:bruTape 1.4s linear infinite}
+@keyframes bruTape{to{background-position:17px 0}}
+.szbru .tb{padding:16px 20px 0}
+.szbru .tb h3{color:var(--bru-ink)!important;font:800 21px/1.2 var(--sans,'Figtree',sans-serif)!important;letter-spacing:-.01em;margin:0 0 6px}
+.szbru .tb p{color:#3d3743!important;font-size:14.5px!important;line-height:1.5}
+.szbru .tbtn{padding:0 20px;justify-content:flex-end;gap:12px}
+.szbru .tbtn .lnk,.szbru .tbtn .btn{padding:10px 18px!important;border:3px solid var(--bru-ink)!important;border-radius:6px!important;font-weight:800!important;font-size:14px!important;
+  text-decoration:none!important;transition:transform .12s,box-shadow .12s!important}
+.szbru .tbtn .lnk{background:transparent!important;color:var(--bru-ink)!important;box-shadow:4px 4px 0 var(--bru-ink)}
+.szbru .tbtn .btn{background:var(--bru-ink)!important;color:var(--bru-paper)!important;box-shadow:4px 4px 0 var(--bru-acc)}
+.szbru .tbtn .lnk:hover,.szbru .tbtn .btn:hover{transform:translate(-2px,-2px)}
+.szbru .tbtn .lnk:hover{box-shadow:6px 6px 0 var(--bru-ink)}
+.szbru .tbtn .btn:hover{box-shadow:6px 6px 0 var(--bru-acc)}
+.szbru .tbtn .lnk:active,.szbru .tbtn .btn:active{transform:translate(4px,4px);box-shadow:0 0 0 transparent!important}
+.szm.szbru .tcard :focus-visible{outline:3px solid var(--bru-acc);outline-offset:3px}
+/* estilo Simple: el acento es el cobre de Simple */
+html.simple .szm.szbru .tcard{--bru-acc:var(--sacc,#d9a066)}
+html.noanim .szbru .tcard,html.noanim .szbru .bru-h i{animation:none!important}
+@media (max-width:520px){.szbru .tbtn{flex-wrap:wrap}.szbru .tbtn .lnk,.szbru .tbtn .btn{flex:1;justify-content:center;text-align:center}}
