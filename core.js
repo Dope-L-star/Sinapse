@@ -3104,9 +3104,22 @@ const CFG_IA = [['beginner', 'Modo principiante', 'Te responden con palabras sen
 const CFG_DIC = ['dictado', 'Modo dictado', 'Un micrófono en la caja de escribir: hablas y el texto aparece en vivo, con puntos, comas y signos de pregunta, para que lo revises antes de enviar.'];
 const memSt0 = () => state.mem || (state.mem = { on:true, t:0, items:[] });
 function memTouch(){ const m = memSt0(); m.t = Date.now(); save(); try{ if (ACC.ready) accPush(); }catch(e){} }
+/* ¿dos datos hablan de lo mismo? Mismo «casillero» (cómo se llama, dónde vive, en qué trabaja, qué estudia, su edad, su idioma)
+   o casi las mismas palabras (70 % o más). «Le gusta el café» y «Le gusta el té» NO son lo mismo: se guardan los dos. */
+const MEM_SLOT = [/^(se llama|quiere que le digan|su nombre es|(their )?name is|wants to be called)\b/i, /^(vive en|es de|lives in|is from)\b/i, /^(trabaja|works)\b/i, /^(estudia|studies)\b/i, /\b(tiene \d+ a[nñ]os|is \d+ years old)\b/i, /^(habla|su idioma|speaks)\b/i, /^(su cumplea[nñ]os|their birthday)\b/i];
+const memWords = s => new Set(String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').match(/[a-z0-9ñ]{3,}/g) || []);
+function memSame(a, b){
+  a = String(a || '').trim(); b = String(b || '').trim(); if (a.toLowerCase() === b.toLowerCase()) return true;
+  if (MEM_SLOT.some(rx => rx.test(a) && rx.test(b))) return true;
+  const A = memWords(a), B = memWords(b); if (!A.size || !B.size) return false;
+  let n = 0; A.forEach(w => { if (B.has(w)) n++; }); return n / Math.max(A.size, B.size) >= 0.7;
+}
 function memAddCore(text){
   const m = memSt0(), t = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 300); if (t.length < 3) return false;
-  if (!m.items.some(x => x.text.toLowerCase() === t.toLowerCase())) m.items.unshift({ id:'m' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), t:Date.now(), text:t });
+  /* v4.0 · sin duplicar: si ya hay algo del mismo tipo (otro nombre, otra ciudad, otro trabajo) o casi igual, se ACTUALIZA */
+  const old = m.items.find(x => memSame(x.text, t));
+  if (old){ old.text = t; old.t = Date.now(); m.items = [old, ...m.items.filter(x => x !== old)]; }
+  else m.items.unshift({ id:'m' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), t:Date.now(), text:t });
   m.items = m.items.slice(0, 40); memTouch(); return true;
 }
 /* v3.7 · lo que SynthonIA puede usar: solo lo aprobado y solo si la memoria está encendida */
@@ -3422,6 +3435,7 @@ async function askStream(p, messages, opts = {}, onDelta){
   const body = viaSz ? { messages, model:model0, turn } : viaGroq ? { model:model0.replace(/^gq:/, ''), messages, stream:true, stream_options:{ include_usage:true } } : { model:model0.replace(/^or:/, ''), messages, stream:true, usage:{ include:true } };
   if (viaTeam) body.teamId = state.useTeam;
   if (opts.maxTokens) body.max_tokens = opts.maxTokens;
+  if (opts.effort && viaSz) body.effort = opts.effort;   /* v4.0 · el servidor usa el esfuerzo para decidir si la IA piensa antes (Alto) o responde directo (Bajo) */
   if (opts.effort && p.id === 'openrouter' && !viaSz && !viaGroq && !viaTrial) body.reasoning = { effort:opts.effort };   /* v2.3.1 · esfuerzo: OpenRouter lo ignora en las IA que no razonan */
   const ctl = new AbortController(); let idle = 0;
   const bump = () => { clearTimeout(idle); idle = setTimeout(() => ctl.abort(), 70000); };

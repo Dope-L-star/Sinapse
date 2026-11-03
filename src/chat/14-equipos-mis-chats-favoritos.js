@@ -59,13 +59,14 @@ function thMeta(model, id, create){
 }
 function touchThread(){
   const e = thMeta(thModel(), curT(), true); e.t = Date.now();
-  if (!e.title){ const u = chatArr().find(x => x.role === 'user'); if (u) e.title = (u.content || (u.files && u.files[0] && u.files[0].name) || 'Conversación').replace(/\s+/g, ' ').slice(0, 60); }
+  /* v4.0 · el primer título sale del primer mensaje con tema (no de «Hola, ¿cómo estás?»); luego la IA lo pone con sentido (05g) */
+  if (!e.title || e.auto0){ const t = titleLocal(chatArr()); if (t !== e.title){ e.title = t; e.auto0 = true; } }
   renderThBtn();
 }
 function allThreads(){
   return Object.keys(st().chats).filter(k => /^openrouter::./.test(k) && Array.isArray(st().chats[k]) && st().chats[k].length).map(k => {
     const { model, id } = parseKey(k), e = thMeta(model, id, false) || {}, u = st().chats[k].find(x => x.role === 'user');
-    return { k, model, id, title:e.title || (u ? (u.content || 'Conversación').replace(/\s+/g, ' ').slice(0, 60) : 'Conversación'), t:e.t || 0, n:st().chats[k].length };
+    return { k, model, id, title:e.title || (u ? titleLocal(st().chats[k]) : 'Conversación'), t:e.t || 0, n:st().chats[k].length };
   }).sort((a, b) => b.t - a.t);
 }
 /* ---------- tus chats y tus favoritos (panel de la izquierda) ---------- */
@@ -140,7 +141,7 @@ $('#thList').addEventListener('click', async e => {
   if (e.target.closest('[data-ren]')){
     const b = $('.tt b', it), inp2 = document.createElement('input'); inp2.value = b.textContent; inp2.maxLength = 60; b.replaceWith(inp2); inp2.focus(); inp2.select();
     let canceled = false;
-    const ok = () => { if (canceled) return; canceled = true; const v = inp2.value.trim(); if (v){ const m = thMeta(model, id, true); m.title = v; if (!m.t) m.t = Date.now(); save(); } renderChats(false); };
+    const ok = () => { if (canceled) return; canceled = true; const v = inp2.value.trim(); if (v){ const m = thMeta(model, id, true); m.title = v; m.manual = true; delete m.auto0; if (!m.t) m.t = Date.now(); save(); } renderChats(false); };
     inp2.addEventListener('keydown', ev => { if (ev.key === 'Enter'){ ev.preventDefault(); ok(); } if (ev.key === 'Escape'){ ev.preventDefault(); ev.stopPropagation(); canceled = true; renderChats(false); } });
     inp2.addEventListener('blur', ok); return;
   }

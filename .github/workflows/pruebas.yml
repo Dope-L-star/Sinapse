@@ -42,6 +42,8 @@ jobs:
         run: node t/synthonia/personalidad.mjs
       - name: Contrato de A.L.I.A.S.
         run: node t/alias/contrato.mjs
+      - name: Cerebro de las IAs (tipo de trabajo, pensar en lo difícil, respuesta vacía → otra IA)
+        run: node t/cerebro/cerebro.mjs
       - name: Internet con regla fija (misma pregunta, misma decisión; SynthFlow y A.L.I.A.S. iguales)
         run: node --test t/web/regla.test.mjs
       - name: Vista previa de temas y panel admin nuevo (ES/EN)

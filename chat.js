@@ -1991,12 +1991,20 @@ function apiMsgs(chat, vision, o = {}){
   }).filter(Boolean);
   while (h.length && h[0].role !== 'user') h.shift();
   const sys = [];
-  if (!o.naive) sys.push(qualitySystem(saver));
+  /* v4.0 · con las IAs conectadas (sz:) el servidor pone unas instrucciones mejores para cada tipo de trabajo (api/_cerebro.js): aquí no se repiten */
+  if (!o.naive && !o.srv){ const lu = [...chat].reverse().find(m => m.role === 'user'); sys.push(qualitySystem(saver, lu && String(lu.ask || lu.content || ''), o.mid)); }
+  /* v4.0 · el hilo: si la charla es más larga de lo que viaja, la IA igual sabe de qué se habló antes (sin gastar otra IA) */
+  if (!o.naive && start > 0){
+    const old = chat.slice(0, start).filter(m => m.role === 'user' && !m.imgId).map(m => String(m.ask || m.content || '').replace(/\s+/g, ' ').trim()).filter(Boolean);
+    const first = old[0], rest = old.slice(1).slice(-8);
+    if (first) sys.push('Contexto de esta conversación (mensajes anteriores que ya no se reenvían): empezó con «' + first.slice(0, 300) + '»' + (rest.length ? ' y después la persona preguntó: ' + rest.map(x => '«' + x.slice(0, 140) + '»').join('; ') : '') + '. Mantén coherencia con eso.');
+  }
   if (o.webAsk) sys.push(webAskSys());   /* v3.8 · la IA puede pedir una búsqueda en internet ella sola */   /* v3.4 · calidad: piensa, revisa la lógica y no inventa */
   if (saver) sys.push('Responde en el idioma del usuario, de forma clara y breve, sin relleno.');
   { const cs = o.naive ? '' : codeSystem(chat, saver); if (cs) sys.push(cs); }   /* v2.4 · SynthCode: manual de programación cuando pides código */
   { const ef = effortHint(); if (ef && !o.naive) sys.push(ef); }   /* v2.3.1 · esfuerzo */
   { const mm = memSystem(); if (mm && !o.naive) sys.push(mm); }
+  if (!o.naive && !o.noMarks) sys.push(marcasSystem(chat));   /* v4.0 · título con sentido y memoria redactada por la IA */
   { const ps = o.naive ? '' : projSystem(chat, saver); if (ps) sys.push(ps); }   /* v2.6 · proyectos: instrucciones y archivos del proyecto */
   if (SZ.CFG.beginner) sys.push('Modo principiante: la persona no sabe nada del tema. Usa palabras sencillas y frases cortas, explica paso a paso, evita los tecnicismos (si usas uno, explícalo) y pon un ejemplo de la vida diaria.');
   if (sys.length) h.unshift({ role:'system', content:sys.join(' ') });
@@ -2641,8 +2649,12 @@ function memSystem(){ const m = memSt(); if (!m.on || !m.items.length) return ''
 /* «¿Quieres que lo recuerde?» después de un mensaje que lo pide */
 function memOffer(text){
   const i = text.search(MEM_RX); if (i < 0) return;
-  let fact = text.slice(i).replace(MEM_RX, '').replace(/^[,.:;\s]+/, '').split(/(?<=[.!?])\s/)[0].trim();
-  if (fact.length < 3) fact = text.trim(); fact = fact.slice(0, 300);
+  /* v4.0 · el dato lo redacta la IA ([recordar: …]); si no lo dio, se limpia aquí (tercera persona, sin «recuerda que») */
+  const ai = memNext; memNext = null;
+  if (ai === '?') return;   /* la IA no entendió qué recordar y te lo preguntó: no se ofrece guardar nada todavía */
+  let fact = ai && ai.length >= 3 ? ai : text.slice(i).replace(MEM_RX, '').replace(/^[,.:;\s]+/, '').split(/(?<=[.!?])\s/)[0].trim();
+  if (fact.length < 3) fact = text.trim();
+  fact = (ai && ai.length >= 3 ? fact : memLimpia(fact)).slice(0, 300); if (fact.length < 3) return;
   $$('.memoff', lane).forEach(x => x.remove());
   const d = document.createElement('div'); d.className = 'agkeep memoff';
   d.innerHTML = '<span>¿Quieres que lo recuerde para tus próximos chats? «<b></b>»</span><div class="agk-b"><button type="button" class="btn sm" data-mm="yes">Recordar</button><button type="button" class="btn sm ghost" data-mm="no">No</button></div><small>Lo ves y lo borras cuando quieras en Ajustes › IAs y memoria.</small>';
@@ -2651,6 +2663,76 @@ function memOffer(text){
 }
 /* v2.2 · «Lo que recuerdo de ti» vive en Ajustes › IAs y memoria */
 function memModal(){ SZ.cfgModal('mem'); }
+/* ---------- v4.0 · Títulos con sentido y memoria con lógica (pedido de Sammuel, 3 nov 2026) ----------
+   La IA que responde hace dos trabajitos más, en la misma respuesta (sin gastar otra IA):
+   1) TÍTULO: al final escribe [titulo: …] con el tema real del chat en 2 a 6 palabras. Se le dice el título actual:
+      si el tema sigue igual, lo repite (el título no cambia en cada mensaje); si el tema cambió de verdad
+      (dejó los documentos y ahora pide una web), escribe uno nuevo. Un saludo solo → «-» (queda «Charla nueva»).
+      Si tú le pusiste el nombre al chat a mano, la IA nunca lo cambia.
+   2) MEMORIA: si pides «recuerda…», la IA saca el dato real y lo redacta corto y en tercera persona: [recordar: Se llama Ana.]
+      Si no está claro qué recordar, escribe [recordar: ?] y te pregunta. La página te pregunta «¿Lo recuerdo?» como antes,
+      y si ya había algo parecido (otro nombre, otra ciudad) se ACTUALIZA en vez de duplicarse (memAddCore en core 14).
+   Las marcas nunca se ven: se quitan mientras la respuesta llega. */
+const MK_RX = /\s*\[(titulo|título|title|recordar|remember)\s*:\s*([^\]\n]{0,240})\]/gi;
+/* mientras llega: también se esconde una marca a medio escribir al final («[tit…») */
+const MK_TAIL = /\s*\[(?:t(?:[ií](?:t(?:u(?:l(?:o)?)?|l(?:e)?)?)?)?|r(?:e(?:c(?:o(?:r(?:d(?:a(?:r)?)?)?)?)?|m(?:e(?:m(?:b(?:e(?:r)?)?)?)?)?)?)?)?(?:\s*:[^\]\n]*)?$/i;
+const sinMarcas = t => String(t || '').replace(MK_RX, '').replace(MK_TAIL, '');
+function marcas(t){
+  let title = null, mem = null;
+  const text = String(t || '').replace(MK_RX, (m, k, v) => { v = v.replace(/^["'«“\s]+|["'»”\s]+$/g, '').trim(); if (/^t/i.test(k)){ if (title == null) title = v.replace(/[.\s]+$/, ''); } else if (mem == null) mem = v === '?' || !v ? v : /[.!?]$/.test(v) ? v : v + '.'; return ''; }).replace(MK_TAIL, '').trim();
+  return { text, title, mem };
+}
+/* lo que se le pide a la IA (va en el mensaje de sistema de apiMsgs) */
+function marcasSystem(chat){
+  const e = thMeta(thModel(), curT(), false), cur = e && e.title && !e.auto0 ? e.title : '', en = SZ.lang() === 'en';
+  const lu = [...chat].reverse().find(m => m.role === 'user'), q = lu ? String(lu.ask || lu.content || '') : '';
+  let s = (en ? 'At the very end of your answer add one line: [titulo: the real topic of THIS chat in 2 to 6 words, in the chat\'s language, no quotes] (for example [titulo: Website for a bakery]). '
+              : 'Al final de tu respuesta agrega una línea: [titulo: el tema real de ESTE chat en 2 a 6 palabras, en el idioma del chat, sin comillas] (por ejemplo [titulo: Página web para una panadería]). ')
+    + (cur ? (en ? 'The current title is «' + cur + '»: if the topic is still the same, repeat it exactly; change it only if the topic really changed. ' : 'El título actual es «' + cur + '»: si el tema sigue siendo el mismo, repítelo exacto; cámbialo solo si el tema de verdad cambió. ') : '')
+    + (en ? 'If so far it is only a greeting or small talk, write [titulo: -]. Never mention this line.' : 'Si hasta ahora solo es un saludo o charla, escribe [titulo: -]. Nunca menciones esta línea.');
+  if (MEM_RX.test(q)) s += en
+    ? ' The person asked you to remember something: confirm it in one sentence and add on the last line [recordar: the fact rewritten short and clear in third person, without "remember that", e.g. Is called Ana and studies design.]. If it is not clear what to remember, ask, and write [recordar: ?].'
+    : ' La persona te pidió recordar algo: confírmalo en una frase y agrega en la última línea [recordar: el dato reescrito corto y claro en tercera persona, sin «recuerda que», por ejemplo Se llama Ana y estudia diseño.]. Si no está claro qué recordar, pregúntale y escribe [recordar: ?].';
+  return s;
+}
+/* sin marca (o con «-»): un título sacado del primer mensaje que no sea un saludo */
+const SALUDO = /^\W*((hola+|holi|buenas|buen(os)? d[ií]as|buenas (tardes|noches)|hey|hi|hello|qu[eé] (tal|m[aá]s|onda)|c[oó]mo (est[aá]s|vas|va todo)|how are you|what'?s up|gracias|thanks|ok|vale|listo)[\s,.!?¡¿]*)+/i;
+function titleLocal(chat){
+  const en = SZ.lang() === 'en';
+  for (const m of chat || []){
+    if (m.role !== 'user') continue;
+    let t = String(m.ask || m.content || '').replace(/\s+/g, ' ').trim().replace(SALUDO, '').replace(/^(por favor|please|oye|mira|necesito que|quiero que|puedes|podr[ií]as|can you|could you|i want you to|me ayudas a|ay[uú]dame a)\s+/i, '').replace(/^[\s,.!?¡¿]+/, '');
+    if (t.length < 4) { if (m.files && m.files[0]) return (en ? 'File: ' : 'Archivo: ') + m.files[0].name.slice(0, 40); continue; }
+    const words = t.split(' '); t = words.slice(0, 7).join(' ').replace(/[\s,.;:!?¡¿]+$/, '');
+    return t.charAt(0).toUpperCase() + t.slice(1) + (words.length > 7 ? '…' : '');
+  }
+  return en ? 'New chat' : 'Charla nueva';
+}
+/* pone el título que dio la IA en el chat donde respondió (no en el que estés mirando si cambiaste) */
+function titleSet(chat, title){
+  const k = Object.keys(st().chats).find(x => st().chats[x] === chat); if (!k) return;
+  const { model, id } = parseKey(k), e = thMeta(model, id, true); if (e.manual) return;
+  const t = String(title || '').replace(/[*_`#"«»“”]/g, '').replace(/\s+/g, ' ').trim().replace(/[.,;:!?]+$/, '');
+  const fromAi = !!t && t !== '-' && t.length >= 3;
+  if (!fromAi && e.title && !e.auto0) return;   /* ya tenía un título con sentido: un «-» no lo borra */
+  const next = fromAi ? t.charAt(0).toUpperCase() + t.slice(1, 60) : titleLocal(chat);
+  if (next === e.title && !!e.auto0 === !fromAi) return;
+  e.title = next; if (fromAi) delete e.auto0; else e.auto0 = true; save(); renderThBtn();
+}
+/* «recuerda que me llamo Ana» → «Se llama Ana.» si la IA no dio el dato redactado */
+function memLimpia(fact){
+  let s = String(fact || '').replace(/\s+/g, ' ').trim().replace(/^(que|de que|esto|:)\s+/i, '').replace(/^(that|this|:)\s+/i, '');
+  const R = [[/\bme llamo\b/gi, 'se llama'], [/\bll[aá]mame\b/gi, 'quiere que le digan'], [/\bdime\b/gi, 'quiere que le digan'], [/\bsoy\b/gi, 'es'], [/\bestoy\b/gi, 'está'], [/\btengo\b/gi, 'tiene'], [/\bvivo\b/gi, 'vive'],
+    [/\btrabajo\b/gi, 'trabaja'], [/\bestudio\b/gi, 'estudia'], [/\bprefiero\b/gi, 'prefiere'], [/\bquiero\b/gi, 'quiere'], [/\bnecesito\b/gi, 'necesita'], [/\bhablo\b/gi, 'habla'], [/\bme gustan\b/gi, 'le gustan'], [/\bme gusta\b/gi, 'le gusta'],
+    [/\bmis\b/gi, 'sus'], [/\bmi\b/gi, 'su'], [/\byo\s+/gi, ''], [/\bmy name is\b/gi, 'name is'], [/\bcall me\b/gi, 'wants to be called'], [/\bI am\b|\bI'm\b/g, 'is'], [/\bI live\b/g, 'lives'], [/\bI work\b/g, 'works'], [/\bI study\b/g, 'studies'],
+    [/\bI like\b/g, 'likes'], [/\bI prefer\b/g, 'prefers'], [/\bI have\b/g, 'has'], [/\bI need\b/g, 'needs'], [/\bmy\b/gi, 'their']];
+  for (const [rx, to] of R) s = s.replace(rx, to);
+  s = s.replace(/\s+/g, ' ').trim().replace(/[\s,;:]+$/, '');
+  if (!s) return '';
+  s = s.charAt(0).toUpperCase() + s.slice(1);
+  return /[.!?]$/.test(s) ? s : s + '.';
+}
+let memNext = null;   /* el dato que redactó la IA en la última respuesta (lo usa memOffer) */
 /* ---------- v1.8 · modo agente: tú escribes; el agente entiende y mejora tu pedido, elige la IA que más sabe de eso
    y te muestra cada paso. Al final decides: quedarte con esa IA o seguir en modo agente ---------- */
 let agentBusy = false;
@@ -2925,13 +3007,29 @@ function frustration(text, regen){
   const { alt } = altFor(mid, (q && typeof q.content === 'string' ? q.content : '') + ' ' + (text || '')); if (!alt) return;
   SZ.BOT.offer('Mmm… parece que ' + info(mid).name + ' no tiene el flow para esto. ' + alt.name + ' tiene más flow 😎 ¿Probamos con ella?', 'guino', 'Cambiar a ' + alt.name, () => { pickModel(alt.id, null); toast('Ahora hablas con ' + alt.name + '. Vuelve a enviar tu mensaje o escribe uno nuevo.'); inp.focus(); });
 }
+/* v4.0 · las IAs pequeñas a veces se quedan en bucle y repiten la misma frase o el mismo párrafo: se deja una sola vez (fuera de los bloques de código) */
+function limpiaBucles(t){
+  const s = String(t || ''); if (s.length < 200) return s;
+  let inCode = false, prev = '', n = 0; const out = [];
+  for (const line of s.split('\n')){
+    if (/^\s*```/.test(line)) inCode = !inCode;
+    const k = line.trim();
+    if (!inCode && k.length > 20 && k === prev){ n++; if (n >= 1) continue; } else { n = 0; }
+    if (k) prev = k;
+    out.push(line);
+  }
+  let r = out.join('\n');
+  /* el mismo párrafo largo repetido seguido (separado por líneas en blanco) */
+  r = r.replace(/(^|\n\n)([^\n`][^\n]{60,})(?:\n\n\2)+(?=\n\n|$)/g, '$1$2');
+  return r;
+}
 async function runSolo(onFail, o = {}){
   const mid = o.model || selId(), chat = chatArr(), g = gen, vis = info(mid).vision, saver = st().sx.saver;
   const slowT = setTimeout(() => { if (busy[mid] === 'think' && SZ.BOT.react) SZ.BOT.react('slow', { auto:mid === 'sz:auto' }); }, 14000);
   /* v4.2 · la IA ya NO decide sola si busca (eso la hacía buscar «porque sí y porque no»): decide la regla fija al enviar.
      Si igual responde que no sabe datos de hoy, SynthonIA te OFRECE buscar; nunca se busca a escondidas. */
   const lastU = [...chat].reverse().find(x => x.role === 'user'), webAuto = false, webOffer = !o.noWeb && mode === 'solo' && !!lastU && !lastU.sources && !lastU.webTried && !lastU.imgId && !lastU.webNo;
-  const sent = apiMsgs(chat, vis, { webAsk:webAuto }), naive = apiMsgs(chat, vis, { naive:true }), ck = hashStr(mid + '|' + saver + '|' + effKey() + '|' + JSON.stringify(sent));
+  const sent = apiMsgs(chat, vis, { webAsk:webAuto, srv:/^sz:/.test(mid), mid }), naive = apiMsgs(chat, vis, { naive:true }), ck = hashStr(mid + '|' + saver + '|' + effKey() + '|' + JSON.stringify(sent));
   let hold = webAuto ? null : false, webQ = null;
   const holdWeb = txt => { if (hold === false) return false; if (webMaybe(txt)){ hold = true; return true; } hold = false; return false; };
   const canCache = !sent.some(m => Array.isArray(m.content));
@@ -2957,7 +3055,7 @@ async function runSolo(onFail, o = {}){
     if (r){ r = Object.assign({}, r, { ms:0, cached:true }); st().sx.saved += r.prompt + r.completion; st().sx.hits += 1; save(); mount(); if (rv) rv.push(r.text); }
     else {
       const ctl = new AbortController(); ctls.add(ctl);
-      try{ r = await SZ.askStream(OR, sent, Object.assign({ model:mid, maxTokens: saver ? 700 : 0, signal:ctl.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { if (holdWeb(txt)) return; mount(); W.write(txt); if (rv) rv.push(txt); }); }finally{ ctls.delete(ctl); }
+      try{ r = await SZ.askStream(OR, sent, Object.assign({ model:mid, maxTokens: saver ? 700 : 0, signal:ctl.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { if (holdWeb(txt)) return; txt = sinMarcas(txt); mount(); W.write(txt); if (rv) rv.push(txt); }); }finally{ ctls.delete(ctl); }
       addUsage(r.prov || SZ.provOf(mid), r.prompt, r.completion, true, { est:r.est, free:/:free$/.test(mid) || r.prov === 'synthz', rid:r.rid });
       if (webOffer && !r.aborted && String(r.text || '').length < 2500 && CUTOFF_RX.test(r.text || '')) setTimeout(() => offerWeb(lastU, onFail, o), 1200);
       if (!r.aborted && !r.swapped) SZ.markGood(mid);
@@ -2971,7 +3069,7 @@ async function runSolo(onFail, o = {}){
         let r2 = null;
         try{
           r2 = await SZ.askStream(OR, [...sent, { role:'assistant', content:base }, { role:'user', content:'Continúa exactamente donde te quedaste: sigue desde la última palabra, sin repetir nada de lo anterior, sin saludar y sin decir que continúas. Escribe solo lo que falta.' }],
-            Object.assign({ model:mid, maxTokens:0, signal:ctl2.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { mount(); const full = base + glue(txt) + txt; W.write(full); if (rv) rv.push(full); });
+            Object.assign({ model:mid, maxTokens:0, signal:ctl2.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { mount(); const full = sinMarcas(base + glue(txt) + txt); W.write(full); if (rv) rv.push(full); });
         }catch(e){ r2 = null; }
         finally{ ctls.delete(ctl2); }
         if (!r2 || r2.aborted && !r2.text) break;
@@ -2989,6 +3087,15 @@ async function runSolo(onFail, o = {}){
       if (g !== gen) return;
       return await runSolo(onFail, Object.assign({}, o, { noWeb:true, fresh:true }));
     }
+    /* v4.0 · respuesta vacía: se pide otra vez UNA vez (el servidor ya cambia de IA si una contesta vacío; esto cubre Puter y las demás) */
+    if (!r.aborted && !o.retried && /^\(La IA devolvió una respuesta vacía\.\)$/.test(String(r.text || '').trim())){
+      const rv0 = rv; rv = null; W.stop && W.stop(); if (live && live.chat === chat) live = null; try{ rv0 && rv0.skip(); }catch(e){} if (el) el.remove();
+      delete busy[mid]; renderNow();
+      return await runSolo(onFail, Object.assign({}, o, { fresh:true, retried:true }));
+    }
+    if (!r.aborted) r.text = limpiaBucles(r.text);
+    /* v4.0 · las marcas de título y memoria se quitan del texto y se usan */
+    { const mk = marcas(r.text); r.text = mk.text || r.text; if (!r.aborted){ titleSet(chat, mk.title); memNext = mk.mem; } }
     const tail = r.aborted ? ' · detenido' : r.cut ? ' · se cortó la conexión' : r.finish === 'length' ? ' · se cortó porque era muy larga (toca «Continuar»)' : '';
     const who = r.swapped ? ' · se acabó tu saldo de Puter este mes; respondió ' + (r.real || 'otra IA') : '';
     W.write(r.text); W.finish({ ms:r.ms, real:r.real || '' });
@@ -3063,15 +3170,37 @@ function offerWeb(lastU, onFail, o){
       Si está bien → «✓ Revisada». Si tiene errores → la respuesta se cambia por la corregida («✨ Mejorada» · Ver original).
       Tiene 28 s como máximo; si tarda más o falla, se queda la respuesta de antes (nunca se pierde nada).
    Se apaga en Ajustes › IAs y memoria › «Revisión de calidad». Las instrucciones del revisor viven en el servidor (api/ai.js). */
-function qualitySystem(saver){
-  if (saver) return 'Piensa en silencio antes de responder; revisa cálculos y lógica. No inventes datos.';
-  return 'Responde como un experto de primer nivel en el tema. Antes de escribir, piensa en silencio qué pide de verdad la persona y cuál es la mejor respuesta.'
-    + ' Empieza por la respuesta directa (sin saludos ni relleno) y luego explica lo necesario en orden lógico, paso a paso cuando ayude.'
-    + ' Rehaz cada cálculo antes de darlo y comprueba que no te contradigas. No inventes datos, citas, enlaces ni funciones: si algo no lo sabes o depende de información que no tienes, dilo claro.'
-    + ' Si la pregunta se puede entender de varias formas, elige la más probable, dilo en una frase y responde.'
-    + ' Usa Markdown limpio: títulos cortos, listas, tablas cuando compares y bloques de código con su lenguaje.'
-    + ' Si hay imágenes o archivos, básate en lo que de verdad se ve o dice en ellos y menciona detalles concretos.'
-    + ' Responde siempre en el idioma en que te escribe la persona.';
+/* v4.0 · las mismas reglas del «cerebro» del servidor (api/_cerebro.js) para CUALQUIER IA que elijas (Puter, OpenRouter, Groq…):
+   la fecha de hoy, cómo responde un experto en ese tipo de trabajo y, si es difícil, pensar → resolver → revisar antes de responder. */
+const Q_HARD = /\b(demuestra|resuelve|calcula|deriva|integral|ecuaci[oó]n|probabilidad|optimiza|algoritmo|depura|debug|refactor|por qu[eé] (falla|no funciona)|paso a paso|a fondo|analiza|compara|eval[uú]a|estrategia|dise[nñ]a|arquitectura|acertijo|l[oó]gica|cu[aá]nt[oa]s?|prove|solve|calculate|equation|probability|algorithm|step by step|in depth|analy[sz]e|compare|evaluate|strategy|design|riddle|puzzle|how (many|much))\b/i;
+const Q_EASY = /^\W*(hola+|holi|buenas|buen(os)? d[ií]as|hey|hi|hello|gracias|thanks|thank you|ok(ay)?|vale|listo|s[ií]|no|dale|c[oó]mo est[aá]s|how are you|qu[eé] tal|chao|bye)\b[\s\W]*$/i;
+const Q_KIND = [['code', /\b(c[oó]digo|code|programa|funci[oó]n|function|script|python|javascript|html|css|sql|bug|error|react|node|java|api)\b|```/i],
+  ['translate', /\b(traduc\w*|translat\w*)\b/i], ['data', /\b(calcul\w*|porcentaje|percent|promedio|average|tabla|datos|data|matem\w*|math|ecuaci[oó]n|equation|\d+\s*[-+*/^x×÷]\s*\d+)\b/i],
+  ['summary', /\b(resum\w*|summar\w*|puntos clave|key points|tl;?dr)\b/i], ['write', /\b(escrib\w*|redact\w*|write|correo|email|carta|ensayo|essay|art[ií]culo|historia|story|poema|poem|post|discurso)\b/i]];
+const Q_JOB = {
+  code:'Como ingeniero de software sénior: código COMPLETO que funcione a la primera, en bloques con su lenguaje, sin «…»; explica la causa exacta de los errores y considera casos raros. No inventes funciones ni librerías.',
+  translate:'Como traductor profesional: traduce el sentido, natural y con el mismo tono y formato; conserva nombres, código y cifras.',
+  data:'Como experto en matemáticas y datos: plantea, resuelve paso a paso mostrando cada operación, RECALCULA cada número y termina con el resultado en negrita y con unidades.',
+  summary:'Como experto en síntesis: la idea central en una frase y luego los puntos clave en viñetas cortas con datos concretos; nada que no esté en el material.',
+  write:'Como escritor profesional: voz natural, ritmo, adaptado a quién lo lee; sin clichés ni relleno; texto listo para usar.',
+  reason:'Como analista experto: primero la conclusión o recomendación, luego las razones más fuertes con sus supuestos; si hay opciones, compáralas con criterios concretos y elige.'
+};
+const Q_NATIVE = /gpt-oss|qwen3|deepseek-r1|qwq|gemini-(2\.5|[3-9])|claude|gpt-[5-9]|\bo[34]\b|grok|kimi|glm-4\.[5-9]|magistral/i;
+function qualitySystem(saver, ask, mid){
+  const day = new Date().toLocaleDateString(SZ.lang() === 'en' ? 'en-US' : 'es-CO', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  if (saver) return 'Hoy es ' + day + '. Piensa en silencio antes de responder; revisa cálculos y lógica. No inventes datos.';
+  const q = String(ask || '').trim(), easy = !q || Q_EASY.test(q);
+  const kind = (Q_KIND.find(([, rx]) => rx.test(q)) || ['reason'])[0];
+  const hard = !easy && (st().sx && st().sx.effort === 'high' || (Q_HARD.test(q) ? 2 : 0) + (/\d\s*[-+*/^=]\s*\d/.test(q) ? 2 : 0) + (/```/.test(q) ? 2 : 0) + (q.length > 400 ? 1 : 0) + (/code|data/.test(kind) ? 1 : 0) >= 3);
+  const base = 'Hoy es ' + day + '. Responde como los mejores asistentes del mundo, con precisión y criterio. Empieza por la respuesta (sin saludos, sin repetir la pregunta, sin relleno) y luego explica lo necesario.'
+    + ' No inventes datos, citas, enlaces ni funciones: si no lo sabes con certeza o pudo cambiar después de lo que aprendiste, dilo en una frase. Si la pregunta es ambigua, elige la lectura más probable y dilo.'
+    + ' Mantén el hilo de la conversación. Markdown limpio (listas, tablas al comparar, código en bloques con su lenguaje); el largo justo. Responde siempre en el idioma en que te escribe la persona.'
+    + ' Si hay imágenes o archivos, básate en lo que de verdad se ve o dice en ellos.';
+  if (easy) return base + ' Esto es sencillo: responde directo y breve, con calidez.';
+  const think = !hard ? '' : Q_NATIVE.test(String(mid || ''))
+    ? ' ES DIFÍCIL: razona con cuidado paso a paso antes de responder y revisa el resultado (rehaz los cálculos, prueba el código con un ejemplo, busca casos raros). En la respuesta muestra los pasos clave.'
+    : ' ES DIFÍCIL: escribe PRIMERO tu razonamiento dentro de <think> y </think> (qué se pide, plan, resolverlo paso a paso y REVISARLO: rehaz los cálculos por otro camino, prueba el código con un ejemplo, busca contradicciones). Cierra </think> y DESPUÉS escribe la respuesta final limpia.';
+  return base + ' ' + Q_JOB[kind] + think;
 }
 const REV_MS = 28000;
 /* las IAs de primer nivel no necesitan que otra más pequeña las revise */
@@ -4637,13 +4766,14 @@ function thMeta(model, id, create){
 }
 function touchThread(){
   const e = thMeta(thModel(), curT(), true); e.t = Date.now();
-  if (!e.title){ const u = chatArr().find(x => x.role === 'user'); if (u) e.title = (u.content || (u.files && u.files[0] && u.files[0].name) || 'Conversación').replace(/\s+/g, ' ').slice(0, 60); }
+  /* v4.0 · el primer título sale del primer mensaje con tema (no de «Hola, ¿cómo estás?»); luego la IA lo pone con sentido (05g) */
+  if (!e.title || e.auto0){ const t = titleLocal(chatArr()); if (t !== e.title){ e.title = t; e.auto0 = true; } }
   renderThBtn();
 }
 function allThreads(){
   return Object.keys(st().chats).filter(k => /^openrouter::./.test(k) && Array.isArray(st().chats[k]) && st().chats[k].length).map(k => {
     const { model, id } = parseKey(k), e = thMeta(model, id, false) || {}, u = st().chats[k].find(x => x.role === 'user');
-    return { k, model, id, title:e.title || (u ? (u.content || 'Conversación').replace(/\s+/g, ' ').slice(0, 60) : 'Conversación'), t:e.t || 0, n:st().chats[k].length };
+    return { k, model, id, title:e.title || (u ? titleLocal(st().chats[k]) : 'Conversación'), t:e.t || 0, n:st().chats[k].length };
   }).sort((a, b) => b.t - a.t);
 }
 /* ---------- tus chats y tus favoritos (panel de la izquierda) ---------- */
@@ -4718,7 +4848,7 @@ $('#thList').addEventListener('click', async e => {
   if (e.target.closest('[data-ren]')){
     const b = $('.tt b', it), inp2 = document.createElement('input'); inp2.value = b.textContent; inp2.maxLength = 60; b.replaceWith(inp2); inp2.focus(); inp2.select();
     let canceled = false;
-    const ok = () => { if (canceled) return; canceled = true; const v = inp2.value.trim(); if (v){ const m = thMeta(model, id, true); m.title = v; if (!m.t) m.t = Date.now(); save(); } renderChats(false); };
+    const ok = () => { if (canceled) return; canceled = true; const v = inp2.value.trim(); if (v){ const m = thMeta(model, id, true); m.title = v; m.manual = true; delete m.auto0; if (!m.t) m.t = Date.now(); save(); } renderChats(false); };
     inp2.addEventListener('keydown', ev => { if (ev.key === 'Enter'){ ev.preventDefault(); ok(); } if (ev.key === 'Escape'){ ev.preventDefault(); ev.stopPropagation(); canceled = true; renderChats(false); } });
     inp2.addEventListener('blur', ok); return;
   }

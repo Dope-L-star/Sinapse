@@ -43,6 +43,18 @@ export function classify(text, tool, isPlan){
    [patrón, [código, escritura, razonamiento, resumen, traducción, datos, plan], rapidez 1-10]
    Puntajes de partida (de pruebas públicas y de uso); lo medido aquí los va corrigiendo. */
 const PERFIL = [
+  /* v4.0 · «cerebro grande» (cat.smart): solo para preguntas difíciles en la Automática */
+  [/gpt-oss-120b/,                                     [9, 7, 9, 8, 7, 9, 9], 7],
+  [/kimi-k2/,                                          [9, 9, 8, 9, 9, 8, 9], 6],
+  [/deepseek-r1(?!-0528-qwen3-8b)/,                    [8, 6, 9, 7, 7, 9, 8], 3],
+  [/deepseek-(chat|v3)/,                               [9, 8, 8, 8, 8, 8, 8], 5],
+  [/qwen3-coder/,                                      [9, 5, 7, 6, 6, 7, 7], 6],
+  [/qwen3-235b|qwen3\.5/,                              [8, 8, 9, 8, 9, 9, 8], 5],
+  [/qwen3-32b/,                                        [8, 6, 8, 7, 8, 8, 7], 7],
+  [/glm-4\.[5-9]/,                                     [8, 7, 8, 8, 7, 8, 8], 5],
+  [/mistral-large|mistral-medium/,                     [8, 9, 8, 9, 9, 8, 8], 5],
+  [/magistral-medium/,                                 [7, 7, 9, 7, 8, 9, 8], 3],
+  [/llama-4-maverick/,                                 [7, 8, 7, 8, 8, 7, 7], 7],
   [/gemini-(\d[\d.]*-)?flash-lite|flash-lite-latest/, [6, 7, 6, 8, 8, 6, 7], 9],
   [/gemini-(\d[\d.]*-)?flash|gemini-flash-latest/,     [8, 8, 8, 9, 9, 8, 9], 7],
   [/gemma-3-27b|gemma-3n?-?27/,                        [5, 7, 6, 7, 8, 5, 6], 6],
@@ -83,13 +95,23 @@ export async function feedback(cat, modelId, up){
   await pipe([['HINCRBY', hk(cat), modelId + (up ? '|up' : '|down'), '1'],
     ['LPUSH', 'rt:log', JSON.stringify({ t:Date.now(), cat, m:modelId, fb:up ? 1 : -1 })], ['LTRIM', 'rt:log', '0', '499']]).catch(() => {});
 }
-async function statsOf(cat){
+/* v4.0 · el chat también aprende, pero gastando poco Redis (techo de Upstash): solo los dos contadores, sin el registro */
+export async function recordLite(cat, modelId, ok, ms){
+  if (!IDX.hasOwnProperty(cat) || !modelId) return;
+  await pipe([['HINCRBY', hk(cat), modelId + (ok ? '|ok' : '|fail'), '1'], ...(ok ? [['HINCRBY', hk(cat), modelId + '|ms', String(Math.max(0, Math.round(ms || 0)))]] : [])]).catch(() => {});
+}
+/* lo medido y la carga de hoy se guardan 60 s en cada servidor: elegir IA no cuesta lecturas de Redis en cada mensaje */
+const MEMO = new Map();
+const memo = (k, fn) => { const c = MEMO.get(k); if (c && Date.now() - c.t < 60e3) return c.p; const p = fn(); MEMO.set(k, { t:Date.now(), p }); p.catch(() => MEMO.delete(k)); return p; };
+const statsOf = cat => memo('s:' + cat, () => statsOf0(cat));
+async function statsOf0(cat){
   const raw = (await redis('HGETALL', hk(cat)).catch(() => [])) || [], S = {};
   for (let i = 0; i < raw.length; i += 2){ const [m, k] = String(raw[i]).split('|'); (S[m] = S[m] || { ok:0, fail:0, ms:0, up:0, down:0 })[k] = +raw[i + 1] || 0; }
   return S;
 }
 /* cuánto de su cuota gratis de hoy ya usó cada proveedor (0 = nada, 1 = lleno) */
-async function loadOf(){
+const loadOf = () => memo('load', loadOf0);
+async function loadOf0(){
   const d = today(), all = await pipe(ORDER.map(p => ['GET', 'rt:ld:' + p + ':' + d])).catch(() => []);
   return Object.fromEntries(ORDER.map((p, i) => [p, Math.min(1, (+all[i] || 0) / Math.max(1, PROV[p].cap))]));
 }
@@ -119,6 +141,20 @@ export async function pick(cat, n = 4){
   return out;
 }
 
+/* v4.0 · para una pregunta difícil: los modelos grandes gratis (cat.smart) ordenados por lo que saben hacer en ESE trabajo y lo medido,
+   seguidos de los normales (pick). Uno por proveedor primero, para que una caída no tumbe dos intentos. */
+export async function pickHard(cat, n = 4){
+  if (!IDX.hasOwnProperty(cat)) cat = 'reason';
+  const [cat2, S, load] = await Promise.all([models(false), statsOf(cat), loadOf()]);
+  /* en lo difícil pesa más lo que sabe (×1.5) que lo rápido; los grandes llevan un punto extra */
+  const sc = (m, big) => { const x = score(m, cat, S, load); return Object.assign({ m }, x, { total:x.total + x.prior * .5 + (big ? 1 : 0) - x.speed * .3 }); };
+  const ranked = [...(cat2.smart || []).map(m => sc(m, true)), ...cat2.list.map(m => sc(m, false))].sort((a, b) => b.total - a.total);
+  const out = [], provs = new Set();
+  for (const r of ranked){ if (out.length >= n) break; if (provs.has(r.m.prov)) continue; out.push(r); provs.add(r.m.prov); }
+  for (const r of ranked){ if (out.length >= n) break; if (!out.includes(r)) out.push(r); }
+  return out;
+}
+
 /* por qué ganó (para decírselo a la persona sin tecnicismos): lo que más pesó */
 export function why(r, ranked){
   if (!r) return 'quality';
@@ -133,7 +169,7 @@ export async function learned(){
   const cat = await models(false), byId = Object.fromEntries(cat.list.map(m => [m.id, m]));
   const out = {};
   for (const c of CATS){
-    const S = await statsOf(c);
+    const S = await statsOf0(c);
     out[c] = Object.entries(S).map(([id, s]) => ({ id, name:(byId[id] && byId[id].name) || id.split(':').pop(), prov:byId[id] ? PROV[byId[id].prov].name : '', n:s.ok + s.fail, ok:s.ok, rate:s.ok + s.fail ? s.ok / (s.ok + s.fail) : 0, ms:s.ok ? Math.round(s.ms / s.ok) : 0, up:s.up, down:s.down, live:!!byId[id] }))
       .filter(x => x.n || x.up || x.down).sort((a, b) => (b.live - a.live) || (b.rate * Math.log(2 + b.n)) - (a.rate * Math.log(2 + a.n))).slice(0, 3);
   }

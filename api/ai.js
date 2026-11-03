@@ -5,6 +5,8 @@
    POST { action:'ping', id | ids } → { status:{ id:'ok'|'busy'|'down' } } (¿esa IA responde ahora? con caché compartida)
    Sin cuenta también funciona: se cuenta por dispositivo y por conexión. */
 import { route, body, json, fail, auth, sha, redis, pipe, today, ipOf, limit, str, roleOf } from './_lib.js';
+import { leer, sistema, reasonParams, temperatura } from './_cerebro.js';
+import { pick, pickHard, recordLite, used as usedProv } from './_ruta.js';
 import { models, chat, reviewerModel, settings, usedToday, quotaKey, PROV, IMG, pickKeys, markPay, clearPay, outage, classify, searchWith, searchWiki, searchRss, readPage, PAY_RX, baseOf, pingModel } from './_pool.js';
 
 /* v2.0 · imágenes con Pollinations: solo con cuenta, con su propio límite diario (no gasta Puter ni tu límite de chat).
@@ -169,6 +171,42 @@ async function review(who, ipKey, b, free){
   return Object.assign(base, { verdict:'fix', text:rest, note });
 }
 
+/* ---------- v4.0 · el cerebro de cada respuesta (api/_cerebro.js + el enrutador de A.L.I.A.S.) ----------
+   · Automática: cada pregunta va a la IA gratis que mejor resuelve ESE tipo de trabajo (antes iba siempre a la misma).
+   · Difícil: va a los modelos gratis más grandes («cerebro grande», cat.smart) con su propio tope diario, para no agotar lo gratis de todos.
+   · Toda respuesta (también si elegiste una IA) lleva las instrucciones de su tipo de trabajo y la fecha de hoy; en lo difícil, piensa y se revisa.
+   SYNTHZ_SMART=0 apaga el «cerebro grande» (quedan solo los modelos de siempre). */
+const SMART_ON = process.env.SYNTHZ_SMART !== '0';
+const SMART_DAY = +process.env.SYNTHZ_SMART_DAY || 600;   /* respuestas difíciles con modelos grandes al día, entre todos */
+async function smartOk(who, me, free){
+  if (!SMART_ON) return false;
+  const d = today(), uk = 'sm:' + who + ':' + d, gk = 'sm:all:' + d, max = free ? 1000 : me ? 40 : 3;
+  const [n, g] = (await pipe([['GET', uk], ['GET', gk]]).catch(() => [0, 0])).map(x => +x || 0);
+  if (n >= max || g >= SMART_DAY) return false;
+  await pipe([['INCR', uk], ['EXPIRE', uk, '172800'], ['INCR', gk], ['EXPIRE', gk, '172800']]).catch(() => {});
+  return true;
+}
+const hasImg = msgs => (Array.isArray(msgs) ? msgs : []).some(m => m && Array.isArray(m.content) && m.content.some(p => p && p.type === 'image_url'));
+async function brainChat(who, ipKey, me, b, free){
+  const model = typeof b.model === 'string' ? b.model : 'sz:auto', maxTokens = b.maxTokens ?? b.max_tokens;
+  const L = leer(b.messages, { effort:['low', 'medium', 'high'].includes(b.effort) ? b.effort : '' });
+  const short = +maxTokens > 0 && +maxTokens <= 900;
+  let route = null, firstMs = 0;
+  if (model === 'sz:auto' && !hasImg(b.messages) && !L.cont){
+    const big = L.level === 'hard' && !short && await smartOk(who, me, free);
+    const ranked = await (big ? pickHard(L.cat) : pick(L.cat)).catch(() => []);
+    if (ranked.length){ route = ranked.map(x => x.m); firstMs = ranked.length > 1 ? 20000 : 0; }
+  }
+  const pend = [];
+  const r = await chat({ who, ipKey, messages:b.messages, model, maxTokens, stream:true, free, route, firstMs,
+    onTry:({ m, ok, ms }) => { pend.push(recordLite(L.cat, m.id, ok, ms)); },
+    brain:m => ({ system:sistema(L, m.prov, m.mid, { short }), extra:reasonParams(m.prov, m.mid, L.level), temperature:temperatura(L), maxTokens:L.level === 'hard' && !short ? 8000 : undefined }) });
+  pend.push(usedProv(r.meta.prov));
+  await Promise.all(pend).catch(() => {});
+  r.meta.cat = L.cat; r.meta.level = L.level;
+  return r;
+}
+
 /* sin cuenta: solo unos pocos mensajes al día (por dispositivo y, para que no se salte, también por conexión) */
 const GUEST_MAX = Math.max(1, Math.min(50, +process.env.SYNTHZ_GUEST_MSGS || 5));
 const gKey = w => 'gm:' + w + ':' + today();
@@ -229,7 +267,7 @@ export default route({
     }
     const free = !!(me && roleOf(me) !== 'user');
     /* v3.7 · la revisión de calidad la pide la página, no la persona: no gasta su EnerX (antes un «hola» bajaba la batería 2 veces, la segunda sin hacer nada) */
-    const r = b.action === 'review' ? await review(who, ipKey, b, true) : await chat({ who, ipKey, messages:b.messages, model:typeof b.model === 'string' ? b.model : 'sz:auto', maxTokens:b.maxTokens, stream:true, free });
+    const r = b.action === 'review' ? await review(who, ipKey, b, true) : await brainChat(who, ipKey, me, b, free);
     let gu = '';
     if (guest){
       const tk = 'gt:' + who + ':' + guest.turn;
@@ -239,7 +277,7 @@ export default route({
     }
     if (b.action === 'review') return json(Object.assign(r, { guest:gu }));
     return new Response(r.stream, { status:200, headers:{ 'content-type':'text/event-stream; charset=utf-8', 'cache-control':'no-store',
-      'x-sz-model':r.meta.model, 'x-sz-name':encodeURIComponent(r.meta.name), 'x-sz-prov':r.meta.provName, 'x-sz-fallback':r.meta.fallback ? '1' : '0', 'x-sz-used':String(r.used), 'x-sz-limit':String(r.limit), 'x-sz-guest':gu,
-      'access-control-expose-headers':'x-sz-model,x-sz-name,x-sz-prov,x-sz-fallback,x-sz-used,x-sz-limit,x-sz-guest' } });
+      'x-sz-model':r.meta.model, 'x-sz-name':encodeURIComponent(r.meta.name), 'x-sz-prov':r.meta.provName, 'x-sz-fallback':r.meta.fallback ? '1' : '0', 'x-sz-used':String(r.used), 'x-sz-limit':String(r.limit), 'x-sz-guest':gu, 'x-sz-cat':r.meta.cat || '', 'x-sz-level':r.meta.level || '',
+      'access-control-expose-headers':'x-sz-model,x-sz-name,x-sz-prov,x-sz-fallback,x-sz-used,x-sz-limit,x-sz-guest,x-sz-cat,x-sz-level' } });
   }
 });

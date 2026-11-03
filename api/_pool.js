@@ -120,6 +120,11 @@ const OLLAMA_PAID = /^(gemma4:31b|gpt-oss:(120b|20b)|nemotron-3-(super|ultra|nan
    Gastan la cuota gratis mucho más rápido y tardan más; quedan los pequeños y rápidos (Llama 3.3 70B, Gemini Flash, Mistral Small, Llama 8B, Gemma…). */
 const HEAVY = /(?:^|[^\d.])(?:[1-9]\d{2,})(?:\.\d+)?b\b|mistral-(medium|large)|magistral|pixtral-large|codestral|devstral-medium|-pro\b|qwen3-(32b|coder)|qwq|deepseek-(r1|v3|v4)(?!.*-qwen3-8b)|kimi-k2|maverick|grok/i;
 export const isHeavy = id => HEAVY.test(String(id || ''));
+/* v4.0 · «cerebro grande»: de los modelos de alto consumo, los GRATIS más listos se guardan aparte (cat.smart).
+   No salen en la lista para elegir: solo los usa la Automática en las preguntas difíciles, con su propio tope diario (api/ai.js · SMART_DAY). */
+export const SMART_RX = /gpt-oss-120b|kimi-k2|qwen3-(32b|235b|coder)|qwen3\.5|deepseek-(chat|v3|r1)|llama-4-maverick|glm-4\.[5-9]|mistral-(medium|large)-latest|magistral-medium-latest/i;
+const SMART_PROVS = new Set(['groq', 'openrouter', 'mistral', 'cloudflare']);
+export const isSmart = (prov, id) => SMART_PROVS.has(prov) && SMART_RX.test(String(id || '')) && !OLLAMA_PAID.test(String(id || ''));
 const DROP = /whisper|guard|tts|orpheus|safeguard|allam|compound|distil|playai|embed|moderation|ocr|voxtral|transcri|lora|vision-preview|lyria|music|audio|image|flux|stable|dall/i;
 async function listFor(prov, k){
   const base = await baseOf(k), H = { Authorization:'Bearer ' + k.key };
@@ -145,19 +150,20 @@ async function listFor(prov, k){
 const nice = s => String(s).replace(/^[^/]+\//, '').replace(/-latest$/, '').split(/[-_]/).map(w => /^gpt$/i.test(w) ? 'GPT' : /^oss$/i.test(w) ? 'OSS' : /^\d+(\.\d+)?b$/i.test(w) ? w.toUpperCase() : /^[a-z]/.test(w) ? w[0].toUpperCase() + w.slice(1) : w).join(' ');
 export async function models(force){
   if (!force){ const c = await getJ('pool:models'); if (c && Date.now() - c.t < 6 * 3600e3) return Object.assign(c, { list:(c.list || []).filter(m => !isHeavy(m.mid)) }); }
-  const keys = await loadKeys(), out = [], provs = [];
+  const keys = await loadKeys(), out = [], provs = [], smart = [];
   for (const p of ORDER){
     const ks = keys.filter(k => k.prov === p); if (!ks.length) continue;
     let got = null;
     for (const k of ks.slice(0, 2)){ try{ got = await listFor(p, k); if (got && got.length) break; }catch(e){} }
     if (!got || !got.length) got = PROV[p].best.map(mid => ({ mid, name:mid, ctx:0 }));
     provs.push(p);
+    got.filter(m => isHeavy(m.mid) && isSmart(p, m.mid)).slice(0, 8).forEach(m => smart.push({ id:'sz:' + p + ':' + m.mid, prov:p, mid:m.mid, name:m.name && m.name !== m.mid ? m.name : nice(m.mid), ctx:m.ctx, smart:true }));
     got = got.filter(m => !isHeavy(m.mid));
     got.slice(0, 40).forEach(m => out.push({ id:'sz:' + p + ':' + m.mid, prov:p, mid:m.mid, name:m.name && m.name !== m.mid ? m.name : nice(m.mid), ctx:m.ctx }));
   }
   const bad = (await redis('HGETALL', 'pool:badm').catch(() => [])) || [], gone = new Set();
   for (let i = 0; i < bad.length; i += 2) if (Date.now() - (+bad[i + 1] || 0) < 6 * 3600e3) gone.add(bad[i]);
-  const c = { t:Date.now(), provs, list:out.filter(m => !gone.has(m.id)) };
+  const c = { t:Date.now(), provs, list:out.filter(m => !gone.has(m.id)), smart:smart.filter(m => !gone.has(m.id)) };
   await setJ('pool:models', c, 21600);
   return c;
 }
@@ -270,20 +276,29 @@ export async function pingModel(id){
 /* v3.9 · opcionales para el enrutador de A.L.I.A.S. (api/_ruta.js); sin ellos todo funciona igual que antes:
    route = lista de modelos del catálogo en el orden a probar (la mejor primero, luego respaldos) ·
    onTry({ m, ok, ms, slow }) = se avisa cada intento para medir · firstMs = cuánto esperar a la PRIMERA opción antes de pasar a la siguiente */
-export async function chat({ who, ipKey, messages, model, maxTokens, system, stream = true, onDone, free = false, temperature = .6, route = null, onTry = null, firstMs = 0 }){
+/* v4.0 · brain(m) (opcional, lo usa /api/ai con api/_cerebro.js) = { system, extra, temperature, maxTokens } para ESA IA:
+   las instrucciones del tipo de trabajo, si piensa con <think> o con su propio razonamiento, y los parámetros que ese proveedor entiende.
+   Además, en streaming: si una IA contesta vacío (o con un error antes de escribir nada), responde la siguiente sin que la persona lo note. */
+const NOEX = new Set();   /* modelos que respondieron 400 a los parámetros de razonamiento (en este servidor) */
+export async function chat({ who, ipKey, messages, model, maxTokens, system, stream = true, onDone, free = false, temperature = .6, route = null, onTry = null, firstMs = 0, brain = null }){
   const { dayLimit } = await settings();
   const [used, usedIp] = free ? [0, 0] : (await pipe([['GET', quotaKey(who)], ['GET', quotaKey(ipKey)]])).map(x => +x || 0);
   if (used >= dayLimit) throw err(429, 'Llegaste al límite de hoy. Se renueva a medianoche. Si quieres seguir ya, conecta Puter (gratis, opcional).', 'sz_limit');
   if (usedIp >= dayLimit * 3) throw err(429, 'Desde esta conexión ya se usó mucho hoy. Se renueva a medianoche, o conecta Puter (gratis, opcional).', 'sz_limit_ip');
   let { msgs, nImg } = normMsgs(messages);
-  while (msgs.length > 1 && msgs.reduce((s, m) => s + txtLen(m), 0) > 48000) msgs = msgs.slice(1);
+  /* v4.0 · si la charla es muy larga se quitan los mensajes más viejos, PERO se conserva el primero que escribió la persona
+     (casi siempre dice de qué va todo) y se avisa a la IA que hubo un salto, para que no pierda el hilo */
+  { const sys0 = msgs[0] && msgs[0].role === 'system' ? 1 : 0; let cutN = 0;
+    while (msgs.length > sys0 + 3 && msgs.reduce((s, m) => s + txtLen(m), 0) > 48000){ msgs.splice(sys0 + 1, 2); cutN += 2; }
+    while (msgs.length > 1 && msgs.reduce((s, m) => s + txtLen(m), 0) > 48000) msgs = msgs.slice(1);
+    if (cutN && msgs[sys0 + 1] && typeof msgs[sys0].content === 'string' && msgs[sys0].role === 'user') msgs[sys0] = { role:'user', content:msgs[sys0].content + '\n\n[… aquí hubo ' + cutN + ' mensajes más de esta conversación que se omitieron por espacio …]' }; }
   if (!msgs.length || msgs[msgs.length - 1].role !== 'user') throw err(400, 'Escribe un mensaje.', 'sz_empty');
   if (system) msgs = [{ role:'system', content:system }, ...msgs.filter(m => m.role !== 'system')];
   nImg = msgs.reduce((n, m) => n + (Array.isArray(m.content) ? m.content.length - 1 : 0), 0);
   const inTok = msgs.reduce((s, m) => s + est(typeof m.content === 'string' ? m.content : m.content[0].text), 0) + nImg * 1000;
   let steps = nImg ? await visionPlan(model) : await plan(model || 'sz:auto');
   if (!nImg && Array.isArray(route) && route.length && (!model || model === 'sz:auto')){
-    const cat = await models(false), live = route.map(r => cat.list.find(m => m.id === (r && r.id))).filter(Boolean);
+    const cat = await models(false), all = [...cat.list, ...(cat.smart || [])], live = route.map(r => all.find(m => m.id === (r && r.id))).filter(Boolean);
     steps = [...live, ...steps.filter(a => !live.some(l => l.id === a.id))].slice(0, 5);
   }
   const tried = [];
@@ -294,11 +309,14 @@ export async function chat({ who, ipKey, messages, model, maxTokens, system, str
   for (const [si, m] of steps.entries()){
     const tm0 = Date.now(), wait1 = si === 0 && firstMs ? firstMs : 30000;   /* la primera opción espera menos si va lenta: pasa a la siguiente */
     const keys = (await pickKeys(m.prov)).slice(0, 2);
-    for (const k of keys){
-      let up;
+    for (let ki = 0; ki < keys.length; ki++){
+      const k = keys[ki]; let up, exUsed = false;
       try{
         const base = await baseOf(k);
-        const body = { model:m.mid, messages:msgs, stream, max_tokens:outTok(m.prov, maxTokens), temperature };
+        const B = brain ? (() => { try{ return brain(m) || {}; }catch(e){ return {}; } })() : {};
+        const mm = B.system ? (msgs[0] && msgs[0].role === 'system' ? [{ role:'system', content:B.system + '\n\n' + msgs[0].content }, ...msgs.slice(1)] : [{ role:'system', content:B.system }, ...msgs]) : msgs;
+        const body = Object.assign({ model:m.mid, messages:mm, stream, max_tokens:outTok(m.prov, B.maxTokens || maxTokens), temperature:B.temperature ?? temperature }, NOEX.has(m.id) ? {} : B.extra || {});
+        exUsed = !NOEX.has(m.id) && !!B.extra && Object.keys(B.extra).length > 0;
         if (stream && (m.prov === 'groq' || m.prov === 'mistral')) body.stream_options = { include_usage:true };
         if (stream && m.prov === 'openrouter') body.usage = { include:true };
         if (m.prov === 'siliconflow') body.enable_thinking = false;
@@ -311,6 +329,8 @@ export async function chat({ who, ipKey, messages, model, maxTokens, system, str
       }catch(e){ up = null; }
       if (!up || !up.ok || (stream && !up.body)){
         const s = up ? up.status : 0, txt = up ? await up.text().catch(() => '') : '';
+        /* v4.0 · ese modelo no entiende el parámetro de «pensar más»: se recuerda y se repite sin él (nunca se esconde el modelo por eso) */
+        if (s === 400 && exUsed){ NOEX.add(m.id); ki--; continue; }
         tried.push(m.prov + ':' + (s || 'sin respuesta'));
         tell(m, false, Date.now() - tm0, !up);
         console.error('[synthz] ia', m.prov, k.id, s ? classify(s) : 'sin respuesta');      /* sin llaves ni mensajes */
@@ -344,6 +364,14 @@ export async function chat({ who, ipKey, messages, model, maxTokens, system, str
         const total = await account(tok);
         return { text:text.trim(), meta, used:free ? 0 : (account.now ?? used + total), limit:dayLimit };
       }
+      /* v4.0 · antes de entregar el stream se espera a que la IA escriba ALGO (o piense): si termina vacía o con error, responde la siguiente */
+      let src = up.body;
+      if (brain){
+        const pk = await peek(up.body, 45000);
+        if (!pk.alive){ tried.push(m.prov + ':vacía'); tell(m, false, Date.now() - tm0, false); console.error('[synthz] ia', m.prov, 'respuesta vacía', pk.why); await redis('HINCRBY', 'st:' + d, 'empty', '1').catch(() => {}); break; }
+        src = pk.stream;
+      }
+      tell(m, true, Date.now() - tm0, false);
       /* streaming: se pasa tal cual y al final se suma lo gastado (lo que dijo el proveedor o una estimación) */
       const dec2 = new TextDecoder(), enc2 = new TextEncoder(); let buf = '', usage = null, outChars = 0;
       const ts = new TransformStream({
@@ -364,11 +392,43 @@ export async function chat({ who, ipKey, messages, model, maxTokens, system, str
           ctl.enqueue(enc2.encode('data: ' + JSON.stringify({ sz:{ used:free ? 0 : (account.now ?? used + total), limit:dayLimit, spent:total, est:!usage } }) + '\n\n'));
         }
       });
-      return { stream:up.body.pipeThrough(ts), meta, used, limit:dayLimit };
+      return { stream:src.pipeThrough(ts), meta, used, limit:dayLimit };
     }
   }
   await redis('HINCRBY', 'st:' + d, 'fail', '1').catch(() => {});
   throw err(503, 'Las IAs están muy ocupadas ahora mismo. Intenta en un momento o conecta Puter.', 'sz_down');
+}
+
+/* v4.0 · mira el principio de una respuesta en vivo sin perder nada: lee hasta que llegue texto o razonamiento.
+   alive = false si se cerró sin escribir nada, si mandó un error antes de escribir o si no dijo nada en «ms».
+   Lo leído se vuelve a entregar tal cual al principio del stream que devuelve. */
+export async function peek(body, ms = 45000){
+  const rd = body.getReader(), dec = new TextDecoder(), got = []; let buf = '', tm;
+  const timeout = new Promise(r => { tm = setTimeout(() => r({ timeout:true }), ms); });
+  const isLive = line => {
+    if (!line.startsWith('data:')) return 0; const x = line.slice(5).trim(); if (!x || x === '[DONE]') return 0;
+    if (/^\{\s*"error"/.test(x)) return -1;
+    if (/"(content|reasoning|reasoning_content)"\s*:\s*"(?:[^"\\]|\\.)/.test(x)) return 1;
+    return 0;
+  };
+  try{
+    while (true){
+      const r = await Promise.race([rd.read(), timeout]);
+      if (r.timeout){ rd.cancel().catch(() => {}); return { alive:false, why:'sin respuesta a tiempo' }; }
+      if (r.done) return { alive:false, why:'vacía' };
+      got.push(r.value); buf += dec.decode(r.value, { stream:true });
+      let i, v = 0;
+      while ((i = buf.indexOf('\n')) >= 0){ const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1); v = isLive(line); if (v) break; }
+      if (v < 0){ rd.cancel().catch(() => {}); return { alive:false, why:'error antes de escribir' }; }
+      if (v > 0) break;
+    }
+  } finally { clearTimeout(tm); }
+  const stream = new ReadableStream({
+    start(ctl){ for (const c of got) ctl.enqueue(c); },
+    async pull(ctl){ try{ const { value, done } = await rd.read(); if (done) ctl.close(); else ctl.enqueue(value); }catch(e){ ctl.error(e); } },
+    cancel(why){ return rd.cancel(why); }
+  });
+  return { alive:true, stream };
 }
 
 /* ---------- alerta: un proveedor pidió pago o quitó lo gratis ----------

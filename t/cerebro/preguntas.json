@@ -1,0 +1,14 @@
+[
+  { "id": "razonar-1", "tipo": "Razonamiento", "lang": "es", "q": "Un bate y una pelota cuestan 1.100 pesos en total. El bate cuesta 1.000 pesos más que la pelota. ¿Cuánto cuesta la pelota?", "espera": "50 pesos (no 100)" },
+  { "id": "razonar-2", "tipo": "Razonamiento", "lang": "en", "q": "If it takes 5 machines 5 minutes to make 5 widgets, how long would it take 100 machines to make 100 widgets?", "espera": "5 minutes" },
+  { "id": "mate-1", "tipo": "Matemáticas", "lang": "es", "q": "Resuelve paso a paso: un tren sale de Bogotá a 80 km/h y otro sale de Medellín, a 400 km, a 120 km/h hacia Bogotá al mismo tiempo. ¿Cuántas horas tardan en cruzarse y a cuántos km de Bogotá?", "espera": "2 horas, a 160 km de Bogotá" },
+  { "id": "mate-2", "tipo": "Matemáticas", "lang": "en", "q": "What is 17% of 2,340, and then that result squared? Show the steps.", "espera": "397.8 → 158,244.84" },
+  { "id": "codigo-1", "tipo": "Código", "lang": "es", "q": "¿Por qué falla esto y cómo lo arreglo?\n```js\nconst nums = [1, 2, 3];\nconst total = nums.reduce((a, b) => { a + b });\nconsole.log(total);\n```", "espera": "Falta return (o quitar llaves); da undefined. Arreglo: (a, b) => a + b, 0" },
+  { "id": "codigo-2", "tipo": "Código", "lang": "en", "q": "Write a Python function that returns the n-th Fibonacci number in O(n) time and O(1) memory, with a couple of tests.", "espera": "Bucle con dos variables, casos n=0/1, pruebas" },
+  { "id": "actual-1", "tipo": "Datos de hoy", "lang": "es", "q": "¿Qué fecha es hoy y qué día de la semana?", "espera": "La fecha real de hoy (antes las IAs gratis decían una fecha de 2023/2024)" },
+  { "id": "actual-2", "tipo": "Datos de hoy", "lang": "en", "q": "What is the latest news about AI this week?", "espera": "Pide buscar en internet y cita fuentes, sin inventar" },
+  { "id": "escribir-1", "tipo": "Escritura", "lang": "es", "q": "Escribe un correo corto y profesional a mi jefe pidiéndole el viernes libre por una cita médica.", "espera": "Asunto, tono profesional, breve, sin relleno" },
+  { "id": "escribir-2", "tipo": "Escritura", "lang": "en", "q": "Write a 4-line poem about a robot learning to dream, with rhyme.", "espera": "4 versos con rima" },
+  { "id": "trampa-1", "tipo": "Lógica con trampa", "lang": "es", "q": "¿Cuántas letras r tiene la palabra «ferrocarril»?", "espera": "4" },
+  { "id": "saludo-1", "tipo": "Charla", "lang": "es", "q": "hola!", "espera": "Respuesta corta y cálida, rápida" }
+]

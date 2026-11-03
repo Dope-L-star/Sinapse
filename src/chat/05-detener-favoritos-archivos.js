@@ -215,12 +215,20 @@ function apiMsgs(chat, vision, o = {}){
   }).filter(Boolean);
   while (h.length && h[0].role !== 'user') h.shift();
   const sys = [];
-  if (!o.naive) sys.push(qualitySystem(saver));
+  /* v4.0 · con las IAs conectadas (sz:) el servidor pone unas instrucciones mejores para cada tipo de trabajo (api/_cerebro.js): aquí no se repiten */
+  if (!o.naive && !o.srv){ const lu = [...chat].reverse().find(m => m.role === 'user'); sys.push(qualitySystem(saver, lu && String(lu.ask || lu.content || ''), o.mid)); }
+  /* v4.0 · el hilo: si la charla es más larga de lo que viaja, la IA igual sabe de qué se habló antes (sin gastar otra IA) */
+  if (!o.naive && start > 0){
+    const old = chat.slice(0, start).filter(m => m.role === 'user' && !m.imgId).map(m => String(m.ask || m.content || '').replace(/\s+/g, ' ').trim()).filter(Boolean);
+    const first = old[0], rest = old.slice(1).slice(-8);
+    if (first) sys.push('Contexto de esta conversación (mensajes anteriores que ya no se reenvían): empezó con «' + first.slice(0, 300) + '»' + (rest.length ? ' y después la persona preguntó: ' + rest.map(x => '«' + x.slice(0, 140) + '»').join('; ') : '') + '. Mantén coherencia con eso.');
+  }
   if (o.webAsk) sys.push(webAskSys());   /* v3.8 · la IA puede pedir una búsqueda en internet ella sola */   /* v3.4 · calidad: piensa, revisa la lógica y no inventa */
   if (saver) sys.push('Responde en el idioma del usuario, de forma clara y breve, sin relleno.');
   { const cs = o.naive ? '' : codeSystem(chat, saver); if (cs) sys.push(cs); }   /* v2.4 · SynthCode: manual de programación cuando pides código */
   { const ef = effortHint(); if (ef && !o.naive) sys.push(ef); }   /* v2.3.1 · esfuerzo */
   { const mm = memSystem(); if (mm && !o.naive) sys.push(mm); }
+  if (!o.naive && !o.noMarks) sys.push(marcasSystem(chat));   /* v4.0 · título con sentido y memoria redactada por la IA */
   { const ps = o.naive ? '' : projSystem(chat, saver); if (ps) sys.push(ps); }   /* v2.6 · proyectos: instrucciones y archivos del proyecto */
   if (SZ.CFG.beginner) sys.push('Modo principiante: la persona no sabe nada del tema. Usa palabras sencillas y frases cortas, explica paso a paso, evita los tecnicismos (si usas uno, explícalo) y pon un ejemplo de la vida diaria.');
   if (sys.length) h.unshift({ role:'system', content:sys.join(' ') });
