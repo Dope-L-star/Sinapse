@@ -5,6 +5,7 @@ window.SZ = { I18N, LANGS, t, lang, setLang, onLang, i18nApply, root, $, $$, cla
 /* v3.4 · el «turno» del mensaje actual: la revisión de calidad viaja en el mismo turno (no cuenta como otro mensaje sin cuenta) */
 /* v3.4 · SynthonIA (synthonia.js): lo que necesita de core, y cuándo se carga */
 window.SZ.synReady = synReady;
+window.SZ.portada = { get:portadaGet, set:portadaSet, known:portadaKnown };   /* v4.1 · portada solo para gente nueva */
 window.SZ.__syn = { root, $, $$, clamp, CFG, PERF, reduce, sleepRaw, esc, isFlow, BRAND, zWord, t, onLang, ENERX, trStr, ACC, accHooks, api, accName, toast, pixelGrid, pixelRun, typeIn, SZQ, szCatalog, telPage, telEv, burst, portalOut, portalLock, authBox, cfgModal, plansModal, memAddCore, memList,
   cfgFetch, get LANG(){ return LANG; }, get SESS(){ return SESS; }, ready:synArrive };
 /* la portada la trae con su propia etiqueta (SynthonIA es la portada); las demás páginas, cuando ya cargaron */

@@ -63,7 +63,7 @@ async function open(file, W, opts = {}){
   page.on('pageerror', e => errors.push(e.message));
   await page.route(u => !u.href.startsWith(BASE), r => r.abort());   /* nada sale a internet (Puter, fuentes, Google) */
   await page.addInitScript(() => { window.__csp = []; document.addEventListener('securitypolicyviolation', e => window.__csp.push(e.violatedDirective + ' ' + (e.blockedURI || ''))); });
-  await page.addInitScript(() => { try{ localStorage.setItem('synthz:visited', '1'); localStorage.setItem('synthz:tour', '1'); sessionStorage.setItem('synthz:intro', '1'); }catch(e){} });
+  await page.addInitScript(() => { try{ localStorage.setItem('synthz:visited', '1'); localStorage.setItem('synthz:tour', '1'); localStorage.setItem('synthz:portada', JSON.stringify({ v:'nuevo', t:1 }));  /* v4.1: quien ya entró no ve la portada salvo que elija «Soy nuevo» */ sessionStorage.setItem('synthz:intro', '1'); }catch(e){} });
   await page.goto(BASE + '/' + file); await page.waitForTimeout(3500);
   return { page, errors };
 }

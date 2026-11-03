@@ -460,6 +460,8 @@ async function intro(){
 
 /* ---------- entrar, ayuda con bloqueadores, configuración y recorrido ---------- */
 let FIRST = false, welcomed = false; try{ FIRST = !localStorage.getItem('synthz:visited'); }catch(e){}
+/* v4.1 · llegó por «Soy nuevo» (la pantallita): se le muestra la portada como a alguien nuevo, con su recorrido */
+try{ const u = new URL(location.href); if (u.searchParams.get('nuevo') === '1'){ FIRST = true; u.searchParams.delete('nuevo'); history.replaceState(null, '', u.pathname + u.search + u.hash); } }catch(e){}
 const markVisited = () => { try{ localStorage.setItem('synthz:visited', '1'); }catch(e){} };
 function puterSignIn(opts){
   if (!window.puter){ showBlockHelp('script'); return Promise.reject(Object.assign(new Error('sin puter'), { shown:true })); }
