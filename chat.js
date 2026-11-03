@@ -1957,7 +1957,7 @@ const attMenu = $('#attMenu'), attBtn = $('#attachBtn');
 function attOpen(){ attMenu.hidden = false; attMenu.classList.remove('bye'); attBtn.setAttribute('aria-expanded', 'true'); }
 function attClose(){ if (attMenu.hidden) return; attBtn.setAttribute('aria-expanded', 'false'); attMenu.classList.add('bye'); setTimeout(() => { if (attMenu.classList.contains('bye')){ attMenu.hidden = true; attMenu.classList.remove('bye'); } }, 260); }
 attBtn.addEventListener('click', () => { if (attMenu.hidden) attOpen(); else attClose(); });
-attMenu.addEventListener('click', e => { const b = e.target.closest('[data-att]'); if (!b) return; attClose(); const k = b.dataset.att; if (k === 'mkimg') return setImgMode(!imgMode); if (k === 'web'){ if (imgMode) setImgMode(false); return setWeb(!webOn); } $({ file:'#fileIn', img:'#imgIn', cam:'#camIn' }[k]).click(); });
+attMenu.addEventListener('click', e => { const b = e.target.closest('[data-att]'); if (!b) return; attClose(); const k = b.dataset.att; if (k === 'mkimg') return setImgMode(!imgMode); if (k === 'web'){ if (imgMode) setImgMode(false); return setWebMode(webMode === 'on' ? 'auto' : 'on'); } if (k === 'noweb') return setWebMode(webMode === 'off' ? 'auto' : 'off'); $({ file:'#fileIn', img:'#imgIn', cam:'#camIn' }[k]).click(); });
 document.addEventListener('pointerdown', e => { if (!attMenu.hidden && !e.target.closest('.attw')) attClose(); });
 addEventListener('keydown', e => { if (e.key === 'Escape' && !attMenu.hidden){ e.preventDefault(); attClose(); attBtn.focus(); } });
 ['#fileIn', '#imgIn', '#camIn'].forEach(s => $(s).addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; }));
@@ -2435,17 +2435,54 @@ document.addEventListener('click', e => { const b = e.target.closest && e.target
 addEventListener('pagehide', vozParar);
 /* ---------- v2.1 · «Buscar en internet»: la IA responde con información de hoy y te muestra sus fuentes ----------
    Se activa con el botón del globo, sola cuando la pregunta lo pide (hoy, precio, noticias…) o cuando el agente lo decide. */
-const WEB_RX = /\b(hoy|ahora mismo|actualmente|actual(es)?|[uú]ltim[oa]s?|esta semana|este mes|este a[ñn]o|noticias?|precio|cu[aá]nto (cuesta|vale)|cotizaci[oó]n|d[oó]lar|clima|resultado|qui[eé]n gan[oó]|en vivo|202[5-9]|busca(r|me)? en (internet|google|la web)|seg[uú]n internet|fuentes?)\b/i;
-let webOn = false;
+/* v4.2 · REGLA FIJA (pedido de Sammuel, 3 nov: «las IAs buscan porque sí y porque no, ESO NO PUEDE PASAR»).
+   Ya no decide la IA ni el azar: la misma pregunta da SIEMPRE la misma decisión, con cualquier IA, en Comparar y en A.L.I.A.S.
+   · Se busca: si lo pides («busca en internet», «con fuentes», «investiga»), o si preguntas algo que cambia con el tiempo
+     (noticias, precios, cotizaciones, clima, resultados, horarios, «hoy», «esta semana», lo más reciente…).
+   · No se busca: charla, opinión, código, tareas, explicaciones generales, escribir o crear algo.
+   · Tú mandas: en «+» puedes forzar «Buscar en internet» o «No buscar» para el próximo mensaje, y en Ajustes apagar la búsqueda sola.
+   La misma regla está en api/_web-regla.js (servidor, A.L.I.A.S.); t/web/regla.test.mjs revisa que las dos digan lo mismo. */
+function webRule(text){
+  let s = String(text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (/```/.test(s) || (s.split('\n').filter(l => /[;{}]\s*$|^\s*(def|function|const|let|var|import|class|return|if|for|while|<\w+)/.test(l)).length >= 3)) return { go:false, why:'codigo' };
+  /* frases que nombran la conversación o saludan no cuentan («tu última respuesta», «¿cómo estás hoy?») */
+  s = s.replace(/\b(tu|la|el|lo|mi|su) (ultim[oa]|anterior) (respuesta|mensaje|parrafo|linea|punto|pregunta|version que (me )?diste)\b|\blo ultimo que (dijiste|escribiste)\b|\b(your|the|my) (last|latest|previous) (answer|message|reply|paragraph|line|point)\b/g, ' ')
+       .replace(/\b(como|que tal) (estas|te va|andas|amaneciste|te sientes)\b[^?.!]*|\bhow (are|r) (you|u)\b[^?.!]*|\bhow('s| is) (your|it going)\b[^?.!]*/g, ' ');
+  for (const [why, rx] of WEB_RULES) if (rx.test(s)) return { go:true, why };
+  return { go:false, why:'general' };
+}
+const WEB_RULES = [
+  ['pedido', /\b(busca(r|me|lo)?|buscame|investiga(r|me)?|averigua(r|me)?)\b[^.?!]{0,40}\b(en )?(internet|google|la web|linea|online)\b|\b(investiga|averigua)\b|\bcon (sus )?fuentes\b|\b(dame|pasame|necesito|quiero) (las )?(fuentes|links?|enlaces?)\b|\b(pagina|sitio|web) oficial\b|\bsegun internet\b|\b(search|look up|google)\b[^.?!]{0,30}\b(web|online|internet|it)\b|\bwith sources\b|\b(find|give) me (the )?(sources|links)\b|\bofficial (site|website|page)\b/],
+  ['hoy', /\b(noticias?|titulares|ultima hora|que (paso|esta pasando|ha pasado)|hoy en dia no|hoy|ayer|esta semana|este mes|este ano|ahora mismo|en este momento|actualmente|en vivo|news|headlines|breaking|what('s| is) happening|today|yesterday|this (week|month|year)|right now|currently|live)\b/],
+  ['reciente', /\b(lo mas (nuevo|reciente)|mas recientes?|recientes?|ultim[oa]s? (version|versiones|modelo|modelos|actualizacion|novedades?|lanzamientos?|estrenos?|episodios?|temporadas?)|novedades|estrenos?|latest|newest|most recent|recent(ly)?|new release)\b/],
+  ['precio', /\b(precios?|cuanto (cuesta|vale|sale|cobra)|cotizacion|tipo de cambio|a como (esta|va)|dolar|dolares|euros?|bitcoin|criptos?|acciones de|bolsa de valores|tarifa|prices?|how much (is|does|do|are)|cost of|exchange rate|stock price|crypto)\b/],
+  ['evento', /\b(clima|pronostico|temperatura (en|de hoy)|va a llover|quien gano|ganador(es)? de|resultados? (del|de la|de los|de las) (partido|juego|elecciones?|sorteo|loteria|carrera|final|mundial)|marcador|tabla de posiciones|elecciones|weather|forecast|who won|winner of|score of|standings|election results?)\b/],
+  ['lugar', /\b(horarios? de|a que hora (abre|cierra)|esta abierto|direccion de|telefono de|donde queda|como llego a|opening hours|is it open|address of|phone number of|how do i get to)\b/]
+];
+let webMode = 'auto';   /* 'auto' (sigue la regla) · 'on' (busca sí o sí) · 'off' (no busca); vale para el próximo mensaje */
 const webBtn = $('#webBtn') || document.createElement('button');
 if (!webBtn.isConnected){ webBtn.type = 'button'; webBtn.className = 'attach webb'; webBtn.id = 'webBtn'; webBtn.setAttribute('aria-pressed', 'false'); webBtn.setAttribute('aria-label', 'Buscar en internet'); webBtn.dataset.tip = 'Buscar en internet';
 webBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.8 3.8 5.8 3.8 9s-1.2 6.2-3.8 9c-2.6-2.8-3.8-5.8-3.8-9S9.4 5.8 12 3z"/></svg>';
 { const ib = $('#imgBtn') || $('#attachBtn'); if (ib) ib.after(webBtn); } }
-function setWeb(on){ webOn = !!on; webBtn.setAttribute('aria-pressed', String(webOn)); document.body.classList.toggle('webbing', webOn); if (webOn) toast('Buscar en internet: tu próximo mensaje se responde con información de hoy y sus fuentes.'); }
-webBtn.addEventListener('click', () => { if (imgMode) setImgMode(false); setWeb(!webOn); });
-const needsWeb = text => webOn || (SZ.CFG.autoWeb !== false && (WEB_RX.test(text) || WEB_RX_EN.test(text)));
-/* v3.8 · también en inglés */
-const WEB_RX_EN = /\b(today|right now|currently|latest|this (week|month|year)|news|price of|how much (is|does)|exchange rate|weather|who won|score|live|search (the web|online|google)|according to (the )?internet)\b/i;
+function setWebMode(m, quiet){
+  webMode = m === 'on' || m === 'off' ? m : 'auto';
+  webBtn.setAttribute('aria-pressed', String(webMode === 'on')); document.body.classList.toggle('webbing', webMode === 'on'); document.body.classList.toggle('nowebbing', webMode === 'off');
+  if (quiet) return;
+  if (webMode === 'on') toast(SZ.lang() === 'en' ? 'Search the web: your next message is answered with today\'s information and its sources.' : 'Buscar en internet: tu próximo mensaje se responde con información de hoy y sus fuentes.');
+  if (webMode === 'off') toast(SZ.lang() === 'en' ? 'No web search: your next message is answered only with what the AI knows.' : 'Sin internet: tu próximo mensaje se responde solo con lo que sabe la IA.');
+}
+function setWeb(on){ setWebMode(on ? 'on' : 'auto'); }
+webBtn.addEventListener('click', () => { if (imgMode) setImgMode(false); setWebMode(webMode === 'on' ? 'auto' : 'on'); });
+/* la decisión para un mensaje: qué se hace y por qué (se guarda en el mensaje para mostrarlo) */
+function webDecide(text){
+  if (webMode === 'on') return { go:true, why:'tu' };
+  if (webMode === 'off') return { go:false, why:'apagado' };
+  if (SZ.CFG.autoWeb === false) return { go:false, why:'ajustes' };
+  return webRule(text);
+}
+const needsWeb = text => webDecide(text).go;
+/* al enviar: se toma la decisión UNA vez, se anota en tu mensaje y lo que forzaste vuelve a «automático» */
+function webTake(text){ const d = webDecide(text); if (webMode !== 'auto') setWebMode('auto', true); return d; }
 /* v3.8 · la IA decide sola: si le falta un dato de hoy, en vez de inventar pide una búsqueda con [BUSCAR: …] y SynthFlow busca, lee y le vuelve a preguntar */
 const webAskSys = () => 'Hoy es ' + new Date().toLocaleDateString('es-CO', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) + '. Tienes una herramienta de búsqueda en internet. Si para responder bien necesitas información actual o que no conoces con certeza (noticias, precios, resultados, clima, versiones o lanzamientos recientes, personas, empresas o hechos posteriores a lo que aprendiste), NO inventes ni digas que no tienes internet: responde ÚNICAMENTE con una línea exacta así: [BUSCAR: consulta corta para un buscador, en el idioma de la persona] y nada más. Si no hace falta buscar, responde normal sin mencionar esta herramienta.';
 const WEB_Q_RX = /^\s*\[(?:BUSCAR|SEARCH)\s*:\s*([^\]\n]{2,200})\]?/i;
@@ -2474,24 +2511,31 @@ function webAsk(text, R){
     + R.results.map((x, i) => '[' + (i + 1) + '] ' + x.t + ' — ' + x.u + '\n' + String(x.s || '').slice(0, 320) + (x.c ? '\nLo que dice la página:\n' + x.c.slice(0, 1900) : '')).join('\n\n');
 }
 /* busca antes de enviar; si falla, se envía igual (sin fuentes) */
-async function webPrep(msg, text){
+async function webPrep(msg, text, why){
   const card = webCard(); lane.appendChild(card); jump();
   try{
     const R = await webSearch(text);
     if (R.results && R.results.length){
-      msg.ask = webAsk(msg.ask || text, R); msg.sources = R.results.map(x => ({ t:x.t, u:x.u })); msg.web = R.via;
+      msg.ask = webAsk(msg.ask || text, R); msg.sources = R.results.map(x => ({ t:x.t, u:x.u })); msg.web = R.via; if (why) msg.webWhy = why;
       if (card._fx){ const host = u => { try{ return new URL(u).hostname.replace(/^www\./, ''); }catch(e){ return ''; } }, hs = [...new Set(R.results.map(x => host(x.u)).filter(Boolean))];
         window.SZFx.mount(card._fx, 'radar', { lang:SZ.lang(), modo:'web', hallazgos:hs }); await new Promise(r => setTimeout(r, !SZ.CFG.anim ? 0 : 900)); }
     }
     else toast('No encontré nada en internet para eso; te respondo con lo que sabe la IA.');
   }catch(e){ toast(e.message + (e.code === 's_guest' ? '' : ' Te respondo con lo que sabe la IA.')); if (e.code === 's_guest') setTimeout(() => SZ.guestGate({ mode:'signup' }), 400); }
-  finally{ try{ card._px.stop(); }catch(e){} card.remove(); if (webOn) setWeb(false); }
+  finally{ try{ card._px.stop(); }catch(e){} card.remove(); }
 }
 const hostOf = u => { try{ return new URL(u).hostname.replace(/^www\./, ''); }catch(e){ return ''; } };
+/* v4.2 · por qué se buscó, dicho claro (y en el idioma de la página) */
+const WEB_WHY = { es:{ tu:'porque lo pediste', pedido:'porque lo pediste', hoy:'porque preguntaste por algo de hoy', reciente:'porque preguntaste por algo reciente', precio:'porque los precios cambian', evento:'porque preguntaste por un resultado o el clima', lugar:'porque preguntaste por un lugar u horario' },
+  en:{ tu:'because you asked', pedido:'because you asked', hoy:'because you asked about something current', reciente:'because you asked about something recent', precio:'because prices change', evento:'because you asked about a result or the weather', lugar:'because you asked about a place or opening hours' } };
+function webSaid(m){
+  const en = SZ.lang() === 'en', n = m.sources.length, why = (WEB_WHY[en ? 'en' : 'es'] || {})[m.webWhy];
+  return (en ? (m.web === 'wikipedia' ? 'Searched Wikipedia' : 'Searched the web') : (m.web === 'wikipedia' ? 'Busqué en Wikipedia' : 'Busqué en internet')) + (why ? ' ' + why : '') + ' · <b>' + n + (en ? (n === 1 ? ' source' : ' sources') : (n === 1 ? ' fuente' : ' fuentes')) + '</b>';
+}
 /* debajo de tu mensaje: «Busqué en internet · 5 fuentes ▸» */
 function sourcesEl(m){
   const el = document.createElement('div'); el.className = 'agsum websum';
-  el.innerHTML = '<button type="button" class="ag-row" aria-expanded="false"><span class="ag-ic">' + webBtn.innerHTML + '</span><span class="ag-tx">' + (m.web === 'wikipedia' ? 'Busqué en Wikipedia' : 'Busqué en internet') + ' · <b>' + m.sources.length + (m.sources.length === 1 ? ' fuente' : ' fuentes') + '</b></span><svg class="ag-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button><div class="ag-d" hidden><ol class="srcl"></ol></div>';
+  el.innerHTML = '<button type="button" class="ag-row" aria-expanded="false"><span class="ag-ic">' + webBtn.innerHTML + '</span><span class="ag-tx">' + webSaid(m) + '</span><svg class="ag-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button><div class="ag-d" hidden><ol class="srcl"></ol></div>';
   const ol = $('.srcl', el);
   m.sources.forEach((x, i) => { const li = document.createElement('li'), a = document.createElement('a'); a.href = x.u; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.innerHTML = '<b></b><small></small>'; $('b', a).textContent = '[' + (i + 1) + '] ' + (x.t || hostOf(x.u)); $('small', a).textContent = hostOf(x.u); li.appendChild(a); ol.appendChild(li); });
   const row = $('.ag-row', el), d = $('.ag-d', el);
@@ -2766,6 +2810,7 @@ async function send(){
     card.set(1, same ? 'Tu pedido ya era claro: lo paso tal cual' : 'Mejoré tu pedido para que la IA lo entienda mejor');
     await SZ.sleepRaw(550);
     const tl = plan.tema && TOPIC[plan.tema] ? TOPIC[plan.tema].l.toLowerCase() : '';
+    const wd = webTake(text);
     const light = isSimple(text, plan) ? lightPick() : null;
     card.set(2, light ? 'Es algo sencillo: uso una IA rápida que gasta menos' : tl ? 'Eligiendo la IA que más sabe de ' + tl : 'Eligiendo la mejor IA para esto');
     const pick = light || agentPick(plan.tema);
@@ -2775,7 +2820,8 @@ async function send(){
     unlock();
     if (g0 !== gen){ card.el.remove(); return; }                /* cambiaste de chat mientras tanto */
     if (!same) msg.ask = plan.pedido;
-    if (plan.web || needsWeb(text)){ card.el.remove(); await webPrep(msg, plan.pedido || text); if (g0 !== gen) return; }
+    /* v4.2 · internet: decide la regla fija (no el plan de la IA), con lo que escribiste tú */
+    if (wd.go){ card.el.remove(); await webPrep(msg, plan.pedido || text, wd.why); if (g0 !== gen) return; }
     if (wantsDeck(text)) msg.deck = true;
     msg.agent = { pick, name:info(pick).name, tl:light ? 'cosas sencillas (gasta menos)' : tl, ask:same ? '' : plan.pedido };
     st().model.openrouter = pick; save(); paintSel(); renderTop(false); paintAccent();
@@ -2815,7 +2861,7 @@ async function send(){
   if (imgs.length) Object.defineProperty(msg, '_imgs', { value:imgs, enumerable:false, writable:true });
   if (text && wantsDeck(text)) msg.deck = true;
   chat.push(msg); touchThread(); save();
-  if (text && needsWeb(text)){ renderMsgs(); await webPrep(msg, text); save(); }
+  { const wd = text ? webTake(text) : { go:false }; if (wd.why === 'apagado') msg.webNo = true; if (wd.go){ renderMsgs(); await webPrep(msg, text, wd.why); save(); } }
   let okSent = true;
   await runSolo(err => { okSent = false; chat.pop(); save(); renderMsgs(); showErr(err); inp.value = text; files.push(...sent); autoGrow(); updateHint(); renderTray(); }, oneModel ? { model:oneModel } : {});
   if (okSent && text && MEM_RX.test(text)) memOffer(text);
@@ -2882,8 +2928,9 @@ function frustration(text, regen){
 async function runSolo(onFail, o = {}){
   const mid = o.model || selId(), chat = chatArr(), g = gen, vis = info(mid).vision, saver = st().sx.saver;
   const slowT = setTimeout(() => { if (busy[mid] === 'think' && SZ.BOT.react) SZ.BOT.react('slow', { auto:mid === 'sz:auto' }); }, 14000);
-  /* v3.8 · la IA decide sola si busca en internet (si ya buscó para este mensaje, no se repite) */
-  const lastU = [...chat].reverse().find(x => x.role === 'user'), webAuto = !o.noWeb && mode === 'solo' && SZ.CFG.autoWeb !== false && !!lastU && !lastU.sources && !lastU.webTried && !lastU.imgId;
+  /* v4.2 · la IA ya NO decide sola si busca (eso la hacía buscar «porque sí y porque no»): decide la regla fija al enviar.
+     Si igual responde que no sabe datos de hoy, SynthonIA te OFRECE buscar; nunca se busca a escondidas. */
+  const lastU = [...chat].reverse().find(x => x.role === 'user'), webAuto = false, webOffer = !o.noWeb && mode === 'solo' && !!lastU && !lastU.sources && !lastU.webTried && !lastU.imgId && !lastU.webNo;
   const sent = apiMsgs(chat, vis, { webAsk:webAuto }), naive = apiMsgs(chat, vis, { naive:true }), ck = hashStr(mid + '|' + saver + '|' + effKey() + '|' + JSON.stringify(sent));
   let hold = webAuto ? null : false, webQ = null;
   const holdWeb = txt => { if (hold === false) return false; if (webMaybe(txt)){ hold = true; return true; } hold = false; return false; };
@@ -2912,7 +2959,7 @@ async function runSolo(onFail, o = {}){
       const ctl = new AbortController(); ctls.add(ctl);
       try{ r = await SZ.askStream(OR, sent, Object.assign({ model:mid, maxTokens: saver ? 700 : 0, signal:ctl.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { if (holdWeb(txt)) return; mount(); W.write(txt); if (rv) rv.push(txt); }); }finally{ ctls.delete(ctl); }
       addUsage(r.prov || SZ.provOf(mid), r.prompt, r.completion, true, { est:r.est, free:/:free$/.test(mid) || r.prov === 'synthz', rid:r.rid });
-      if (webAuto && !r.aborted){ const mq = WEB_Q_RX.exec(r.text || ''); webQ = mq ? mq[1].trim() : (String(r.text || '').length < 2500 && CUTOFF_RX.test(r.text || '') ? String(lastU.content || '').slice(0, 300) : null); }
+      if (webOffer && !r.aborted && String(r.text || '').length < 2500 && CUTOFF_RX.test(r.text || '')) setTimeout(() => offerWeb(lastU, onFail, o), 1200);
       if (!r.aborted && !r.swapped) SZ.markGood(mid);
       SZ.TEL.msgs++; SZ.TEL.ai = (r.prov || SZ.provOf(mid)).slice(0, 12);
       st().sx.saved += Math.max(0, msgCost(naive) - msgCost(sent)); save();
@@ -3000,6 +3047,14 @@ async function regen(){
   await runSolo(err => { chat.push(last); save(); renderMsgs(); showErr(err, { regen:true }); }, { fresh:true });
 }
 
+
+/* v4.2 · la IA dijo que no tiene datos de hoy: SynthonIA te pregunta antes de buscar (tú decides; no se busca a escondidas) */
+function offerWeb(lastU, onFail, o){
+  if (!lastU || lastU.sources || lastU.webTried || !SZ.BOT || !SZ.BOT.offer) return;
+  const en = SZ.lang() === 'en';
+  SZ.BOT.offer(en ? 'This AI says it has no current data for that. Want me to search the web and answer with sources?' : 'Esta IA dice que no tiene datos de hoy para eso. ¿Lo busco en internet y te respondo con fuentes?', 'pensando',
+    en ? 'Search the web' : 'Buscar en internet', async () => { lastU.webTried = true; await webPrep(lastU, String(lastU.content || '').slice(0, 300), 'tu'); save(); renderMsgs(); await runSolo(onFail, Object.assign({}, o, { noWeb:true, fresh:true })); });
+}
 /* ---------- v3.4 · Calidad de las respuestas (pedido de Sammuel, 28 oct) ----------
    Dos pasos, para que todas las IAs respondan con lógica y se entiendan:
    1) qualitySystem(): unas instrucciones cortas de «experto» que viajan con cada mensaje (las pone apiMsgs).
@@ -3281,8 +3336,13 @@ async function compare(){
   const sent = files.splice(0).filter(f => f.state === 'ok'); renderTray();
   const ask = (text || 'Mira los archivos adjuntos.') + sent.map(f => f.text ? '\n\n[Archivo adjunto: ' + f.name + ']\n```\n' + f.text.slice(0, Math.floor(24000 / sent.length)) + '\n```' : '').join('');
   inp.value = ''; autoGrow(); updateHint();
-  const C = newCmpRun(text, sent.length ? { ask, files:sent.map(f => ({ name:f.name, kind:f.kind, thumb:f.thumb })) } : null);
-  if (sent.length) C.msg = { role:'user', content:text, files:sent.map(f => ({ name:f.name, kind:f.kind, text:f.text, thumb:f.thumb })) };
+  /* v4.2 · Comparar sigue la MISMA regla de internet que el chat normal: si toca buscar, se busca una sola vez y todas las IAs reciben los mismos resultados */
+  const wd = text ? webTake(text) : { go:false }, wm = { role:'user', content:text };
+  if (wd.go) await webPrep(wm, text, wd.why);
+  const ask2 = wm.ask ? wm.ask + (ask.length > text.length ? ask.slice(text.length) : '') : ask;
+  const C = newCmpRun(text, sent.length || wm.sources ? { ask:ask2, files:sent.map(f => ({ name:f.name, kind:f.kind, thumb:f.thumb })) } : null);
+  if (sent.length || wm.sources) C.msg = Object.assign({ role:'user', content:text }, sent.length ? { files:sent.map(f => ({ name:f.name, kind:f.kind, text:f.text, thumb:f.thumb })) } : {}, wm.sources ? { sources:wm.sources, web:wm.web, webWhy:wm.webWhy } : {});
+  if (wm.sources){ const u = C.node.querySelector('.m.user'); const se = sourcesEl(wm); if (u) u.after(se); else C.node.prepend(se); }
   ids.forEach(id => cmpJob(id, C));
 }
 /* entrar a Comparar con las IA marcadas (desde los temas) */
@@ -5273,8 +5333,8 @@ addEventListener('synthz-saver', () => { $$('#sxSw, #saverBtn').forEach(x => x.s
     const paint = () => { const on = !!st().sx.saver; sv.setAttribute('aria-checked', String(on)); $('.mck', sv).textContent = on ? '✓' : ''; };
     paint(); addEventListener('synthz-saver', paint);
     sv.addEventListener('click', e => { e.stopPropagation(); setSaver(!st().sx.saver); paint(); attClose(); }, true);
-    const wb = $('[data-att="web"]', am), ib = $('[data-att="mkimg"]', am);
-    const mark = () => { if (wb) wb.setAttribute('aria-checked', String(webOn)); if (ib) ib.setAttribute('aria-checked', String(imgMode)); };
+    const wb = $('[data-att="web"]', am), nb = $('[data-att="noweb"]', am), ib = $('[data-att="mkimg"]', am);
+    const mark = () => { if (wb) wb.setAttribute('aria-checked', String(webMode === 'on')); if (nb) nb.setAttribute('aria-checked', String(webMode === 'off')); if (ib) ib.setAttribute('aria-checked', String(imgMode)); };
     new MutationObserver(mark).observe(document.body, { attributes:true, attributeFilter:['class'] }); mark();
   }
 }
@@ -5286,12 +5346,13 @@ addEventListener('synthz-saver', () => { $$('#sxSw, #saverBtn').forEach(x => x.s
   const paint = () => {
     const L = [];
     if (imgMode) L.push(['img', '🎨', 'Crear imagen']);
-    if (webOn) L.push(['web', '🌐', 'Internet']);
+    if (webMode === 'on') L.push(['web', '🌐', SZ.lang() === 'en' ? 'Web search' : 'Internet']);
+    if (webMode === 'off') L.push(['noweb', '🚫', SZ.lang() === 'en' ? 'No web search' : 'Sin internet']);
     if (st().sx.saver) L.push(['saver', '🍃', 'Respuestas cortas']);
     const have = $$('[data-off]', host).map(b => b.dataset.off).join(), want = L.map(x => x[0]).join(); if (have === want) return;
     host.innerHTML = L.map(([k, ic, t]) => '<button type="button" class="onchip" data-off="' + k + '" data-tip="' + t + ' · toca para apagar" aria-label="' + t + ': encendido. Toca para apagar"><i aria-hidden="true">' + ic + '</i><span class="oc-l">' + t + '</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg></button>').join('');
   };
-  host.addEventListener('click', e => { const b = e.target.closest('[data-off]'); if (!b) return; const k = b.dataset.off; if (k === 'img') setImgMode(false); else if (k === 'web') setWeb(false); else setSaver(false); paint(); });
+  host.addEventListener('click', e => { const b = e.target.closest('[data-off]'); if (!b) return; const k = b.dataset.off; if (k === 'img') setImgMode(false); else if (k === 'web' || k === 'noweb') setWebMode('auto', true); else setSaver(false); paint(); });
   new MutationObserver(paint).observe(document.body, { attributes:true, attributeFilter:['class'] });
   addEventListener('synthz-saver', paint); $('#saverBtn') && $('#saverBtn').addEventListener('click', () => setTimeout(paint, 0)); paint();
 }

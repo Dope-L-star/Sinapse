@@ -71,6 +71,10 @@ export default function CajaEscribir(){
                 <i aria-hidden="true">🌐</i>
                 <span><b>Buscar en internet</b><small>Responde con datos de hoy y sus fuentes</small></span>
               </button>
+              <button type="button" role="menuitemcheckbox" data-att="noweb" aria-checked="false">
+                <i aria-hidden="true">🚫</i>
+                <span><b>No buscar en internet</b><small>Solo con lo que sabe la IA (para tu próximo mensaje)</small></span>
+              </button>
               <button type="button" role="menuitemcheckbox" data-att="saver" aria-checked="false"><i aria-hidden="true">🍃</i><span><b>Respuestas cortas</b><small>Gastas menos de tu límite de hoy</small></span><em className="mck" aria-hidden="true" /></button>
               <p className="ahint">También puedes arrastrar archivos aquí o pegarlos con Ctrl+V.</p>
             </div>

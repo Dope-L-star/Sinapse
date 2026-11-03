@@ -13,6 +13,7 @@
 import TX from './_alias-textos.js';
 import { route, body, json, auth, redis, pipe, limit, today, str, rid, sha, ipOf, roleOf } from './_lib.js';
 import { chat, pickKeys, searchWith, searchWiki, markPay, PAY_RX, classify } from './_pool.js';
+import { webRule } from './_web-regla.js';
 import { classify as kindOf, pick, why, record, feedback, learned, used, CATS } from './_ruta.js';
 
 const MAX_GOAL = 500, MAX_STEPS = 7, MIN_STEPS = 3;
@@ -161,6 +162,14 @@ const fallbackSteps = (goal, lang) => [
   { id:3, title:t(lang, 'srv.fb3t'), tool:'think', input:t(lang, 'srv.fb3i') }
 ];
 
+/* si toca buscar y no hay paso de búsqueda, se agrega al principio; si no toca, los pasos de búsqueda pasan a «pensar» */
+function webSteps(steps, go, goal, lang){
+  let out = steps.map(x => Object.assign({}, x));
+  if (go && !out.some(x => x.tool === 'search')) out.unshift({ id:0, title:t(lang, 'srv.fb1t'), tool:'search', input:goal.slice(0, 200) });
+  if (!go) out = out.map(x => x.tool === 'search' ? Object.assign(x, { tool:'think' }) : x);
+  return out.slice(0, MAX_STEPS).map((x, i) => Object.assign(x, { id:i + 1 }));
+}
+
 /* ---------- action: plan ---------- */
 async function doPlan(req, me, b, lang){
   const raw = typeof b.goal === 'string' ? b.goal.trim() : '', goal = str(raw, MAX_GOAL);
@@ -183,7 +192,11 @@ async function doPlan(req, me, b, lang){
     }
   }catch(e){ await undo(); throw e; }
   if (!answered) await undo();                                                           /* si ninguna IA respondió, no gasta el cupo */
-  return json({ ok:true, plan:Object.assign({ id:rid(8), goal, steps:steps || fallbackSteps(goal, lang) }, steps && R.model ? { route:R } : {}) });
+  /* v4.2 · internet con regla fija, igual que en SynthFlow: la IA que arma el plan ya no decide si se busca.
+     b.web = 'on' | 'off' fuerza la decisión; si no viene, decide webRule(objetivo). Si la persona luego edita un paso, manda ella. */
+  const wd = b.web === 'on' ? { go:true, why:'tu' } : b.web === 'off' ? { go:false, why:'apagado' } : webRule(goal);
+  const fin = webSteps(steps || fallbackSteps(goal, lang), wd.go, goal, lang);
+  return json({ ok:true, plan:Object.assign({ id:rid(8), goal, steps:fin, web:wd }, steps && R.model ? { route:R } : {}) });
 }
 
 /* ---------- action: step ---------- */
