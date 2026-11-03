@@ -330,7 +330,7 @@ let ptopAll = false;
 function renderPTopics(){
   const L = ptopAll ? TOPICS : TOPICS.slice(0, 8);
   $('#pTopics').innerHTML = L.map(([k, e, l], i) => '<button type="button" class="tchip sm" data-ptk="' + k + '" aria-pressed="' + (ptopic === k) + '" style="--i:' + i + '">' + esc(l) + '</button>').join('')
-    + '<button type="button" class="tchip sm more" data-ptmore>' + (ptopAll ? 'Menos temas' : '+ ' + (TOPICS.length - 8) + ' temas') + '</button>';
+    + '<button type="button" class="tchip sm more" data-ptmore>' + (ptopAll ? (SZ.lang() === 'en' ? 'Fewer topics' : 'Menos temas') : '+ ' + (TOPICS.length - 8) + (SZ.lang() === 'en' ? ' topics' : ' temas')) + '</button>';
 }
 $('#pTopics').addEventListener('click', e => {
   if (e.target.closest('[data-ptmore]')){ ptopAll = !ptopAll; smoothSwap($('#pTopics'), renderPTopics); return; }
@@ -4068,8 +4068,8 @@ function bPane1(){
   const keys = BF.all ? TOPICS.map(t => t[0]) : (isMobile() ? Object.keys(BICO).slice(0, 7) : Object.keys(BICO));
   const card = (k, i) => { const T = TOPIC[k], ic = BICO[k], c = BCOL[k] || '#e6b65f'; return '<button type="button" class="bf-card" data-bt="' + k + '" style="--i:' + i + ';--tc:' + c + '"><span class="bf-ic">' + (ic ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + ic + '"/></svg>' : '<i aria-hidden="true">' + T.e + '</i>') + '</span><b>' + esc(T.l) + '</b><small>' + esc(BEX[k] || T.ex.map(x => x[0]).join(' · ')) + '</small></button>'; };
   return '<div class="bf-h"><h1 class="greet">' + greetHtml(GREET[0]) + '</h1><p>Toca un tema. En el siguiente paso te muestro las IA que mejor lo hacen.</p></div>'
-    + '<div class="bf-grid' + (BF.all ? ' all' : '') + '">' + keys.map(card).join('') + (BF.all || !isMobile() ? '' : '<button type="button" class="bf-card more" data-bmore style="--i:' + keys.length + '"><span class="bf-ic"><i aria-hidden="true">✦</i></span><b>Más temas</b><small>Ver los ' + TOPICS.length + '</small></button>') + '</div>'
-    + (BF.all || isMobile() ? '' : '<p class="bf-skip"><button type="button" class="btn sm ghost" data-bmore>✦ Ver los ' + TOPICS.length + ' temas</button></p>')
+    + '<div class="bf-grid' + (BF.all ? ' all' : '') + '">' + keys.map(card).join('') + (BF.all || !isMobile() ? '' : '<button type="button" class="bf-card more" data-bmore style="--i:' + keys.length + '"><span class="bf-ic"><i aria-hidden="true">✦</i></span><b>' + (SZ.lang() === 'en' ? 'More topics' : 'Más temas') + '</b><small>' + (SZ.lang() === 'en' ? 'See all ' : 'Ver los ') + TOPICS.length + '</small></button>') + '</div>'
+    + (BF.all || isMobile() ? '' : '<p class="bf-skip"><button type="button" class="btn sm ghost" data-bmore>✦ ' + (SZ.lang() === 'en' ? 'See all ' + TOPICS.length + ' topics' : 'Ver los ' + TOPICS.length + ' temas') + '</button></p>')
     + '<p class="bf-skip">¿Ya sabes qué IA quieres? <button type="button" class="lnk" data-bskip>Ir directo al chat →</button></p>';
 }
 function bPane2(){

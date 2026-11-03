@@ -10,6 +10,15 @@ import { useCallback, useEffect, useState } from 'react';
  */
 export default function SynthonIAHost() {
   const [hidden, setHidden] = useState(false);
+  /* v4.2 · ya estamos en ALFA: «ALFA» en español, «ALPHA» en inglés (cambia al instante con el idioma) */
+  const [alfaTag, setAlfaTag] = useState('ALFA');
+  useEffect(() => {
+    const read = () => setAlfaTag(document.documentElement.lang === 'en' ? 'ALPHA' : 'ALFA');
+    read();
+    const mo = new MutationObserver(read);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+    return () => mo.disconnect();
+  }, []);
 
   const activateAssistant = useCallback((event) => {
     if (typeof window === 'undefined') return;
@@ -105,7 +114,7 @@ export default function SynthonIAHost() {
             data-react-component="synthonia-beta"
             style={{ visibility: 'hidden' }}
             onClick={openFeedback}
-          >BETA</button>
+          >{alfaTag}</button>
         </>
       )}
     </div>

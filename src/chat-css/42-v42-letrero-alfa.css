@@ -33,7 +33,7 @@
 .la-b{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:10px 20px;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.18));background:rgba(255,255,255,.06);color:var(--text,#f3eef8);font:600 15px var(--sans,inherit);cursor:pointer;transition:background .2s,transform .2s,box-shadow .2s}
 .la-b svg{width:20px;height:20px}
 .la-b:hover{background:rgba(255,255,255,.12);transform:translateY(-1px)}
-.la-b:focus-visible,.la-x:focus-visible,.la-chip:focus-visible{outline:3px solid #b8c4ff;outline-offset:3px}
+.la-b:focus-visible,.la-x:focus-visible{outline:3px solid #b8c4ff;outline-offset:3px}
 .la-go{border-color:transparent;color:#1b1220;background:linear-gradient(120deg,var(--gold,#e6b65f),color-mix(in srgb,var(--gold,#e6b65f) 55%,var(--wine,#c9566c)));box-shadow:0 8px 26px rgba(var(--gold-rgb,230,182,95),.35)}
 .la-go:hover{background:linear-gradient(120deg,var(--gold,#e6b65f),color-mix(in srgb,var(--gold,#e6b65f) 55%,var(--wine,#c9566c)));box-shadow:0 12px 32px rgba(var(--gold-rgb,230,182,95),.5)}
 .la-x{position:absolute;top:-14px;right:-10px;z-index:2;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;border:1px solid var(--line,rgba(255,255,255,.2));background:#1a1420;color:var(--text,#fff);cursor:pointer}
@@ -54,9 +54,6 @@
 .la-code{font:700 clamp(17px,4.4vw,24px)/1.1 var(--mono,ui-monospace,monospace) !important;letter-spacing:.08em}
 .la-wink{position:relative;margin:0;font-size:13px;color:var(--gold,#e6b65f);min-height:1.2em}
 .la-note{margin:14px 0 16px;font-size:13px;color:var(--mute,#a79fb8)}
-/* el chip «ALFA» para volver a verlo (solo después de cerrarlo, en esta sesión) */
-.la-chip{position:fixed;left:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:60;min-height:32px;padding:5px 12px;border-radius:999px;border:1px solid rgba(var(--gold-rgb,230,182,95),.55);background:rgba(20,14,26,.8);color:var(--gold,#e6b65f);font:800 11.5px/1 var(--sans,inherit);letter-spacing:.2em;cursor:pointer;box-shadow:0 0 16px rgba(var(--gold-rgb,230,182,95),.25);animation:laUp .5s ease both}
-@media (max-width:899px){.la-chip{bottom:calc(76px + env(safe-area-inset-bottom))}}
 @media (max-width:520px){
   .la-front{padding:36px 18px 22px}.la-back{padding:18px 14px}
   .la-pase{aspect-ratio:auto;min-height:220px;padding:18px}
@@ -72,13 +69,13 @@ html.simple .la-go{background:var(--sacc);box-shadow:none}
 html.simple .la-back{background:var(--sbg,#252422)}
 /* sin animaciones: todo prendido y quieto desde el principio */
 html.noanim .la,html.noanim .la-stage,html.noanim .la-card,html.noanim .la-pase,html.noanim .la-b{transition:none}
-html.noanim .la-bulbs i,html.noanim .la-chip{animation:none}
+html.noanim .la-bulbs i{animation:none}
 html.noanim .la-word span,html.noanim .la-kick,html.noanim .la-sub,html.noanim .la-perks li{animation:none;opacity:1}
 html.noanim .la-word span{text-shadow:0 0 4px rgba(255,255,255,.9),0 0 14px var(--gold,#e6b65f)}
 html.noanim .la-pase{transform:none}
 @media (prefers-reduced-motion:reduce){
   .la,.la-stage,.la-card,.la-pase{transition:none}
-  .la-bulbs i,.la-chip{animation:none}
+  .la-bulbs i{animation:none}
   .la-word span,.la-kick,.la-sub,.la-perks li{animation:none;opacity:1}
   .la-word span{text-shadow:0 0 4px rgba(255,255,255,.9),0 0 14px var(--gold,#e6b65f)}
   .la-pase{transform:none}

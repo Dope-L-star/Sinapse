@@ -176,7 +176,7 @@ addEventListener('pointerdown', e => {
     BOT.sticky = 'triste'; botFace('triste', true); if (BOT.open) botClose();
     const unstick = e => { if (e.target.closest && e.target.closest('#szSay,#szHand,#szBot,.szm')) return; if (e.type === 'pointerdown' && e.pointerType === 'mouse' && e.button) return; BOT.sticky = null; botFace('feliz', true); removeEventListener('keydown', unstick, true); removeEventListener('pointerdown', unstick, true); };
     setTimeout(() => { addEventListener('keydown', unstick, true); addEventListener('pointerdown', unstick, true); }, 2500);
-    if (!t || !HAND){ botBubble('Perdónanos por tu mala experiencia. Toca «BETA» para contarnos cuál fue el problema.', 9000); return; }
+    if (!t || !HAND){ botBubble('Perdónanos por tu mala experiencia. Toca «ALFA» para contarnos cuál fue el problema.', 9000); return; }
     const r0 = BOT.el.getBoundingClientRect(); HAND.show({ x:r0.left + r0.width / 2, y:r0.top + r0.height / 2 });
     await HAND.moveTo(t, { shape:'point' }); HAND.spot(t, 8);
     const k = await HAND.talk('Perdónanos por tu mala experiencia. Aquí está nuestro botón para que nos cuentes cuál fue el problema.', { near:t, mood:'triste', buttons:[{ label:'Contarles' }, { label:'Ahora no', ghost:true }], auto:14000 });

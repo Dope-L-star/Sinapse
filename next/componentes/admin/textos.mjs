@@ -76,10 +76,10 @@ const es = {
   mPh: 'Estamos presentando fallas o actualizaciones. Espera un momento.', mStart: 'Encender aviso', mChange: 'Cambiar texto', mStop: 'Apagar aviso', mStarted: 'Aviso encendido: la página ya muestra el mantenimiento.', mStopped: 'Aviso apagado.',
   /* confirmación brutalista */
   sure: 'Confirmar', cancel: 'Cancelar', danger: 'OJO',
-  mConfirmT: '¿Cubrir SymphorIA con el mantenimiento?', mConfirmP: 'Las ~10 mil personas de la beta verán el aviso en vez de la página hasta que lo apagues. Pulsem sigue abierto.', mConfirmB: 'Sí, encender',
+  mConfirmT: '¿Cubrir SymphorIA con el mantenimiento?', mConfirmP: 'Las ~10 mil personas de la alfa verán el aviso en vez de la página hasta que lo apagues. Pulsem sigue abierto.', mConfirmB: 'Sí, encender',
   sbConfirmT: '¿Copiar todo a Supabase?', sbConfirmP: 'Puede tardar unos minutos y hace muchas consultas. No cierres Pulsem mientras copia.', sbConfirmB: 'Copiar ahora',
   /* comentarios */
-  fbTitle: 'Comentarios de la beta', fbNew: n => n + ' nuevos', fbLead: 'Márcalos como vistos o resueltos.',
+  fbTitle: 'Comentarios de la alfa', fbNew: n => n + ' nuevos', fbLead: 'Márcalos como vistos o resueltos.',
   fbChips: { nuevo: 'Nuevos', visto: 'Vistos', resuelto: 'Resueltos', todos: 'Todos' }, fbCat: { idea: '💡 Idea', error: '🐞 Algo falló', confuso: '🤔 No entendió algo', otro: '💬 Otro' },
   seen: 'Visto', solved: 'Resuelto ✓', by: (s, b) => s + ' por ' + b, marked: s => 'Marcado como ' + s + '.', filterFb: 'Buscar en comentarios…',
   /* ayuda */
@@ -163,9 +163,9 @@ const en = {
   mTitle: 'Maintenance notice', mOn: '● On', mLead: 'Covers the whole site with this notice and SynthonIA in the middle. Pulsem is never covered; Prime and ZFlow can «Enter anyway».',
   mPh: 'We are having issues or updates. Please wait a moment.', mStart: 'Turn notice on', mChange: 'Change text', mStop: 'Turn notice off', mStarted: 'Notice on: the site now shows maintenance.', mStopped: 'Notice off.',
   sure: 'Confirm', cancel: 'Cancel', danger: 'CAREFUL',
-  mConfirmT: 'Cover SymphorIA with maintenance?', mConfirmP: 'The ~10k beta users will see the notice instead of the site until you turn it off. Pulsem stays open.', mConfirmB: 'Yes, turn on',
+  mConfirmT: 'Cover SymphorIA with maintenance?', mConfirmP: 'The ~10k alpha users will see the notice instead of the site until you turn it off. Pulsem stays open.', mConfirmB: 'Yes, turn on',
   sbConfirmT: 'Copy everything to Supabase?', sbConfirmP: 'It can take a few minutes and makes many requests. Don’t close Pulsem while it copies.', sbConfirmB: 'Copy now',
-  fbTitle: 'Beta feedback', fbNew: n => n + ' new', fbLead: 'Mark them as seen or solved.',
+  fbTitle: 'Alpha feedback', fbNew: n => n + ' new', fbLead: 'Mark them as seen or solved.',
   fbChips: { nuevo: 'New', visto: 'Seen', resuelto: 'Solved', todos: 'All' }, fbCat: { idea: '💡 Idea', error: '🐞 Something broke', confuso: '🤔 Confused', otro: '💬 Other' },
   seen: 'Seen', solved: 'Solved ✓', by: (s, b) => s + ' by ' + b, marked: s => 'Marked as ' + s + '.', filterFb: 'Search feedback…',
   helpTitle: 'Help', helpN: (o, l) => o + ' waiting' + (l ? ' · ' + l + ' unanswered 15+ min' : ''), helpLead: 'Open one to reply. With «Contact» you write to someone first.',
