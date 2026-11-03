@@ -52,6 +52,7 @@ html.enter.po #veil{background:#0b0c10}
 .fc.ro{padding-right:10px}
 .fc.load .ic,.fc.load img{background:linear-gradient(90deg,rgba(255,255,255,.06),rgba(255,255,255,.2),rgba(255,255,255,.06));background-size:200% 100%;animation:shimmer 1.2s infinite linear}
 .fc.err{border-color:rgba(255,140,120,.5)}
+.fc .fcp{flex:none;font:500 11px var(--mono);color:var(--mute);white-space:nowrap}
 .fcs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 body.drag::after{content:"Suelta tus archivos aquí";position:fixed;inset:14px;z-index:9000;display:grid;place-items:center;border:2px dashed rgba(184,196,255,.6);border-radius:26px;background:rgba(11,12,16,.72);backdrop-filter:blur(8px);font-family:var(--serif);font-size:30px;pointer-events:none}
 

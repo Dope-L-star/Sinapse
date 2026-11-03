@@ -60,10 +60,10 @@ export default function CajaEscribir(){
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.6 2.8 3.8 5.8 3.8 9s-1.2 6.2-3.8 9c-2.6-2.8-3.8-5.8-3.8-9S9.4 5.8 12 3z" /></svg>
             </button>
             <div className="amenu" id="attMenu" role="menu" hidden>
-              <button type="button" role="menuitem" data-att="file"><i aria-hidden="true">📄</i><span><b>Archivo o PDF</b><small>Documentos, código y textos</small></span></button>
+              <button type="button" role="menuitem" data-att="file"><i aria-hidden="true">📄</i><span><b>Cualquier archivo</b><small>PDF, Word, Excel, zip, audio, video, código…</small></span></button>
               <button type="button" role="menuitem" data-att="img">
                 <i aria-hidden="true">🖼️</i>
-                <span><b>Imagen</b><small>Solo las IA que «ven fotos» pueden mirarla</small></span>
+                <span><b>Imagen</b><small>Si tu IA no ve fotos, otra te la describe</small></span>
               </button>
               <button type="button" role="menuitem" data-att="cam" className="only-touch"><i aria-hidden="true">📷</i><span><b>Tomar una foto</b><small>Con la cámara del celular</small></span></button>
               <button type="button" role="menuitem" data-att="mkimg"><i aria-hidden="true">🎨</i><span><b>Crear una imagen</b><small>La IA la dibuja (con tu cuenta)</small></span></button>
@@ -76,7 +76,7 @@ export default function CajaEscribir(){
             </div>
             <div className="onchips" id="onChips" />
           </div>
-          <input type="file" id="fileIn" multiple hidden accept="image/*,.pdf,.docx,.xlsx,.pptx,.odt,.ods,.odp,.txt,.md,.csv,.tsv,.json,.jsonl,.xml,.html,.htm,.css,.scss,.js,.mjs,.ts,.jsx,.tsx,.py,.ipynb,.java,.c,.h,.cpp,.cs,.go,.rs,.php,.rb,.sh,.sql,.yml,.yaml,.toml,.ini,.log,.tex,.swift,.kt,.dart,.lua,.vue,.svelte,.srt,.vtt,.rtf,.svg" />
+          <input type="file" id="fileIn" multiple hidden />
           <input type="file" id="imgIn" multiple hidden accept="image/*" />
           <input type="file" id="camIn" hidden accept="image/*" capture="environment" />
           <label className="field"><textarea id="inp" rows="1" placeholder="Escribe tu mensaje…" /></label>
