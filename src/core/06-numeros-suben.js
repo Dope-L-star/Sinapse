@@ -11,7 +11,19 @@ function countTo(el, val){
 }
 
 /* la etiqueta para lectores de pantalla sigue al idioma (si el texto tiene clave, se lee la traducción) */
-function ariaSync(el){ const k = el.dataset.i18n || el.dataset.i18nHtml, v = k && t(k); el.setAttribute('aria-label', (v && v !== k ? v : el.textContent).replace(/<[^>]+>/g, '').trim().replace(/\s+/g, ' ')); }
+/* v4.0 · un <p> o <span> con aria-label NO se lee (ARIA lo prohíbe en elementos sin rol): la frase de la portada
+   «Pregunta, crea, programa y compara…» quedaba muda para los lectores de pantalla. Ahí va un texto oculto a la vista en su lugar. */
+const srFree = el => { const s = el.querySelector(':scope > .sr-txt'); return s ? el.textContent.slice(0, el.textContent.length - s.textContent.length) : el.textContent; };
+const ARIA_NAMED = /^(H[1-6]|A|BUTTON|LABEL|SUMMARY)$/;
+function ariaSync(el){
+  const k = el.dataset.i18n || el.dataset.i18nHtml, v = k && t(k), txt = (v && v !== k ? v : srFree(el)).replace(/<[^>]+>/g, '').trim().replace(/\s+/g, ' ');
+  if (ARIA_NAMED.test(el.tagName) || el.hasAttribute('role')){ el.setAttribute('aria-label', txt); return; }
+  let s = el.querySelector(':scope > .sr-txt');
+  /* si el cambio de idioma ya dejó el texto normal (sin letras sueltas), se lee solo y no hace falta copia */
+  if (el._chars && !el.querySelector('.tc')){ if (s) s.remove(); return; }
+  if (!s){ s = document.createElement('span'); s.className = 'sr-txt'; el.appendChild(s); }
+  s.textContent = txt;
+}
 onLang(() => document.querySelectorAll('[data-aa]').forEach(ariaSync));
 
 /* ===== escritura suave: cada letra aparece con un resplandor y un cursor la acompaña ===== */
@@ -34,7 +46,7 @@ function charify(el){
           if (wrap) frag.appendChild(holder);
         });
         n.replaceWith(frag);
-      } else if (n.nodeType === 1 && !/^(SCRIPT|STYLE|SVG|I|BUTTON)$/i.test(n.tagName)) walk(n);
+      } else if (n.nodeType === 1 && !/^(SCRIPT|STYLE|SVG|I|BUTTON)$/i.test(n.tagName) && !n.classList.contains('sr-txt')) walk(n);
     });
   };
   walk(el);

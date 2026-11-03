@@ -26,7 +26,7 @@ function t(k, v){
 }
 function i18nApply(r = document){
   /* si el texto ya es el mismo no se toca: así no se borran las letras animadas (charify) ni se rompen referencias */
-  r.querySelectorAll('[data-i18n]').forEach(el => { const v = t(el.dataset.i18n); if (el.textContent !== v) el.textContent = v; });
+  r.querySelectorAll('[data-i18n]').forEach(el => { const v = t(el.dataset.i18n), sr = el.querySelector(':scope > .sr-txt'), cur = sr ? el.textContent.slice(0, el.textContent.length - sr.textContent.length) : el.textContent; if (cur !== v) el.textContent = v; });
   const tp = document.createElement('template');
   r.querySelectorAll('[data-i18n-html]').forEach(el => { tp.innerHTML = t(el.dataset.i18nHtml); if (el.innerHTML !== tp.innerHTML) el.innerHTML = tp.innerHTML; });
   r.querySelectorAll('[data-i18n-attr]').forEach(el => el.dataset.i18nAttr.split(';').forEach(p => { const [a, k] = p.split('=').map(x => x && x.trim()); if (a && k) el.setAttribute(a, t(k)); }));
