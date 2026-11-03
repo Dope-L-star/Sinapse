@@ -46,8 +46,8 @@
 .la-ph small{display:block;font:600 11px/1 var(--serif,Georgia,serif);letter-spacing:.3em;color:var(--gold,#e6b65f)}
 .la-ph b{display:block;margin:8px 0 4px;font:900 clamp(26px,6vw,38px)/1 var(--sans,inherit);background:linear-gradient(90deg,var(--gold,#e6b65f),#9fe7ff,var(--wine,#c9566c));-webkit-background-clip:text;background-clip:text;color:transparent}
 .la-ph span{font-size:14px;color:#efe9f7}
-.la-face{flex:none;width:clamp(58px,14vw,84px);height:auto;filter:drop-shadow(0 6px 16px rgba(var(--wine-rgb,201,86,108),.45));animation:laFloat 3.4s ease-in-out infinite}
-@keyframes laFloat{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-6px) rotate(4deg)}}
+.la-syn{flex:none;width:104px;height:138px;margin:-14px -6px -30px 0;pointer-events:none}
+.la-syn .szbody{--sz:104px}
 .la-pd{position:relative;display:flex;flex-wrap:wrap;gap:6px 28px;margin:0}
 .la-pd dt{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:#b3abc4}
 .la-pd dd{margin:2px 0 0;font-size:15px;color:#fff}
@@ -72,13 +72,13 @@ html.simple .la-go{background:var(--sacc);box-shadow:none}
 html.simple .la-back{background:var(--sbg,#252422)}
 /* sin animaciones: todo prendido y quieto desde el principio */
 html.noanim .la,html.noanim .la-stage,html.noanim .la-card,html.noanim .la-pase,html.noanim .la-b{transition:none}
-html.noanim .la-bulbs i,html.noanim .la-face,html.noanim .la-chip{animation:none}
+html.noanim .la-bulbs i,html.noanim .la-chip{animation:none}
 html.noanim .la-word span,html.noanim .la-kick,html.noanim .la-sub,html.noanim .la-perks li{animation:none;opacity:1}
 html.noanim .la-word span{text-shadow:0 0 4px rgba(255,255,255,.9),0 0 14px var(--gold,#e6b65f)}
 html.noanim .la-pase{transform:none}
 @media (prefers-reduced-motion:reduce){
   .la,.la-stage,.la-card,.la-pase{transition:none}
-  .la-bulbs i,.la-face,.la-chip{animation:none}
+  .la-bulbs i,.la-chip{animation:none}
   .la-word span,.la-kick,.la-sub,.la-perks li{animation:none;opacity:1}
   .la-word span{text-shadow:0 0 4px rgba(255,255,255,.9),0 0 14px var(--gold,#e6b65f)}
   .la-pase{transform:none}

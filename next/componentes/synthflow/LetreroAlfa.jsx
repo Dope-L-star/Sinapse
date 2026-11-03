@@ -3,7 +3,7 @@
    Sale UNA vez a cada persona al entrar a SynthFlow (se recuerda en este navegador).
    · Un letrero de teatro con bombillos que corren por el borde y las letras que se prenden una por una.
    · La sorpresa: «Ver mi pase» voltea el letrero y aparece tu Pase Alfa holográfico, con un código propio
-     (se arma en tu navegador, no se manda a ningún lado), la fecha en que entraste y la carita de SynthonIA que te guiña.
+     (se arma en tu navegador, no se manda a ningún lado), la fecha en que entraste y SynthonIA celebrando contigo.
      El brillo del pase sigue al mouse o a la inclinación del celular. Se puede guardar como imagen.
    · Vuelve a verse con el chip «ALFA» de abajo a la izquierda (solo en esta sesión) o borrando los datos del sitio.
    Respeta: ES/EN al instante, Simple, «sin animaciones» (html.noanim) y prefers-reduced-motion. Escape cierra. */
@@ -47,16 +47,20 @@ function miPase() {
 }
 const fecha = (t, l) => new Date(t).toLocaleDateString(l === 'en' ? 'en-US' : 'es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
 
-function Carita({ wink }) {
-  return (
-    <svg className="la-face" viewBox="0 0 64 64" aria-hidden="true">
-      <defs><radialGradient id="laOrb" cx="35%" cy="30%" r="75%"><stop offset="0" stopColor="#fff6d8" /><stop offset=".45" stopColor="var(--gold,#e6b65f)" /><stop offset="1" stopColor="var(--wine,#c9566c)" /></radialGradient></defs>
-      <circle cx="32" cy="32" r="28" fill="url(#laOrb)" />
-      <circle cx="23" cy="28" r="4" fill="#1b1220" />
-      {wink ? <path d="M36 28q5-5 10 0" stroke="#1b1220" strokeWidth="3.2" fill="none" strokeLinecap="round" /> : <circle cx="41" cy="28" r="4" fill="#1b1220" />}
-      <path d="M22 39q10 9 20 0" stroke="#1b1220" strokeWidth="3.2" fill="none" strokeLinecap="round" />
-    </svg>
-  );
+/* SynthonIA de verdad (la misma de toda la página, dibujada por synthonia.js): saluda y, al voltear el pase, celebra */
+function SynthonIA({ fiesta }) {
+  const host = useRef(null);
+  useEffect(() => {
+    let tm = 0;
+    const paint = () => {
+      const SZ = window.SZ;
+      if (SZ && typeof SZ.synSet === 'function' && host.current) SZ.synSet(host.current, fiesta ? 'celebrando' : 'feliz', fiesta ? 'celebra' : 'saluda', 104);
+      else tm = setTimeout(paint, 300);
+    };
+    paint();
+    return () => clearTimeout(tm);
+  }, [fiesta]);
+  return <div className="la-syn" ref={host} aria-hidden="true" />;
 }
 
 /* el pase como imagen SVG para guardar (mismos colores del tema activo) */
@@ -67,7 +71,7 @@ function svgDelPase(p, t, l) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="600" viewBox="0 0 1000 600">
 <defs><linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#140f22"/><stop offset="1" stop-color="#2a1530"/></linearGradient>
 <linearGradient id="h" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${g}"/><stop offset=".5" stop-color="#9fe7ff"/><stop offset="1" stop-color="${w}"/></linearGradient>
-<radialGradient id="o" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff6d8"/><stop offset=".45" stop-color="${g}"/><stop offset="1" stop-color="${w}"/></radialGradient></defs>
+</defs>
 <rect width="1000" height="600" rx="44" fill="url(#b)"/><rect x="14" y="14" width="972" height="572" rx="34" fill="none" stroke="url(#h)" stroke-width="4"/>
 <text x="70" y="120" font-family="Georgia,serif" font-size="30" fill="${g}" letter-spacing="8">SYMPHORIA</text>
 <text x="70" y="220" font-family="Arial Black,Arial,sans-serif" font-size="92" font-weight="900" fill="url(#h)">${esc(t.ptitle)}</text>
@@ -75,7 +79,6 @@ function svgDelPase(p, t, l) {
 <text x="70" y="420" font-family="Arial,sans-serif" font-size="22" fill="#a79fb8">${esc(t.code)}</text>
 <text x="70" y="470" font-family="Courier New,monospace" font-size="48" font-weight="700" fill="#fff" letter-spacing="4">${esc(p.code)}</text>
 <text x="70" y="530" font-family="Arial,sans-serif" font-size="22" fill="#a79fb8">${esc(t.since)} ${esc(fecha(p.t, l))}</text>
-<g transform="translate(780 330)"><circle r="120" fill="url(#o)"/><circle cx="-34" cy="-14" r="15" fill="#1b1220"/><path d="M18 -14q18 -18 36 0" stroke="#1b1220" stroke-width="11" fill="none" stroke-linecap="round"/><path d="M-40 34q40 36 80 0" stroke="#1b1220" stroke-width="11" fill="none" stroke-linecap="round"/></g>
 </svg>`;
 }
 
@@ -194,7 +197,7 @@ export default function LetreroAlfa() {
                   <b>{t.ptitle}</b>
                   <span>{t.holder}</span>
                 </div>
-                <Carita wink={flip} />
+                <SynthonIA fiesta={flip} />
               </div>
               <dl className="la-pd">
                 <div><dt>{t.code}</dt><dd className="la-code">{pase ? pase.code : ''}</dd></div>
