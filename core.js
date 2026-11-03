@@ -23,7 +23,7 @@ const CFG = (() => {
      A quien v2.3 le apagó el vidrio y el fondo sola (lite:1), se le devuelven una vez. */
   if (phone && fresh) c = Object.assign(cfgPreset('visual'), { perf:'visual', cursor:false, lite:2 });
   else if (phone && c.lite !== 2){ c = Object.assign({}, c, cfgPreset('visual'), { perf:'visual', cursor:false, lite:2 }); try{ localStorage.setItem('synthz:cfg', JSON.stringify(Object.assign({ v:2 }, c))); }catch(e){} }
-  return Object.assign({ v:2, perf:'visual', intro:'session', sound:true }, cfgPreset(c.perf), c);
+  return Object.assign({ v:2, perf:'visual', intro:'session', sound:true, dictado:true }, cfgPreset(c.perf), c);   /* v3.9.1 · el dictado viene encendido (Sammuel, 3 nov) */
 })();
 const PERF = CFG.perf === 'speed';
 /* v3.1 · manda Ajustes (Animaciones, Vidrio, Modo rápido), no el sistema: con los «efectos visuales» de Windows apagados,
@@ -37,8 +37,8 @@ function cfgClasses(){ const r = document.documentElement; r.classList.toggle('n
   r.classList.toggle('simple', simple); if (simple){ r.classList.add('noglass', 'nobg'); } r.classList.toggle('navleft', chat && CFG.nav === 'left');
   /* v2.9.2 · tamaño de SynthFlow: compacto (por defecto) o normal; el CSS (chat-css 29) lo achica con zoom:var(--ui-z) */
   r.classList.toggle('compact', chat && CFG.size !== 'normal');
-  /* v3.9 · modo dictado (micrófono en la caja de escribir): función nueva, apagada hasta que la persona la encienda en Ajustes */
-  r.classList.toggle('dicta', chat && !!CFG.dictado);
+  /* v3.9 · modo dictado (micrófono en la caja de escribir). v3.9.1 · encendido por defecto (Sammuel, 3 nov); se apaga en Ajustes */
+  r.classList.toggle('dicta', chat && CFG.dictado !== false);
   /* v3.2 · atajos de la lista de chats: ninguno (por defecto), solo Sintéticos, solo Proyectos o los dos; siempre siguen en la barrita de íconos */
   const lk = CFG.links || 'none'; r.classList.toggle('lk-proj', chat && (lk === 'proj' || lk === 'both')); r.classList.toggle('lk-syn', chat && (lk === 'syn' || lk === 'both'));
   if (chat && !simple && THEMES.some(t => t[0] === CFG.theme && !t[3])) r.dataset.theme = CFG.theme; else delete r.dataset.theme; }
@@ -128,7 +128,7 @@ function t(k, v){
 }
 function i18nApply(r = document){
   /* si el texto ya es el mismo no se toca: así no se borran las letras animadas (charify) ni se rompen referencias */
-  r.querySelectorAll('[data-i18n]').forEach(el => { const v = t(el.dataset.i18n); if (el.textContent !== v) el.textContent = v; });
+  r.querySelectorAll('[data-i18n]').forEach(el => { const v = t(el.dataset.i18n), sr = el.querySelector(':scope > .sr-txt'), cur = sr ? el.textContent.slice(0, el.textContent.length - sr.textContent.length) : el.textContent; if (cur !== v) el.textContent = v; });
   const tp = document.createElement('template');
   r.querySelectorAll('[data-i18n-html]').forEach(el => { tp.innerHTML = t(el.dataset.i18nHtml); if (el.innerHTML !== tp.innerHTML) el.innerHTML = tp.innerHTML; });
   r.querySelectorAll('[data-i18n-attr]').forEach(el => el.dataset.i18nAttr.split(';').forEach(p => { const [a, k] = p.split('=').map(x => x && x.trim()); if (a && k) el.setAttribute(a, t(k)); }));
@@ -546,6 +546,8 @@ Object.assign(I18N.es, {
  "ix.noacc": "pruébala sin cuenta",
  "ix.skip": "Mantén <kbd>espacio</kbd> 1,5 s para saltar",
  "ix.skipTouch": "Mantén presionado 1,5 s para saltar",
+ "ix.skipTap": "Toca la pantalla para saltar",
+ "ix.skipClick": "Haz clic o pulsa <kbd>Esc</kbd> para saltar",
  "ix.idea1": "Explícame la fotosíntesis fácil",
  "ix.idea2": "Dame 3 ideas para un regalo barato",
  "ix.idea3": "Encuentra el error en mi código",
@@ -632,6 +634,8 @@ Object.assign(I18N.en, {
  "ix.noacc": "try it without an account",
  "ix.skip": "Hold <kbd>space</kbd> for 1.5 s to skip",
  "ix.skipTouch": "Press and hold 1.5 s to skip",
+ "ix.skipTap": "Tap the screen to skip",
+ "ix.skipClick": "Click or press <kbd>Esc</kbd> to skip",
  "ix.idea1": "Explain photosynthesis simply",
  "ix.idea2": "Give me 3 ideas for a cheap gift",
  "ix.idea3": "Find the bug in my code",
@@ -1686,7 +1690,19 @@ function countTo(el, val){
 }
 
 /* la etiqueta para lectores de pantalla sigue al idioma (si el texto tiene clave, se lee la traducción) */
-function ariaSync(el){ const k = el.dataset.i18n || el.dataset.i18nHtml, v = k && t(k); el.setAttribute('aria-label', (v && v !== k ? v : el.textContent).replace(/<[^>]+>/g, '').trim().replace(/\s+/g, ' ')); }
+/* v4.0 · un <p> o <span> con aria-label NO se lee (ARIA lo prohíbe en elementos sin rol): la frase de la portada
+   «Pregunta, crea, programa y compara…» quedaba muda para los lectores de pantalla. Ahí va un texto oculto a la vista en su lugar. */
+const srFree = el => { const s = el.querySelector(':scope > .sr-txt'); return s ? el.textContent.slice(0, el.textContent.length - s.textContent.length) : el.textContent; };
+const ARIA_NAMED = /^(H[1-6]|A|BUTTON|LABEL|SUMMARY)$/;
+function ariaSync(el){
+  const k = el.dataset.i18n || el.dataset.i18nHtml, v = k && t(k), txt = (v && v !== k ? v : srFree(el)).replace(/<[^>]+>/g, '').trim().replace(/\s+/g, ' ');
+  if (ARIA_NAMED.test(el.tagName) || el.hasAttribute('role')){ el.setAttribute('aria-label', txt); return; }
+  let s = el.querySelector(':scope > .sr-txt');
+  /* si el cambio de idioma ya dejó el texto normal (sin letras sueltas), se lee solo y no hace falta copia */
+  if (el._chars && !el.querySelector('.tc')){ if (s) s.remove(); return; }
+  if (!s){ s = document.createElement('span'); s.className = 'sr-txt'; el.appendChild(s); }
+  s.textContent = txt;
+}
 onLang(() => document.querySelectorAll('[data-aa]').forEach(ariaSync));
 
 /* ===== escritura suave: cada letra aparece con un resplandor y un cursor la acompaña ===== */
@@ -1709,7 +1725,7 @@ function charify(el){
           if (wrap) frag.appendChild(holder);
         });
         n.replaceWith(frag);
-      } else if (n.nodeType === 1 && !/^(SCRIPT|STYLE|SVG|I|BUTTON)$/i.test(n.tagName)) walk(n);
+      } else if (n.nodeType === 1 && !/^(SCRIPT|STYLE|SVG|I|BUTTON)$/i.test(n.tagName) && !n.classList.contains('sr-txt')) walk(n);
     });
   };
   walk(el);
@@ -3039,8 +3055,8 @@ const CFG_ROWS = [['cursor', 'Cursor ' + BRAND(), 'El cursor de vidrio con vient
 /* v2.2 · Ajustes con 2 pestañas: «Página» (cómo se ve y se siente) e «IAs y memoria» (cómo te responden y qué recuerdan de ti) */
 const CFG_PAGE = CFG_ROWS.filter(r => r[0] !== 'beginner');
 const CFG_IA = [['beginner', 'Modo principiante', 'Te responden con palabras sencillas, paso a paso y con ejemplos.'], ['autoWeb', 'Buscar en internet cuando haga falta', 'Si preguntas por algo de hoy (precios, noticias, el clima…), la IA busca sola y te muestra sus fuentes.'], ['saver', 'Respuestas cortas', 'Respuestas más breves: gastas menos de tu límite de hoy.'], ['review', 'Revisión de calidad', 'Otra IA revisa la lógica de cada respuesta y la corrige si encuentra errores. Tarda unos segundos más.']];
-/* v3.9 · modo dictado: nuevo, apagado para todos hasta que se enciende aquí (solo en SynthFlow) */
-const CFG_DIC = ['dictado', 'Modo dictado', 'Un micrófono en la caja de escribir: hablas y el texto aparece en vivo para que lo revises antes de enviar.'];
+/* v3.9 · modo dictado (solo en SynthFlow). v3.9.1 · viene encendido para todos; aquí se apaga */
+const CFG_DIC = ['dictado', 'Modo dictado', 'Un micrófono en la caja de escribir: hablas y el texto aparece en vivo, con puntos, comas y signos de pregunta, para que lo revises antes de enviar.'];
 const memSt0 = () => state.mem || (state.mem = { on:true, t:0, items:[] });
 function memTouch(){ const m = memSt0(); m.t = Date.now(); save(); try{ if (ACC.ready) accPush(); }catch(e){} }
 function memAddCore(text){
@@ -3073,7 +3089,7 @@ function memPanel(host){
 const cfgLinks = [];
 function cfgModal(tab){
   if ($('#cfgm')) return;
-  const draft = Object.assign({ autoWeb:true, review:true }, CFG); draft.saver = !!(state.sx && state.sx.saver);
+  const draft = Object.assign({ autoWeb:true, review:true, dictado:true }, CFG); draft.saver = !!(state.sx && state.sx.saver);
   const o = document.createElement('div'); o.id = 'cfgm'; o.className = 'szm';
   const row = ([k, t, s]) => '<div class="cfgrow"><p>' + t + '<small>' + s + '</small></p><button class="cfgsw" type="button" role="switch" data-k="' + k + '" aria-checked="' + !!draft[k] + '" aria-pressed="' + !!draft[k] + '" aria-label="' + t + '"></button></div>';
   const IN = [['always', 'Cada vez'], ['session', 'Una vez por visita'], ['never', 'Nunca']];

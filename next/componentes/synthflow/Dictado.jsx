@@ -2,7 +2,8 @@
    v3.9 · hablas y el texto aparece en la caja de escribir (#inp), en vivo, para que lo revises antes de enviar.
    - Usa el reconocimiento de voz que ya trae el navegador (Web Speech API): gratis, sin servicios pagos.
      En Chrome y Edge la voz la convierte en texto Google o Microsoft; en Safari, Apple. SymphorIA no recibe el audio.
-   - Apagado para todos: se enciende en Ajustes › IAs y memoria › «Modo dictado» (CFG.dictado → html.dicta).
+   - v3.9.1 · encendido para todos (Sammuel, 3 nov); se apaga en Ajustes › IAs y memoria › «Modo dictado» (CFG.dictado → html.dicta).
+   - v3.9.1 · puntuación automática según tus pausas (puntuar()), además de los comandos de voz.
    - El micrófono no se pide hasta que la persona toca el botón; la primera vez sale un aviso que explica qué pasa.
    - Pausa, reanuda, «Listo» (deja el texto para editarlo) y «Cancelar» (devuelve la caja como estaba).
    - Puntuación por voz («coma», «punto», «nueva línea», «borra eso»…), mayúsculas y «¿» automáticos.
@@ -16,7 +17,7 @@ const T = {
     mic: 'Dictar', micOn: 'Dejar de dictar', tip: 'Dictar con tu voz (Ctrl+Shift+Espacio)',
     listen: 'Te escucho', pause: 'En pausa', start: 'Abriendo el micrófono',
     hold: 'Pausa', resume: 'Seguir', done: 'Listo', cancel: 'Cancelar',
-    hint: 'Di «coma», «punto» o «nueva línea». «Borra eso» quita lo último.',
+    hint: 'Pongo puntos, comas y «¿?» solo según tus pausas. Una pausa larga empieza otro párrafo. «Borra eso» quita lo último.',
     empty: 'Habla cuando quieras…',
     askT: 'Antes de dictar', askB: 'Vas a usar tu micrófono y tu navegador te pedirá permiso. Lo que dices lo convierte en texto el propio navegador: en Chrome y Edge pasa por Google o Microsoft, y en Safari por Apple. SymphorIA no recibe ni guarda tu voz, solo el texto que tú decidas enviar.',
     askOk: 'Usar el micrófono', askNo: 'Ahora no', priv: 'Privacidad',
@@ -33,7 +34,7 @@ const T = {
     mic: 'Dictate', micOn: 'Stop dictating', tip: 'Dictate with your voice (Ctrl+Shift+Space)',
     listen: 'Listening', pause: 'Paused', start: 'Opening the microphone',
     hold: 'Pause', resume: 'Resume', done: 'Done', cancel: 'Cancel',
-    hint: 'Say "comma", "period" or "new line". "Scratch that" removes the last part.',
+    hint: 'I add periods, commas and question marks from your pauses. A long pause starts a new paragraph. "Scratch that" removes the last part.',
     empty: 'Speak whenever you are ready…',
     askT: 'Before you dictate', askB: 'You are about to use your microphone and your browser will ask for permission. Your browser turns what you say into text: in Chrome and Edge it goes through Google or Microsoft, and in Safari through Apple. SymphorIA never receives or stores your voice, only the text you choose to send.',
     askOk: 'Use the microphone', askNo: 'Not now', priv: 'Privacy',
@@ -73,28 +74,100 @@ const CMD = {
 };
 const BORRA = { es: /\b(?:borra|borrar|quita) (?:eso|lo [uú]ltimo)\b/i, en: /\b(?:scratch that|delete that|undo that)\b/i };
 
+/* ---------- v3.9.1 · puntuación automática (Sammuel: «que ponga signos de puntuación… PERO QUE ESTÉ BIEN HECHO»)
+   El navegador entrega el dictado en trozos: cada trozo termina donde hiciste una pausa. Con eso:
+   - una pausa cierra la frase con «.», «?» o «!» según cómo empieza («cómo…», «puedes…» → pregunta; «qué bueno…» → exclamación);
+   - si el trozo termina en una palabra que no cierra frase («de», «que», «y», «the», «and»…), se espera al siguiente;
+   - comas antes de «pero», «aunque», «sino»… y después de «hola», «oye», «bueno»… al empezar;
+   - una pausa larga (más de PARA_MS) empieza un párrafo nuevo;
+   - los comandos de voz («coma», «punto», «nueva línea»…) siguen funcionando y mandan sobre lo automático. ---------- */
+const PARA_MS = 4500;
+const QW = {
+  es: 'qu[eé]|c[oó]mo|cu[aá]ndo|d[oó]nde|ad[oó]nde|por ?qu[eé]|para qu[eé]|qui[eé]n(?:es)?|cu[aá]l(?:es)?|cu[aá]nt[oa]s?|puedes|podr[ií]as|podemos|puedo|me (?:puedes|podr[ií]as|ayudas|explicas|dices|recomiendas|cuentas)|sabes|conoces|tienes|hay|es posible|crees|te parece|ser[ií]a|ser[aá]|est[aá]s|quieres|vale la pena|verdad',
+  en: "what|how|why|when|where|who|whom|whose|which|can|could|would|will|should|shall|do|does|did|is|are|was|were|am|have|has|had|may|might|isn't|aren't|don't|doesn't|didn't|won't|wouldn't|can't|couldn't|shouldn't|right",
+};
+const EXCL = {
+  es: /^(?:qu[eé] (?:bueno|buena|genial|bien|lindo|linda|bonito|bonita|incre[ií]ble|ch[eé]vere|horror|miedo|rico|maravilla|chimba|nota)|genial|incre[ií]ble|wow|guau|felicidades|feliz (?:cumplea[ñn]os|navidad|a[ñn]o)|(?:muchas |mil |much[ií]simas )?gracias|excelente|bravo|qu[eé] (?:alegr[ií]a|emoci[oó]n))\b/i,
+  en: /^(?:wow|great|awesome|amazing|congratulations|congrats|happy (?:birthday|new year)|thank you|thanks|what a|how (?:nice|cool|great|amazing))\b/i,
+};
+const LEAD = {
+  es: /^(hola|oye|bueno|vale|ok|okay|listo|perfecto|buenas|buenos d[ií]as|buenas tardes|buenas noches|s[ií]|gracias|disculpa|perd[oó]n|por favor|mmm|eh)\s+(?=\p{L})/iu,
+  en: /^(hi|hello|hey|well|okay|ok|yes|yeah|sorry|excuse me|um|uh)\s+(?=\p{L})/iu,
+};
+const COMMA_BEFORE = {
+  es: /([^\s,;:.¿¡(])\s+(pero|aunque|sino|sin embargo|as[ií] que|o sea|por ejemplo|es decir|por lo tanto|mientras que|ya que)\s+/gi,
+  en: /([^\s,;:.(])\s+(but|however|although|though|for example|for instance|that is|so that|whereas|which means)\s+/gi,
+};
+const COMMA_AFTER = { es: /\b(sin embargo|por ejemplo|es decir|o sea|por lo tanto|adem[aá]s|finalmente|primero|luego)\s+(?!de\b|que\b|,)(?=\p{L})/giu, en: /\b(however|for example|for instance|that is|also|first|finally|then)\s+(?!,)(?=\p{L})/giu };
+/* palabras con las que una frase no termina: si el trozo acaba así, la frase sigue en el próximo */
+const DANGLE = {
+  es: /\b(?:de|del|la|el|los|las|un|una|unos|unas|y|e|o|u|ni|que|en|con|sin|por|para|a|al|mi|mis|tu|tus|su|sus|nuestro|nuestra|pero|porque|como|cuando|si|muy|m[aá]s|menos|tan|este|esta|ese|esa|entre|sobre|hasta|desde|hacia|seg[uú]n|ante|tras|le|les|me|te|se|nos|cada)$/iu,
+  en: /\b(?:the|a|an|and|or|nor|but|to|of|in|on|at|with|without|for|from|by|about|my|your|his|her|their|our|its|that|which|who|because|if|so|very|more|less|than|this|these|those|as|into|onto)$/i,
+};
+const QRE = L => new RegExp('^(?:' + QW[L] + ')(?![\\p{L}])', 'iu');   /* \\b no sirve con «qué» o «cuál» (la tilde no cuenta como letra para \\b) */
+/* la frase empieza después de un saludo con coma («Hola, ¿cómo estás?») */
+const sinSaludo = s => s.replace(/^[^,;:]{1,30},\s*/, '');
+function cierre(sent, L){
+  const s = sent.replace(/^[\s¿¡"(]+/, '').trim(); if (!s) return '.';
+  const b = sinSaludo(s);
+  if (EXCL[L].test(s) || EXCL[L].test(b)) return '!';
+  if (QRE(L).test(s) || QRE(L).test(b)) return '?';
+  if (L === 'es' && /,\s*(?:verdad|cierto|no)$/i.test(s)) return '?';
+  if (L === 'en' && /,\s*(?:right|isn't it|don't you|ok)$/i.test(s)) return '?';
+  return '.';
+}
+function comandos(s, L){ let o = ' ' + s + ' '; (CMD[L] || CMD.es).forEach(([re, to]) => { o = o.replace(re, to); }); return o.trim(); }
+function comas(s, L){
+  let o = s.replace(LEAD[L], (m, w) => w + ', ');
+  if (L === 'es') o = o.replace(/([^\s,])\s+(verdad|cierto)$/i, '$1, $2');   /* «…bonito verdad» → «…bonito, ¿verdad?» */
+  o = o.replace(COMMA_BEFORE[L], (m, a, w) => a + ', ' + w + ' ');
+  o = o.replace(COMMA_AFTER[L], (m, w, off, all) => { const pre = all.slice(0, off).trim(); /* «además» al empezar o después de coma/punto lleva coma; en medio («y además») no */ return (!pre || /[,.;:!?]$/.test(pre) || /^(?:sin embargo|por ejemplo|es decir|o sea|por lo tanto|however|for example|for instance|that is)$/i.test(w)) ? w + ', ' : m; });
+  return o;
+}
+/* trozos {t, p} → texto con puntuación (p = empieza párrafo). abierto = el último trozo todavía se está oyendo */
+export function puntuar(list, L = 'es', abierto = false){
+  const out = []; let sent = '';
+  const ends = () => out.length && /[.!?…:;]$/.test(out[out.length - 1]);
+  const cerrar = () => { if (out.length && !ends() && out[out.length - 1] !== '\n\n') out[out.length - 1] += cierre(sent, L); sent = ''; };
+  list.forEach((c, i) => {
+    let s = comas(comandos(String(c.t || '').trim(), L), L).trim(); if (!s) return;
+    if (c.p && out.length){ cerrar(); out.push('\n\n'); }
+    out.push(s);
+    const tail = s.split(/[.!?…\n]/); sent = (/[.!?…\n]/.test(s) ? '' : sent + ' ') + tail[tail.length - 1];
+    if (/[.!?…]$/.test(s) || /\n$/.test(s)){ sent = ''; return; }
+    const last = abierto && i === list.length - 1;
+    if (!last && !DANGLE[L].test(s.replace(/[,;:]+$/, ''))) cerrar();
+  });
+  return out.join(' ');
+}
+
 /* quita las partes que dicen «borra eso» y la anterior a ellas */
 function sinBorrados(parts, L){
   const out = [];
-  parts.forEach(p => { if (BORRA[L].test(p)){ out.pop(); const r = p.replace(new RegExp(BORRA[L].source, 'gi'), '').trim(); if (r) out.push(r); } else if (p.trim()) out.push(p.trim()); });
+  parts.forEach(p => { const t = String(p.t || ''); if (BORRA[L].test(t)){ const prev = out.pop(); const r = t.replace(new RegExp(BORRA[L].source, 'gi'), '').trim(); if (r) out.push({ t: r, p: prev ? prev.p : p.p }); } else if (t.trim()) out.push({ t: t.trim(), p: p.p }); });
   return out;
 }
 export function pulir(raw, L = 'es', capStart = true){
-  let s = ' ' + String(raw || '').replace(/\s+/g, ' ') + ' ';
+  let s = ' ' + String(raw || '').replace(/[ \t\r]+/g, ' ') + ' ';
   (CMD[L] || CMD.es).forEach(([re, to]) => { s = s.replace(re, to); });
   s = s.replace(/[ \t]+([,.;:?!…)])/g, '$1')                      /* nada de espacio antes de la puntuación */
     .replace(/([¿¡(])[ \t]+/g, '$1')                               /* ni después de lo que abre */
     .replace(/([,.;:?!…])(?=[^\s,.;:?!…)"\n])/g, '$1 ')            /* y sí uno después */
-    .replace(/[ \t]*\n[ \t]*/g, '\n').replace(/([.,;:])\1+/g, '$1').replace(/ {2,}/g, ' ');
-  s = s.replace(/^ +| +$/g, '');
+    .replace(/[ \t]*\n[ \t]*/g, '\n').replace(/\n{3,}/g, '\n\n').replace(/([.,;:])\1+/g, '$1').replace(/[,;:]([.?!])/g, '$1').replace(/ {2,}/g, ' ');
+  s = s.replace(/^[ \n]+|[ \n]+$/g, '');
   if (L === 'es'){
-    /* «¿» y «¡» al inicio de la frase que termina en «?» o «!» */
-    s = s.replace(/(^|[.!?…\n]\s*)([^.!?…\n¿¡]+?)([?!])/g, (m, a, b, c) => { const o = c === '?' ? '¿' : '¡'; return b.includes(o) ? m : a + o + b.replace(/^\s+/, '') + c; });
+    /* «¿» y «¡» donde empieza la pregunta: al inicio de la frase o después del saludo («Hola, ¿cómo estás?», «Es bonito, ¿verdad?») */
+    const qre = new RegExp('^(.*?,\\s*)(?=(?:' + QW.es + ')(?![\\p{L}]))', 'iu');
+    s = s.replace(/(?<=^|[.!?…\n])(\s*)([^.!?…\n¿¡]+?)([?!])/g, (m, a, b, c) => {
+      const o = c === '?' ? '¿' : '¡'; if (b.includes(o)) return m;
+      const body = b.replace(/^\s+/, ''), k = c === '?' ? body.match(qre) : null;
+      return k && k[1].length < body.length - 1 && !QRE('es').test(body) && !EXCL.es.test(body) ? a + k[1] + o + body.slice(k[1].length) + c : a + o + body + c;
+    });
   }
   /* mayúscula al empezar y después de cada punto, «?», «!» o salto de línea */
   s = s.replace(/([.!?…]\s+|\n\s*)([¿¡("]?)(\p{Ll})/gu, (m, a, b, c) => a + b + c.toUpperCase());
   if (capStart) s = s.replace(/^([¿¡("]?)(\p{Ll})/u, (m, a, c) => a + c.toUpperCase());
-  if (L === 'en') s = s.replace(/\bi\b/g, 'I');
+  if (L === 'en') s = s.replace(/\bi\b/g, 'I').replace(/\bi'(m|ll|ve|d)\b/g, "I'$1");
   return s;
 }
 
@@ -104,7 +177,7 @@ function langTag(L){
   return L === 'en' ? 'en-US' : 'es-ES';
 }
 const siteLang = () => { try{ return window.SZ && window.SZ.lang() === 'en' ? 'en' : 'es'; }catch(e){ return 'es'; } };
-const cfgOn = () => { try{ return !!(window.SZ && window.SZ.CFG && window.SZ.CFG.dictado); }catch(e){ return false; } };
+const cfgOn = () => { try{ return !(window.SZ && window.SZ.CFG && window.SZ.CFG.dictado === false); }catch(e){ return true; } };
 const touchy = () => { try{ return matchMedia('(pointer:coarse)').matches; }catch(e){ return false; } };
 const fmtT = ms => { const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 
@@ -151,9 +224,10 @@ export default function Dictado(){
     const Lg = siteLang();
     const parts = sinBorrados(e.parts.concat(e.sess), Lg);
     const capStart = !e.pre.trim() || /[.!?…\n]\s*$/.test(e.pre);
-    const fin = pulir(parts.join(' '), Lg, capStart);
     const midRaw = e.mid.trim();
-    const all = pulir((parts.join(' ') + ' ' + midRaw).trim(), Lg, capStart);
+    /* lo fijo lleva su puntuación completa; lo que todavía se está oyendo se muestra sin cerrar la frase */
+    const fin = pulir(puntuar(parts, Lg), Lg, capStart);
+    const all = midRaw ? pulir(puntuar(parts.concat({ t: midRaw, p: e.paraNext }), Lg, true), Lg, capStart) : fin;
     const glueA = e.pre && !/\s$/.test(e.pre) && all && !/^[,.;:?!…)]/.test(all) ? ' ' : '';
     const glueB = e.post && all && !/^\s/.test(e.post) ? ' ' : '';
     e.writing = true;
@@ -169,7 +243,7 @@ export default function Dictado(){
   const stopRec = useCallback(abort => { const r = E.current.rec; E.current.rec = null; if (!r) return; r.onresult = r.onend = r.onerror = r.onspeechstart = r.onspeechend = null; try{ abort ? r.abort() : r.stop(); }catch(x){} }, []);
 
   /* lo oído en la sesión del reconocedor pasa a ser texto fijo (al pausar, al reiniciarse solo o al terminar) */
-  const absorb = useCallback(() => { const e = E.current; if (e.mid.trim()) e.sess.push(e.mid.trim()); e.parts = e.parts.concat(e.sess); e.sess = []; e.mid = ''; }, []);
+  const absorb = useCallback(() => { const e = E.current; if (e.mid.trim()){ e.sess.push({ t: e.mid.trim(), p: !!e.paraNext }); e.paraNext = false; } e.parts = e.parts.concat(e.sess); e.sess = []; e.sessP = []; e.mid = ''; }, []);
 
   const startRec = useCallback(() => {
     const e = E.current; if (!SR) return;
@@ -180,8 +254,15 @@ export default function Dictado(){
     r.onresult = ev => {
       const fin = [], mid = [];
       for (let i = 0; i < ev.results.length; i++){ const x = ev.results[i]; (x.isFinal ? fin : mid).push(x[0] ? x[0].transcript : ''); }
-      e.sess = fin.map(s => s.trim()).filter(Boolean); e.mid = mid.join(' ');
-      e.heard = Date.now(); setTalk(true); paint();
+      /* una pausa larga desde lo último que se oyó → el próximo trozo empieza párrafo */
+      const now = Date.now();
+      if (e.lastRes && now - e.lastRes > PARA_MS && (e.parts.length || e.sess.length)) e.paraNext = true;
+      e.lastRes = now;
+      e.sessP = e.sessP || [];
+      const fs = fin.map(x => x.trim());
+      fs.forEach((x, i) => { if (e.sessP[i] === undefined && x){ e.sessP[i] = !!e.paraNext; e.paraNext = false; } });
+      e.sess = fs.map((x, i) => ({ t: x, p: !!e.sessP[i] })).filter(x => x.t); e.mid = mid.join(' ');
+      e.heard = now; setTalk(true); paint();
       if (e.st === 'start') setState('listen');
     };
     r.onspeechstart = () => { e.heard = Date.now(); setTalk(true); };
@@ -210,7 +291,7 @@ export default function Dictado(){
     const e = E.current, el = inp(); if (!el || el.disabled) return;
     const a = el.selectionStart ?? el.value.length, b = el.selectionEnd ?? el.value.length;
     e.orig = el.value; e.pre = el.value.slice(0, a); e.post = el.value.slice(b);
-    e.parts = []; e.sess = []; e.mid = ''; e.t0 = Date.now(); e.heard = Date.now(); e.acc = 0; e.restarts = 0; e.fatal = '';
+    e.parts = []; e.sess = []; e.sessP = []; e.paraNext = false; e.lastRes = 0; e.mid = ''; e.t0 = Date.now(); e.heard = Date.now(); e.acc = 0; e.restarts = 0; e.fatal = '';
     setView({ fin: '', mid: '' }); setMs(0); setCard(null); setState('start');
     blip(true); try{ if (touchy() && navigator.vibrate) navigator.vibrate(12); }catch(x){}
     setLive(T[siteLang()].live.on);
@@ -245,7 +326,7 @@ export default function Dictado(){
 
   /* idioma del sitio y el interruptor de Ajustes */
   useEffect(() => {
-    setL(siteLang()); setOn(cfgOn() || document.documentElement.classList.contains('dicta'));
+    setL(siteLang()); setOn(document.documentElement.classList.contains('dicta'));
     const mo = new MutationObserver(() => {
       setL(siteLang());
       const v = document.documentElement.classList.contains('dicta'); setOn(v);
@@ -253,7 +334,7 @@ export default function Dictado(){
     });
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'lang'] });
     let hooked = false;
-    const hook = () => { if (hooked || !window.SZ || !window.SZ.onLang) return; hooked = true; window.SZ.onLang(() => { setL(siteLang()); const e = E.current; if (e.rec && (e.st === 'listen' || e.st === 'start')){ absorb(); paint(); stopRec(true); startRec(); } }); setOn(cfgOn() || document.documentElement.classList.contains('dicta')); };
+    const hook = () => { if (hooked || !window.SZ || !window.SZ.onLang) return; hooked = true; window.SZ.onLang(() => { setL(siteLang()); const e = E.current; if (e.rec && (e.st === 'listen' || e.st === 'start')){ absorb(); paint(); stopRec(true); startRec(); } }); setOn(document.documentElement.classList.contains('dicta')); };
     hook(); addEventListener('synthflow-ready', hook);
     return () => { mo.disconnect(); removeEventListener('synthflow-ready', hook); };
   }, [finish, stopRec, absorb, paint, startRec]);
@@ -261,7 +342,7 @@ export default function Dictado(){
   /* si la persona escribe mientras dicta, lo suyo manda: lo dictado sigue desde donde quedó el cursor.
      Al enviar (Enter o el avión) el dictado se corta antes de que el motor vacíe la caja. */
   useEffect(() => {
-    const onInput = ev => { const e = E.current; if (e.writing || e.st === 'off' || !ev.isTrusted) return; const el = ev.target; e.pre = el.value.slice(0, el.selectionStart ?? el.value.length); e.post = el.value.slice(el.selectionEnd ?? el.value.length); e.parts = []; e.sess = []; e.mid = ''; if (e.rec){ stopRec(true); startRec(); } };
+    const onInput = ev => { const e = E.current; if (e.writing || e.st === 'off' || !ev.isTrusted) return; const el = ev.target; e.pre = el.value.slice(0, el.selectionStart ?? el.value.length); e.post = el.value.slice(el.selectionEnd ?? el.value.length); e.parts = []; e.sess = []; e.sessP = []; e.mid = ''; if (e.rec){ stopRec(true); startRec(); } };
     const onKey = ev => {
       const e = E.current;
       if (ev.key === ' ' && ev.shiftKey && (ev.ctrlKey || ev.metaKey) && document.documentElement.classList.contains('dicta')){ ev.preventDefault(); tap(); return; }

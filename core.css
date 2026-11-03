@@ -1740,6 +1740,17 @@ html.simple .br,html.simple .so{border-color:rgba(255,255,255,.1);background:var
 html.noanim .pm-rain span,html.noanim .br-sweep,html.noanim .br-o em,html.noanim .so-tx>b i,html.noanim .so-coin{animation:none!important}
 html.noanim .pm-rain span{transform:none;opacity:.25}
 html.noanim .br-o em{opacity:.8}
+/* ===== v4.0 · revisión de accesibilidad y comprensión (3 nov) ===== */
+/* texto solo para lectores de pantalla (las frases que se escriben letra por letra se leen enteras) */
+.sr-txt{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important;border:0!important;opacity:1!important}
+/* foco visible con teclado donde el diseño no puso uno propio (baja prioridad: cualquier estilo propio gana) */
+:where(a,button,[role=button],[role=switch],[role=tab],summary,select,textarea,input,[tabindex]):focus-visible{outline:2px solid #3de0ff;outline-offset:2px}
+/* la etiqueta BETA de SynthFlow medía 17 px de alto: muy chica para un dedo */
+.beta-tag.bb{min-height:24px;display:inline-flex;align-items:center}
+/* «?» (guía) y Configuración de la portada casi no se veían sobre el fondo */
+#nav .cfgb{color:rgba(255,255,255,.9);border-color:rgba(255,255,255,.32);background:rgba(255,255,255,.1)}
+/* el aviso «toca para saltar» de la intro, más legible */
+#intSkip{font-size:14px;color:var(--soft,#d8d4ee)}
 /* v3.0 · ventana de Planes: cuatro tarjetas de vidrio; la tuya brilla con su color */
 .tcard.plans{width:min(760px,calc(100vw - 24px))}
 .pl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:14px 0 6px}
