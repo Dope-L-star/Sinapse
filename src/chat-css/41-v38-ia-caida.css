@@ -1,0 +1,25 @@
+/* v3.8 · ventana «esta IA no está respondiendo ahora» (React: IaCaida.jsx). Usa .szm/.tcard: hereda vidrio, temas y Simple */
+#iaCaida .tcard{width:min(94vw,460px);text-align:left}
+#iaCaida h2{margin:6px 0 8px;font:600 22px/1.25 var(--sans,inherit);color:var(--text);letter-spacing:-.01em}
+#iaCaida .iac-sub{margin:0;color:var(--soft);font-size:14.5px;line-height:1.55}
+#iaCaida .tn{margin:20px 0 10px}
+.iac-ico{display:flex;gap:6px;height:30px;align-items:flex-end}
+.iac-ico span{width:8px;border-radius:4px;background:var(--accent,#e6b65f);opacity:.85;animation:iacZz 1.6s ease-in-out infinite}
+.iac-ico span:nth-child(1){height:10px}.iac-ico span:nth-child(2){height:18px;animation-delay:.2s}.iac-ico span:nth-child(3){height:26px;animation-delay:.4s}
+@keyframes iacZz{0%,100%{transform:scaleY(.55);opacity:.45}50%{transform:scaleY(1);opacity:.95}}
+.iac-try{width:100%;min-height:46px;padding:12px 16px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.05);color:var(--text);font:500 15px var(--sans,inherit);text-align:left;transition:background .2s,border-color .2s}
+.iac-try:hover,.iac-try:focus-visible{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3)}
+.iac-para{display:flex;gap:8px;margin-top:10px}
+.iac-para input{flex:1;min-width:0;min-height:46px;padding:0 14px;border:1px solid var(--line);border-radius:14px;background:rgba(0,0,0,.18);color:var(--text);font:15px var(--sans,inherit)}
+.iac-para input:focus{outline:2px solid #b8c4ff;outline-offset:1px}
+.iac-para .btn{flex:none;min-height:46px}
+.iac-rec{margin:14px 0 0;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.06);color:var(--text);font-size:14.5px;line-height:1.5;animation:avpop .45s var(--ease) both}
+.iac-rec p{margin:0 0 10px}
+.iac-wait{color:var(--mute)}
+.iac-foot{margin-top:16px}
+html.simple #iaCaida .tcard{background:var(--sbg,#1a1917) !important;border:1px solid var(--sline) !important;border-radius:16px !important;color:var(--stext,#fff)}
+html.simple #iaCaida h2{font-family:var(--serif,Georgia,serif);font-weight:400;font-size:26px}
+html.simple .iac-ico span{background:var(--stext,#fff)}
+@media (max-width:480px){.iac-para{flex-direction:column}.iac-para .btn{width:100%}}
+@media (prefers-reduced-motion:reduce){.iac-ico span{animation:none}}
+html.noanim .iac-ico span{animation:none}

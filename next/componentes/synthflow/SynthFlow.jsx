@@ -9,6 +9,7 @@ import CajaEscribir from './CajaEscribir';
 import TabBar from './TabBar';
 import Selector from './Selector';
 import PuenteEfectos from './PuenteEfectos';
+import IaCaida from './IaCaida';
 
 export default function SynthFlow(){
   return (
@@ -29,6 +30,7 @@ export default function SynthFlow(){
       </div>
       <Selector />
       <PuenteEfectos />
+      <IaCaida />
     </>
   );
 }

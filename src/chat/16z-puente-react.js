@@ -15,7 +15,12 @@ window.SZFlow = Object.freeze({
   hideBar:() => { const c = $('#chatsClose'); if (c) c.click(); },
   closeSheet:() => { if (isMobile()) closeChatsSheet(); },
   mode:() => mode,
-  accInfo:() => accInfo
+  accInfo:() => accInfo,
+  /* v3.8 · ventana «esta IA no responde»: la que mejor sirve para lo que escribiste, usarla, o seguir mirando */
+  iaFor:(text, not) => iaFor(text, not),
+  iaUse:id => { if (mode === 'cmp'){ if (!st().cmp.includes(id)) addToCompare(id, null); } else pickModel(id, null); setTimeout(() => inp.focus(), 60); },
+  iaList:() => openSide(mode === 'cmp' ? 'add' : 'set'),
+  lang:() => SZ.lang()
 });
 { const w = $('#sNav .snw'); if (w && !w.firstChild) w.innerHTML = SZ.flowWord(); }
 try{ dispatchEvent(new CustomEvent('synthflow-ready')); }catch(e){}

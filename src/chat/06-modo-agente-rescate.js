@@ -129,8 +129,9 @@ async function send(){
   if (files.some(f => f.state === 'load')){ toast('Espera a que terminen de cargar los archivos.'); return; }
   try{ SZ.setTurn(text + '|' + Date.now()); }catch(e){}
   if (trialOn && trialLeft() <= 0){ toast('Se acabaron tus mensajes de prueba.'); const tb = $('#trialBar'); tb.classList.remove('pulse'); void tb.offsetWidth; tb.classList.add('pulse'); return; }
-  if (trialOn && files.length){ toast('La prueba guiada es solo de texto. Conecta una IA para enviar archivos.'); return; }
   if (!budgetOk()) return;
+  /* v3.8 · si todavía se está comprobando la IA que elegiste, espera esa respuesta (1-2 s); si no responde, tu texto se queda en la caja */
+  { const h = HEALTH.get(selId()), m1 = selId(); if (h && h.p){ sendBtn.disabled = true; try{ await h.p; }finally{ sendBtn.disabled = false; } if (selId() !== m1) return; } }
   /* modo agente: no eliges IA; el agente entiende tu pedido, lo mejora, elige la IA experta y te muestra los pasos */
   if (agentOn() && mode === 'solo' && text && !files.length){
     if (agentBusy) return;
@@ -188,11 +189,12 @@ async function send(){
   /* v3.4 · si la IA elegida no ve fotos, ya no te bloquea: esta respuesta la da una que sí ve (antes salía «Este modelo no ve imágenes» y no podías enviar) */
   /* v3.7 · y solo por esta respuesta: tu IA elegida se queda elegida (antes te la cambiaba para siempre al adjuntar una foto) */
   let oneModel = null;
+  /* v3.8 · foto (o PDF escaneado, o video) con una IA que no ve: una IA que sí ve la describe en texto y responde TU IA elegida.
+     Solo si eso falla, responde esa vez la que ve (como antes). Y si ninguna ve, se manda la ficha de la foto: nunca te bloquea. */
   if (ready.some(f => f.kind === 'img') && !info(selId()).vision){
     const v = visionPick();
-    if (!v){ toast('Ninguna de tus IAs conectadas ve fotos ahora. Conecta Puter o envía tu pregunta sin la imagen.'); return; }
-    oneModel = v.id;
-    toast(info(selId()).name + ' no ve fotos: esta vez te responde ' + v.name + ', que sí las ve. Después sigues con ' + info(selId()).name + '.');
+    if (v && !(await seeForMe(ready, v, text))){ oneModel = v.id; toast(info(selId()).name + ' no ve fotos: esta vez te responde ' + v.name + ', que sí las ve. Después sigues con ' + info(selId()).name + '.'); }
+    else if (!v) ready.filter(f => f.kind === 'img' && !f.seen).forEach(f => { f.text = (f.text ? f.text + '\n\n' : '') + '[Foto adjunta: ' + f.name + '. Ahora no hay ninguna IA conectada que vea fotos; si la necesitas, pídele a la persona que cuente qué muestra.]'; });
   }
   try{ localStorage.setItem('synthz:sent', String(sentN() + 1)); }catch(e){}
   try{ frustration(text, false); }catch(e){}
@@ -210,13 +212,34 @@ async function send(){
   if (okSent && text && MEM_RX.test(text)) memOffer(text);
 }
 
+/* v3.8 · «mirar por ti»: una IA que ve describe las fotos (y lee su texto) para que la IA elegida, que no ve, entienda igual */
+const SEE_PROMPT = 'Describe estas imágenes para alguien que no puede verlas, con todo el detalle útil: copia EXACTO todo el texto que aparezca (letreros, documentos, capturas de pantalla, código, tablas con sus números), y describe personas, objetos, colores, gráficos y lo que esté pasando. Si son páginas de un documento, transcríbelas completas. No respondas la pregunta: solo describe. Escribe en el idioma de esta pregunta: ';
+async function seeForMe(list, v, text){
+  const todo = list.filter(f => f.kind === 'img' && !f.seen);
+  if (!todo.length) return true;
+  const wait = setTimeout(() => toast(v.name + ' está mirando tu foto para que ' + info(selId()).name + ' la entienda…'), 600);
+  sendBtn.disabled = true; todo.forEach(f => { f.state = 'load'; f.prog = SZ.lang() === 'en' ? 'Looking…' : 'Mirando…'; }); renderTray();
+  try{
+    for (const f of todo){
+      const pics = (f.dataUrls || [f.dataUrl]).filter(Boolean).slice(0, 4), ctl = new AbortController(); ctls.add(ctl);
+      let r;
+      try{ r = await SZ.askStream(OR, [{ role:'user', content:[{ type:'text', text:SEE_PROMPT + '«' + (text || 'qué hay en la imagen') + '»' }, ...pics.map(u => ({ type:'image_url', image_url:{ url:u } }))] }], { model:v.id, maxTokens:1200, signal:ctl.signal }, () => {}); }finally{ ctls.delete(ctl); }
+      if (!r || r.aborted || !String(r.text || '').trim()) return false;
+      addUsage(r.prov || SZ.provOf(v.id), r.prompt, r.completion, true, { est:r.est, free:/:free$/.test(v.id) || r.prov === 'synthz', rid:r.rid });
+      f.text = (f.text ? f.text + '\n\n' : '') + '[' + (f.scan ? 'PDF escaneado' : f.frames ? 'Fotos del video' : 'Foto') + ' «' + f.name + '», descrita por ' + v.name + ' porque esta IA no ve imágenes]\n' + String(r.text).trim();
+      f.seen = true;
+    }
+    return true;
+  }catch(e){ console.warn('[ver foto]', e); return false; }
+  finally{ clearTimeout(wait); sendBtn.disabled = false; todo.forEach(f => { f.state = 'ok'; delete f.prog; }); renderTray(); }
+}
 /* v3.4 · la mejor IA conectada que ve fotos: primero la Automática de SymphorIA (elige sola una que ve), luego cualquiera de la lista */
 function visionPick(){
   if (szOn()) return info('sz:auto');
   return cat.list.find(m => m.vision && connected(m.id) && !SZ.isBad(m.id)) || null;
 }
 /* ---------- v1.3 · SynthonIA te rescata cuando una IA falla o cuando notas que no te entiende ---------- */
-const TOPIC_RX = [['codigo', /c[oó]digo|program|funci[oó]n|javascript|python|html|css|sql|bug|error de|script/i], ['mate', /ecuaci|matem|calcul|derivad|integral|\d+\s*[x×*+\/-]\s*\d+/i], ['estudiar', /explica|estudi|examen|tarea|aprend|resum/i], ['correo', /correo|email|e-mail/i], ['marketing', /marketing|publicidad|anuncio|vender|ventas|campa[ñn]a/i], ['redes', /instagram|tiktok|reel|post|redes/i], ['idiomas', /traduc|ingl[eé]s|franc[eé]s|idioma/i], ['negocios', /negocio|emprend|empresa|cliente/i], ['ideas', /idea|nombre para|lluvia de/i], ['escribir', /escrib|texto|carta|historia|poema|redact/i]];
+const TOPIC_RX = [['codigo', /c[oó]digo|program|funci[oó]n|javascript|python|html|css|sql|bug|error de|script|coding|code\b|website|app\b/i], ['mate', /ecuaci|matem|calcul|derivad|integral|math|equation|algebra|\d+\s*[x×*+\/-]\s*\d+/i], ['estudiar', /explica|estudi|examen|tarea|aprend|resum|homework|study|exam|learn|explain|summar/i], ['correo', /correo|email|e-mail/i], ['marketing', /marketing|publicidad|anuncio|vender|ventas|campa[ñn]a|advert|\bads?\b|sell|sales/i], ['redes', /instagram|tiktok|reel|post|redes|social media/i], ['idiomas', /traduc|ingl[eé]s|franc[eé]s|idioma|translat|english|spanish|french|language/i], ['negocios', /negocio|emprend|empresa|cliente|business|startup|company|customer/i], ['ideas', /idea|nombre para|lluvia de/i], ['escribir', /escrib|texto|carta|historia|poema|redact|writ|essay|letter|story|poem/i]];
 function guessTopic(t){ const f = TOPIC_RX.find(([k, rx]) => TOPIC[k] && rx.test(t)); return f ? f[0] : null; }
 function altFor(mid, text){
   const tk = guessTopic(text || '');
@@ -250,7 +273,11 @@ function frustration(text, regen){
 async function runSolo(onFail, o = {}){
   const mid = o.model || selId(), chat = chatArr(), g = gen, vis = info(mid).vision, saver = st().sx.saver;
   const slowT = setTimeout(() => { if (busy[mid] === 'think' && SZ.BOT.react) SZ.BOT.react('slow', { auto:mid === 'sz:auto' }); }, 14000);
-  const sent = apiMsgs(chat, vis), naive = apiMsgs(chat, vis, { naive:true }), ck = hashStr(mid + '|' + saver + '|' + effKey() + '|' + JSON.stringify(sent));
+  /* v3.8 · la IA decide sola si busca en internet (si ya buscó para este mensaje, no se repite) */
+  const lastU = [...chat].reverse().find(x => x.role === 'user'), webAuto = !o.noWeb && mode === 'solo' && SZ.CFG.autoWeb !== false && !!lastU && !lastU.sources && !lastU.webTried && !lastU.imgId;
+  const sent = apiMsgs(chat, vis, { webAsk:webAuto }), naive = apiMsgs(chat, vis, { naive:true }), ck = hashStr(mid + '|' + saver + '|' + effKey() + '|' + JSON.stringify(sent));
+  let hold = webAuto ? null : false, webQ = null;
+  const holdWeb = txt => { if (hold === false) return false; if (webMaybe(txt)){ hold = true; return true; } hold = false; return false; };
   const canCache = !sent.some(m => Array.isArray(m.content));
   if (works[mid]) works[mid].stop();
   works[mid] = SZ.workView({ model:info(mid).name, inTok:msgCost(sent) });
@@ -274,14 +301,15 @@ async function runSolo(onFail, o = {}){
     if (r){ r = Object.assign({}, r, { ms:0, cached:true }); st().sx.saved += r.prompt + r.completion; st().sx.hits += 1; save(); mount(); if (rv) rv.push(r.text); }
     else {
       const ctl = new AbortController(); ctls.add(ctl);
-      try{ r = await SZ.askStream(OR, sent, Object.assign({ model:mid, maxTokens: saver ? 700 : 0, signal:ctl.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { mount(); W.write(txt); if (rv) rv.push(txt); }); }finally{ ctls.delete(ctl); }
+      try{ r = await SZ.askStream(OR, sent, Object.assign({ model:mid, maxTokens: saver ? 700 : 0, signal:ctl.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { if (holdWeb(txt)) return; mount(); W.write(txt); if (rv) rv.push(txt); }); }finally{ ctls.delete(ctl); }
       addUsage(r.prov || SZ.provOf(mid), r.prompt, r.completion, true, { est:r.est, free:/:free$/.test(mid) || r.prov === 'synthz', rid:r.rid });
+      if (webAuto && !r.aborted){ const mq = WEB_Q_RX.exec(r.text || ''); webQ = mq ? mq[1].trim() : (String(r.text || '').length < 2500 && CUTOFF_RX.test(r.text || '') ? String(lastU.content || '').slice(0, 300) : null); }
       if (!r.aborted && !r.swapped) SZ.markGood(mid);
       SZ.TEL.msgs++; SZ.TEL.ai = (r.prov || SZ.provOf(mid)).slice(0, 12);
       st().sx.saved += Math.max(0, msgCost(naive) - msgCost(sent)); save();
-      if (canCache && !r.aborted) cachePut(ck, r);
+      if (canCache && !r.aborted && !webQ) cachePut(ck, r);
       /* si la IA se quedó sin espacio (o se cortó la conexión), sigue sola donde quedó: la persona recibe la respuesta completa sin tocar «Continuar» */
-      for (let n = 0; n < 3 && !r.aborted && !r.swapped && g === gen && (r.finish === 'length' || r.cut); n++){
+      for (let n = 0; n < 3 && !webQ && !r.aborted && !r.swapped && g === gen && (r.finish === 'length' || r.cut); n++){
         const base = r.text, ctl2 = new AbortController(); ctls.add(ctl2);
         const glue = t => (!base || /\s$/.test(base) || /^[\s.,;:!?)\]]/.test(t) || !/[.!?:;)\]*_`]$/.test(base)) ? '' : ' ';
         let r2 = null;
@@ -297,6 +325,14 @@ async function runSolo(onFail, o = {}){
       }
     }
     if (g !== gen){ if (rv) rv.skip(); return; }
+    /* v3.8 · la IA pidió buscar (o dijo que no tiene internet): se busca, se leen las páginas y se le vuelve a preguntar, ya con los datos */
+    if (webQ){
+      const rv0 = rv; rv = null; W.stop && W.stop(); if (live && live.chat === chat) live = null; if (el) el.remove(); { const t = $('.think-wrap', lane); if (t) t.remove(); } try{ rv0 && rv0.skip(); }catch(e){} if (el) el.remove();
+      lastU.webTried = true; delete busy[mid]; renderNow();
+      await webPrep(lastU, webQ); save();
+      if (g !== gen) return;
+      return await runSolo(onFail, Object.assign({}, o, { noWeb:true, fresh:true }));
+    }
     const tail = r.aborted ? ' · detenido' : r.cut ? ' · se cortó la conexión' : r.finish === 'length' ? ' · se cortó porque era muy larga (toca «Continuar»)' : '';
     const who = r.swapped ? ' · se acabó tu saldo de Puter este mes; respondió ' + (r.real || 'otra IA') : '';
     W.write(r.text); W.finish({ ms:r.ms, real:r.real || '' });

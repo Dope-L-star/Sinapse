@@ -113,15 +113,15 @@
         <div class="attw">
           <button class="attach" id="attachBtn" type="button" aria-label="Adjuntar" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.9-8.9a3.7 3.7 0 0 1 5.2 5.2l-8.9 8.9a1.8 1.8 0 0 1-2.6-2.6l8.1-8.1"/></svg></button>
           <div class="amenu" id="attMenu" role="menu" hidden>
-            <button type="button" role="menuitem" data-att="file"><i aria-hidden="true">📄</i><span><b>Archivo o PDF</b><small>Documentos, código y textos</small></span></button>
-            <button type="button" role="menuitem" data-att="img"><i aria-hidden="true">🖼️</i><span><b>Imagen</b><small>Solo las IA que «ven fotos» pueden mirarla</small></span></button>
+            <button type="button" role="menuitem" data-att="file"><i aria-hidden="true">📄</i><span><b>Cualquier archivo</b><small>PDF, Word, Excel, zip, audio, video, código…</small></span></button>
+            <button type="button" role="menuitem" data-att="img"><i aria-hidden="true">🖼️</i><span><b>Imagen</b><small>Si tu IA no ve fotos, otra te la describe</small></span></button>
             <button type="button" role="menuitem" data-att="cam" class="only-touch"><i aria-hidden="true">📷</i><span><b>Tomar una foto</b><small>Con la cámara del celular</small></span></button>
             <button type="button" role="menuitem" data-att="mkimg" class="only-small"><i aria-hidden="true">🎨</i><span><b>Crear una imagen</b><small>La IA la dibuja (con tu cuenta)</small></span></button>
             <button type="button" role="menuitem" data-att="web" class="only-small"><i aria-hidden="true">🌐</i><span><b>Buscar en internet</b><small>Responde con datos de hoy y sus fuentes</small></span></button>
             <p class="ahint">También puedes arrastrar archivos aquí o pegarlos con Ctrl+V.</p>
           </div>
         </div>
-        <input type="file" id="fileIn" multiple hidden accept="image/*,.pdf,.docx,.xlsx,.pptx,.odt,.ods,.odp,.txt,.md,.csv,.tsv,.json,.jsonl,.xml,.html,.htm,.css,.scss,.js,.mjs,.ts,.jsx,.tsx,.py,.ipynb,.java,.c,.h,.cpp,.cs,.go,.rs,.php,.rb,.sh,.sql,.yml,.yaml,.toml,.ini,.log,.tex,.swift,.kt,.dart,.lua,.vue,.svelte,.srt,.vtt,.rtf,.svg">
+        <input type="file" id="fileIn" multiple hidden>
         <input type="file" id="imgIn" multiple hidden accept="image/*">
         <input type="file" id="camIn" hidden accept="image/*" capture="environment">
         <label class="field"><textarea id="inp" rows="1" placeholder="Escribe tu mensaje…"></textarea></label>

@@ -45,7 +45,7 @@ const files = []; let fid = 0;
 const TEXTX = /\.(txt|md|markdown|csv|tsv|json|jsonl|xml|html?|css|scss|less|js|cjs|mjs|jsx|ts|tsx|py|ipynb|java|c|h|cpp|hpp|cs|go|rs|rb|php|sh|bat|ps1|sql|yml|yaml|toml|ini|cfg|conf|env|log|tex|swift|kt|kts|dart|scala|pl|r|lua|vue|svelte|astro|graphql|gql|proto|srt|vtt|rtf|svg|gradle|properties)$/i;
 /* v3.4 · Word, Excel, PowerPoint y OpenDocument: se sacan sus textos en el navegador (son un .zip con XML adentro) */
 const OFFX = /\.(docx|xlsx|pptx|odt|ods|odp)$/i;
-const CAP = 40000, clip = t => t.length > CAP ? t.slice(0, CAP) + '\n…(archivo recortado)' : t;
+const FILES_MAX = 10, CAP = 40000, clip = t => t.length > CAP ? t.slice(0, CAP) + '\n…(archivo recortado)' : t;
 function readImg(file){
   return new Promise((ok, no) => {
     const url = URL.createObjectURL(file), im = new Image();
@@ -69,7 +69,14 @@ function loadPdf(){
   })().catch(e => { pdfP = null; throw e; }));
 }
 async function readPdf(file){
-  const lib = await loadPdf(), pdf = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  const lib = await loadPdf(), task = lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
+  /* v3.8 · PDF con contraseña: se la pide a la persona (antes salía «No pude leer el PDF») */
+  task.onPassword = (give, why) => {
+    const en = SZ.lang() === 'en', nm = file.name || 'PDF';
+    const pw = prompt(why === 2 ? (en ? 'That password did not work. Try again for «' + nm + '»:' : 'Esa contraseña no sirvió. Prueba otra vez para «' + nm + '»:') : (en ? '«' + nm + '» is locked. Type its password:' : '«' + nm + '» tiene contraseña. Escríbela para abrirlo:'));
+    if (pw == null) task.destroy(); else give(pw);
+  };
+  const pdf = await task.promise;
   let t = '';
   for (let i = 1; i <= Math.min(pdf.numPages, 60) && t.length < CAP; i++){
     const tc = await (await pdf.getPage(i)).getTextContent();
@@ -89,30 +96,42 @@ async function readPdf(file){
   }
   return clip(t.trim());
 }
-/* lector mínimo de .zip (sin librerías): lee el índice del final y descomprime con DecompressionStream */
-async function zipOpen(buf){
-  const dv = new DataView(buf), td = new TextDecoder();
-  let e = buf.byteLength - 22; while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+/* lector mínimo de .zip (sin librerías): lee el índice del final y descomprime con DecompressionStream.
+   v3.8 · trabaja por pedazos del archivo (Blob.slice): un .zip de 500 MB ya no se carga entero en memoria */
+async function zipOpen(src){
+  const file = src instanceof Blob ? src : new Blob([src]), size = file.size, td = new TextDecoder();
+  const tn = Math.min(size, 65557), tail = new DataView(await file.slice(size - tn).arrayBuffer());
+  let e = tn - 22; while (e >= 0 && tail.getUint32(e, true) !== 0x06054b50) e--;
   if (e < 0) throw new Error('El archivo está dañado.');
-  const n = dv.getUint16(e + 10, true), ent = {}; let p = dv.getUint32(e + 16, true);
-  for (let i = 0; i < n && p + 46 <= buf.byteLength; i++){
+  let n = tail.getUint16(e + 10, true), cdLen = tail.getUint32(e + 12, true), cdAt = tail.getUint32(e + 16, true);
+  if ((cdAt === 0xffffffff || n === 0xffff) && e >= 20 && tail.getUint32(e - 20, true) === 0x07064b50){   /* zip64 (más de 4 GB o 65.535 archivos) */
+    const at = Number(tail.getBigUint64(e - 12, true)), z = new DataView(await file.slice(at, at + 56).arrayBuffer());
+    n = Number(z.getBigUint64(32, true)); cdLen = Number(z.getBigUint64(40, true)); cdAt = Number(z.getBigUint64(48, true));
+  }
+  const dv = new DataView(await file.slice(cdAt, cdAt + cdLen).arrayBuffer()), ent = {};
+  for (let i = 0, p = 0; i < n && p + 46 <= dv.byteLength; i++){
     const nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true);
-    ent[td.decode(new Uint8Array(buf, p + 46, nl))] = { m:dv.getUint16(p + 10, true), cs:dv.getUint32(p + 20, true), lo:dv.getUint32(p + 42, true) };
+    let cs = dv.getUint32(p + 20, true), us = dv.getUint32(p + 24, true), lo = dv.getUint32(p + 42, true);
+    if (cs === 0xffffffff || us === 0xffffffff || lo === 0xffffffff){   /* tamaños de zip64 en el campo extra */
+      for (let q = p + 46 + nl, end = q + xl; q + 4 <= end;){ const id = dv.getUint16(q, true), ln = dv.getUint16(q + 2, true); if (id === 1){ let r = q + 4; if (us === 0xffffffff){ us = Number(dv.getBigUint64(r, true)); r += 8; } if (cs === 0xffffffff){ cs = Number(dv.getBigUint64(r, true)); r += 8; } if (lo === 0xffffffff) lo = Number(dv.getBigUint64(r, true)); break; } q += 4 + ln; }
+    }
+    ent[td.decode(new Uint8Array(dv.buffer, p + 46, nl))] = { m:dv.getUint16(p + 10, true), fl:dv.getUint16(p + 8, true), cs, us, lo };
     p += 46 + nl + xl + cl;
   }
-  const read = async name => {
-    const x = ent[name]; if (!x) return '';
-    const at = x.lo + 30 + dv.getUint16(x.lo + 26, true) + dv.getUint16(x.lo + 28, true), raw = new Uint8Array(buf, at, x.cs);
-    if (x.m === 0) return td.decode(raw);
+  const blob = async (name, max = 60 * 1048576) => {
+    const x = ent[name]; if (!x) return new Blob([]);
+    if (x.fl & 1) throw new Error('Ese archivo tiene contraseña.');
+    const h = new DataView(await file.slice(x.lo, x.lo + 30).arrayBuffer()), at = x.lo + 30 + h.getUint16(26, true) + h.getUint16(28, true), raw = file.slice(at, at + x.cs);
+    if (x.m === 0) return raw;
     if (x.m !== 8 || typeof DecompressionStream === 'undefined') throw new Error('Tu navegador no puede abrir este archivo. Guárdalo como PDF y súbelo otra vez.');
-    return new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+    return inflate(raw.stream().pipeThrough(new DecompressionStream('deflate-raw')), max);
   };
-  return { names:Object.keys(ent), read };
+  return { names:Object.keys(ent), size:k => (ent[k] || {}).us || 0, locked:k => !!((ent[k] || {}).fl & 1), blob, read:async name => (await blob(name, 24 * 1048576)).text() };
 }
 const xmlTxt = x => x.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(+d)).replace(/&amp;/g, '&');
 const byNum = (a, b) => (+(a.match(/(\d+)\.xml$/) || [])[1] || 0) - (+(b.match(/(\d+)\.xml$/) || [])[1] || 0);
 async function readOffice(file){
-  const z = await zipOpen(await file.arrayBuffer()), ext = file.name.split('.').pop().toLowerCase();
+  const z = await zipOpen(file), ext = file.name.split('.').pop().toLowerCase();
   let t = '';
   if (ext === 'docx'){
     const x = await z.read('word/document.xml');
@@ -142,27 +161,17 @@ async function readOffice(file){
   return clip(t);
 }
 function renderTray(){
-  $('#tray').innerHTML = files.map(f => '<span class="fc ' + f.state + '" data-id="' + f.id + '">' + (f.thumb ? '<img src="' + esc(f.thumb) + '" alt="">' : (SZ.fileIco(f.name.split('.').pop()) ? '<i class="ic img">' + SZ.fileIco(f.name.split('.').pop()) + '</i>' : '<i class="ic">' + esc((f.name.split('.').pop() || 'file').slice(0, 4)) + '</i>')) + '<b>' + esc(f.name) + '</b><button class="x" type="button" aria-label="Quitar archivo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>').join('');
+  $('#tray').innerHTML = files.map(f => '<span class="fc ' + f.state + '" data-id="' + f.id + '">' + (f.thumb ? '<img src="' + esc(f.thumb) + '" alt="">' : (SZ.fileIco(f.name.split('.').pop()) ? '<i class="ic img">' + SZ.fileIco(f.name.split('.').pop()) + '</i>' : '<i class="ic">' + esc((f.name.split('.').pop() || 'file').slice(0, 4)) + '</i>')) + '<b>' + esc(f.name) + '</b>' + (f.prog ? '<small class="fcp">' + esc(f.prog) + '</small>' : '') + '<button class="x" type="button" aria-label="Quitar archivo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>').join('');
 }
 async function addFiles(list){
-  if (mode === 'cmp'){ toast('Los archivos funcionan en el modo Individual.'); return; }
+  /* v3.8 · cualquier archivo, en Individual y en Comparar: readAny nunca falla (lo que no sea texto se convierte o se describe) */
   for (const file of [...list]){
-    if (files.length >= 6){ toast('Máximo 6 archivos por mensaje.'); break; }
-    const f = { id:++fid, name:file.name || 'archivo', state:'load', kind:'text' }; files.push(f); renderTray();
-    try{
-      if (/^image\//.test(file.type)){ f.kind = 'img'; Object.assign(f, await readImg(file)); }
-      else if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf'){
-        f.kind = 'pdf'; const p = await readPdf(file);
-        if (p && p.scanned){ f.kind = 'img'; f.dataUrl = p.pics[0]; f.dataUrls = p.pics; f.thumb = p.pics[0]; f.scan = p.pages; } else f.text = p;
-      }
-      else if (OFFX.test(file.name)){ f.kind = 'doc'; f.text = await readOffice(file); }
-      else if (TEXTX.test(file.name) || /^text\//.test(file.type) || file.type === 'application/json'){ f.text = clip(await file.text()); }
-      else throw new Error('Tipo de archivo no compatible: ' + f.name);
-      f.state = 'ok';
-    }catch(e){
-      f.state = 'err'; toast(f.kind === 'pdf' && !/compatible/.test(e.message || '') ? 'No pude leer el PDF «' + f.name + '». Puede estar dañado o protegido con contraseña.' : f.kind === 'img' && !/compatible/.test(e.message || '') ? 'No pude abrir la imagen «' + f.name + '».' : f.kind === 'doc' && !/navegador|texto|dañado/.test(e.message || '') ? 'No pude leer «' + f.name + '». Guárdalo como PDF y súbelo otra vez.' : e.message);
-      setTimeout(() => { const i = files.indexOf(f); if (i > -1){ files.splice(i, 1); renderTray(); } }, 2200);
-    }
+    if (files.length >= FILES_MAX){ toast('Máximo ' + FILES_MAX + ' archivos por mensaje.'); break; }
+    const f = { id:++fid, name:file.name || 'archivo', state:'load', kind:'text', size:file.size }; files.push(f); renderTray();
+    try{ await readAny(file, f); }
+    catch(e){ console.warn('[archivos]', e); f.kind = 'text'; f.text = fichaTxt(file); }
+    if (!f.text && f.kind !== 'img') f.text = fichaTxt(file);
+    f.state = 'ok'; delete f.prog;
     renderTray();
   }
 }
@@ -171,7 +180,7 @@ $('#tray').addEventListener('click', e => { const x = e.target.closest('.x'); if
 const attMenu = $('#attMenu'), attBtn = $('#attachBtn');
 function attOpen(){ attMenu.hidden = false; attMenu.classList.remove('bye'); attBtn.setAttribute('aria-expanded', 'true'); }
 function attClose(){ if (attMenu.hidden) return; attBtn.setAttribute('aria-expanded', 'false'); attMenu.classList.add('bye'); setTimeout(() => { if (attMenu.classList.contains('bye')){ attMenu.hidden = true; attMenu.classList.remove('bye'); } }, 260); }
-attBtn.addEventListener('click', () => { if (mode === 'cmp'){ toast('Los archivos funcionan con una sola IA. Quita las demás para adjuntar.'); return; } if (attMenu.hidden) attOpen(); else attClose(); });
+attBtn.addEventListener('click', () => { if (attMenu.hidden) attOpen(); else attClose(); });
 attMenu.addEventListener('click', e => { const b = e.target.closest('[data-att]'); if (!b) return; attClose(); const k = b.dataset.att; if (k === 'mkimg') return setImgMode(!imgMode); if (k === 'web'){ if (imgMode) setImgMode(false); return setWeb(!webOn); } $({ file:'#fileIn', img:'#imgIn', cam:'#camIn' }[k]).click(); });
 document.addEventListener('pointerdown', e => { if (!attMenu.hidden && !e.target.closest('.attw')) attClose(); });
 addEventListener('keydown', e => { if (e.key === 'Escape' && !attMenu.hidden){ e.preventDefault(); attClose(); attBtn.focus(); } });
@@ -206,7 +215,8 @@ function apiMsgs(chat, vision, o = {}){
   }).filter(Boolean);
   while (h.length && h[0].role !== 'user') h.shift();
   const sys = [];
-  if (!o.naive) sys.push(qualitySystem(saver));   /* v3.4 · calidad: piensa, revisa la lógica y no inventa */
+  if (!o.naive) sys.push(qualitySystem(saver));
+  if (o.webAsk) sys.push(webAskSys());   /* v3.8 · la IA puede pedir una búsqueda en internet ella sola */   /* v3.4 · calidad: piensa, revisa la lógica y no inventa */
   if (saver) sys.push('Responde en el idioma del usuario, de forma clara y breve, sin relleno.');
   { const cs = o.naive ? '' : codeSystem(chat, saver); if (cs) sys.push(cs); }   /* v2.4 · SynthCode: manual de programación cuando pides código */
   { const ef = effortHint(); if (ef && !o.naive) sys.push(ef); }   /* v2.3.1 · esfuerzo */

@@ -385,15 +385,17 @@ function pickModel(id, node){
     const base = mode === 'cmp' ? st().cmp : [selId()].filter(x => x !== TRIAL_ID), why = cmpWhyNot(id, base);
     if (why === 'ya'){ toast('Esa IA ya está en la comparación.'); return; }
     if (why){ toast(why); return; }
-    addToCompare(id, node); return;
+    if (node !== null) iaThenAdd(id, node); else addToCompare(id, node);   /* v3.8 · solo se suma si de verdad responde */
+    return;
   }
   if (trialOn && id !== TRIAL_ID) exitTrial(true);
-  const same = id === selId();
+  const same = id === selId(), prev = selId();
   if (node) st().pinned = id;
   st().model.openrouter = id; save(); paintSel(); renderTop(!same); paintAccent();
   if (!same && node){ const r = node.getBoundingClientRect(); burst(r.left + 32, r.top + 24, [vendorColor(info(id).vendor), '#ffffff', vendorColor(info(id).vendor)], 8); }
   renderMsgs();
   closeSide();
+  if (node !== null && !same) iaAfterPick(id, prev);   /* v3.8 · ¿responde? si no, vuelves a la de antes y te pregunto para qué la querías */
 }
 
 /* ---------- cabecera ---------- */
@@ -1588,7 +1590,7 @@ const files = []; let fid = 0;
 const TEXTX = /\.(txt|md|markdown|csv|tsv|json|jsonl|xml|html?|css|scss|less|js|cjs|mjs|jsx|ts|tsx|py|ipynb|java|c|h|cpp|hpp|cs|go|rs|rb|php|sh|bat|ps1|sql|yml|yaml|toml|ini|cfg|conf|env|log|tex|swift|kt|kts|dart|scala|pl|r|lua|vue|svelte|astro|graphql|gql|proto|srt|vtt|rtf|svg|gradle|properties)$/i;
 /* v3.4 · Word, Excel, PowerPoint y OpenDocument: se sacan sus textos en el navegador (son un .zip con XML adentro) */
 const OFFX = /\.(docx|xlsx|pptx|odt|ods|odp)$/i;
-const CAP = 40000, clip = t => t.length > CAP ? t.slice(0, CAP) + '\n…(archivo recortado)' : t;
+const FILES_MAX = 10, CAP = 40000, clip = t => t.length > CAP ? t.slice(0, CAP) + '\n…(archivo recortado)' : t;
 function readImg(file){
   return new Promise((ok, no) => {
     const url = URL.createObjectURL(file), im = new Image();
@@ -1612,7 +1614,14 @@ function loadPdf(){
   })().catch(e => { pdfP = null; throw e; }));
 }
 async function readPdf(file){
-  const lib = await loadPdf(), pdf = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  const lib = await loadPdf(), task = lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
+  /* v3.8 · PDF con contraseña: se la pide a la persona (antes salía «No pude leer el PDF») */
+  task.onPassword = (give, why) => {
+    const en = SZ.lang() === 'en', nm = file.name || 'PDF';
+    const pw = prompt(why === 2 ? (en ? 'That password did not work. Try again for «' + nm + '»:' : 'Esa contraseña no sirvió. Prueba otra vez para «' + nm + '»:') : (en ? '«' + nm + '» is locked. Type its password:' : '«' + nm + '» tiene contraseña. Escríbela para abrirlo:'));
+    if (pw == null) task.destroy(); else give(pw);
+  };
+  const pdf = await task.promise;
   let t = '';
   for (let i = 1; i <= Math.min(pdf.numPages, 60) && t.length < CAP; i++){
     const tc = await (await pdf.getPage(i)).getTextContent();
@@ -1632,30 +1641,42 @@ async function readPdf(file){
   }
   return clip(t.trim());
 }
-/* lector mínimo de .zip (sin librerías): lee el índice del final y descomprime con DecompressionStream */
-async function zipOpen(buf){
-  const dv = new DataView(buf), td = new TextDecoder();
-  let e = buf.byteLength - 22; while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+/* lector mínimo de .zip (sin librerías): lee el índice del final y descomprime con DecompressionStream.
+   v3.8 · trabaja por pedazos del archivo (Blob.slice): un .zip de 500 MB ya no se carga entero en memoria */
+async function zipOpen(src){
+  const file = src instanceof Blob ? src : new Blob([src]), size = file.size, td = new TextDecoder();
+  const tn = Math.min(size, 65557), tail = new DataView(await file.slice(size - tn).arrayBuffer());
+  let e = tn - 22; while (e >= 0 && tail.getUint32(e, true) !== 0x06054b50) e--;
   if (e < 0) throw new Error('El archivo está dañado.');
-  const n = dv.getUint16(e + 10, true), ent = {}; let p = dv.getUint32(e + 16, true);
-  for (let i = 0; i < n && p + 46 <= buf.byteLength; i++){
+  let n = tail.getUint16(e + 10, true), cdLen = tail.getUint32(e + 12, true), cdAt = tail.getUint32(e + 16, true);
+  if ((cdAt === 0xffffffff || n === 0xffff) && e >= 20 && tail.getUint32(e - 20, true) === 0x07064b50){   /* zip64 (más de 4 GB o 65.535 archivos) */
+    const at = Number(tail.getBigUint64(e - 12, true)), z = new DataView(await file.slice(at, at + 56).arrayBuffer());
+    n = Number(z.getBigUint64(32, true)); cdLen = Number(z.getBigUint64(40, true)); cdAt = Number(z.getBigUint64(48, true));
+  }
+  const dv = new DataView(await file.slice(cdAt, cdAt + cdLen).arrayBuffer()), ent = {};
+  for (let i = 0, p = 0; i < n && p + 46 <= dv.byteLength; i++){
     const nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true);
-    ent[td.decode(new Uint8Array(buf, p + 46, nl))] = { m:dv.getUint16(p + 10, true), cs:dv.getUint32(p + 20, true), lo:dv.getUint32(p + 42, true) };
+    let cs = dv.getUint32(p + 20, true), us = dv.getUint32(p + 24, true), lo = dv.getUint32(p + 42, true);
+    if (cs === 0xffffffff || us === 0xffffffff || lo === 0xffffffff){   /* tamaños de zip64 en el campo extra */
+      for (let q = p + 46 + nl, end = q + xl; q + 4 <= end;){ const id = dv.getUint16(q, true), ln = dv.getUint16(q + 2, true); if (id === 1){ let r = q + 4; if (us === 0xffffffff){ us = Number(dv.getBigUint64(r, true)); r += 8; } if (cs === 0xffffffff){ cs = Number(dv.getBigUint64(r, true)); r += 8; } if (lo === 0xffffffff) lo = Number(dv.getBigUint64(r, true)); break; } q += 4 + ln; }
+    }
+    ent[td.decode(new Uint8Array(dv.buffer, p + 46, nl))] = { m:dv.getUint16(p + 10, true), fl:dv.getUint16(p + 8, true), cs, us, lo };
     p += 46 + nl + xl + cl;
   }
-  const read = async name => {
-    const x = ent[name]; if (!x) return '';
-    const at = x.lo + 30 + dv.getUint16(x.lo + 26, true) + dv.getUint16(x.lo + 28, true), raw = new Uint8Array(buf, at, x.cs);
-    if (x.m === 0) return td.decode(raw);
+  const blob = async (name, max = 60 * 1048576) => {
+    const x = ent[name]; if (!x) return new Blob([]);
+    if (x.fl & 1) throw new Error('Ese archivo tiene contraseña.');
+    const h = new DataView(await file.slice(x.lo, x.lo + 30).arrayBuffer()), at = x.lo + 30 + h.getUint16(26, true) + h.getUint16(28, true), raw = file.slice(at, at + x.cs);
+    if (x.m === 0) return raw;
     if (x.m !== 8 || typeof DecompressionStream === 'undefined') throw new Error('Tu navegador no puede abrir este archivo. Guárdalo como PDF y súbelo otra vez.');
-    return new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+    return inflate(raw.stream().pipeThrough(new DecompressionStream('deflate-raw')), max);
   };
-  return { names:Object.keys(ent), read };
+  return { names:Object.keys(ent), size:k => (ent[k] || {}).us || 0, locked:k => !!((ent[k] || {}).fl & 1), blob, read:async name => (await blob(name, 24 * 1048576)).text() };
 }
 const xmlTxt = x => x.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(+d)).replace(/&amp;/g, '&');
 const byNum = (a, b) => (+(a.match(/(\d+)\.xml$/) || [])[1] || 0) - (+(b.match(/(\d+)\.xml$/) || [])[1] || 0);
 async function readOffice(file){
-  const z = await zipOpen(await file.arrayBuffer()), ext = file.name.split('.').pop().toLowerCase();
+  const z = await zipOpen(file), ext = file.name.split('.').pop().toLowerCase();
   let t = '';
   if (ext === 'docx'){
     const x = await z.read('word/document.xml');
@@ -1685,27 +1706,17 @@ async function readOffice(file){
   return clip(t);
 }
 function renderTray(){
-  $('#tray').innerHTML = files.map(f => '<span class="fc ' + f.state + '" data-id="' + f.id + '">' + (f.thumb ? '<img src="' + esc(f.thumb) + '" alt="">' : (SZ.fileIco(f.name.split('.').pop()) ? '<i class="ic img">' + SZ.fileIco(f.name.split('.').pop()) + '</i>' : '<i class="ic">' + esc((f.name.split('.').pop() || 'file').slice(0, 4)) + '</i>')) + '<b>' + esc(f.name) + '</b><button class="x" type="button" aria-label="Quitar archivo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>').join('');
+  $('#tray').innerHTML = files.map(f => '<span class="fc ' + f.state + '" data-id="' + f.id + '">' + (f.thumb ? '<img src="' + esc(f.thumb) + '" alt="">' : (SZ.fileIco(f.name.split('.').pop()) ? '<i class="ic img">' + SZ.fileIco(f.name.split('.').pop()) + '</i>' : '<i class="ic">' + esc((f.name.split('.').pop() || 'file').slice(0, 4)) + '</i>')) + '<b>' + esc(f.name) + '</b>' + (f.prog ? '<small class="fcp">' + esc(f.prog) + '</small>' : '') + '<button class="x" type="button" aria-label="Quitar archivo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>').join('');
 }
 async function addFiles(list){
-  if (mode === 'cmp'){ toast('Los archivos funcionan en el modo Individual.'); return; }
+  /* v3.8 · cualquier archivo, en Individual y en Comparar: readAny nunca falla (lo que no sea texto se convierte o se describe) */
   for (const file of [...list]){
-    if (files.length >= 6){ toast('Máximo 6 archivos por mensaje.'); break; }
-    const f = { id:++fid, name:file.name || 'archivo', state:'load', kind:'text' }; files.push(f); renderTray();
-    try{
-      if (/^image\//.test(file.type)){ f.kind = 'img'; Object.assign(f, await readImg(file)); }
-      else if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf'){
-        f.kind = 'pdf'; const p = await readPdf(file);
-        if (p && p.scanned){ f.kind = 'img'; f.dataUrl = p.pics[0]; f.dataUrls = p.pics; f.thumb = p.pics[0]; f.scan = p.pages; } else f.text = p;
-      }
-      else if (OFFX.test(file.name)){ f.kind = 'doc'; f.text = await readOffice(file); }
-      else if (TEXTX.test(file.name) || /^text\//.test(file.type) || file.type === 'application/json'){ f.text = clip(await file.text()); }
-      else throw new Error('Tipo de archivo no compatible: ' + f.name);
-      f.state = 'ok';
-    }catch(e){
-      f.state = 'err'; toast(f.kind === 'pdf' && !/compatible/.test(e.message || '') ? 'No pude leer el PDF «' + f.name + '». Puede estar dañado o protegido con contraseña.' : f.kind === 'img' && !/compatible/.test(e.message || '') ? 'No pude abrir la imagen «' + f.name + '».' : f.kind === 'doc' && !/navegador|texto|dañado/.test(e.message || '') ? 'No pude leer «' + f.name + '». Guárdalo como PDF y súbelo otra vez.' : e.message);
-      setTimeout(() => { const i = files.indexOf(f); if (i > -1){ files.splice(i, 1); renderTray(); } }, 2200);
-    }
+    if (files.length >= FILES_MAX){ toast('Máximo ' + FILES_MAX + ' archivos por mensaje.'); break; }
+    const f = { id:++fid, name:file.name || 'archivo', state:'load', kind:'text', size:file.size }; files.push(f); renderTray();
+    try{ await readAny(file, f); }
+    catch(e){ console.warn('[archivos]', e); f.kind = 'text'; f.text = fichaTxt(file); }
+    if (!f.text && f.kind !== 'img') f.text = fichaTxt(file);
+    f.state = 'ok'; delete f.prog;
     renderTray();
   }
 }
@@ -1714,7 +1725,7 @@ $('#tray').addEventListener('click', e => { const x = e.target.closest('.x'); if
 const attMenu = $('#attMenu'), attBtn = $('#attachBtn');
 function attOpen(){ attMenu.hidden = false; attMenu.classList.remove('bye'); attBtn.setAttribute('aria-expanded', 'true'); }
 function attClose(){ if (attMenu.hidden) return; attBtn.setAttribute('aria-expanded', 'false'); attMenu.classList.add('bye'); setTimeout(() => { if (attMenu.classList.contains('bye')){ attMenu.hidden = true; attMenu.classList.remove('bye'); } }, 260); }
-attBtn.addEventListener('click', () => { if (mode === 'cmp'){ toast('Los archivos funcionan con una sola IA. Quita las demás para adjuntar.'); return; } if (attMenu.hidden) attOpen(); else attClose(); });
+attBtn.addEventListener('click', () => { if (attMenu.hidden) attOpen(); else attClose(); });
 attMenu.addEventListener('click', e => { const b = e.target.closest('[data-att]'); if (!b) return; attClose(); const k = b.dataset.att; if (k === 'mkimg') return setImgMode(!imgMode); if (k === 'web'){ if (imgMode) setImgMode(false); return setWeb(!webOn); } $({ file:'#fileIn', img:'#imgIn', cam:'#camIn' }[k]).click(); });
 document.addEventListener('pointerdown', e => { if (!attMenu.hidden && !e.target.closest('.attw')) attClose(); });
 addEventListener('keydown', e => { if (e.key === 'Escape' && !attMenu.hidden){ e.preventDefault(); attClose(); attBtn.focus(); } });
@@ -1749,7 +1760,8 @@ function apiMsgs(chat, vision, o = {}){
   }).filter(Boolean);
   while (h.length && h[0].role !== 'user') h.shift();
   const sys = [];
-  if (!o.naive) sys.push(qualitySystem(saver));   /* v3.4 · calidad: piensa, revisa la lógica y no inventa */
+  if (!o.naive) sys.push(qualitySystem(saver));
+  if (o.webAsk) sys.push(webAskSys());   /* v3.8 · la IA puede pedir una búsqueda en internet ella sola */   /* v3.4 · calidad: piensa, revisa la lógica y no inventa */
   if (saver) sys.push('Responde en el idioma del usuario, de forma clara y breve, sin relleno.');
   { const cs = o.naive ? '' : codeSystem(chat, saver); if (cs) sys.push(cs); }   /* v2.4 · SynthCode: manual de programación cuando pides código */
   { const ef = effortHint(); if (ef && !o.naive) sys.push(ef); }   /* v2.3.1 · esfuerzo */
@@ -1769,6 +1781,319 @@ function cachePut(k, r){
   const c = cacheAll(); c[k] = { t:Date.now(), text:r.text, prompt:r.prompt, completion:r.completion, model:r.model };
   const ks = Object.keys(c).sort((a, b) => c[b].t - c[a].t); ks.slice(60).forEach(x => delete c[x]);
   try{ localStorage.setItem(CACHE_KEY, JSON.stringify(c)); }catch(e){}
+}
+/* ---------- v3.8 · adjuntar CUALQUIER archivo, sin errores ----------
+   Antes, lo que no era texto, PDF, Office o foto salía «Tipo de archivo no compatible» y se borraba de la bandeja.
+   Ahora todo se lee aquí, en el navegador y gratis, y la IA elegida recibe algo que entiende:
+   · fotos (también HEIC del iPhone), PDF (con texto, escaneado o con contraseña), Word/Excel/PowerPoint/OpenDocument,
+     .doc/.xls/.ppt viejos, RTF, EPUB, código y cualquier texto;
+   · .zip (y .jar, .apk…), .tar, .gz y .tgz: se abren y se lee lo que traen adentro;
+   · audio y video: se pasan a texto (Whisper, gratis, en /api/ai) y del video se sacan 3 fotos;
+   · lo demás (programas, bases de datos, formatos raros): qué es, su tamaño y el texto que se pueda rescatar.
+   readAny nunca lanza un error: si un camino falla, prueba el siguiente y al final siempre queda una ficha del archivo. */
+const MB = 1048576;
+const sizeTxt = n => n < 1024 ? n + ' B' : n < MB ? (n / 1024).toFixed(1).replace('.0', '') + ' KB' : n < 1024 * MB ? (n / MB).toFixed(1).replace('.0', '') + ' MB' : (n / 1024 / MB).toFixed(2) + ' GB';
+const extOf = n => { const m = /\.([a-z0-9]{1,10})$/i.exec(String(n || '')); return m ? m[1].toLowerCase() : ''; };
+const IMGX = /\.(png|jpe?g|jfif|pjpeg|gif|webp|bmp|ico|avif|apng|tiff?|heic|heif)$/i;
+const AUDX = /\.(mp3|wav|wave|m4a|aac|ogg|oga|opus|flac|weba|amr|aiff?|wma|mid|midi|3ga)$/i;
+const VIDX = /\.(mp4|m4v|mov|webm|mkv|avi|wmv|3gp|ogv|mpe?g|flv)$/i;
+const ZIPX = /\.(zip|jar|apk|aab|xpi|crx|ipa|nupkg|whl|vsix|sketch|xd|kmz|cbz|odg|key|numbers|pages|xps|oxps|3mf)$/i;
+const OLDX = /\.(doc|dot|xls|xlt|ppt|pps|pot|wps|wpd|pub|vsd|msg|mdb|accdb)$/i;
+/* qué es un archivo según sus primeros bytes (sirve cuando el nombre no tiene extensión o miente) */
+function magicOf(u){
+  const s = (a, b) => String.fromCharCode(...u.slice(a, b)), h = (...x) => x.every((v, i) => u[i] === v);
+  if (h(0xff, 0xfe) || h(0xfe, 0xff) || h(0xef, 0xbb, 0xbf)) return 'text';   /* marca de texto UTF-8/16 (FF FE se parece al comienzo de un mp3) */
+  if (h(0x25, 0x50, 0x44, 0x46)) return 'pdf';
+  if (h(0x50, 0x4b, 0x03, 0x04) || h(0x50, 0x4b, 0x05, 0x06)) return 'zip';
+  if (h(0x1f, 0x8b)) return 'gz';
+  if (u.length > 262 && s(257, 262) === 'ustar') return 'tar';
+  if (h(0x49, 0x49, 0x2a, 0) || h(0x4d, 0x4d, 0, 0x2a)) return 'img';
+  if (h(0x89, 0x50, 0x4e, 0x47) || h(0xff, 0xd8, 0xff) || s(0, 4) === 'GIF8' || (s(0, 4) === 'RIFF' && s(8, 12) === 'WEBP') || h(0x42, 0x4d)) return 'img';
+  if (s(4, 8) === 'ftyp'){ const b = s(8, 12); return /^(heic|heix|hevc|mif1|msf1|avif)/.test(b) ? 'img' : /^(M4A |M4B |mp42?|isom|dash|M4V |qt  |3gp)/.test(b) ? 'av' : 'av'; }
+  if (s(0, 3) === 'ID3' || (u[0] === 0xff && (u[1] & 0xe0) === 0xe0) || s(0, 4) === 'OggS' || s(0, 4) === 'fLaC' || (s(0, 4) === 'RIFF' && /WAVE|AVI /.test(s(8, 12))) || h(0x1a, 0x45, 0xdf, 0xa3)) return 'av';
+  if (s(0, 5) === '{\\rtf') return 'rtf';
+  if (h(0xd0, 0xcf, 0x11, 0xe0)) return 'ole';
+  return '';
+}
+const KIND_TXT = { exe:'programa de Windows', msi:'instalador de Windows', dll:'librería de Windows', dmg:'imagen de disco de Mac', iso:'imagen de disco', deb:'paquete de Linux', rpm:'paquete de Linux', apk:'app de Android', ipa:'app de iPhone',
+  sqlite:'base de datos SQLite', db:'base de datos', mdb:'base de datos de Access', accdb:'base de datos de Access', psd:'diseño de Photoshop', ai:'diseño de Illustrator', sketch:'diseño de Sketch', fig:'diseño de Figma', xd:'diseño de Adobe XD',
+  rar:'archivo comprimido RAR', '7z':'archivo comprimido 7-Zip', bz2:'archivo comprimido', xz:'archivo comprimido', ttf:'fuente de letra', otf:'fuente de letra', woff:'fuente de letra', woff2:'fuente de letra',
+  stl:'modelo 3D', obj:'modelo 3D', fbx:'modelo 3D', glb:'modelo 3D', gltf:'modelo 3D', blend:'proyecto de Blender', dwg:'plano de AutoCAD', dxf:'plano de AutoCAD', kml:'mapa', gpx:'ruta GPS', eml:'correo', msg:'correo de Outlook', ics:'evento de calendario', vcf:'contacto' };
+function kindTxt(name, type, magic){
+  const e = extOf(name);
+  return KIND_TXT[e] || (magic === 'ole' ? 'documento viejo de Office' : type ? type : e ? 'archivo .' + e : 'archivo sin extensión');
+}
+function fichaTxt(file, extra){
+  return '[Archivo adjunto: ' + (file.name || 'archivo') + ' · ' + kindTxt(file.name, file.type) + ' · ' + sizeTxt(file.size || 0) + (file.lastModified ? ' · modificado el ' + new Date(file.lastModified).toISOString().slice(0, 10) : '') + ']' + (extra ? '\n' + extra : '');
+}
+/* ¿es texto? Mira los primeros bytes: sin ceros y con pocos caracteres de control → texto (UTF-8, UTF-16 o Windows-1252) */
+async function sniffText(blob, max = 1.2 * MB){
+  const buf = new Uint8Array(await blob.slice(0, max).arrayBuffer()); if (!buf.length) return '';
+  if (buf[0] === 0xff && buf[1] === 0xfe) return new TextDecoder('utf-16le').decode(buf.subarray(2));
+  if (buf[0] === 0xfe && buf[1] === 0xff) return new TextDecoder('utf-16be').decode(buf.subarray(2));
+  const n = Math.min(buf.length, 8192); let bad = 0;
+  for (let i = 0; i < n; i++){ const b = buf[i]; if (b === 0) return null; if (b < 9 || (b > 13 && b < 32 && b !== 27)) bad++; }
+  if (bad > n * .01) return null;
+  let t = new TextDecoder('utf-8').decode(buf), rep = (t.match(/�/g) || []).length;
+  if (rep > t.length * .002 + 2){ try{ t = new TextDecoder('windows-1252').decode(buf); }catch(e){} }
+  if (blob.size > max) t += '\n…(archivo recortado: solo se lee el comienzo)';
+  return t;
+}
+/* rescatar el texto legible de un archivo binario (como el comando «strings»): sirve para .doc/.xls/.ppt viejos, programas, bases de datos… */
+async function binStrings(blob, min = 5){
+  const u = new Uint8Array(await blob.slice(0, 12 * MB).arrayBuffer()), out = [], seen = new Set(), td = new TextDecoder('utf-8'), tw = new TextDecoder('windows-1252');
+  let len = 0;
+  const push = s => { s = s.replace(/\s+/g, ' ').trim(); if (s.length >= min && /\p{L}{3}/u.test(s) && (s.match(/[\p{L}\d\s.,;:!?¿¡()'"-]/gu) || []).length > s.length * .8 && !seen.has(s)){ seen.add(s); out.push(s); len += s.length + 1; } };
+  /* primero el texto en UTF-16 (así guardan Word, Excel y PowerPoint viejos lo que escribiste): letra, 0, letra, 0… */
+  for (const o of [0, 1]){
+    let w = '';
+    for (let i = o; i + 1 < u.length && len < CAP / 2; i += 2){
+      const c = u[i] | (u[i + 1] << 8);
+      if ((c >= 32 && c < 0x2000) || c === 9 || c === 10 || c === 13) w += String.fromCharCode(c);
+      else { if (w.length >= min) push(w); w = ''; }
+    }
+    if (w.length >= min) push(w);
+  }
+  let a = -1;
+  const ok = b => (b >= 32 && b < 127) || b === 9 || b >= 0xa0;
+  for (let i = 0; i <= u.length && len < CAP; i++){
+    if (i < u.length && ok(u[i])){ if (a < 0) a = i; continue; }
+    if (a >= 0 && i - a >= min){ const sl = u.subarray(a, i), t = td.decode(sl); push(/�/.test(t) ? tw.decode(sl) : t); }
+    a = -1;
+  }
+  return out.join('\n');
+}
+/* RTF → texto: fuera las palabras de control, los grupos ocultos y las llaves; acentos con \'e1 y \u225 */
+function rtfTxt(r){
+  let t = r.replace(/\{\\\*[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g, '').replace(/\{\\(fonttbl|colortbl|stylesheet|info|pict|header|footer)[\s\S]*?\}\s*\}/g, '');
+  t = t.replace(/\\par[d]?\b ?|\\line\b ?|\\row\b ?/g, '\n').replace(/\\tab\b ?|\\cell\b ?/g, '\t');
+  t = t.replace(/\\'([0-9a-f]{2})/gi, (_, h) => new TextDecoder('windows-1252').decode(new Uint8Array([parseInt(h, 16)])));
+  t = t.replace(/\\u(-?\d+)\??/g, (_, d) => String.fromCharCode(d < 0 ? +d + 65536 : +d));
+  t = t.replace(/\\[a-z]+-?\d* ?/gi, '').replace(/\\([{}\\])/g, '$1').replace(/[{}]/g, '');
+  return t.replace(/\n{3,}/g, '\n\n').trim();
+}
+const htmlTxt = h => xmlTxt(String(h).replace(/<(script|style|head)[\s\S]*?<\/\1>/gi, '').replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|h\d|li|tr|section|article)>/gi, '\n').replace(/&nbsp;/g, ' ')).replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+/* bytes descomprimidos con un tope (un .gz de 20 KB puede esconder 2 GB) */
+async function inflate(stream, max = 40 * MB){
+  const rd = stream.getReader(), parts = []; let n = 0;
+  try{ for (;;){ const { done, value } = await rd.read(); if (done) break; parts.push(value); n += value.length; if (n >= max){ rd.cancel().catch(() => {}); break; } } }catch(e){ if (!n) throw e; }
+  return new Blob(parts);
+}
+async function readEpub(file){
+  const z = await zipOpen(file); let order = [];
+  try{
+    const root = (/full-path="([^"]+)"/.exec(await z.read('META-INF/container.xml')) || [])[1];
+    if (root){
+      const opf = await z.read(root), dir = root.includes('/') ? root.replace(/[^/]+$/, '') : '', man = {};
+      for (const m of opf.matchAll(/<item\b[^>]*>/g)){ const id = (/\bid="([^"]+)"/.exec(m[0]) || [])[1], hr = (/\bhref="([^"]+)"/.exec(m[0]) || [])[1]; if (id && hr) man[id] = dir + decodeURIComponent(hr); }
+      order = [...opf.matchAll(/<itemref\b[^>]*idref="([^"]+)"/g)].map(m => man[m[1]]).filter(Boolean);
+    }
+  }catch(e){}
+  if (!order.length) order = z.names.filter(n => /\.x?html?$/i.test(n)).sort();
+  let t = '';
+  for (const n of order){ if (t.length >= CAP) break; try{ const x = htmlTxt(await z.read(n)); if (x) t += x + '\n\n'; }catch(e){} }
+  return t.trim();
+}
+/* dentro de un .zip/.tar: cada archivo se lee con las mismas reglas (hasta 30, y sin pasarse del tope de texto) */
+async function readInner(blob, name, depth){
+  const e = extOf(name);
+  if (/\.pdf$/i.test(name)){ const p = await readPdf(blob); return typeof p === 'string' ? p : '(PDF escaneado de ' + p.pages + ' páginas: adjúntalo solo para verlo)'; }
+  if (OFFX.test(name)) return readOffice(new File([blob], name.split('/').pop()));
+  if (/\.epub$/i.test(name)) return readEpub(blob);
+  if (/\.rtf$/i.test(name)) return rtfTxt(await blob.text());
+  if (/\.x?html?$/i.test(name)) return htmlTxt(await sniffText(blob) || '');
+  if (depth < 2 && (ZIPX.test(name) || /\.(tar|tgz|gz)$/i.test(name))) return (await readArchive(blob, name, depth + 1)).text;
+  if (IMGX.test(name) || AUDX.test(name) || VIDX.test(name)) return null;   /* fotos, audio y video de adentro: se nombran en la lista */
+  const t = await sniffText(blob, 400000);
+  if (t != null) return t;
+  if (OLDX.test(name) || e === 'sqlite' || e === 'db'){ const s = await binStrings(blob); return s || null; }
+  return null;
+}
+async function readArchive(file, name, depth = 0){
+  let list = [], get;
+  if (/\.(tgz|gz)$/i.test(name) || magicOf(new Uint8Array(await file.slice(0, 4).arrayBuffer())) === 'gz'){
+    if (typeof DecompressionStream === 'undefined') throw new Error('gz');
+    const inner = await inflate(file.stream().pipeThrough(new DecompressionStream('gzip'))), iname = /\.tgz$/i.test(name) ? name.replace(/\.tgz$/i, '.tar') : name.replace(/\.gz$/i, '') || 'archivo';
+    if (/\.tar$/i.test(iname) || magicOf(new Uint8Array(await inner.slice(0, 264).arrayBuffer())) === 'tar') return readArchive(inner, iname, depth);
+    const t = await readInner(inner, iname, depth);
+    return { text:'--- ' + iname + ' (' + sizeTxt(inner.size) + ' descomprimido) ---\n' + (t || '(sin texto legible)'), count:1 };
+  }
+  if (/\.tar$/i.test(name) || magicOf(new Uint8Array(await file.slice(0, 264).arrayBuffer())) === 'tar'){
+    const td = new TextDecoder(), ents = {};
+    for (let p = 0, k = 0; p + 512 <= file.size && k < 2000; k++){
+      const h = new Uint8Array(await file.slice(p, p + 512).arrayBuffer()); if (!h[0]) break;
+      const cut = (a, b) => td.decode(h.subarray(a, b)).replace(/\0[\s\S]*$/, ''), sz = parseInt(cut(124, 136).trim(), 8) || 0, ty = String.fromCharCode(h[156] || 48), pre = cut(345, 500);
+      const nm = (pre ? pre + '/' : '') + cut(0, 100);
+      if (ty === '0' || ty === '\0' || ty === '7') ents[nm] = { at:p + 512, size:sz };
+      p += 512 + Math.ceil(sz / 512) * 512;
+    }
+    list = Object.keys(ents).map(n => ({ name:n, size:ents[n].size }));
+    get = n => Promise.resolve(file.slice(ents[n].at, ents[n].at + ents[n].size));
+  } else {
+    const z = await zipOpen(file);
+    list = z.names.filter(n => !/\/$/.test(n)).map(n => ({ name:n, size:z.size(n), locked:z.locked(n) }));
+    get = n => z.blob(n);
+  }
+  const shown = list.filter(x => !/(^|\/)(__MACOSX|\.DS_Store|Thumbs\.db)/.test(x.name));
+  let t = 'Contiene ' + shown.length + (shown.length === 1 ? ' archivo' : ' archivos') + ':\n' + shown.slice(0, 200).map(x => '· ' + x.name + ' (' + sizeTxt(x.size) + ')' + (x.locked ? ' · con contraseña' : '')).join('\n') + (shown.length > 200 ? '\n· …y ' + (shown.length - 200) + ' más' : '');
+  let n = 0;
+  for (const x of shown){
+    if (n >= 30 || t.length >= CAP) break;
+    if (x.locked || !x.size || x.size > 60 * MB) continue;
+    try{ const c = await readInner(await get(x.name), x.name, depth); if (c && c.trim()){ t += '\n\n--- ' + x.name + ' ---\n' + c.trim().slice(0, Math.max(2000, CAP - t.length)); n++; } }catch(e){}
+  }
+  return { text:t, count:shown.length };
+}
+/* ---------- fotos: HEIC del iPhone con heic2any (cdnjs, solo si hace falta) ---------- */
+let heicP, tiffP;
+/* TIFF: Chrome y Firefox no lo abren; UTIF.js (MIT, en /lib, sin internet extra) lo pasa a una foto normal */
+function loadTiff(){
+  return tiffP || (tiffP = new Promise((ok, no) => { const s = document.createElement('script'); s.src = '/lib/utif.min.js'; s.onload = () => window.UTIF ? ok(window.UTIF) : no(new Error('tiff')); s.onerror = () => { tiffP = null; no(new Error('tiff')); }; document.head.appendChild(s); }));
+}
+async function tiffToPng(file){
+  const U = await loadTiff(), buf = await file.arrayBuffer(), ifds = U.decode(buf); if (!ifds.length) throw new Error('tiff');
+  U.decodeImage(buf, ifds[0]); const rgba = U.toRGBA8(ifds[0]), w = ifds[0].width, h = ifds[0].height;
+  const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba.buffer, 0, w * h * 4), w, h), 0, 0);
+  return new Promise((ok, no) => c.toBlob(b => b ? ok(b) : no(new Error('tiff')), 'image/png'));
+}
+function loadHeic(){
+  return heicP || (heicP = new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.4/heic2any.min.js'; s.onload = () => window.heic2any ? ok(window.heic2any) : no(new Error('heic')); s.onerror = () => { heicP = null; no(new Error('heic')); }; document.head.appendChild(s); }));
+}
+async function readAnyImg(file){
+  try{ return await readImg(file); }
+  catch(e){
+    const mg = magicOf(new Uint8Array(await file.slice(0, 16).arrayBuffer()));
+    if (/\.tiff?$/i.test(file.name) || /tiff/.test(file.type) || (mg === 'img' && /^(II\*|MM\0\*)/.test(String.fromCharCode(...new Uint8Array(await file.slice(0, 4).arrayBuffer()))))) return readImg(await tiffToPng(file));
+    if (!/\.(heic|heif)$/i.test(file.name) && !/hei[cf]/.test(file.type) && magicOf(new Uint8Array(await file.slice(0, 16).arrayBuffer())) !== 'img') throw e;
+    const conv = await (await loadHeic())({ blob:file, toType:'image/jpeg', quality:.85 });
+    return readImg(Array.isArray(conv) ? conv[0] : conv);
+  }
+}
+/* ---------- audio y video ---------- */
+const STT_SEC = 60, STT_MAX = 20;   /* trozos de 1 minuto (≈1,9 MB cada uno); hasta 20 minutos por archivo */
+function wavOf(pcm, rate){
+  const b = new ArrayBuffer(44 + pcm.length * 2), v = new DataView(b), w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + pcm.length * 2, true); w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, pcm.length * 2, true);
+  for (let i = 0; i < pcm.length; i++){ const s = Math.max(-1, Math.min(1, pcm[i])); v.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true); }
+  return new Uint8Array(b);
+}
+function b64(u){ let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); }
+const clock = s => { s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = s % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(x).padStart(2, '0'); };
+async function decodePcm(file){
+  /* archivos enormes: se decodifica el comienzo (en mp3/webm funciona aunque se corte) */
+  const big = file.size > 120 * MB, src = big ? file.slice(0, 120 * MB) : file;
+  const AC = window.OfflineAudioContext || window.webkitOfflineAudioContext; if (!AC) throw new Error('audio');
+  const ac = new AC(1, 16000, 16000), buf = await ac.decodeAudioData(await src.arrayBuffer());
+  const ch = buf.numberOfChannels, n = buf.length, pcm = new Float32Array(n);
+  for (let c = 0; c < ch; c++){ const d = buf.getChannelData(c); for (let i = 0; i < n; i++) pcm[i] += d[i] / ch; }
+  return { pcm, rate:buf.sampleRate, dur:buf.duration, big };
+}
+async function sttChunk(pcm, rate, i){
+  const part = pcm.subarray(i * STT_SEC * rate, (i + 1) * STT_SEC * rate);
+  let e = 0; for (let k = 0; k < part.length; k += 16) e += part[k] * part[k];
+  if (Math.sqrt(e / Math.max(1, part.length / 16)) < .004) return '';   /* silencio: no se manda */
+  const r = await fetch('/api/ai', { method:'POST', headers:SZ.szHeaders(), body:JSON.stringify({ action:'transcribe', audio:b64(wavOf(part, rate)), lang:SZ.lang() === 'en' ? 'en' : '' }) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(j.error || 'stt'), { status:r.status });
+  return String(j.text || '').trim();
+}
+async function transcribe(file, f){
+  const { pcm, rate, dur, big } = await decodePcm(file), n = Math.min(STT_MAX, Math.ceil(dur / STT_SEC)), out = new Array(n).fill(null);
+  let next = 0, fails = 0, stop = null;
+  f.prog = SZ.lang() === 'en' ? 'Transcribing…' : 'Pasando a texto…'; renderTray();
+  const worker = async () => {
+    while (next < n && !stop && files.includes(f)){
+      const i = next++;
+      try{ out[i] = await sttChunk(pcm, rate, i); }
+      catch(e){ fails++; if (e.status === 429 || e.status === 401 || e.status === 503 || fails > 2) stop = e; }
+      f.prog = (SZ.lang() === 'en' ? 'Transcribing ' : 'Pasando a texto ') + Math.min(n, out.filter(x => x != null).length) + '/' + n; renderTray();
+    }
+  };
+  await Promise.all([worker(), worker()]);
+  delete f.prog;
+  const got = out.map((t, i) => t ? '[' + clock(i * STT_SEC) + '] ' + t : '').filter(Boolean).join('\n');
+  const done = out.filter(x => x != null).length;
+  return { dur, got, done, n, big, stopped:!!stop, more:dur > STT_MAX * STT_SEC };
+}
+function videoFrames(file){
+  return new Promise(ok => {
+    const url = URL.createObjectURL(file), v = document.createElement('video'), pics = [];
+    let i = 0, stamps = [], meta = null, quit = setTimeout(() => end(), 20000);
+    const end = () => { clearTimeout(quit); v.removeAttribute('src'); try{ v.load(); }catch(e){} URL.revokeObjectURL(url); ok({ pics, meta }); };
+    v.muted = true; v.playsInline = true; v.preload = 'auto';
+    v.onloadedmetadata = () => { meta = { dur:v.duration, w:v.videoWidth, h:v.videoHeight }; if (!v.videoWidth || !isFinite(v.duration)) return end(); stamps = [.1, .5, .9].map(p => Math.max(0, Math.min(v.duration - .05, v.duration * p))); v.currentTime = stamps[0]; };
+    v.onseeked = () => {
+      try{ const s = Math.min(1, 960 / Math.max(v.videoWidth, v.videoHeight)), c = document.createElement('canvas'); c.width = Math.round(v.videoWidth * s); c.height = Math.round(v.videoHeight * s); c.getContext('2d').drawImage(v, 0, 0, c.width, c.height); pics.push(c.toDataURL('image/jpeg', .78)); }catch(e){}
+      if (++i < stamps.length) v.currentTime = stamps[i]; else end();
+    };
+    v.onerror = () => end();
+    v.src = url;
+  });
+}
+async function readMedia(file, f, isVideo){
+  const parts = [];
+  if (isVideo){
+    const fr = await videoFrames(file).catch(() => ({ pics:[], meta:null }));
+    if (fr.pics.length){ f.kind = 'img'; f.dataUrls = fr.pics; f.dataUrl = fr.pics[0]; f.thumb = fr.pics[0]; f.frames = fr.pics.length; }
+    if (fr.meta && fr.meta.w) parts.push('Video de ' + clock(fr.meta.dur) + ', ' + fr.meta.w + '×' + fr.meta.h + ' px.' + (fr.pics.length ? ' Van ' + fr.pics.length + ' fotos sacadas del video (al comienzo, a la mitad y al final).' : ''));
+  }
+  let tr = null;
+  try{ tr = await transcribe(file, f); }catch(e){ delete f.prog; }
+  if (tr){
+    if (!isVideo) parts.push('Audio de ' + clock(tr.dur) + '.');
+    if (tr.got) parts.push('Lo que se dice' + (tr.done < tr.n || tr.more ? ' (transcrito hasta el minuto ' + Math.round(tr.done * STT_SEC / 60) + ')' : '') + ':\n' + tr.got);
+    else if (tr.done) parts.push('No se escucha voz: es música, ruido o silencio.');
+    else parts.push('No se pudo pasar el audio a texto ahora (límite de hoy o sin conexión). Pídele a la persona que diga qué hay en el audio si lo necesitas.');
+  } else parts.push((isVideo ? 'El sonido del video' : 'Este audio') + ' no se pudo abrir en el navegador.' + (isVideo ? '' : ' Formato: ' + (file.type || extOf(file.name))));
+  return parts.join('\n');
+}
+/* ---------- el lector de todo ---------- */
+async function readAny(file, f, o = {}){
+  const name = file.name || 'archivo', type = String(file.type || '').toLowerCase();
+  const head = new Uint8Array(await file.slice(0, 264).arrayBuffer().catch(() => new ArrayBuffer(0))), magic = magicOf(head);
+  const tryIt = async fn => { try{ return await fn(); }catch(e){ return null; } };
+  let t = null;
+  if (!file.size){ f.text = fichaTxt(file, 'El archivo está vacío (0 bytes).'); return; }
+  /* fotos */
+  if (!o.textOnly && (/^image\//.test(type) && !/svg/.test(type) || IMGX.test(name) || (magic === 'img' && !TEXTX.test(name)))){
+    const r = await tryIt(() => readAnyImg(file));
+    if (r){ f.kind = 'img'; Object.assign(f, r); return; }
+    /* foto que el navegador no abre: se manda su ficha (y si es TIFF/BMP raros, el texto que tenga) */
+    f.kind = 'text'; f.text = fichaTxt(file, 'Es una imagen que este navegador no puede mostrar.'); return;
+  }
+  /* PDF: con texto → texto; escaneado → fotos de sus páginas; con contraseña → la pide; dañado → el texto que se rescate */
+  if (/\.pdf$/i.test(name) || type === 'application/pdf' || magic === 'pdf'){
+    f.kind = 'pdf';
+    const p = await tryIt(() => readPdf(file));
+    if (p && p.scanned){ if (o.textOnly){ f.text = fichaTxt(file, 'PDF escaneado de ' + p.pages + ' páginas (sin texto que copiar).'); return; } f.kind = 'img'; f.dataUrl = p.pics[0]; f.dataUrls = p.pics; f.thumb = p.pics[0]; f.scan = p.pages; return; }
+    if (p){ f.text = p; return; }
+    t = await tryIt(() => binStrings(file, 4));
+    f.text = fichaTxt(file, t && t.length > 40 ? 'El PDF venía dañado; esto es lo que se pudo rescatar:\n' + clip(t) : 'El PDF está dañado o protegido y no se pudo abrir.'); return;
+  }
+  if (OFFX.test(name)){ f.kind = 'doc'; t = await tryIt(() => readOffice(file)); if (t){ f.text = t; return; } }
+  if (/\.epub$/i.test(name)){ f.kind = 'doc'; t = await tryIt(() => readEpub(file)); if (t){ f.text = clip(t); return; } }
+  if (/\.rtf$/i.test(name) || magic === 'rtf'){ f.kind = 'doc'; t = await tryIt(async () => rtfTxt(await sniffText(file, 8 * MB) || '')); if (t){ f.text = clip(t); return; } }
+  /* audio y video */
+  if (!o.textOnly && magic !== 'text' && (/^(audio|video)\//.test(type) || AUDX.test(name) || VIDX.test(name) || (magic === 'av' && !TEXTX.test(name)))){
+    const isV = /^video\//.test(type) || VIDX.test(name);
+    f.kind = 'media'; f.text = fichaTxt(file, await readMedia(file, f, isV).catch(() => '')); return;
+  }
+  /* comprimidos */
+  if (ZIPX.test(name) || /\.(tar|tgz|gz)$/i.test(name) || /zip|x-tar|gzip/.test(type) || magic === 'zip' || magic === 'gz' || magic === 'tar'){
+    f.kind = 'zip';
+    const r = await tryIt(() => readArchive(file, name));
+    if (r){ f.text = fichaTxt(file, clip(r.text)); return; }
+  }
+  /* código y cualquier texto (también sin extensión o con una que no conocemos) */
+  if (magic !== 'ole' && !OLDX.test(name)){
+    t = await tryIt(() => sniffText(file));
+    if (t != null){ f.kind = 'text'; f.text = clip(/\.x?html?$/i.test(name) && t.length > CAP ? htmlTxt(t) : t); return; }
+  }
+  /* .doc/.xls/.ppt viejos, programas, bases de datos, formatos raros: qué es + el texto que se pueda rescatar */
+  f.kind = magic === 'ole' || OLDX.test(name) ? 'doc' : 'bin';
+  t = await tryIt(() => binStrings(file));
+  f.text = fichaTxt(file, t && t.length > 30 ? (f.kind === 'doc' ? 'Documento de Office viejo; este es su texto:\n' : 'Texto legible que trae adentro:\n') + clip(t) : 'Es un archivo binario sin texto legible: puedes hablar de qué es, pero no de su contenido.');
 }
 /* ---------- v2.0 · crear imágenes (Pollinations): solo con cuenta, con su propio límite diario ----------
    La imagen se guarda en este equipo (IndexedDB) para no llenar tu espacio en la nube; el chat guarda solo la referencia. */
@@ -1887,7 +2212,15 @@ webBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" s
 { const ib = $('#imgBtn') || $('#attachBtn'); if (ib) ib.after(webBtn); } }
 function setWeb(on){ webOn = !!on; webBtn.setAttribute('aria-pressed', String(webOn)); document.body.classList.toggle('webbing', webOn); if (webOn) toast('Buscar en internet: tu próximo mensaje se responde con información de hoy y sus fuentes.'); }
 webBtn.addEventListener('click', () => { if (imgMode) setImgMode(false); setWeb(!webOn); });
-const needsWeb = text => webOn || (SZ.CFG.autoWeb !== false && WEB_RX.test(text));
+const needsWeb = text => webOn || (SZ.CFG.autoWeb !== false && (WEB_RX.test(text) || WEB_RX_EN.test(text)));
+/* v3.8 · también en inglés */
+const WEB_RX_EN = /\b(today|right now|currently|latest|this (week|month|year)|news|price of|how much (is|does)|exchange rate|weather|who won|score|live|search (the web|online|google)|according to (the )?internet)\b/i;
+/* v3.8 · la IA decide sola: si le falta un dato de hoy, en vez de inventar pide una búsqueda con [BUSCAR: …] y SynthFlow busca, lee y le vuelve a preguntar */
+const webAskSys = () => 'Hoy es ' + new Date().toLocaleDateString('es-CO', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) + '. Tienes una herramienta de búsqueda en internet. Si para responder bien necesitas información actual o que no conoces con certeza (noticias, precios, resultados, clima, versiones o lanzamientos recientes, personas, empresas o hechos posteriores a lo que aprendiste), NO inventes ni digas que no tienes internet: responde ÚNICAMENTE con una línea exacta así: [BUSCAR: consulta corta para un buscador, en el idioma de la persona] y nada más. Si no hace falta buscar, responde normal sin mencionar esta herramienta.';
+const WEB_Q_RX = /^\s*\[(?:BUSCAR|SEARCH)\s*:\s*([^\]\n]{2,200})\]?/i;
+const CUTOFF_RX = /(no tengo acceso a (internet|la web|informaci[oó]n (en tiempo real|actual(izada)?)|datos (en tiempo real|actuales))|no puedo (navegar|buscar en internet|acceder a internet|consultar internet)|mi (conocimiento|informaci[oó]n|entrenamiento) (llega|est[aá] actualizad[oa]|se actualiz[oó]|tiene fecha de corte) hasta|fecha de corte de mi|as of my (last )?(knowledge|training)|knowledge cut-?off|i (don'?t|do not|can'?t|cannot) (have )?(access|browse|search)( to)? (the )?(internet|real-time|current|web))/i;
+/* mientras llega la respuesta: ¿empieza como «[BUSCAR…»? entonces no se muestra (se queda «pensando») */
+const webMaybe = t => { t = String(t || '').replace(/^\s+/, ''); return !t || /^\[(?:B(?:U(?:S(?:C(?:A(?:R)?)?)?)?)?|S(?:E(?:A(?:R(?:C(?:H)?)?)?)?)?)?$/i.test(t) || /^\[(BUSCAR|SEARCH)\b/i.test(t); };
 function webCard(){
   const el = document.createElement('div'); el.className = 'agrun webrun';
   el.innerHTML = '<div class="ag-h"><span class="pxw">' + SZ.pixelGrid() + '</span><span class="ag-t"><b>Buscando en internet</b><small>Leo varias páginas para responderte con datos de hoy…</small></span></div>';
@@ -1897,16 +2230,17 @@ function webCard(){
   el._px = SZ.pixelRun($('.pxw', el)); return el;
 }
 async function webSearch(q){
-  const r = await fetch('/api/ai', { method:'POST', headers:SZ.szHeaders(), body:JSON.stringify({ action:'search', q:q.slice(0, 300) }) });
+  const r = await fetch('/api/ai', { method:'POST', headers:SZ.szHeaders(), body:JSON.stringify({ action:'search', q:q.slice(0, 300), lang:SZ.lang() === 'en' ? 'en' : 'es' }) });
   const d = await r.json().catch(() => ({}));
   if (!r.ok) throw Object.assign(new Error(d.error || 'No pude buscar en internet ahora.'), { code:d.code, status:r.status });
   return d;
 }
 /* lo que le llega a la IA: tu mensaje + los resultados numerados (tú sigues viendo solo tu mensaje) */
 function webAsk(text, R){
-  const day = new Date().toLocaleDateString('es-CO', { day:'numeric', month:'long', year:'numeric' });
-  return text + '\n\n---\nResultados de una búsqueda en internet hecha hoy (' + day + ')' + (R.via === 'wikipedia' ? ', en Wikipedia' : '') + '. Úsalos si sirven, cita cada dato con su número entre corchetes, por ejemplo [1], y no inventes datos que no estén aquí:\n'
-    + R.results.map((x, i) => '[' + (i + 1) + '] ' + x.t + ' — ' + x.u + '\n' + x.s).join('\n\n');
+  const day = new Date().toLocaleDateString('es-CO', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  /* v3.8 · además del resumen del buscador, va el texto que se leyó de las primeras páginas (cabe en ~9.000 letras) */
+  return text + '\n\n---\nResultados de una búsqueda en internet hecha hoy, ' + day + (R.via === 'wikipedia' ? ' (en Wikipedia)' : R.via === 'noticias' ? ' (noticias)' : '') + '. Responde con estos datos, que son más nuevos que lo que sabes; cita cada dato con su número entre corchetes, por ejemplo [1]; si los resultados no lo dicen, dilo, y no inventes nada que no esté aquí:\n'
+    + R.results.map((x, i) => '[' + (i + 1) + '] ' + x.t + ' — ' + x.u + '\n' + String(x.s || '').slice(0, 320) + (x.c ? '\nLo que dice la página:\n' + x.c.slice(0, 1900) : '')).join('\n\n');
 }
 /* busca antes de enviar; si falla, se envía igual (sin fuentes) */
 async function webPrep(msg, text){
@@ -2173,8 +2507,9 @@ async function send(){
   if (files.some(f => f.state === 'load')){ toast('Espera a que terminen de cargar los archivos.'); return; }
   try{ SZ.setTurn(text + '|' + Date.now()); }catch(e){}
   if (trialOn && trialLeft() <= 0){ toast('Se acabaron tus mensajes de prueba.'); const tb = $('#trialBar'); tb.classList.remove('pulse'); void tb.offsetWidth; tb.classList.add('pulse'); return; }
-  if (trialOn && files.length){ toast('La prueba guiada es solo de texto. Conecta una IA para enviar archivos.'); return; }
   if (!budgetOk()) return;
+  /* v3.8 · si todavía se está comprobando la IA que elegiste, espera esa respuesta (1-2 s); si no responde, tu texto se queda en la caja */
+  { const h = HEALTH.get(selId()), m1 = selId(); if (h && h.p){ sendBtn.disabled = true; try{ await h.p; }finally{ sendBtn.disabled = false; } if (selId() !== m1) return; } }
   /* modo agente: no eliges IA; el agente entiende tu pedido, lo mejora, elige la IA experta y te muestra los pasos */
   if (agentOn() && mode === 'solo' && text && !files.length){
     if (agentBusy) return;
@@ -2232,11 +2567,12 @@ async function send(){
   /* v3.4 · si la IA elegida no ve fotos, ya no te bloquea: esta respuesta la da una que sí ve (antes salía «Este modelo no ve imágenes» y no podías enviar) */
   /* v3.7 · y solo por esta respuesta: tu IA elegida se queda elegida (antes te la cambiaba para siempre al adjuntar una foto) */
   let oneModel = null;
+  /* v3.8 · foto (o PDF escaneado, o video) con una IA que no ve: una IA que sí ve la describe en texto y responde TU IA elegida.
+     Solo si eso falla, responde esa vez la que ve (como antes). Y si ninguna ve, se manda la ficha de la foto: nunca te bloquea. */
   if (ready.some(f => f.kind === 'img') && !info(selId()).vision){
     const v = visionPick();
-    if (!v){ toast('Ninguna de tus IAs conectadas ve fotos ahora. Conecta Puter o envía tu pregunta sin la imagen.'); return; }
-    oneModel = v.id;
-    toast(info(selId()).name + ' no ve fotos: esta vez te responde ' + v.name + ', que sí las ve. Después sigues con ' + info(selId()).name + '.');
+    if (v && !(await seeForMe(ready, v, text))){ oneModel = v.id; toast(info(selId()).name + ' no ve fotos: esta vez te responde ' + v.name + ', que sí las ve. Después sigues con ' + info(selId()).name + '.'); }
+    else if (!v) ready.filter(f => f.kind === 'img' && !f.seen).forEach(f => { f.text = (f.text ? f.text + '\n\n' : '') + '[Foto adjunta: ' + f.name + '. Ahora no hay ninguna IA conectada que vea fotos; si la necesitas, pídele a la persona que cuente qué muestra.]'; });
   }
   try{ localStorage.setItem('synthz:sent', String(sentN() + 1)); }catch(e){}
   try{ frustration(text, false); }catch(e){}
@@ -2254,13 +2590,34 @@ async function send(){
   if (okSent && text && MEM_RX.test(text)) memOffer(text);
 }
 
+/* v3.8 · «mirar por ti»: una IA que ve describe las fotos (y lee su texto) para que la IA elegida, que no ve, entienda igual */
+const SEE_PROMPT = 'Describe estas imágenes para alguien que no puede verlas, con todo el detalle útil: copia EXACTO todo el texto que aparezca (letreros, documentos, capturas de pantalla, código, tablas con sus números), y describe personas, objetos, colores, gráficos y lo que esté pasando. Si son páginas de un documento, transcríbelas completas. No respondas la pregunta: solo describe. Escribe en el idioma de esta pregunta: ';
+async function seeForMe(list, v, text){
+  const todo = list.filter(f => f.kind === 'img' && !f.seen);
+  if (!todo.length) return true;
+  const wait = setTimeout(() => toast(v.name + ' está mirando tu foto para que ' + info(selId()).name + ' la entienda…'), 600);
+  sendBtn.disabled = true; todo.forEach(f => { f.state = 'load'; f.prog = SZ.lang() === 'en' ? 'Looking…' : 'Mirando…'; }); renderTray();
+  try{
+    for (const f of todo){
+      const pics = (f.dataUrls || [f.dataUrl]).filter(Boolean).slice(0, 4), ctl = new AbortController(); ctls.add(ctl);
+      let r;
+      try{ r = await SZ.askStream(OR, [{ role:'user', content:[{ type:'text', text:SEE_PROMPT + '«' + (text || 'qué hay en la imagen') + '»' }, ...pics.map(u => ({ type:'image_url', image_url:{ url:u } }))] }], { model:v.id, maxTokens:1200, signal:ctl.signal }, () => {}); }finally{ ctls.delete(ctl); }
+      if (!r || r.aborted || !String(r.text || '').trim()) return false;
+      addUsage(r.prov || SZ.provOf(v.id), r.prompt, r.completion, true, { est:r.est, free:/:free$/.test(v.id) || r.prov === 'synthz', rid:r.rid });
+      f.text = (f.text ? f.text + '\n\n' : '') + '[' + (f.scan ? 'PDF escaneado' : f.frames ? 'Fotos del video' : 'Foto') + ' «' + f.name + '», descrita por ' + v.name + ' porque esta IA no ve imágenes]\n' + String(r.text).trim();
+      f.seen = true;
+    }
+    return true;
+  }catch(e){ console.warn('[ver foto]', e); return false; }
+  finally{ clearTimeout(wait); sendBtn.disabled = false; todo.forEach(f => { f.state = 'ok'; delete f.prog; }); renderTray(); }
+}
 /* v3.4 · la mejor IA conectada que ve fotos: primero la Automática de SymphorIA (elige sola una que ve), luego cualquiera de la lista */
 function visionPick(){
   if (szOn()) return info('sz:auto');
   return cat.list.find(m => m.vision && connected(m.id) && !SZ.isBad(m.id)) || null;
 }
 /* ---------- v1.3 · SynthonIA te rescata cuando una IA falla o cuando notas que no te entiende ---------- */
-const TOPIC_RX = [['codigo', /c[oó]digo|program|funci[oó]n|javascript|python|html|css|sql|bug|error de|script/i], ['mate', /ecuaci|matem|calcul|derivad|integral|\d+\s*[x×*+\/-]\s*\d+/i], ['estudiar', /explica|estudi|examen|tarea|aprend|resum/i], ['correo', /correo|email|e-mail/i], ['marketing', /marketing|publicidad|anuncio|vender|ventas|campa[ñn]a/i], ['redes', /instagram|tiktok|reel|post|redes/i], ['idiomas', /traduc|ingl[eé]s|franc[eé]s|idioma/i], ['negocios', /negocio|emprend|empresa|cliente/i], ['ideas', /idea|nombre para|lluvia de/i], ['escribir', /escrib|texto|carta|historia|poema|redact/i]];
+const TOPIC_RX = [['codigo', /c[oó]digo|program|funci[oó]n|javascript|python|html|css|sql|bug|error de|script|coding|code\b|website|app\b/i], ['mate', /ecuaci|matem|calcul|derivad|integral|math|equation|algebra|\d+\s*[x×*+\/-]\s*\d+/i], ['estudiar', /explica|estudi|examen|tarea|aprend|resum|homework|study|exam|learn|explain|summar/i], ['correo', /correo|email|e-mail/i], ['marketing', /marketing|publicidad|anuncio|vender|ventas|campa[ñn]a|advert|\bads?\b|sell|sales/i], ['redes', /instagram|tiktok|reel|post|redes|social media/i], ['idiomas', /traduc|ingl[eé]s|franc[eé]s|idioma|translat|english|spanish|french|language/i], ['negocios', /negocio|emprend|empresa|cliente|business|startup|company|customer/i], ['ideas', /idea|nombre para|lluvia de/i], ['escribir', /escrib|texto|carta|historia|poema|redact|writ|essay|letter|story|poem/i]];
 function guessTopic(t){ const f = TOPIC_RX.find(([k, rx]) => TOPIC[k] && rx.test(t)); return f ? f[0] : null; }
 function altFor(mid, text){
   const tk = guessTopic(text || '');
@@ -2294,7 +2651,11 @@ function frustration(text, regen){
 async function runSolo(onFail, o = {}){
   const mid = o.model || selId(), chat = chatArr(), g = gen, vis = info(mid).vision, saver = st().sx.saver;
   const slowT = setTimeout(() => { if (busy[mid] === 'think' && SZ.BOT.react) SZ.BOT.react('slow', { auto:mid === 'sz:auto' }); }, 14000);
-  const sent = apiMsgs(chat, vis), naive = apiMsgs(chat, vis, { naive:true }), ck = hashStr(mid + '|' + saver + '|' + effKey() + '|' + JSON.stringify(sent));
+  /* v3.8 · la IA decide sola si busca en internet (si ya buscó para este mensaje, no se repite) */
+  const lastU = [...chat].reverse().find(x => x.role === 'user'), webAuto = !o.noWeb && mode === 'solo' && SZ.CFG.autoWeb !== false && !!lastU && !lastU.sources && !lastU.webTried && !lastU.imgId;
+  const sent = apiMsgs(chat, vis, { webAsk:webAuto }), naive = apiMsgs(chat, vis, { naive:true }), ck = hashStr(mid + '|' + saver + '|' + effKey() + '|' + JSON.stringify(sent));
+  let hold = webAuto ? null : false, webQ = null;
+  const holdWeb = txt => { if (hold === false) return false; if (webMaybe(txt)){ hold = true; return true; } hold = false; return false; };
   const canCache = !sent.some(m => Array.isArray(m.content));
   if (works[mid]) works[mid].stop();
   works[mid] = SZ.workView({ model:info(mid).name, inTok:msgCost(sent) });
@@ -2318,14 +2679,15 @@ async function runSolo(onFail, o = {}){
     if (r){ r = Object.assign({}, r, { ms:0, cached:true }); st().sx.saved += r.prompt + r.completion; st().sx.hits += 1; save(); mount(); if (rv) rv.push(r.text); }
     else {
       const ctl = new AbortController(); ctls.add(ctl);
-      try{ r = await SZ.askStream(OR, sent, Object.assign({ model:mid, maxTokens: saver ? 700 : 0, signal:ctl.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { mount(); W.write(txt); if (rv) rv.push(txt); }); }finally{ ctls.delete(ctl); }
+      try{ r = await SZ.askStream(OR, sent, Object.assign({ model:mid, maxTokens: saver ? 700 : 0, signal:ctl.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { if (holdWeb(txt)) return; mount(); W.write(txt); if (rv) rv.push(txt); }); }finally{ ctls.delete(ctl); }
       addUsage(r.prov || SZ.provOf(mid), r.prompt, r.completion, true, { est:r.est, free:/:free$/.test(mid) || r.prov === 'synthz', rid:r.rid });
+      if (webAuto && !r.aborted){ const mq = WEB_Q_RX.exec(r.text || ''); webQ = mq ? mq[1].trim() : (String(r.text || '').length < 2500 && CUTOFF_RX.test(r.text || '') ? String(lastU.content || '').slice(0, 300) : null); }
       if (!r.aborted && !r.swapped) SZ.markGood(mid);
       SZ.TEL.msgs++; SZ.TEL.ai = (r.prov || SZ.provOf(mid)).slice(0, 12);
       st().sx.saved += Math.max(0, msgCost(naive) - msgCost(sent)); save();
-      if (canCache && !r.aborted) cachePut(ck, r);
+      if (canCache && !r.aborted && !webQ) cachePut(ck, r);
       /* si la IA se quedó sin espacio (o se cortó la conexión), sigue sola donde quedó: la persona recibe la respuesta completa sin tocar «Continuar» */
-      for (let n = 0; n < 3 && !r.aborted && !r.swapped && g === gen && (r.finish === 'length' || r.cut); n++){
+      for (let n = 0; n < 3 && !webQ && !r.aborted && !r.swapped && g === gen && (r.finish === 'length' || r.cut); n++){
         const base = r.text, ctl2 = new AbortController(); ctls.add(ctl2);
         const glue = t => (!base || /\s$/.test(base) || /^[\s.,;:!?)\]]/.test(t) || !/[.!?:;)\]*_`]$/.test(base)) ? '' : ' ';
         let r2 = null;
@@ -2341,6 +2703,14 @@ async function runSolo(onFail, o = {}){
       }
     }
     if (g !== gen){ if (rv) rv.skip(); return; }
+    /* v3.8 · la IA pidió buscar (o dijo que no tiene internet): se busca, se leen las páginas y se le vuelve a preguntar, ya con los datos */
+    if (webQ){
+      const rv0 = rv; rv = null; W.stop && W.stop(); if (live && live.chat === chat) live = null; if (el) el.remove(); { const t = $('.think-wrap', lane); if (t) t.remove(); } try{ rv0 && rv0.skip(); }catch(e){} if (el) el.remove();
+      lastU.webTried = true; delete busy[mid]; renderNow();
+      await webPrep(lastU, webQ); save();
+      if (g !== gen) return;
+      return await runSolo(onFail, Object.assign({}, o, { noWeb:true, fresh:true }));
+    }
     const tail = r.aborted ? ' · detenido' : r.cut ? ' · se cortó la conexión' : r.finish === 'length' ? ' · se cortó porque era muy larga (toca «Continuar»)' : '';
     const who = r.swapped ? ' · se acabó tu saldo de Puter este mes; respondió ' + (r.real || 'otra IA') : '';
     W.write(r.text); W.finish({ ms:r.ms, real:r.real || '' });
@@ -2493,6 +2863,96 @@ document.addEventListener('click', e => {
   body.innerHTML = md(showO ? m.orig : m.content); codeButtons(body);
   b.setAttribute('aria-pressed', String(showO)); b.textContent = showO ? RL('Ver mejorada', 'See improved') : RL('Ver original', 'See original');
 });
+/* ---------- v3.8 · ¿la IA que elegiste funciona de verdad? ----------
+   Al elegir una IA (o sumarla a Comparar) se le hace una pregunta mínima. Si no responde:
+   · se esconde de la lista (si ya no existe, 12 h y para todos; si está llena, 10 min y vuelve sola),
+   · vuelves a la IA que tenías, y una ventana te pregunta para qué la querías:
+     «Solo quería probar» → sigues navegando, sin las IAs caídas;  «La quiero para…» → te recomienda la que sí funciona y mejor sirve para eso.
+   Para no gastar: el resultado se guarda (bien 10 min, llena 2 min, caída 30 min) y en el servidor se comparte entre todos.
+   Las de SymphorIA se prueban en /api/ai (no gasta tu batería); Puter y tus llaves, con una respuesta de 4 palabras como mucho. */
+const HEALTH = new Map(), H_TTL = { ok:10 * 60e3, busy:2 * 60e3, down:30 * 60e3 };
+function iaCached(id){ const h = HEALTH.get(id); return h && h.v && Date.now() - h.t < H_TTL[h.v] ? h.v : null; }
+const iaSkip = id => !id || id === 'sz:auto' || /^tr:/.test(id) || !connected(id);
+function iaNote(id, v, shared){
+  HEALTH.set(id, { v, t:Date.now() });
+  if (v === 'ok'){ SZ.markGood(id); return; }
+  if (v === 'down') SZ.markBad(id, !shared); else SZ.markSick(id, 10 * 60e3);
+  iaDrop(id);
+}
+/* sacarla de todo: lista, Comparar, la fijada y los filtros (los filtros leen de cat.list) */
+function iaDrop(id){
+  if (!cat.list.some(m => m.id === id)) return;
+  setCatalog(cat.list.filter(m => m.id !== id), cat.t, cat.status);
+  if (st().pinned === id) delete st().pinned;
+  if (st().cmp.includes(id) && mode !== 'cmp') st().cmp = st().cmp.filter(x => x !== id);
+  save();
+  try{ renderList({ keep:true }); }catch(e){}
+}
+async function szPing(ids){
+  const r = await fetch('/api/ai', { method:'POST', headers:SZ.szHeaders(), body:JSON.stringify({ action:'ping', ids }) });
+  if (!r.ok) throw new Error('ping ' + r.status);
+  return (await r.json()).status || {};
+}
+function iaProbe(id){
+  if (iaSkip(id)) return Promise.resolve('ok');
+  const c = iaCached(id); if (c) return Promise.resolve(c);
+  const h = HEALTH.get(id); if (h && h.p) return h.p;
+  const p = (async () => {
+    if (/^sz:/.test(id)){
+      try{ const v = (await szPing([id]))[id]; return v === 'down' || v === 'busy' ? v : 'ok'; }
+      catch(e){ return 'ok'; }   /* sin conexión con SymphorIA: no es culpa de la IA, no se esconde */
+    }
+    const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 15000);
+    try{ const r = await SZ.askStream(OR, [{ role:'user', content:'Responde solo: ok' }], { model:id, maxTokens:4, signal:ctl.signal }, () => {}); return r && r.aborted ? 'busy' : 'ok'; }
+    catch(e){ return e && e.gone ? 'down' : e && (e.aborted || e.name === 'AbortError') ? 'busy' : 'ok'; }   /* un error de tu cuenta o tu saldo no es «IA caída» */
+    finally{ clearTimeout(tm); }
+  })();
+  HEALTH.set(id, { p });
+  return p.then(v => { iaNote(id, v, /^sz:/.test(id)); return v; });
+}
+/* al abrir la lista: las de SymphorIA se revisan de a 4 (una vez cada 10 min; el servidor guarda la respuesta para todos) */
+let iaSweepT = 0;
+async function iaSweep(){
+  if (Date.now() - iaSweepT < 10 * 60e3 || !szOn()) return; iaSweepT = Date.now();
+  const ids = cat.list.filter(m => /^sz:/.test(m.id) && !iaSkip(m.id) && !iaCached(m.id)).map(m => m.id);
+  for (let i = 0; i < ids.length; i += 4){
+    try{ const st0 = await szPing(ids.slice(i, i + 4)); Object.keys(st0).forEach(id => { if (['ok', 'busy', 'down'].includes(st0[id])) iaNote(id, st0[id], true); }); }
+    catch(e){ break; }
+  }
+}
+/* la IA que mejor sirve para lo que escribiste, entre las que SÍ responden ahora */
+async function iaFor(text, not){
+  const tk = guessTopic(text || ''), seen = new Set([not]);
+  const list = [...(tk ? recommendTop(tk, 12) : []), bestUsable(true), bestUsable(false), ...cat.list.filter(m => m.free)].filter(m => m && !seen.has(m.id) && (seen.add(m.id), true) && connected(m.id) && !SZ.isBad(m.id));
+  const tr = x => SZ.lang() === 'en' && SZ.__syn && SZ.__syn.trStr ? SZ.__syn.trStr(x) : x, topic = tk ? tr(TOPIC[tk].l) : '';
+  for (const m of list.filter(m => m.id !== 'sz:auto').slice(0, 4)){ if ((await iaProbe(m.id)) === 'ok') return { id:m.id, name:tr(m.name), topic }; }
+  return szOn() ? { id:'sz:auto', name:tr(info('sz:auto').name), topic } : null;
+}
+function iaAsk(id, why, from, name){
+  name = name || (info(id) || {}).name || id;
+  if (SZ.lang() === 'en' && SZ.__syn && SZ.__syn.trStr) name = SZ.__syn.trStr(name);
+  try{ dispatchEvent(new CustomEvent('sz-ia-caida', { detail:{ id, name, why, from } })); }
+  catch(e){ toast(name + ' no está respondiendo ahora. La quité de la lista: elige otra.'); }
+}
+/* elegiste una IA: se queda elegida mientras se comprueba (sin esperar); si no responde, vuelves a la de antes */
+function iaAfterPick(id, prev){
+  if (iaSkip(id)) return;
+  const name = info(id).name;
+  iaProbe(id).then(v => {
+    if (v === 'ok' || selId() !== id) return;
+    const back = prev && prev !== id && !SZ.isBad(prev) && connected(prev) ? prev : (bestUsable(true) || bestUsable(false) || {}).id;
+    if (back) pickModel(back, null);
+    iaAsk(id, v, 'solo', name);
+  });
+}
+/* Comparar: primero se comprueba y solo se suma si responde */
+async function iaThenAdd(id, node){
+  if (iaSkip(id) || iaCached(id) === 'ok') return addToCompare(id, node);
+  const name = info(id).name, slow = setTimeout(() => toast('Comprobando que ' + name + ' responde…'), 450);
+  const v = await iaProbe(id); clearTimeout(slow);
+  if (v === 'ok') return addToCompare(id, node);
+  closeSide(); iaAsk(id, v, 'cmp', name);
+}
 /* ---------- comparar: las respuestas llegan en orden, sin cajas vacías, y puedes sumar IA después ---------- */
 /* «Esta tiene más Flow»: cada respuesta trae una carita buena de SynthonIA, distinta a las demás */
 function flowBtn(C){ const f = SZ.randomGoodFace(C.faces); C.faces.add(f); return '<button class="flowb" type="button" title="Sigue la conversación con esta IA"><i aria-hidden="true">' + SZ.face(f, 24) + '</i>Esta tiene más Flow</button>'; }
@@ -2503,14 +2963,14 @@ function flipAdd(grid, el){
   if (SZ.reduce || root.classList.contains('noanim')) return;
   kids.forEach((k, i) => { const a = before[i], b = k.getBoundingClientRect(), dx = a.left - b.left, dy = a.top - b.top, sx = a.width / (b.width || 1); if (Math.abs(dx) + Math.abs(dy) > 1 || Math.abs(sx - 1) > .01) k.animate([{ transform:'translate(' + dx + 'px,' + dy + 'px) scaleX(' + sx + ')', transformOrigin:'left top' }, { transform:'none', transformOrigin:'left top' }], { duration:700, easing:'cubic-bezier(.22,1,.36,1)' }); });
 }
-function newCmpRun(text){
+function newCmpRun(text, at){
   const run = ++cmpRun, node = document.createElement('div'); node.className = 'cmp-run';
-  node.appendChild(userEl(text));
+  node.appendChild(userEl(text, at && at.files));
   const wait = document.createElement('div'); wait.className = 'cmp-wait';
   const grid = document.createElement('div'); grid.className = 'cmp-grid';
   const note = document.createElement('p'); note.className = 'cmp-note'; note.textContent = 'Para ahorrar, en Comparar cada IA responde más corto y sin el historial. Si repites la misma pregunta, sale de la caché gratis.';
   node.append(wait, grid, note);
-  cmpLast = { run, text, node, grid, wait, cards:new Map(), done:[], blind:!!st().battle, n:0, faces:new Set() };
+  cmpLast = { run, text:at ? at.ask : text, node, grid, wait, cards:new Map(), done:[], blind:!!st().battle, n:0, faces:new Set() };
   parkComposer(); setFresh(false); lane.innerHTML = ''; lane.appendChild(node); jump();
   return cmpLast;
 }
@@ -2574,16 +3034,24 @@ function cmpJob(mid, C){
 }
 async function compare(){
   if (isLocked()){ lockNudge(); return; }
-  const text = inp.value.trim(); if (!text) return;
+  const text = inp.value.trim(), ready = files.filter(f => f.state === 'ok'); if (!text && !ready.length) return;
   if (Object.keys(busy).length){ toast('Espera a que terminen de responder, o detenlas con el botón ■.'); return; }
   const ids = st().cmp.slice();
   if (ids.length < 2){ toast('Agrega otra IA con el botón +.'); openSide('add'); return; }
-  if (files.length){ toast('Los archivos funcionan con una sola IA. Quítalos para comparar.'); return; }
+  /* v3.8 · Comparar también con archivos: cada IA recibe el mismo texto sacado de los archivos (las fotos, descritas por una IA que ve) */
+  if (files.some(f => f.state === 'load')){ toast('Espera a que terminen de cargar los archivos.'); return; }
   if (!budgetOk()) return;
   try{ SZ.setTurn(text + '|' + Date.now()); }catch(e){}
   if (!(await ensureConn())) return;
+  if (ready.some(f => f.kind === 'img' && !f.seen)){
+    const v = visionPick();
+    if (!v || !(await seeForMe(ready, v, text))) ready.filter(f => f.kind === 'img' && !f.seen).forEach(f => { f.text = (f.text ? f.text + '\n\n' : '') + '[Foto adjunta: ' + f.name + ' (no se pudo describir ahora)]'; f.seen = true; });
+  }
+  const sent = files.splice(0).filter(f => f.state === 'ok'); renderTray();
+  const ask = (text || 'Mira los archivos adjuntos.') + sent.map(f => f.text ? '\n\n[Archivo adjunto: ' + f.name + ']\n```\n' + f.text.slice(0, Math.floor(24000 / sent.length)) + '\n```' : '').join('');
   inp.value = ''; autoGrow(); updateHint();
-  const C = newCmpRun(text);
+  const C = newCmpRun(text, sent.length ? { ask, files:sent.map(f => ({ name:f.name, kind:f.kind, thumb:f.thumb })) } : null);
+  if (sent.length) C.msg = { role:'user', content:text, files:sent.map(f => ({ name:f.name, kind:f.kind, text:f.text, thumb:f.thumb })) };
   ids.forEach(id => cmpJob(id, C));
 }
 /* entrar a Comparar con las IA marcadas (desde los temas) */
@@ -2658,7 +3126,7 @@ function pickWinner(card){
     (st().thread || (st().thread = {}))[mid] = 't' + Date.now().toString(36);
     st().cmp = []; cmpLast = null; st().model.openrouter = mid; st().pinned = mid;
     const arr = st().chats[ckey()] = [];
-    arr.push({ role:'user', content:C.text }, { role:'assistant', content:card._raw || '', meta:(card._meta || '') + ' · la elegiste en Comparar', model:mid });
+    arr.push(C.msg || { role:'user', content:C.text }, { role:'assistant', content:card._raw || '', meta:(card._meta || '') + ' · la elegiste en Comparar', model:mid });
     touchThread(); save(); setMode('solo');
     toast(info(mid).name + ' tiene más Flow 😎 Sigues con ella.');
   }, 700);
@@ -2740,6 +3208,7 @@ function openSide(kind, anchor){
   sideFrom = a ? a.getBoundingClientRect() : null;
   if (pickMode === 'set' && !ptopic && curTopic) ptopic = curTopic;
   renderPTopics(); paintPNote(); paintPGo();
+  iaSweep();   /* v3.8 · las que no responden salen de la lista mientras la miras */
   const wasOpen = side.classList.contains('open');
   if (!wasOpen) custOn(false);
   paintCust();
@@ -4135,7 +4604,7 @@ function pjPageHtml(p){
     + '<section class="pj-card" id="pjFiles"><div class="pj-ch"><h3>Archivos</h3><span class="pj-fb"><button type="button" class="lnk" data-pa="paste">Pegar texto</button><button type="button" class="btn sm ghost" data-pa="upload">' + PJ_PLUS + 'Subir</button></span></div>'
     + '<div class="pj-cap" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '" aria-label="Capacidad usada"><i style="width:' + Math.max(pct, size ? 2 : 0) + '%"></i></div><small class="pj-muted">' + (size ? 'Usas ' + (pct < 1 ? 'menos del 1 %' : 'el ' + pct + ' %') + ' del espacio · ' + pjNum(size) + ' de ' + pjNum(PJ_MAX) + ' caracteres. En cada mensaje la IA lee lo que más se relaciona con tu pregunta (hasta unas 1.300 palabras, que cuentan en tu límite).' : 'PDF, Word en texto, código, notas… La IA los usa como fuente en cada chat del proyecto.') + '</small>'
     + ((p.files || []).length ? '<ul class="pj-fl">' + p.files.map(f => '<li><span class="pj-fi">' + esc((f.name.split('.').pop() || 'txt').slice(0, 4).toUpperCase()) + '</span><span class="pj-fn"><b>' + esc(f.name) + '</b><small>' + (f.text ? pjNum(f.text.length) + ' caracteres' : 'Guardado en otro equipo') + '</small></span><button type="button" class="pj-fx" data-fdel="' + esc(f.id) + '" aria-label="Quitar ' + esc(f.name) + '">' + PJ_X + '</button></li>').join('') + '</ul>' : '')
-    + '<input type="file" id="pjFileIn" multiple hidden accept=".pdf,.docx,.xlsx,.pptx,.odt,.ods,.odp,.txt,.md,.csv,.tsv,.json,.xml,.html,.css,.js,.ts,.jsx,.tsx,.py,.java,.c,.cpp,.cs,.go,.rs,.php,.rb,.sql,.yml,.yaml,.log"></section>'
+    + '<input type="file" id="pjFileIn" multiple hidden></section>'
     + '</aside></div>';
 }
 
@@ -4201,7 +4670,7 @@ async function pjAddFiles(p, list){
       if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf'){ toast('Leyendo «' + file.name + '»…'); const lib = await loadPdf(), pdf = await lib.getDocument({ data:new Uint8Array(await file.arrayBuffer()) }).promise; t = ''; for (let i = 1; i <= Math.min(pdf.numPages, 300) && t.length < PJ_MAX; i++){ const tc = await (await pdf.getPage(i)).getTextContent(); t += '\n--- página ' + i + ' ---\n' + tc.items.map(x => x.str).join(' '); } if (t.replace(/--- página \d+ ---/g, '').trim().length < 20) throw new Error('«' + file.name + '» parece escaneado (sin texto que leer).'); }
       else if (TEXTX.test(file.name) || /^text\//.test(file.type) || file.type === 'application/json') t = await file.text();
       else if (OFFX.test(file.name)) t = await readOffice(file);   /* v3.4 · Word, Excel y PowerPoint también */
-      else throw new Error('Tipo de archivo no compatible: ' + file.name);
+      else { const f = {}; toast('Leyendo «' + file.name + '»…'); await readAny(file, f, { textOnly:true }); t = f.text || fichaTxt(file); }   /* v3.8 · cualquier otro archivo: zip, RTF, EPUB, .doc viejo… */
       if (!pjAddText(p, file.name, t.trim())) break;
     }catch(err){ toast(err.message || 'No pude leer «' + file.name + '».'); }
   }
@@ -4825,7 +5294,12 @@ window.SZFlow = Object.freeze({
   hideBar:() => { const c = $('#chatsClose'); if (c) c.click(); },
   closeSheet:() => { if (isMobile()) closeChatsSheet(); },
   mode:() => mode,
-  accInfo:() => accInfo
+  accInfo:() => accInfo,
+  /* v3.8 · ventana «esta IA no responde»: la que mejor sirve para lo que escribiste, usarla, o seguir mirando */
+  iaFor:(text, not) => iaFor(text, not),
+  iaUse:id => { if (mode === 'cmp'){ if (!st().cmp.includes(id)) addToCompare(id, null); } else pickModel(id, null); setTimeout(() => inp.focus(), 60); },
+  iaList:() => openSide(mode === 'cmp' ? 'add' : 'set'),
+  lang:() => SZ.lang()
 });
 { const w = $('#sNav .snw'); if (w && !w.firstChild) w.innerHTML = SZ.flowWord(); }
 try{ dispatchEvent(new CustomEvent('synthflow-ready')); }catch(e){}

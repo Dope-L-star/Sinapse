@@ -1,19 +1,26 @@
 /* IA de SymphorIA para todos (beta 2)
    GET                       → { models, provs, limit, used } modelos gratis disponibles y lo que llevas hoy
    POST { messages, model?, maxTokens? } → respuesta en vivo (streaming), con el gasto al final
+   POST { action:'transcribe', audio } → { text } (audio adjunto pasado a texto, trozos de 1 minuto)
+   POST { action:'ping', id | ids } → { status:{ id:'ok'|'busy'|'down' } } (¿esa IA responde ahora? con caché compartida)
    Sin cuenta también funciona: se cuenta por dispositivo y por conexión. */
 import { route, body, json, fail, auth, sha, redis, pipe, today, ipOf, limit, str, roleOf } from './_lib.js';
-import { models, chat, reviewerModel, settings, usedToday, PROV, IMG, pickKeys, markPay, clearPay, outage, classify, searchWith, searchWiki, PAY_RX } from './_pool.js';
+import { models, chat, reviewerModel, settings, usedToday, PROV, IMG, pickKeys, markPay, clearPay, outage, classify, searchWith, searchWiki, searchRss, readPage, PAY_RX, baseOf, pingModel } from './_pool.js';
 
 /* v2.0 · imágenes con Pollinations: solo con cuenta, con su propio límite diario (no gasta Puter ni tu límite de chat).
    Solo gasta el saldo que ya esté cargado en Pollinations: nunca cobra a una tarjeta. */
 const IMG_GLOBAL = +process.env.SYNTHZ_IMG_GLOBAL || 150;
 /* v2.1 · «Buscar en internet»: Tavily o Exa (gratis, sin tarjeta) y, si no hay, Wikipedia. Cuenta en su propio límite */
 const SEARCH_GLOBAL = +process.env.SYNTHZ_SEARCH_GLOBAL || 300;
+const NEWS_RX = /\b(hoy|ayer|noticias?|[uú]ltim[oa]s?|esta semana|resultado|gan[oó]|elecci|partido|precio|d[oó]lar|cotizaci|today|yesterday|news|latest|this week|score|won|election|price)\b/i;
 async function webSearch(req, me, who, b){
   const q = str(b.q, 300); if (q.length < 2) throw Object.assign(new Error('Escribe qué quieres buscar.'), { status:400, code:'s_empty' });
-  const team = me && roleOf(me) !== 'user', max = team ? 5000 : me ? 30 : 3, d = today();   /* v3.0: el equipo, sin límite propio (solo el tope de todos) */
-  await limit('srch:' + who, 10, 60);
+  const lang = b.lang === 'en' ? 'en' : 'es', read = b.read !== false;
+  /* v3.8 · la misma pregunta en 30 min sale de la caché: no gasta búsquedas de nadie */
+  const ck = 'sc:' + lang + ':' + sha(q.toLowerCase().replace(/\s+/g, ' ').trim()).slice(0, 24), hit = await redis('GET', ck).catch(() => null);
+  if (hit){ try{ return json(Object.assign(JSON.parse(hit), { cached:true })); }catch(e){} }
+  const team = me && roleOf(me) !== 'user', max = team ? 5000 : me ? 60 : 8, d = today();   /* v3.8 · más búsquedas al día: 60 con cuenta, 8 sin cuenta */
+  await limit('srch:' + who, 12, 60);
   const uk = 'srch:' + who + ':' + d, gk = 'srch:all:' + d;
   const [n, g] = (await pipe([['GET', uk], ['GET', gk]])).map(x => +x || 0);
   if (n >= max) throw Object.assign(new Error(me ? 'Ya hiciste tus ' + max + ' búsquedas en internet de hoy. Mañana tienes más.' : 'Sin cuenta puedes buscar en internet ' + max + ' veces al día. Entra (es gratis) para buscar más.'), { status:429, code:me ? 's_limit' : 's_guest' });
@@ -31,10 +38,59 @@ async function webSearch(req, me, who, b){
       if (res.length) break;
     }
   }
-  if (!res.length){ res = await searchWiki(q, 4).catch(() => []); via = 'wikipedia'; }
+  /* v3.8 · sin llaves o sin saldo: feeds públicos de Bing (noticias si la pregunta es de actualidad) y, al final, Wikipedia */
+  if (!res.length){ const news = NEWS_RX.test(q); for (const nw of news ? [true, false] : [false, true]){ res = await searchRss(q, 6, nw, lang).catch(e => { console.error('[synthz] búsqueda rss', e.status || 'sin respuesta'); return []; }); if (res.length){ via = nw ? 'noticias' : 'internet'; break; } } }
+  if (!res.length){ res = await searchWiki(q, 4, lang).catch(() => []); via = 'wikipedia'; }
   res = res.filter(x => /^https?:\/\//.test(x.u)).slice(0, 6);
+  /* v3.8 · la IA no solo ve el resumen: se leen las 3 primeras páginas (6 s cada una, en paralelo) y se guarda lo importante 6 h */
+  if (read && res.length){
+    await Promise.all(res.slice(0, 3).map(async x => {
+      const pk = 'pg:' + sha(x.u).slice(0, 24);
+      try{ let c = await redis('GET', pk).catch(() => null); if (c == null){ c = await readPage(x.u, q).catch(() => ''); await redis('SET', pk, c, 'EX', '21600').catch(() => {}); } if (c && c.length > 120) x.c = c; }catch(e){}
+    }));
+  }
   await pipe([['INCR', uk], ['EXPIRE', uk, '172800'], ['INCR', gk], ['EXPIRE', gk, '172800']]);
-  return json({ results:res, via, left:Math.max(0, max - n - 1) });
+  const out = { results:res, via, at:new Date().toISOString() };
+  if (res.length) await redis('SET', ck, JSON.stringify(out), 'EX', '1800').catch(() => {});
+  return json(Object.assign(out, { left:Math.max(0, max - n - 1) }));
+}
+/* v3.8 · audio y video adjuntos → texto. El navegador manda trozos de 1 minuto (WAV 16 kHz) y aquí los transcribe
+   Whisper gratis: Groq (whisper-large-v3-turbo) y, si no hay, Cloudflare Workers AI. Cuenta en su propio límite (no gasta EnerX). */
+const STT_GLOBAL = +process.env.SYNTHZ_STT_GLOBAL || 4000;
+async function transcribe(me, who, b){
+  const a = typeof b.audio === 'string' ? b.audio : '';
+  if (a.length < 200 || a.length > 4_000_000 || !/^[A-Za-z0-9+/=]+$/.test(a.slice(0, 400))) throw Object.assign(new Error('Ese audio no llegó bien.'), { status:400, code:'tr_bad' });
+  const team = me && roleOf(me) !== 'user', max = team ? 5000 : me ? 240 : 30, d = today();   /* trozos de 1 min al día: con cuenta 4 h, sin cuenta 30 min */
+  await limit('tr:' + who, 40, 60);
+  const uk = 'tr:' + who + ':' + d, gk = 'tr:all:' + d;
+  const [n, g] = (await pipe([['GET', uk], ['GET', gk]])).map(x => +x || 0);
+  if (n >= max || g >= STT_GLOBAL) throw Object.assign(new Error('Por hoy ya se pasó mucho audio a texto. Mañana hay más.'), { status:429, code:'tr_limit' });
+  const lang = /^[a-z]{2}$/.test(String(b.lang || '')) ? String(b.lang) : '', wav = Buffer.from(a, 'base64');
+  let text = null;
+  for (const k of (await pickKeys('groq')).slice(0, 2)){
+    try{
+      const fd = new FormData();
+      fd.append('file', new Blob([wav], { type:'audio/wav' }), 'audio.wav'); fd.append('model', process.env.SYNTHZ_STT_MODEL || 'whisper-large-v3-turbo'); fd.append('response_format', 'json'); fd.append('temperature', '0');
+      if (lang) fd.append('language', lang);
+      const r = await fetch((await baseOf(k)) + '/audio/transcriptions', { method:'POST', headers:{ Authorization:'Bearer ' + k.key }, body:fd, signal:AbortSignal.timeout(45000) });
+      if (!r.ok){ const t = await r.text().catch(() => ''); throw Object.assign(new Error('groq'), { status:r.status, txt:t }); }
+      text = String((await r.json()).text || ''); break;
+    }catch(e){
+      const s = e.status || 0; console.error('[synthz] audio a texto groq', s ? classify(s) : 'sin respuesta');
+      if (s === 402 || ((s === 401 || s === 403) && PAY_RX.test(e.txt || ''))) await markPay(k, s, e.txt || '');
+      if (s === 401 || s === 403 || s === 429) await redis('SET', 'pk:down:' + k.id, classify(s), 'EX', s === 429 ? '90' : '600').catch(() => {});
+    }
+  }
+  if (text == null) for (const k of (await pickKeys('cloudflare')).slice(0, 2)){
+    try{
+      const r = await fetch((await baseOf(k)).replace(/\/v1$/, '') + '/run/@cf/openai/whisper-large-v3-turbo', { method:'POST', headers:{ Authorization:'Bearer ' + k.key, 'content-type':'application/json' }, body:JSON.stringify(Object.assign({ audio:a }, lang ? { language:lang } : {})), signal:AbortSignal.timeout(45000) });
+      if (!r.ok) throw Object.assign(new Error('cf'), { status:r.status });
+      const j = await r.json(); text = String((j.result && j.result.text) || ''); break;
+    }catch(e){ console.error('[synthz] audio a texto cloudflare', e.status ? classify(e.status) : 'sin respuesta'); }
+  }
+  if (text == null) throw Object.assign(new Error('Ahora no se puede pasar el audio a texto. Prueba en un rato.'), { status:503, code:'tr_down' });
+  await pipe([['INCR', uk], ['EXPIRE', uk, '172800'], ['INCR', gk], ['EXPIRE', gk, '172800']]);
+  return json({ text:text.trim().slice(0, 20000), left:Math.max(0, max - n - 1) });
 }
 async function makeImage(req, me, b){
   if (!me) throw Object.assign(new Error('Para crear imágenes entra a tu cuenta (es gratis).'), { status:401, code:'img_login' });
@@ -138,6 +194,15 @@ export default route({
     const b = await body(req, 6_000_000), { who, ipKey, me } = await whoOf(req); let guest = null;
     if (b.action === 'image') return makeImage(req, me, b);
     if (b.action === 'search') return webSearch(req, me, who, b);
+    if (b.action === 'transcribe') return transcribe(me, who, b);
+    /* v3.8 · ¿responde la IA que elegiste? (no gasta tu límite; el resultado se comparte unos minutos) */
+    if (b.action === 'ping'){
+      const ids = (Array.isArray(b.ids) ? b.ids : [b.id]).filter(x => typeof x === 'string' && /^sz:[\w.:/@+-]{2,160}$/.test(x)).slice(0, 4);
+      if (!ids.length) return fail(400, 'Modelo no válido.');
+      await limit('ping:' + who, 30, 60);
+      const out = {}; await Promise.all(ids.map(async id => { out[id] = await pingModel(id).catch(() => 'busy'); }));
+      return json({ status:out });
+    }
     if (!me){
       const turn = /^[\w-]{4,40}$/.test(String(b.turn || '')) ? String(b.turn) : 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
       const [inDev, inIp, g, n] = await Promise.all([redis('SISMEMBER', gKey(who), turn), redis('SISMEMBER', gKey(ipKey), turn), guestUsed(who, ipKey), redis('GET', 'gt:' + who + ':' + turn)]);

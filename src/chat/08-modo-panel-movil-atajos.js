@@ -74,6 +74,7 @@ function openSide(kind, anchor){
   sideFrom = a ? a.getBoundingClientRect() : null;
   if (pickMode === 'set' && !ptopic && curTopic) ptopic = curTopic;
   renderPTopics(); paintPNote(); paintPGo();
+  iaSweep();   /* v3.8 · las que no responden salen de la lista mientras la miras */
   const wasOpen = side.classList.contains('open');
   if (!wasOpen) custOn(false);
   paintCust();

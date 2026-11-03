@@ -16,6 +16,8 @@ function markBad(id, share){
   BAD[id] = Date.now(); saveBad();
   if (share !== false) fetch('/api/health', { method:'POST', headers:{ 'content-type':'application/json' }, body:JSON.stringify({ id, ok:false }), keepalive:true }).catch(() => {});
 }
+/* v3.8 · una IA que no responde AHORA (llena o lenta) se esconde solo un rato y vuelve sola */
+function markSick(id, ms){ if (!id || /^tr:/.test(id)) return; BAD[id] = Date.now() - BAD_MS + (ms || 10 * 60e3); saveBad(); }
 function markGood(id){
   if (BAD[id]){ delete BAD[id]; saveBad(); }
   try{ const k = 'synthz:good:' + id; if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, '1'); }catch(e){}
