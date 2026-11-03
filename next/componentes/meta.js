@@ -1,5 +1,5 @@
 /* Lo que cada página repite al compartirse (Next no mezcla openGraph/twitter del marco con los de la página) */
-const IMG = { url: '/media/og-synthz.jpg', width: 1200, height: 630, alt: 'SymphorIA: tu IA gratis, en una sola mesa' };
+const IMG = { url: '/media/og-symphoria.jpg', width: 1200, height: 630, alt: 'SymphorIA: varias IAs gratis en una sola mesa' };
 export const meta = (titulo, desc, ruta) => ({
   title: titulo,
   description: desc,

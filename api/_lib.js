@@ -63,9 +63,15 @@ export function route(handlers){
 /* ---------- Redis por REST (Upstash) ---------- */
 let CMDN = 0;                                                /* comandos de Redis usados en esta llamada (para el medidor de lo gratis) */
 const monthKey = () => new Date().toISOString().slice(0, 7);
+/* Fase 4 · el medidor se anota de a varias llamadas juntas (cada 25 llamadas o cada minuto) en vez de en cada una:
+   antes cada llamada gastaba 2 comandos más y una ida y vuelta extra a Redis solo para contarse.
+   Si el servidor se apaga con llamadas sin anotar, el medidor queda un poquito corto (es un estimado). */
+let USE_C = 0, USE_N = 0, USE_T = 0;
 async function flushUse(){
-  const n = CMDN; CMDN = 0;
-  try{ const m = monthKey(); await fetch(R_URL.replace(/\/$/, '') + '/pipeline', { method:'POST', headers:{ Authorization:'Bearer ' + R_TOK, 'content-type':'application/json' }, body:JSON.stringify([['INCRBY', 'use:c:' + m, n + 2], ['INCR', 'use:r:' + m]]) }); }catch(e){}
+  USE_C += CMDN; CMDN = 0; USE_N++;
+  if (USE_N < 25 && Date.now() - USE_T < 60e3) return;
+  const n = USE_C, r = USE_N; USE_C = 0; USE_N = 0; USE_T = Date.now();
+  try{ const m = monthKey(); await fetch(R_URL.replace(/\/$/, '') + '/pipeline', { method:'POST', headers:{ Authorization:'Bearer ' + R_TOK, 'content-type':'application/json' }, body:JSON.stringify([['INCRBY', 'use:c:' + m, n + 2], ['INCRBY', 'use:r:' + m, r]]) }); }catch(e){}
 }
 export async function redis(...cmd){
   CMDN++;
@@ -100,9 +106,12 @@ export const ipOf = req => String((fromProxy(req) && req.headers.get('x-sz-ip'))
 export const str = (v, max) => String(v == null ? '' : v).replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, max);
 
 /* límite de peticiones: n por ventana de s segundos */
+/* Fase 4 · 1 comando en vez de 2: la fecha de vencimiento se pone solo al abrir la ventana (c = 1) o al pasarse del límite
+   (por si la primera se perdió), no en cada llamada */
 export async function limit(key, n, s){
-  const [c] = await pipe([['INCR', 'rl:' + key], ['EXPIRE', 'rl:' + key, String(s), 'NX']]);
-  if (+c > n) throw Object.assign(new Error('Vas muy rápido. Espera un momento e intenta de nuevo.'), { status:429 });
+  const c = +(await redis('INCR', 'rl:' + key));
+  if (c === 1 || c > n) await redis('EXPIRE', 'rl:' + key, String(s), 'NX').catch(() => {});
+  if (c > n) throw Object.assign(new Error('Vas muy rápido. Espera un momento e intenta de nuevo.'), { status:429 });
 }
 
 /* ---------- cifrado de llaves (AES-256-GCM) ---------- */
