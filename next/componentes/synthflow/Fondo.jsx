@@ -21,7 +21,7 @@ export default function Fondo(){
       <div id="scrim" />
       <div className="amenu effm" id="modeMenu" role="menu" aria-label="Modo de uso" hidden />
       <div className="amenu effm" id="effMenu" role="menu" aria-label="Esfuerzo de la IA" hidden />
-      <div className="corner" id="corner" role="img" aria-label="Claude" style={{bottom:"8px",right:"10px"}} />
+      <div className="corner" id="corner" aria-hidden="true" style={{bottom:"8px",right:"10px"}} />
     </>
   );
 }

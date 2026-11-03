@@ -1,4 +1,4 @@
 {
- "chatHtmlHash": "a1de8dab878bf86cbb94292e2b896c16c94057ea770fdc246e9b0ac47ca98450",
+ "chatHtmlHash": "048bd37e205e417bc1c60466ebc370da217d4bce9e5775f441965b3869cfa2e2",
  "nota": "hash del <body> de chat.html cuando se pasó a JSX (v3.7). Si chat.html cambia, pasa el cambio a estos componentes y actualiza este hash."
 }
