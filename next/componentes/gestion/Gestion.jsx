@@ -80,7 +80,13 @@ export default function Gestion({ api, demo = false }) {
     </header>
   );
   if (err === 'perm') return <div className="gx">{cab}<main className="gx-main"><div className="gx-card gx-msg"><p>{T.sinPermiso}</p><a className="gx-btn" href="/pulsem.html">{T.irPulsem}</a></div></main></div>;
-  if (!R) return <div className="gx">{cab}<main className="gx-main"><p className="gx-load">{err ? T.error : T.cargando}</p></main></div>;
+  /* mientras llegan los datos: el tablero en «esqueleto» con un brillo que lo recorre (en vez de un «Cargando…» suelto) */
+  if (!R) return (
+    <div className="gx">{cab}<main className="gx-main" aria-busy={!err}>
+      <div className="gx-head"><h1>{T.titulo}</h1><p className="gx-load" role="status">{err ? T.error : T.cargando}</p></div>
+      {err ? null : <div className="gx-grid gx-skel" aria-hidden="true">{['gx-norte', '', '', 'gx-wide', '', ''].map((c, i) => <div key={i} className={'gx-card ' + c} style={{ '--i': i }}><i /><b /><i /><i /></div>)}</div>}
+    </main></div>
+  );
 
   const { norte, calidad, gente, tropiezos, capacidad, voz, ayuda } = R;
   const cambio = Math.round(norte.cambio * 100);

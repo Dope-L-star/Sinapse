@@ -33,6 +33,12 @@
 .pm-rain span{writing-mode:vertical-rl;text-orientation:upright;font:600 11px/1.05 var(--mono,'IBM Plex Mono',monospace);letter-spacing:-.5px;
   background:linear-gradient(180deg,transparent,var(--sb-primary,#7b3ff2) 40%,var(--sb-light,#3de0ff) 92%,#fff);-webkit-background-clip:text;background-clip:text;color:transparent;
   opacity:.85;animation:pmFall var(--v,2s) linear infinite;animation-delay:calc(var(--d,0s) * -1)}
+/* v3.8.1 · la carita de SynthonIA que cae entre las palabras del sitio */
+.pm-rain span.pm-face{writing-mode:horizontal-tb;background:none;color:var(--sb-light,#3de0ff);width:20px;opacity:1;filter:drop-shadow(0 0 4px rgba(61,224,255,.6))}
+.pm-face svg{display:block;width:20px;height:23px;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round}
+.pm-face svg .ey{fill:currentColor;stroke:none}
+.pm-rain span:not(.pm-face){font-size:12px;letter-spacing:0}
+html.simple .pm-rain span.pm-face{background:none;color:var(--sacc,#d9a066);filter:none}
 @keyframes pmFall{from{transform:translateY(-105%)}to{transform:translateY(105%)}}
 .pm-tx{margin:0;font:600 14px var(--sans,sans-serif);color:var(--text,#f6f3ff);text-shadow:0 0 12px rgba(0,0,0,.9),0 0 3px rgba(0,0,0,.8)}
 .pm-tx b{background:var(--grad-text,linear-gradient(95deg,#3de0ff,#7b3ff2,#ff3d9a));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none}

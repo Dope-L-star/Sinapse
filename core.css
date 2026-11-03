@@ -1713,6 +1713,12 @@ html.noanim .szbru .tcard,html.noanim .szbru .bru-h i{animation:none!important}
 .pm-rain span{writing-mode:vertical-rl;text-orientation:upright;font:600 11px/1.05 var(--mono,'IBM Plex Mono',monospace);letter-spacing:-.5px;
   background:linear-gradient(180deg,transparent,var(--sb-primary,#7b3ff2) 40%,var(--sb-light,#3de0ff) 92%,#fff);-webkit-background-clip:text;background-clip:text;color:transparent;
   opacity:.85;animation:pmFall var(--v,2s) linear infinite;animation-delay:calc(var(--d,0s) * -1)}
+/* v3.8.1 · la carita de SynthonIA que cae entre las palabras del sitio */
+.pm-rain span.pm-face{writing-mode:horizontal-tb;background:none;color:var(--sb-light,#3de0ff);width:20px;opacity:1;filter:drop-shadow(0 0 4px rgba(61,224,255,.6))}
+.pm-face svg{display:block;width:20px;height:23px;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round}
+.pm-face svg .ey{fill:currentColor;stroke:none}
+.pm-rain span:not(.pm-face){font-size:12px;letter-spacing:0}
+html.simple .pm-rain span.pm-face{background:none;color:var(--sacc,#d9a066);filter:none}
 @keyframes pmFall{from{transform:translateY(-105%)}to{transform:translateY(105%)}}
 .pm-tx{margin:0;font:600 14px var(--sans,sans-serif);color:var(--text,#f6f3ff);text-shadow:0 0 12px rgba(0,0,0,.9),0 0 3px rgba(0,0,0,.8)}
 .pm-tx b{background:var(--grad-text,linear-gradient(95deg,#3de0ff,#7b3ff2,#ff3d9a));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none}
@@ -1740,6 +1746,51 @@ html.simple .br,html.simple .so{border-color:rgba(255,255,255,.1);background:var
 html.noanim .pm-rain span,html.noanim .br-sweep,html.noanim .br-o em,html.noanim .so-tx>b i,html.noanim .so-coin{animation:none!important}
 html.noanim .pm-rain span{transform:none;opacity:.25}
 html.noanim .br-o em{opacity:.8}
+/* v3.8 · Recursos de Uiverse que mandó Sammuel (29/10), usados como estilo y no como piezas literales.
+   Colores siempre del tema activo (--gold-rgb / --wine-rgb); Simple usa su acento; «Animaciones» apagadas = quieto. */
+
+/* ── #4 + #34 · interruptores de Ajustes: al encender, el botón suelta un halo de colores (como el checkbox de gagan-gv)
+      y dentro aparece un visto que se dibuja (como el checkbox SVG que se traza). Apagado queda igual que antes. ── */
+:is(.cfgsw,.sxsw){overflow:visible}
+:is(.cfgsw,.sxsw)::after{transition:transform .45s cubic-bezier(.34,1.56,.64,1),box-shadow .5s ease!important}
+:is(.cfgsw,.sxsw)[aria-pressed="true"]::after{
+  box-shadow:-3px -3px 9px -2px rgba(var(--gold-rgb),.85),3px -3px 9px -2px rgba(var(--wine-rgb),.8),
+             3px 3px 9px -2px rgba(var(--gold-rgb),.6),-3px 3px 9px -2px rgba(var(--wine-rgb),.55)}
+:is(.cfgsw,.sxsw)::before{content:"";position:absolute;z-index:1;top:50%;left:3px;width:5px;height:9px;margin:-6px 0 0 7.5px;
+  border:solid rgba(var(--wine-rgb),1);border-width:0 2px 2px 0;transform:translateX(0) rotate(45deg);
+  clip-path:inset(0 0 100% 0);opacity:0;transition:transform .45s cubic-bezier(.34,1.56,.64,1),clip-path .3s ease,opacity .2s;pointer-events:none}
+:is(.cfgsw,.sxsw)[aria-pressed="true"]::before{transform:translateX(18px) rotate(45deg);clip-path:inset(0 0 0 0);opacity:1;transition-delay:0s,.18s,.1s}
+:is(.cfgsw,.sxsw):active::after{width:24px!important}
+:is(.cfgsw,.sxsw)[aria-pressed="true"]:active::after{transform:translateX(14px)}
+html.simple :is(.cfgsw,.sxsw)[aria-pressed="true"]::after{box-shadow:none}
+html.simple :is(.cfgsw,.sxsw)::before{border-color:var(--sacc,#d9a066)}
+/* los interruptores que ya traen algo dentro (memoria) no llevan el visto */
+:is(.cfgsw,.sxsw):has(> i)::before{display:none}
+
+/* ── 000748 · «Color de SynthFlow» como un dock: el color que tocas crece y sus vecinos lo acompañan ── */
+@media (hover:hover) and (pointer:fine){
+  .cfgth button i{transition:transform .5s cubic-bezier(.175,.885,.32,1.1),box-shadow .5s}
+  .cfgth button:not([data-lock]):hover i{transform:translateY(-8px) scale(1.45);box-shadow:0 0 0 3px rgba(0,0,0,.35),0 12px 26px -8px var(--t1)}
+  .cfgth button:not([data-lock]):hover + button i,.cfgth button:has(+ button:not([data-lock]):hover) i{transform:translateY(-3px) scale(1.2)}
+  .cfgth button:not([data-lock]):hover + button + button i,.cfgth button:has(+ button + button:not([data-lock]):hover) i{transform:scale(1.08)}
+  .cfgth button:active i{transform:scale(1.08)!important}
+}
+.cfgth button[aria-pressed="true"] i{animation:uvPick .7s cubic-bezier(.34,1.56,.64,1)}
+@keyframes uvPick{0%{transform:scale(.8)}60%{transform:scale(1.18)}100%{transform:none}}
+
+/* ── #9 · el brillito diagonal que cruza los botones al pasar el mouse (elijahgummer) + el anillo separado del botón ── */
+:is(.btn:not(.ghost),.szm .tbtn .btn,.cfgfoot .btn){position:relative;overflow:hidden;isolation:isolate}
+:is(.btn:not(.ghost),.szm .tbtn .btn,.cfgfoot .btn)::after{content:"";position:absolute;z-index:-1;top:-60%;right:-30px;width:28px;height:220%;
+  background:linear-gradient(90deg,transparent,rgba(var(--gold-rgb),.55),transparent);transform:translateX(0) rotate(14deg);opacity:0;
+  transition:transform 1s cubic-bezier(.22,1,.36,1),opacity .3s;pointer-events:none}
+:is(.btn:not(.ghost),.szm .tbtn .btn,.cfgfoot .btn):hover::after{transform:translateX(calc(-1 * var(--uvw,260px))) rotate(14deg);opacity:1}
+:is(.btn:not(.ghost),.szm .tbtn .btn,.cfgfoot .btn):focus-visible{box-shadow:0 0 0 2px var(--bg,#0b0a10),0 0 0 4px rgba(var(--gold-rgb),.8)}
+html.simple :is(.btn:not(.ghost),.cfgfoot .btn)::after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent)}
+
+/* sin animaciones: todo queda en su sitio */
+html.noanim :is(.cfgsw,.sxsw)::after,html.noanim :is(.cfgsw,.sxsw)::before,html.noanim .cfgth button i{transition:none!important;animation:none!important}
+html.noanim :is(.btn,.szm .tbtn .btn,.cfgfoot .btn)::after{display:none}
+@media (prefers-reduced-motion:reduce){.cfgth button i{animation:none!important}:is(.btn,.cfgfoot .btn)::after{display:none}}
 /* ===== v4.0 · revisión de accesibilidad y comprensión (3 nov) ===== */
 /* texto solo para lectores de pantalla (las frases que se escriben letra por letra se leen enteras) */
 .sr-txt{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important;border:0!important;opacity:1!important}
@@ -1751,6 +1802,94 @@ html.noanim .br-o em{opacity:.8}
 #nav .cfgb{color:rgba(255,255,255,.9);border-color:rgba(255,255,255,.32);background:rgba(255,255,255,.1)}
 /* el aviso «toca para saltar» de la intro, más legible */
 #intSkip{font-size:14px;color:var(--soft,#d8d4ee)}
+/* v3.8 · Efectos React de next/componentes/efectos/ hechos con recursos de Uiverse que mandó Sammuel.
+   Todos usan los colores del tema (--gold-rgb / --wine-rgb), solo mueven transform/opacity y se quedan quietos con «Animaciones» apagadas. */
+
+/* ── LibroBuscando (.lb-) · anand_4957 ── */
+.lb{display:flex;align-items:center;gap:14px;padding:10px 4px}
+.lb-book{position:relative;flex:none;width:58px;height:44px;border-radius:5px;perspective:300px;transform-style:preserve-3d;
+  background:linear-gradient(135deg,rgba(var(--gold-rgb),1),rgba(var(--wine-rgb),1));box-shadow:0 6px 16px -6px rgba(var(--wine-rgb),.8),inset 0 0 0 2px rgba(255,255,255,.18)}
+.lb-pg,.lb-sh{position:absolute;top:3px;left:3px;width:calc(50% - 3px);height:calc(100% - 6px);border-radius:2px 0 0 2px;transform-origin:100% 50%}
+.lb-pg{background:#f4f3f7 repeating-linear-gradient(transparent 0 5px,rgba(20,20,30,.16) 5px 6px) 4px 6px/18px 26px no-repeat;
+  animation:lbFlip 2.8s cubic-bezier(.65,0,.35,1) infinite;animation-delay:calc(var(--n,0) * .35s);backface-visibility:hidden}
+.lb-pg:nth-child(2){--n:0}.lb-pg:nth-child(3){--n:1}.lb-pg:nth-child(4){--n:2}.lb-pg:nth-child(5){--n:3;background:#e6e4ee}
+.lb-sh{background:linear-gradient(-45deg,transparent 50%,rgba(0,0,0,.25) 50%);filter:blur(3px);top:auto;bottom:-10px;height:14px;opacity:.6}
+@keyframes lbFlip{0%,8%{transform:rotateY(0)}42%,58%{transform:rotateY(-180deg);filter:brightness(.6)}92%,100%{transform:rotateY(0)}}
+.lb-tx,.gi-tx,.bc small,.ax-tx{margin:0;font-size:13.5px;color:var(--soft,#c3c5ce)}
+.lb-tx b{color:var(--text,#fff);font-weight:600}
+:is(.lb-tx,.bc small)>i{font-style:normal;animation:lbDot 1.2s infinite;opacity:.2}
+:is(.lb-tx,.bc small)>i:nth-of-type(2){animation-delay:.2s}:is(.lb-tx,.bc small)>i:nth-of-type(3){animation-delay:.4s}
+@keyframes lbDot{40%{opacity:1}}
+
+/* ── GenerandoImagen (.gi-) · dexter-st ── */
+.gi{position:relative;display:grid;place-items:center;width:var(--s,150px);height:var(--s,150px);margin:6px auto}
+.gi-ring{position:absolute;inset:0;border-radius:50%;animation:giRot 2s linear infinite;
+  box-shadow:0 8px 16px 0 rgba(255,255,255,.85) inset,0 16px 26px 0 rgba(var(--gold-rgb),.9) inset,0 48px 52px 0 rgba(var(--wine-rgb),.9) inset}
+@keyframes giRot{0%{transform:rotate(90deg)}50%{transform:rotate(270deg);filter:hue-rotate(-25deg)}100%{transform:rotate(450deg)}}
+.gi-tx{position:relative;z-index:1;font-weight:300;font-size:calc(var(--s,150px) / 12);color:#fff;white-space:nowrap}
+.gi-tx span{display:inline-block;opacity:.4;animation:giLet 2s infinite;animation-delay:calc(var(--i) * .09s)}
+@keyframes giLet{0%,100%{opacity:.4;transform:none}20%{opacity:1;transform:scale(1.18)}40%{opacity:.7;transform:none}}
+
+/* ── BlobCarga (.bc-) · dylanharriscameron ── */
+.bc{position:relative;overflow:hidden;height:var(--h,220px);border-radius:18px;isolation:isolate;
+  background:rgba(var(--wine-rgb),.06);box-shadow:0 18px 40px -20px rgba(0,0,0,.6)}
+.bc-blob{position:absolute;z-index:-1;top:50%;left:50%;width:46%;aspect-ratio:1;border-radius:50%;background:rgba(var(--gold-rgb),1);filter:blur(22px);
+  animation:bcBounce 5s infinite ease}
+.bc-b2{background:rgba(var(--wine-rgb),1);width:36%;animation-duration:6.5s;animation-direction:reverse}
+@keyframes bcBounce{0%,100%{transform:translate(-100%,-100%)}25%{transform:translate(0,-100%)}50%{transform:translate(0,0)}75%{transform:translate(-100%,0)}}
+.bc-glass{position:absolute;inset:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:16px;text-align:center;border-radius:14px;
+  background:rgba(14,12,20,.62);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);outline:1px solid rgba(255,255,255,.14)}
+.bc-glass b{font-size:15px;color:var(--text,#fff)}
+.bc-bar{display:block;width:min(200px,70%);height:4px;margin-top:8px;border-radius:9px;overflow:hidden;background:rgba(255,255,255,.08)}
+.bc-bar i{display:block;height:100%;width:40%;border-radius:inherit;background:linear-gradient(90deg,rgba(var(--gold-rgb),1),rgba(var(--wine-rgb),1));animation:bcRun 1.6s cubic-bezier(.65,0,.35,1) infinite}
+@keyframes bcRun{from{transform:translateX(-100%)}to{transform:translateX(250%)}}
+
+/* ── ArchivosXYZ (.ax-) · ilkhoeri: las tarjetas se turnan al frente; solo transform ── */
+.ax{display:grid;justify-items:center;gap:8px;padding:6px 0}
+.ax-stage{position:relative;width:240px;height:150px}
+.ax-card{position:absolute;left:50%;top:0;width:108px;height:142px;margin-left:-54px;padding:10px;border:0;border-radius:14px;cursor:pointer;color:#fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;overflow:hidden;
+  background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.35),rgba(var(--gold-rgb),1) 45%,rgba(var(--wine-rgb),1));
+  box-shadow:0 14px 30px -12px rgba(0,0,0,.7),inset 0 0 0 1px rgba(255,255,255,.2);animation:axTurn 9s cubic-bezier(.75,0,0,1) infinite;animation-delay:calc(var(--k) * -3s)}
+.ax-card:nth-child(2){background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.35),rgba(var(--wine-rgb),1) 45%,rgba(60,40,120,1))}
+.ax-card:nth-child(3){background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.3),#3aa0f0 45%,#1d3f9e)}
+.ax-ext{font:800 34px/1 inherit;font-size:34px;letter-spacing:-.02em;color:transparent;-webkit-text-stroke:1.5px rgba(255,255,255,.9);background:linear-gradient(-45deg,rgba(255,255,255,.2),rgba(255,255,255,.75));-webkit-background-clip:text;background-clip:text}
+.ax-card small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;opacity:.9}
+.ax-card:hover,.ax-card:focus-visible{animation-play-state:paused}
+.ax-stage:hover .ax-card{animation-play-state:paused}
+@keyframes axTurn{
+  0%,26%{transform:translate(0,0) rotate(0);z-index:3;opacity:1}
+  33.3%,59%{transform:translate(-62px,16px) rotate(-14deg) scale(.9);z-index:1;opacity:.85}
+  66.6%,92%{transform:translate(62px,16px) rotate(14deg) scale(.9);z-index:2;opacity:.85}
+  100%{transform:translate(0,0) rotate(0);z-index:3;opacity:1}}
+.ax-n1 .ax-card{animation:none}.ax-n1 .ax-stage{width:120px}
+.ax-n2 .ax-card{animation-name:axTurn2;animation-duration:6s}
+@keyframes axTurn2{0%,40%{transform:none;z-index:2}50%,90%{transform:translate(56px,14px) rotate(12deg) scale(.9);z-index:1}100%{transform:none;z-index:2}}
+
+/* ── BotonInicio (.bi-) · dexter-st: capas de color que giran dentro, luz que respira ── */
+.bi{position:relative;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;isolation:isolate;cursor:pointer;
+  padding:13px 38px;border-radius:32px;border:2px solid rgba(255,255,255,.85);background:rgba(var(--wine-rgb),1);
+  font:600 19px/1 inherit;font-size:19px;letter-spacing:.12em;color:#140b10;box-shadow:inset 0 0 10px 6px rgba(40,30,80,.55)}
+.bi-capas{position:absolute;inset:0;z-index:-1;filter:saturate(.8) brightness(1.35)}
+.bi-capas i{position:absolute;left:-60%;top:-200%;width:220%;aspect-ratio:1;mix-blend-mode:difference;animation:biRot 20s linear infinite;
+  background:repeating-radial-gradient(ellipse at 65% 180%,#fff 0 6%,rgba(var(--gold-rgb),1) 9% 15%,#fff 18%)}
+.bi-capas i:last-child{mix-blend-mode:color-dodge}
+@keyframes biRot{to{transform:rotate(360deg)}}
+.bi-luz{position:absolute;z-index:0;width:80%;height:60%;border-radius:50px;background:rgba(255,255,255,.35);filter:blur(6px);animation:biPulse 3s ease-in-out infinite;pointer-events:none}
+@keyframes biPulse{0%,100%{opacity:1}50%{opacity:.1}}
+.bi-tx{position:relative;z-index:1;text-shadow:0 0 4px #fff;transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.bi:hover .bi-tx{transform:scale(1.1)}.bi:active .bi-tx{transform:scale(.95)}
+.bi:focus-visible{outline:2px solid rgba(var(--gold-rgb),1);outline-offset:4px}
+.bi:disabled{opacity:.5;cursor:not-allowed}
+html.simple .bi{background:var(--sacc,#d9a066)}
+
+/* sin animaciones: todo quieto y legible */
+html.noanim :is(.lb-pg,.gi-ring,.gi-tx span,.bc-blob,.bc-bar i,.ax-card,.bi-capas i,.bi-luz,.lb-tx>i,.bc small>i){animation:none!important}
+html.noanim :is(.gi-tx span,.lb-tx>i,.bc small>i){opacity:1}
+html.noanim .ax-card:nth-child(2){transform:translate(-62px,16px) rotate(-14deg) scale(.9);z-index:1}
+html.noanim .ax-card:nth-child(3){transform:translate(62px,16px) rotate(14deg) scale(.9);z-index:0}
+html.noanim .ax-card:nth-child(1){z-index:3}
+@media (prefers-reduced-motion:reduce){:is(.lb-pg,.gi-ring,.bc-blob,.ax-card,.bi-capas i){animation-duration:30s!important}}
 /* v3.0 · ventana de Planes: cuatro tarjetas de vidrio; la tuya brilla con su color */
 .tcard.plans{width:min(760px,calc(100vw - 24px))}
 .pl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:14px 0 6px}

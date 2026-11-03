@@ -80,3 +80,20 @@ html.noanim .ap-rv,html.noanim .ap-w{opacity:1!important;transform:none!importan
 html.noanim main h1{animation:none!important;background-position:0 0!important}
 html.noanim .acts a.go{animation:none!important}
 html.noglass .ap-toc a{backdrop-filter:none;-webkit-backdrop-filter:none;background:#16131f}
+/* volver arriba (Uiverse · vinodjangid07): círculo con flecha; al pasar el mouse se estira, la flecha sale volando y aparece el texto */
+html.ap-on .ap-top{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));z-index:44;width:48px;height:48px;padding:0;border:0;border-radius:999px;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;color:#fff;background:rgba(20,18,30,.82);
+  -webkit-backdrop-filter:blur(14px) saturate(160%);backdrop-filter:blur(14px) saturate(160%);box-shadow:0 0 0 4px rgba(157,108,255,.22),0 12px 30px -10px rgba(0,0,0,.6);
+  opacity:0;transform:translateY(16px) scale(.9);pointer-events:none;transition:opacity .4s var(--ap-ease),transform .5s var(--ap-ease),width .35s var(--ap-ease),background .35s}
+html.ap-on.ap-far .ap-top{opacity:1;transform:none;pointer-events:auto}
+.ap-top svg{width:13px;fill:currentColor;transition:transform .35s var(--ap-ease)}
+.ap-top::before{content:attr(data-t);position:absolute;bottom:-22px;font:600 0/1 inherit;font-size:0;white-space:nowrap;transition:font-size .3s var(--ap-ease),bottom .3s var(--ap-ease)}
+.ap-top:focus-visible{outline:2px solid var(--ap-l);outline-offset:3px}
+@media (hover:hover) and (pointer:fine){
+  html.ap-on .ap-top:hover{width:136px;background:linear-gradient(120deg,var(--ap-a),var(--ap-b) 70%,var(--ap-c))}
+  .ap-top:hover svg{transform:translateY(-220%)}
+  .ap-top:hover::before{font-size:13.5px;bottom:auto}
+}
+.ap-top:active{transform:scale(.94)!important}
+html.noanim .ap-top,html.noanim .ap-top *,html.noanim .ap-top::before{transition:none!important}
+@media print{.ap-top{display:none!important}}

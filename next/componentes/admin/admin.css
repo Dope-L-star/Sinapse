@@ -338,3 +338,16 @@ html.noglass .pa-top,html.noglass .pa-nav,html.noglass .pa-card{backdrop-filter:
 html.noanim .pa *,html.noanim .pa *::before,html.noanim .pa *::after{animation:none!important;transition:none!important}
 .pa .pa-cmd-in input:focus-visible{outline:none}
 .pa-cmd-in:focus-within{background:rgba(255,255,255,.03)}
+/* v3.8 · globitos de ayuda en los íconos de arriba (Uiverse · mrhyddenn): salen con rebote y con el degradado del tema */
+.pa-top .pa-ib[data-tip]{position:relative}
+.pa-top .pa-ib[data-tip]::after,.pa-top .pa-ib[data-tip]::before{position:absolute;left:50%;top:calc(100% + 2px);opacity:0;pointer-events:none;z-index:30;
+  transition:opacity .25s,transform .35s cubic-bezier(.68,-.55,.265,1.55)}
+.pa-top .pa-ib[data-tip]::after{content:attr(data-tip);transform:translate(-50%,-6px) scale(.9);padding:6px 10px;border-radius:9px;white-space:nowrap;
+  font:600 12px/1.2 inherit;font-size:12px;color:#fff;background:linear-gradient(320deg,var(--pa-a),var(--pa-b));box-shadow:0 10px 24px -8px rgba(0,0,0,.6)}
+.pa-top .pa-ib[data-tip]::before{content:"";width:9px;height:9px;margin-top:-3px;transform:translate(-50%,-6px) rotate(45deg);background:var(--pa-b)}
+.pa-top .pa-ib[data-tip]:is(:hover,:focus-visible)::after{opacity:1;transform:translate(-50%,8px) scale(1)}
+.pa-top .pa-ib[data-tip]:is(:hover,:focus-visible)::before{opacity:1;transform:translate(-50%,8px) rotate(45deg)}
+.pa-top .pa-ib[data-tip]:last-child::after{left:auto;right:-4px;transform:translate(0,-6px) scale(.9)}
+.pa-top .pa-ib[data-tip]:last-child:is(:hover,:focus-visible)::after{transform:translate(0,8px) scale(1)}
+@media (hover:none){.pa-top .pa-ib[data-tip]::after,.pa-top .pa-ib[data-tip]::before{display:none}}
+html.noanim .pa-top .pa-ib[data-tip]::after,html.noanim .pa-top .pa-ib[data-tip]::before{transition:none}
