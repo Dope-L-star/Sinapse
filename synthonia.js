@@ -1113,7 +1113,7 @@ function botAct(a){
   if (BOT.acts && BOT.acts[a]){ const fn = BOT.acts[a]; delete BOT.acts[a]; botClose(); try{ fn(); }catch(e){} return; }
   if (a === 'tochat'){ const q = BOT.pendingQ || ''; botClose(); if (isFlow()){ const i = document.getElementById('inp'); if (i){ i.value = q; i.dispatchEvent(new Event('input', { bubbles:true })); i.focus(); } } else { try{ sessionStorage.setItem('synthz:q', JSON.stringify({ q, t:Date.now() })); }catch(e){} portalOut('chat.html'); } return; }
   if (a === 'guide'){ botClose(); const g = $('#guideTop') || $('#helpBtn'); if (g) g.click(); }
-  else if (a === 'conn' && !/chat\.html/.test(location.pathname)){ botClose(); SZ.portalOut ? SZ.portalOut('chat.html?conn=1') : (location.href = 'chat.html?conn=1'); }
+  else if (a === 'conn' && !isFlow()){ botClose(); SZ.portalOut ? SZ.portalOut('chat.html?conn=1') : (location.href = 'chat.html?conn=1'); }
   else if (a === 'conn'){ botClose(); const x = document.createElement('a'); x.setAttribute('data-conn', ''); document.body.appendChild(x); x.click(); x.remove(); }
   else if (a === 'team') botTeam();
   else if (a === 'login'){ botClose(); const b = $('#accBtn') || $('[data-tab="me"]'); if (b) b.click(); }
@@ -1847,7 +1847,7 @@ function alertMode(on){
     document.body.appendChild(o); alertEl = o; requestAnimationFrame(() => o.classList.add('on'));
     const pb = $('[data-al="pu"]', o); if (pb) pb.addEventListener('click', () => { alertDismissed = true; alertMode(false); try{ dispatchEvent(new CustomEvent('synthz-useputer')); }catch(e){} });
     try{ telEv('noai', 'modo alerta: ninguna IA gratis responde'); }catch(e){}
-    clearInterval(alertT); alertT = setInterval(async () => { try{ await szCatalog(); }catch(e){} if (!SZQ.alert) alertBack(); }, 30000);
+    clearInterval(alertT); alertT = setInterval(async () => { if (document.hidden) return; try{ await szCatalog(); }catch(e){} if (!SZQ.alert) alertBack(); }, 60000);   /* Fase 4: cada minuto y solo con la pestaña a la vista (antes 30 s: con miles de personas esperando, era una avalancha justo cuando el servidor está mal) */
   } else if (!on && alertEl){ const o = alertEl; alertEl = null; clearInterval(alertT); o.classList.remove('on'); setTimeout(() => o.remove(), 500); }
 }
 let alertDismissed = false;
@@ -1994,10 +1994,12 @@ function mtClose(){
   document.documentElement.classList.remove('mt-on');
   if (reduce) el.remove(); else el.animate([{ opacity:1 }, { opacity:0 }], { duration:380 }).onfinish = () => el.remove();
 }
+let mtLastCheck = 0;
 async function mtCheck(){
   try{
-    const r = await fetch('/api/config', { cache:'no-store' }); if (!r.ok) return;
-    const m = (await r.json()).maint || {};
+    mtLastCheck = Date.now();
+    const { ok, d } = B.cfgFetch ? await B.cfgFetch() : await fetch('/api/config', { cache:'no-store' }).then(async r => ({ ok:r.ok, d:r.ok ? await r.json() : {} })); if (!ok) return;
+    const m = d.maint || {};
     if (m.on && !mtSkipped()) mtOpen({ text:m.text || 'Estamos presentando fallas o actualizaciones. Espera un momento.', t:m.t });
     else if (!m.on){ mtClose(); try{ sessionStorage.removeItem('synthz:mtskip'); }catch(e){} }
   }catch(e){}
@@ -2008,7 +2010,8 @@ if (!mtOff()){
   const go = () => { mtCheck(); mtLast = Date.now(); MT.timer = setInterval(() => { mtAgo(); if (document.hidden) return; if (MT.el || Date.now() - mtLast > 300000){ mtLast = Date.now(); mtCheck(); } }, 45000); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
   addEventListener('synthz-acc', mtExit); accHooks.push(() => setTimeout(mtExit, 0));
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) mtCheck(); });
+  /* Fase 4 · al volver a la pestaña se revisa, pero no más de una vez por minuto (antes: cada cambio de pestaña era una llamada) */
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && (MT.el || Date.now() - mtLastCheck > 60e3)) mtCheck(); });
 }
 /* ===== v3.1 · Movimiento: SynthonIA sabe por qué todo se mueve, cómo apagarlo y qué cambió =====
    La capa de animaciones vive en movimiento.css / movimiento.js (src/movimiento*). Aquí solo va lo que SynthonIA cuenta y las novedades. */

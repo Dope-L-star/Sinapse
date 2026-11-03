@@ -1147,9 +1147,19 @@ async function api(path, o = {}){
   if (!r.ok) throw Object.assign(new Error(d.error || 'Error ' + r.status), { status:r.status, data:d });
   return d;
 }
+/* Fase 4 · costo cero: /api/config se pedía 2 veces al abrir cada página (las cuentas y el aviso de mantenimiento).
+   Ahora las dos usan la misma respuesta si tiene menos de 5 s. Devuelve { ok, d }. */
+let cfgP = null, cfgT = 0;
+function cfgFetch(maxAge = 5000){
+  if (cfgP && Date.now() - cfgT < maxAge) return cfgP;
+  cfgT = Date.now();
+  const p = cfgP = fetch('/api/config', { cache:'no-store' }).then(async r => ({ ok:r.ok, d:r.ok ? await r.json().catch(() => ({})) : {} }));
+  p.catch(() => { if (cfgP === p) cfgP = null; });
+  return p;
+}
 async function accConfig(){
   if (ACC.avail !== null) return ACC.avail;
-  try{ const r = await fetch('/api/config'); const d = r.ok ? await r.json() : {}; ACC.cid = d.googleClientId || ''; ACC.dcid = d.driveClientId || ''; ACC.sbg = !!d.sbGoogle; ACC.sb = d.sb || null; ACC.google = !!((d.google && ACC.cid) || ACC.sbg); ACC.missing = d.missing || (r.ok ? [] : ['servidor']); ACC.avail = !!d.ok; }
+  try{ const { ok, d } = await cfgFetch(); const r = { ok }; ACC.cid = d.googleClientId || ''; ACC.dcid = d.driveClientId || ''; ACC.sbg = !!d.sbGoogle; ACC.sb = d.sb || null; ACC.google = !!((d.google && ACC.cid) || ACC.sbg); ACC.missing = d.missing || (r.ok ? [] : ['servidor']); ACC.avail = !!d.ok; }
   catch(e){ ACC.avail = false; }
   return ACC.avail;
 }
@@ -2030,7 +2040,7 @@ function puterOutNote(){ if (puOutNoted) return; puOutNoted = true; toast('Usast
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
 })();
 
-/* ===== pulso de SymphorIA: «sigo aquí» cada 10 min (el equipo cada 3) y avisos cortos cuando algo falla (sin mensajes ni chats)
+/* ===== pulso de SymphorIA: «sigo aquí» cada 15 min (el equipo cada 3) y avisos cortos cuando algo falla (sin mensajes ni chats)
    v3.7 · costo cero: de 3 a 10 minutos para las personas = unas 3 veces menos escrituras en Redis por cada visitante ===== */
 const TEL = { since:Date.now(), msgs:0, errs:0, ai:'', locked:false, last:{} };
 const telPage = () => (location.pathname.split('/').pop() || 'index.html').replace(/\.html$/, '') || 'index';
@@ -2042,7 +2052,8 @@ function telEv(kind, detail){
   }catch(e){}
 }
 let beatT = 0, beatAt = 0;
-const beatMs = () => { const r = ACC && ACC.user && ACC.user.role; return r && r !== 'user' ? 180000 : 600000; };
+/* Fase 4 (Sammuel dio permiso, 3 nov): las personas cada 15 min (antes 10); el equipo sigue cada 3 */
+const beatMs = () => { const r = ACC && ACC.user && ACC.user.role; return r && r !== 'user' ? 180000 : 900000; };
 async function telBeat(){
   clearTimeout(beatT); beatT = setTimeout(telBeat, beatMs());
   if (document.hidden) return; beatAt = Date.now();
@@ -2052,7 +2063,8 @@ async function telBeat(){
     if (d.help) try{ dispatchEvent(new CustomEvent('synthz-help-ping')); }catch(e){}
   }catch(e){}
 }
-setTimeout(telBeat, 4000);
+/* el primero a los 30 s (antes 4 s): quien entra y se va enseguida ya no gasta una escritura */
+setTimeout(telBeat, 30000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - beatAt > beatMs() - 10000) telBeat(); });
 addEventListener('error', e => { if (!e || !e.message || /ResizeObserver|Script error/i.test(e.message)) return; telEv('jserror', e.message + ' @' + String(e.filename || '').split('/').pop() + ':' + (e.lineno || 0)); });
 addEventListener('unhandledrejection', e => { const m = e && e.reason && (e.reason.message || String(e.reason)); if (!m || /abort|Detenido|net|Failed to fetch|NetworkError|load failed/i.test(m)) return; telEv('jserror', 'promesa: ' + m); });
@@ -4472,7 +4484,7 @@ window.SZ = { I18N, LANGS, t, lang, setLang, onLang, i18nApply, root, $, $$, cla
 /* v3.4 · SynthonIA (synthonia.js): lo que necesita de core, y cuándo se carga */
 window.SZ.synReady = synReady;
 window.SZ.__syn = { root, $, $$, clamp, CFG, PERF, reduce, sleepRaw, esc, isFlow, BRAND, zWord, t, onLang, ENERX, trStr, ACC, accHooks, api, accName, toast, pixelGrid, pixelRun, typeIn, SZQ, szCatalog, telPage, telEv, burst, portalOut, portalLock, authBox, cfgModal, plansModal, memAddCore, memList,
-  get LANG(){ return LANG; }, get SESS(){ return SESS; }, ready:synArrive };
+  cfgFetch, get LANG(){ return LANG; }, get SESS(){ return SESS; }, ready:synArrive };
 /* la portada la trae con su propia etiqueta (SynthonIA es la portada); las demás páginas, cuando ya cargaron */
 if (document.readyState === 'complete') setTimeout(synLoad, 300); else addEventListener('load', () => (window.requestIdleCallback || setTimeout)(synLoad, { timeout:1200 }), { once:true });
 window.SZ.turnNow = () => TURN && Date.now() - TURN.at < 600000 ? TURN.id : '';

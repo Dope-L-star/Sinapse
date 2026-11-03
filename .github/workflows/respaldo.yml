@@ -1,0 +1,34 @@
+# Fase 4 · respaldo semanal de la base de datos (gratis: GitHub Actions).
+# Queda apagado (no hace nada) hasta que existan estos 3 secretos en GitHub → Settings → Secrets and variables → Actions:
+#   KV_REST_API_URL, KV_REST_API_TOKEN (los mismos de Upstash/Vercel) y RESPALDO_CLAVE (una frase larga que solo sepa el dueño).
+# El archivo sale cifrado con RESPALDO_CLAVE y se guarda 30 días en la pestaña Actions. Ver ops/respaldo-redis.mjs para restaurar.
+name: Respaldo de la base de datos
+on:
+  schedule:
+    - cron: '17 8 * * 1'   # lunes 3:17 a. m. en Colombia
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  respaldo:
+    if: github.repository == 'Dope-L-star/SynthZ-Style'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Respaldar (cifrado)
+        env:
+          KV_REST_API_URL: ${{ secrets.KV_REST_API_URL }}
+          KV_REST_API_TOKEN: ${{ secrets.KV_REST_API_TOKEN }}
+          RESPALDO_CLAVE: ${{ secrets.RESPALDO_CLAVE }}
+        run: node ops/respaldo-redis.mjs respaldar respaldo.enc
+      - name: Guardar el archivo
+        if: hashFiles('respaldo.enc') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: respaldo-redis-${{ github.run_number }}
+          path: respaldo.enc
+          retention-days: 30

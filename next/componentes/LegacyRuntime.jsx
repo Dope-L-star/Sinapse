@@ -83,6 +83,9 @@ export default function LegacyRuntime({ page, scripts = [], puter = false }) {
       script.src = src;
       script.async = async;
       script.dataset.symphoriaSrc = src;
+      // core.js trae synthonia.js solo si no ve una etiqueta con data-syn: sin esta marca, en un celular lento
+      // la portada (que la pide en su lista) la bajaba y la ejecutaba dos veces.
+      if (new URL(src, window.location.origin + '/').pathname === '/synthonia.js') script.dataset.syn = '1';
       script.onload = () => {
         script.dataset.symphoriaLoaded = '1';
         onload?.();

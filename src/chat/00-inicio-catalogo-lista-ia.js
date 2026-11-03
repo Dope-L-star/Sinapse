@@ -225,7 +225,7 @@ async function refresh(silent){
   }finally{ loading = false; }
 }
 $('#refreshBtn').addEventListener('click', () => refresh(false));
-setInterval(() => { if (!document.hidden) refresh(true); }, 600000);
+setInterval(() => { if (!document.hidden) refresh(true); }, 1200000);   /* Fase 4: cada 20 min (antes 10); tu EnerX igual se actualiza con cada respuesta */
 /* v3.7 · costo cero: al volver a la pestaña solo se actualiza si la lista tiene más de 5 min (antes 1 min) */
 document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - cat.t > 300000) refresh(true); });
 

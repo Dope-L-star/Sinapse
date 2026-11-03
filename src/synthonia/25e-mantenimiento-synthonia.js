@@ -127,10 +127,12 @@ function mtClose(){
   document.documentElement.classList.remove('mt-on');
   if (reduce) el.remove(); else el.animate([{ opacity:1 }, { opacity:0 }], { duration:380 }).onfinish = () => el.remove();
 }
+let mtLastCheck = 0;
 async function mtCheck(){
   try{
-    const r = await fetch('/api/config', { cache:'no-store' }); if (!r.ok) return;
-    const m = (await r.json()).maint || {};
+    mtLastCheck = Date.now();
+    const { ok, d } = B.cfgFetch ? await B.cfgFetch() : await fetch('/api/config', { cache:'no-store' }).then(async r => ({ ok:r.ok, d:r.ok ? await r.json() : {} })); if (!ok) return;
+    const m = d.maint || {};
     if (m.on && !mtSkipped()) mtOpen({ text:m.text || 'Estamos presentando fallas o actualizaciones. Espera un momento.', t:m.t });
     else if (!m.on){ mtClose(); try{ sessionStorage.removeItem('synthz:mtskip'); }catch(e){} }
   }catch(e){}
@@ -141,5 +143,6 @@ if (!mtOff()){
   const go = () => { mtCheck(); mtLast = Date.now(); MT.timer = setInterval(() => { mtAgo(); if (document.hidden) return; if (MT.el || Date.now() - mtLast > 300000){ mtLast = Date.now(); mtCheck(); } }, 45000); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
   addEventListener('synthz-acc', mtExit); accHooks.push(() => setTimeout(mtExit, 0));
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) mtCheck(); });
+  /* Fase 4 · al volver a la pestaña se revisa, pero no más de una vez por minuto (antes: cada cambio de pestaña era una llamada) */
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && (MT.el || Date.now() - mtLastCheck > 60e3)) mtCheck(); });
 }

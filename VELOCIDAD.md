@@ -19,3 +19,20 @@ Notas:
 1. **La portada en el celular (41).** El hilo principal trabaja 13,5 s: 6,5 s de «otros» y 4 s de estilos y diseño. Eso viene de las animaciones que corren al mismo tiempo (fondo espacial, aurora, SynthonIA, escenas). `core.js` tarda 1 s en arrancar. Lo que más ayudaría: pausar lo que no se ve, arrancar las escenas después del primer dibujo y bajar la cantidad de capas animadas en celulares lentos.
 2. **JavaScript sin usar.** Se podrían ahorrar 87 KB en la portada y 151 KB en el chat cargando aparte lo que no se usa al entrar (Pulsem, A.L.I.A.S., eventos).
 3. **La portada tiene 2.400 elementos.** Las escenas de abajo se podrían armar cuando la persona llega a ellas.
+
+## Fase 4 · 3 de noviembre de 2026 (antes → después)
+
+Medido en local sobre el mismo export de Cloudflare (`cloudflare/public`), con compresión. «Lista para usar» = todos los motores cargados (evento `symphoria:react-page-ready`), mediana de 5 cargas; celular = 4G lento (150 ms, 1,6 Mbps) y procesador 4× más lento.
+
+| Página | Equipo | Lista para usar antes | Después |
+| --- | --- | --- | --- |
+| Portada | Celular | 7,4 s | 6,8 s |
+| Portada | Computador | 1,74 s | 1,43 s |
+| SynthFlow | Celular | 6,4 s | 5,5 s |
+| SynthFlow | Computador | 1,01 s | 0,93 s |
+
+Lighthouse (mediana de 3): portada en celular 42 → 51 (LCP 5,9 s → 3,7 s). En SynthFlow el LCP es el saludo que escribe chat.js: antes a veces quedaba fuera de la medición y la nota salía más alta de lo real; con los motores en paralelo el saludo sale ~1 s antes.
+
+Servidor (prueba de carga local, `node t/carga/carga.mjs`): comandos de Redis por visita (config + salud + lista de IAs + latido) 20 → 7,2; con 500 visitas a la vez, 0 errores y p95 de 80 ms en nuestro código (sin contar a las IAs de afuera).
+
+Qué sigue pesando: las animaciones de la portada (fondo, aurora, escenas) son la mayor parte del trabajo del celular, y el latido de cada 10 min es lo que más gasta Redis.
