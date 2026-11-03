@@ -396,3 +396,25 @@ html.noanim .am *,html.noanim .am-ambient *{animation:none !important;transition
 .am-lcat li.first .nm{color:#f4d9a0}
 .am-lnone{color:var(--dim);font-size:11px}
 @media (max-width:540px){.am .sroute{flex-wrap:wrap;align-items:flex-start}.am .sr-txt{flex:1 1 calc(100% - 40px)}.am .sr-vote{margin-left:36px}.am-learn{padding:15px}}
+
+/* ---------- v3.9 · botón «Start» de Uiverse (dexter-st) para ejecutar el plan: copia del bloque .bi de src/core-css/27-v38-uiverse-efectos.css
+   (A.L.I.A.S. no carga core.css). Si cambia allá, copiar de nuevo. ---------- */
+/* ── BotonInicio (.bi-) · dexter-st: capas de color que giran dentro, luz que respira ── */
+.bi{position:relative;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;isolation:isolate;cursor:pointer;
+  padding:13px 38px;border-radius:32px;border:2px solid rgba(255,255,255,.85);background:rgba(var(--wine-rgb),1);
+  font:600 19px/1 inherit;font-size:19px;letter-spacing:.12em;color:#140b10;box-shadow:inset 0 0 10px 6px rgba(40,30,80,.55)}
+.bi-capas{position:absolute;inset:0;z-index:-1;filter:saturate(.8) brightness(1.35)}
+.bi-capas i{position:absolute;left:-60%;top:-200%;width:220%;aspect-ratio:1;mix-blend-mode:difference;animation:biRot 20s linear infinite;
+  background:repeating-radial-gradient(ellipse at 65% 180%,#fff 0 6%,rgba(var(--gold-rgb),1) 9% 15%,#fff 18%)}
+.bi-capas i:last-child{mix-blend-mode:color-dodge}
+@keyframes biRot{to{transform:rotate(360deg)}}
+.bi-luz{position:absolute;z-index:0;width:80%;height:60%;border-radius:50px;background:rgba(255,255,255,.35);filter:blur(6px);animation:biPulse 3s ease-in-out infinite;pointer-events:none}
+@keyframes biPulse{0%,100%{opacity:1}50%{opacity:.1}}
+.bi-tx{position:relative;z-index:1;text-shadow:0 0 4px #fff;transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.bi:hover .bi-tx{transform:scale(1.1)}.bi:active .bi-tx{transform:scale(.95)}
+.bi:focus-visible{outline:2px solid rgba(var(--gold-rgb),1);outline-offset:4px}
+.bi:disabled{opacity:.5;cursor:not-allowed}
+.am .bi{font-family:var(--brand);font-size:15px;letter-spacing:.08em;padding:12px 30px;min-height:46px}
+html.noanim .am :is(.bi-capas i,.bi-luz){animation:none!important}
+@media (prefers-reduced-motion:reduce){.am .bi-capas i{animation-duration:30s!important}}
+@media (max-width:540px){.am .btns .bi{flex:1 1 100%}}

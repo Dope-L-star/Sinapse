@@ -15,6 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Pasos, { porQue } from './Pasos';
 import Resultado, { compilar } from './Resultado';
 import { Icono } from './iconos';
+import BotonInicio from '../efectos/BotonInicio';   /* botón «Start» de Uiverse (dexter-st), hecho por el hilo del panel: arranca la misión */
 
 const LANGS = ['es', 'en'], MAX_STEPS = 7;
 const K_LANG = 'synthz:alias:lang', K_HIST = 'alias:misiones', HIST_MAX = 20;
@@ -593,7 +594,7 @@ export default function AliasApp() {
                       </fieldset>
                       {ctlMsg ? <p id="ctlMsg" className="ctl-msg">{ctlMsg}</p> : null}
                       <div className="btns">
-                        {p === 'edit' ? <button type="button" className="am-btn-p" id="bRun" data-alias="run" disabled={!total} onClick={() => { S.editing = null; drive(); }}>{t('btn_ejecutar')} <Icono n="right" /></button> : null}
+                        {p === 'edit' ? <BotonInicio lang={lang} texto={t('btn_ejecutar')} id="bRun" data-alias="run" disabled={!total} onClick={() => { S.editing = null; drive(); }} /> : null}
                         {p === 'await' ? <button type="button" className="am-btn-p" id="bApprove" data-alias="run" onClick={() => send({ a: 'go' })}>{t('btn_aprobar')} <Icono n="right" /></button> : null}
                         {p === 'paused' ? <button type="button" className="am-btn-p" id="bResume" data-alias="run" onClick={() => send({ a: 'go' })}>{t('btn_continuar')} <Icono n="right" /></button> : null}
                         {p === 'running' && !S.pausing ? <button type="button" className="am-btn-o" id="bPause" data-alias="pause" onClick={() => { S.pausing = true; draw(); say(tt('pausando')); }}>{t('btn_pausar')}</button> : null}
