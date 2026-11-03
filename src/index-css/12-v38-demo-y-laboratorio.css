@@ -120,3 +120,12 @@
 }
 html.noanim .dm-mano,html.noanim .dm-mano svg,html.noanim .lab-liq::before,html.noanim .lab-liq i,html.noanim .lab-bat,html.noanim .dm-col.piensa .dm-r::before{animation:none;transition:none}
 .dm-pop[hidden]{display:none}
+/* v4.2 · solo cuenta quien deja su correo: el formulario sale dentro de la ventanita del candado y el tubo elegido se marca (sin contar todavía) */
+.dm-form{display:grid;gap:6px}
+.dm-form label{font-size:12.5px;color:#fff;line-height:1.4}
+.dm-form div{display:flex;gap:6px}
+.dm-form input{flex:1;min-width:0;padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.3);color:#fff;font:inherit;font-size:14px}
+.dm-form button{padding:8px 12px;border-radius:12px;border:0;background:#ffc857;color:#1b1206;font:700 13px var(--sans);cursor:pointer;width:auto;height:auto;min-height:0}
+.dm-form input:focus-visible,.dm-form button:focus-visible{outline:3px solid #b8c4ff;outline-offset:2px}
+.dm-aviso{margin:0;min-height:1em;font-size:12px;color:#ffc857}
+.lab-tubo.elegido:not(.votado) .lab-vidrio{box-shadow:0 0 0 2px color-mix(in srgb,var(--c) 35%,transparent),inset 0 0 18px rgba(255,255,255,.06)}

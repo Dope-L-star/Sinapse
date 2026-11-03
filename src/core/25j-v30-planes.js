@@ -40,8 +40,8 @@ function plansModal(){
   addEventListener('keydown', function k(e){ if (e.key === 'Escape'){ close(); removeEventListener('keydown', k); } });
 }
 
-/* v3.8 · Fase 3 · los planes de pago son una puerta falsa: «Me interesa» cuenta el interés (y deja un correo opcional)
-   en el mismo lugar que los votos de «El laboratorio» de la portada (api/config.js › puertas). Nunca se cobra nada. */
+/* v3.8 · Fase 3 · los planes de pago son una puerta falsa: «Me interesa» pide el correo; v4.2 (Sammuel, 3 nov) solo cuenta como interesado
+   quien DEJA SU CORREO (el clic se guarda aparte y no se muestra), en el mismo lugar que los votos de «El laboratorio» de la portada (api/config.js › puertas). Nunca se cobra nada. */
 const PL_VK = 'synthz:puertas';
 let plCuentas = {};
 function plansDoor(o){
@@ -51,29 +51,25 @@ function plansDoor(o){
   const pinta = () => {
     $$('.pl-quiero', o).forEach(b => { const k = 'plan-' + b.dataset.plan, si = !!votos[k];
       b.textContent = si ? '✓ Te avisamos' : '✦ Me interesa'; b.classList.toggle('si', si); b.setAttribute('aria-pressed', si); });
-    $$('.pl-n', o).forEach(s => { const n = plCuentas['plan-' + s.dataset.plan] || 0; s.textContent = n ? (n === 1 ? '1 persona lo quiere' : n + ' personas lo quieren') : ''; });
+    $$('.pl-n', o).forEach(s => { const n = plCuentas['plan-' + s.dataset.plan] || 0; s.textContent = n ? (n === 1 ? '1 persona dejó su correo' : n + ' personas dejaron su correo') : ''; });
   };
   pinta();
   fetch('/api/config?puertas=1').then(r => r.ok ? r.json() : null).then(d => { if (d && d.puertas){ plCuentas = d.puertas; pinta(); } }).catch(() => {});
   const manda = (id, email) => fetch('/api/config', { method:'POST', headers:{ 'content-type':'application/json' }, body:JSON.stringify({ action:'puerta', id, email:email || undefined, lang:(window.SZ && SZ.lang && SZ.lang()) || 'es' }) })
-    .then(r => r.ok ? r.json() : Promise.reject()).then(d => { if (d && typeof d.n === 'number'){ plCuentas[id] = Math.max(d.n, plCuentas[id] || 0); pinta(); } return true; });
+    .then(r => r.ok ? r.json() : Promise.reject()).then(d => { if (d && typeof d.n === 'number') plCuentas[id] = d.n; if (email && d && d.saved){ votos[id] = Date.now(); try{ localStorage.setItem(PL_VK, JSON.stringify(votos)); }catch(er){} } pinta(); return true; });
   const f = $('.pl-correo', o), av = $('.pl-aviso', f);
   o.addEventListener('click', e => {
     const b = e.target.closest('.pl-quiero'); if (!b) return;
     const id = 'plan-' + b.dataset.plan; ultimo = id;
-    if (!votos[id]){
-      votos[id] = Date.now(); try{ localStorage.setItem(PL_VK, JSON.stringify(votos)); }catch(er){}
-      plCuentas[id] = (plCuentas[id] || 0) + 1; pinta();
-      const r = b.getBoundingClientRect(); try{ if (!document.documentElement.classList.contains('noanim')) burst(r.left + r.width / 2, r.top + r.height / 2, ['#ffd27a', '#9fffd6', '#a98bff', '#ff3d9a'], 22); }catch(er){}
-      manda(id).catch(() => {});
-    }
-    $('label', f).textContent = '¿Te escribimos cuando abra ' + nom(b.dataset.plan) + '? (opcional)';
-    av.textContent = ''; f.hidden = false; $('input', f).focus({ preventScroll:true });
+    if (votos[id]) return;
+    manda(id).catch(() => {});   /* solo el clic, aparte: todavía no cuenta como interesado */
+    $('label', f).textContent = 'Para contar tu interés en ' + nom(b.dataset.plan) + ', déjanos tu correo. Te escribimos solo cuando abra.';
+    av.textContent = ''; $('div', f).hidden = false; f.hidden = false; $('input', f).focus({ preventScroll:true });
   });
   f.addEventListener('submit', e => {
     e.preventDefault(); const c = $('input', f).value.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(c)){ av.textContent = 'Ese correo no parece válido.'; return; }
     av.textContent = '…';
-    manda(ultimo, c).then(() => { av.textContent = 'Listo: te escribimos solo cuando abra. Nada se cobra.'; $('input', f).value = ''; }).catch(() => { av.textContent = 'No pudimos guardarlo ahora. Intenta más tarde.'; });
+    manda(ultimo, c).then(() => { av.textContent = 'Listo: te escribimos solo cuando abra. Nada se cobra.'; $('input', f).value = ''; $('div', f).hidden = true; const b = $('.pl-quiero[data-plan="' + ultimo.slice(5) + '"]', o); if (b){ const r = b.getBoundingClientRect(); try{ if (!document.documentElement.classList.contains('noanim')) burst(r.left + r.width / 2, r.top + r.height / 2, ['#ffd27a', '#9fffd6', '#a98bff', '#ff3d9a'], 22); }catch(er){} } }).catch(() => { av.textContent = 'No pudimos guardarlo ahora. Intenta más tarde.'; });
   });
 }

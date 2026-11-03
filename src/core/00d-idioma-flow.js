@@ -29,7 +29,7 @@ function trStr(s){
 const TR_DAYS = { lun:'Mon', mar:'Tue', 'mié':'Wed', jue:'Thu', vie:'Fri', 'sáb':'Sat', dom:'Sun' };
 /* v3.7 · Pulsem en inglés: frases con números (van ANTES del diccionario, para que no se traduzcan a medias) */
 const TR_PRE = [
-  /* v3.8 · planes como puerta falsa */ [/^(\d+) personas lo quieren$/, '$1 people want it'], [/^¿Te escribimos cuando abra (.+)\? \(opcional\)$/, 'Want us to write when $1 opens? (optional)'],
+  /* v3.8 · planes como puerta falsa */ [/^(\d+) personas lo quieren$/, '$1 people want it'], [/^¿Te escribimos cuando abra (.+)\? \(opcional\)$/, 'Want us to write when $1 opens? (optional)'], /* v4.2 · solo cuenta quien deja su correo */ [/^(\d+) personas dejaron su correo$/, '$1 people left their email'], [/^Para contar tu interés en (.+), déjanos tu correo\. Te escribimos solo cuando abra\.$/, 'To count your interest in $1, leave your email. We will only write when it opens.'],
   /* v3.7 · selector de IA */ [/^(\d+) IA$/, (m, n) => n + (n === '1' ? ' AI' : ' AIs')], [/^(\d+) versi(?:ón|ones)$/, (m, n) => n + (n === '1' ? ' version' : ' versions')], [/^\+ (\d+) temas$/, '+ $1 topics'], [/^Menos temas$/, 'Fewer topics'],
   /* v3.8 · SynthFlow: «3 fuentes», la IA «pensando»/«escribiendo» arriba y el «Ej.:» de la caja */ [/^(\d+) fuentes?$/, (m, n) => n + (n === '1' ? ' source' : ' sources')], [/^pensando$/, 'thinking'], [/^escribiendo$/, 'writing'], [/^Ej\.: /, 'E.g.: '],
   /* v3.8 · adjuntar cualquier archivo */ [/^Máximo (\d+) archivos por mensaje\.$/, 'Up to $1 files per message.'], [/^(.+) está mirando tu foto para que (.+) la entienda…$/, '$1 is looking at your photo so $2 can understand it…'], [/^Leyendo «(.+)»…$/, 'Reading «$1»…'],

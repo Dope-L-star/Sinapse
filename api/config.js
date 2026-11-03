@@ -9,28 +9,32 @@ async function driveCid(){
   return googleCid().catch(() => '');
 }
 async function maint(){ try{ const c = await getJ('cfg:maint'); return c && c.on ? { on:true, text:String(c.text || '').slice(0, 300), t:c.t || 0 } : { on:false }; }catch(e){ return { on:false }; } }
-/* Puertas falsas de la portada (v3.8: pestañas con candado de la demo y «El laboratorio»): votos y correo opcional para avisar.
-   No cobra nada (pagos apagados). GET ?puertas=1 → { puertas:{ id:n } } · POST { action:'puerta', id, email? } → { ok, n }
-   Un voto por IP y función (la IP se guarda como hash). El correo va cifrado; solo el equipo lo puede leer. */
+/* Puertas falsas de la portada (v3.8: pestañas con candado de la demo y «El laboratorio») y de los planes: correo para avisar.
+   No cobra nada (pagos apagados). GET ?puertas=1 → { puertas:{ id:n }, clics:{ id:n } } · POST { action:'puerta', id, email? } → { ok, n, clics }
+   v4.2 (Sammuel, 3 nov: «si no dejan el correo no debería decir que se interesó; cualquiera da clic»):
+   n = personas que DEJARON SU CORREO (uno por correo, fd:e:<id>). Es lo único que se muestra como interés.
+   Los clics sin correo se guardan aparte (fd:n:<id>, uno por IP como hash) y no se muestran como «personas que lo quieren».
+   El correo va cifrado; solo el equipo lo puede leer. */
 export const PUERTAS = ['voz', 'grupo', 'agenda', 'extension', 'escritorio', 'plan-syntonia', 'plan-timeless', 'plan-orquesta'];
 async function puertasGet(){
-  if (missing().length) return json({ puertas:{} });
-  const n = await pipe(PUERTAS.map(id => ['GET', 'fd:n:' + id])).catch(() => []);
-  return json({ puertas:Object.fromEntries(PUERTAS.map((id, i) => [id, +(n[i] || 0)])) });
+  if (missing().length) return json({ puertas:{}, clics:{} });
+  const r = await pipe(PUERTAS.flatMap(id => [['HLEN', 'fd:e:' + id], ['GET', 'fd:n:' + id]])).catch(() => []);
+  return json({ puertas:Object.fromEntries(PUERTAS.map((id, i) => [id, +(r[i * 2] || 0)])), clics:Object.fromEntries(PUERTAS.map((id, i) => [id, +(r[i * 2 + 1] || 0)])) });
 }
 const puertaPost = route({ async POST(req){
   const b = await body(req, 4000).catch(() => ({}));
   if (b.action !== 'puerta' || !PUERTAS.includes(b.id)) return fail(400, 'Puerta desconocida.');
   const ip = ipOf(req);
   await limit('fd:' + sha(ip), 20, 3600);
+  const email = b.email == null || b.email === '' ? '' : cleanEmail(b.email);
+  if (b.email && !(email && okEmail(email) && email.length <= 254)) return fail(400, 'Ese correo no parece válido.');
   const [nuevo] = await pipe([['SADD', 'fd:ip:' + b.id, sha('fd:' + ip)]]);
   const cmds = [];
   if (+nuevo === 1) cmds.push(['INCR', 'fd:n:' + b.id]);
-  const email = cleanEmail(b.email);
-  if (email && okEmail(email) && email.length <= 254) cmds.push(['HSET', 'fd:e:' + b.id, sha('fd:' + email), enc(JSON.stringify({ email, lang:b.lang === 'en' ? 'en' : 'es', t:Date.now() }))]);
+  if (email) cmds.push(['HSET', 'fd:e:' + b.id, sha('fd:' + email), enc(JSON.stringify({ email, lang:b.lang === 'en' ? 'en' : 'es', t:Date.now() }))]);
   if (cmds.length) await pipe(cmds);
-  const n = +(await pipe([['GET', 'fd:n:' + b.id]]))[0] || 0;
-  return json({ ok:true, n });
+  const [n, c] = await pipe([['HLEN', 'fd:e:' + b.id], ['GET', 'fd:n:' + b.id]]);
+  return json({ ok:true, n:+n || 0, clics:+c || 0, saved:!!email });
 } });
 /* Fase 4 · costo cero: la respuesta normal es igual para todos, así que cada servidor la guarda 15 s (antes: 3-4 lecturas de Redis por visita).
    El aviso de mantenimiento tarda como mucho 15 s más en aparecer o quitarse. Los votos de las puertas falsas no se guardan en caché. */

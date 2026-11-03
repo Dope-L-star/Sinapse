@@ -20,7 +20,7 @@ export async function start({ root = path.join(REPO, 'cloudflare/public'), reply
   /* Redis y proveedores de mentira (lo mismo que t/humo/prueba-mensajes.mjs) */
   process.env.KV_REST_API_URL = 'http://redis.test'; process.env.KV_REST_API_TOKEN = 't';
   process.env.GROQ_API_KEY = 'gsk_prueba';
-  const kv = new Map(), sets = new Map();
+  const kv = new Map(), sets = new Map(), hs = new Map();
   const run = c => {
     const op = String(c[0]).toUpperCase(), k = String(c[1] ?? '');
     if (op === 'GET') return kv.has(k) ? kv.get(k) : null;
@@ -36,7 +36,10 @@ export async function start({ root = path.join(REPO, 'cloudflare/public'), reply
     if (op === 'SCARD') return (sets.get(k) || new Set()).size;
     if (op === 'SISMEMBER') return (sets.get(k) || new Set()).has(String(c[2])) ? 1 : 0;
     if (op === 'SMEMBERS') return [...(sets.get(k) || [])];
-    if (op === 'HGETALL' || op === 'LRANGE' || op === 'ZRANGE') return [];
+    if (op === 'HSET'){ const h = hs.get(k) || new Map(); for (let i = 2; i + 1 < c.length; i += 2) h.set(String(c[i]), String(c[i + 1])); hs.set(k, h); return 1; }
+    if (op === 'HLEN') return (hs.get(k) || new Map()).size;
+    if (op === 'HGETALL') return [...(hs.get(k) || new Map())].flat();
+    if (op === 'LRANGE' || op === 'ZRANGE') return [];
     return null;
   };
   const realFetch = globalThis.fetch;
