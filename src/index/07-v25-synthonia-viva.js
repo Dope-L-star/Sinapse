@@ -53,7 +53,11 @@ function standAt(S, sec, h){
   /* el título se escribe letra por letra: se mide el texto completo (no lo que ya se ve) */
   const cs = getComputedStyle(h), R = h.getBoundingClientRect(), fs = parseFloat(cs.fontSize) || 40;
   const cx = (anchor.cv || (anchor.cv = document.createElement('canvas'))).getContext('2d'); cx.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
-  const txt = h.textContent.trim(), ls = parseFloat(cs.letterSpacing) || 0, tw = Math.min(R.width, cx.measureText(txt).width + ls * txt.length);
+  const txt = h.textContent.trim(), ls = parseFloat(cs.letterSpacing) || 0;
+  /* v4.2 · si la letra de la página aún no cargó, el lienzo mide con otra letra (más angosta) y ella quedaba encima del título:
+     se usa lo más ancho entre esa medida y lo que el texto ocupa de verdad en pantalla */
+  const rg = document.createRange(); rg.selectNodeContents(h); const seen = rg.getBoundingClientRect().width || 0;
+  const tw = Math.min(R.width, Math.max(seen, cx.measureText(txt).width + ls * txt.length));
   const lh = Math.min(R.height, parseFloat(cs.lineHeight) || fs * 1.1), al = cs.textAlign;
   const l0 = al === 'center' ? R.left + (R.width - tw) / 2 : al === 'right' || al === 'end' ? R.right - tw : R.left;
   const t = { left:l0, right:l0 + tw, top:R.top, height:lh };
