@@ -6,7 +6,7 @@ window.SZ = { I18N, LANGS, t, lang, setLang, onLang, i18nApply, root, $, $$, cla
 /* v3.4 · SynthonIA (synthonia.js): lo que necesita de core, y cuándo se carga */
 window.SZ.synReady = synReady;
 window.SZ.__syn = { root, $, $$, clamp, CFG, PERF, reduce, sleepRaw, esc, isFlow, BRAND, zWord, t, onLang, ENERX, trStr, ACC, accHooks, api, accName, toast, pixelGrid, pixelRun, typeIn, SZQ, szCatalog, telPage, telEv, burst, portalOut, portalLock, authBox, cfgModal, plansModal, memAddCore, memList,
-  get LANG(){ return LANG; }, get SESS(){ return SESS; }, ready:synArrive };
+  cfgFetch, get LANG(){ return LANG; }, get SESS(){ return SESS; }, ready:synArrive };
 /* la portada la trae con su propia etiqueta (SynthonIA es la portada); las demás páginas, cuando ya cargaron */
 if (document.readyState === 'complete') setTimeout(synLoad, 300); else addEventListener('load', () => (window.requestIdleCallback || setTimeout)(synLoad, { timeout:1200 }), { once:true });
 window.SZ.turnNow = () => TURN && Date.now() - TURN.at < 600000 ? TURN.id : '';

@@ -141,7 +141,7 @@ function alertMode(on){
     document.body.appendChild(o); alertEl = o; requestAnimationFrame(() => o.classList.add('on'));
     const pb = $('[data-al="pu"]', o); if (pb) pb.addEventListener('click', () => { alertDismissed = true; alertMode(false); try{ dispatchEvent(new CustomEvent('synthz-useputer')); }catch(e){} });
     try{ telEv('noai', 'modo alerta: ninguna IA gratis responde'); }catch(e){}
-    clearInterval(alertT); alertT = setInterval(async () => { try{ await szCatalog(); }catch(e){} if (!SZQ.alert) alertBack(); }, 30000);
+    clearInterval(alertT); alertT = setInterval(async () => { if (document.hidden) return; try{ await szCatalog(); }catch(e){} if (!SZQ.alert) alertBack(); }, 60000);   /* Fase 4: cada minuto y solo con la pestaña a la vista (antes 30 s: con miles de personas esperando, era una avalancha justo cuando el servidor está mal) */
   } else if (!on && alertEl){ const o = alertEl; alertEl = null; clearInterval(alertT); o.classList.remove('on'); setTimeout(() => o.remove(), 500); }
 }
 let alertDismissed = false;

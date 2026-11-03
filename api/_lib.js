@@ -63,9 +63,15 @@ export function route(handlers){
 /* ---------- Redis por REST (Upstash) ---------- */
 let CMDN = 0;                                                /* comandos de Redis usados en esta llamada (para el medidor de lo gratis) */
 const monthKey = () => new Date().toISOString().slice(0, 7);
+/* Fase 4 · el medidor se anota de a varias llamadas juntas (cada 25 llamadas o cada minuto) en vez de en cada una:
+   antes cada llamada gastaba 2 comandos más y una ida y vuelta extra a Redis solo para contarse.
+   Si el servidor se apaga con llamadas sin anotar, el medidor queda un poquito corto (es un estimado). */
+let USE_C = 0, USE_N = 0, USE_T = 0;
 async function flushUse(){
-  const n = CMDN; CMDN = 0;
-  try{ const m = monthKey(); await fetch(R_URL.replace(/\/$/, '') + '/pipeline', { method:'POST', headers:{ Authorization:'Bearer ' + R_TOK, 'content-type':'application/json' }, body:JSON.stringify([['INCRBY', 'use:c:' + m, n + 2], ['INCR', 'use:r:' + m]]) }); }catch(e){}
+  USE_C += CMDN; CMDN = 0; USE_N++;
+  if (USE_N < 25 && Date.now() - USE_T < 60e3) return;
+  const n = USE_C, r = USE_N; USE_C = 0; USE_N = 0; USE_T = Date.now();
+  try{ const m = monthKey(); await fetch(R_URL.replace(/\/$/, '') + '/pipeline', { method:'POST', headers:{ Authorization:'Bearer ' + R_TOK, 'content-type':'application/json' }, body:JSON.stringify([['INCRBY', 'use:c:' + m, n + 2], ['INCRBY', 'use:r:' + m, r]]) }); }catch(e){}
 }
 export async function redis(...cmd){
   CMDN++;

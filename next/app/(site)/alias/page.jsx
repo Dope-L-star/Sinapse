@@ -5,7 +5,7 @@ import reactTree from '../../../contenido/arboles-react/alias.json';
 export const metadata = {
   title: 'A.L.I.A.S. · SymphorIA',
   robots: { index: false, follow: false },
-  alternates: { canonical: '/alias.html' },
+  alternates: { canonical: '/alias' },
 };
 
 export default function AliasPage() {

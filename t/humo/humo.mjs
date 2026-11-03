@@ -32,8 +32,8 @@ check('api/_lib.js no trae correos ni huellas escritas', !/@gmail\.com|SETUP_HAS
 /* ---------- archivos para buscadores ---------- */
 const read = f => { try{ return fs.readFileSync(path.join(ROOT, f), 'utf8'); }catch(e){ return ''; } };
 check('robots.txt con sitemap y sin /api', /Sitemap:\s*https:\/\//.test(read('robots.txt')) && /Disallow: \/api\//.test(read('robots.txt')));
-check('sitemap.xml con la portada y SynthFlow', /<loc>[^<]+\/<\/loc>/.test(read('sitemap.xml')) && /chat\.html/.test(read('sitemap.xml')));
-check('imagen para compartir existe', fs.existsSync(path.join(ROOT, 'media/og-synthz.jpg')));
+check('sitemap.xml con la portada y SynthFlow', /<loc>[^<]+\/<\/loc>/.test(read('sitemap.xml')) && /\/chat(\.html)?<\/loc>/.test(read('sitemap.xml')));
+check('imagen para compartir existe', fs.existsSync(path.join(ROOT, 'media/og-symphoria.jpg')));
 if (process.argv[2]) check('dist/ no publica piezas, pruebas ni notas', !['src', 't', 'api', 'INFORME.md', 'build.mjs', 'package.json'].some(f => fs.existsSync(path.join(ROOT, f))));
 
 /* ---------- páginas en el navegador ---------- */

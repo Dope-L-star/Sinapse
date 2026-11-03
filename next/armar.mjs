@@ -10,6 +10,8 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { CLARITY_PROJECT_ID_DEFAULT, isClarityAllowed } from './lib/clarity-client.mjs';
 import { isCloudflareAnalyticsAllowed } from './lib/cloudflare-analytics.mjs';
+import { VERSIONABLES } from './lib/versiones.mjs';
+import crypto from 'node:crypto';
 
 const aqui = path.dirname(fileURLToPath(import.meta.url)), raiz = path.resolve(aqui, '..');
 const clarityRequested = process.env.NEXT_PUBLIC_CLARITY_ENABLED === 'true';
@@ -46,6 +48,19 @@ const pub = path.join(aqui, 'public');
 fs.rmSync(pub, { recursive: true, force: true });
 fs.cpSync(path.join(raiz, 'dist'), pub, { recursive: true });
 for (const f of HECHAS) fs.rmSync(path.join(pub, f), { force: true });
+
+/* Fase 4 · caché larga: cada motor heredado se copia también a /v/<huella>/<nombre> (ver lib/versiones.mjs).
+   La huella cambia solo si cambia el archivo, así que /v/* se guarda un año en Cloudflare y en el navegador. */
+const versiones = {};
+for (const f of VERSIONABLES) {
+  const p = path.join(pub, f);
+  if (!fs.existsSync(p)) continue;
+  const huella = crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex').slice(0, 10);
+  fs.mkdirSync(path.join(pub, 'v', huella), { recursive: true });
+  fs.copyFileSync(p, path.join(pub, 'v', huella, f));
+  versiones[f] = huella;
+}
+process.env.SZ_VERSIONES = JSON.stringify(versiones);
 
 if (!fs.existsSync(path.join(aqui, 'node_modules', 'next', 'dist', 'bin', 'next'))) corre('npm', ['ci', '--no-audit', '--no-fund'], aqui);
 fs.rmSync(path.join(aqui, 'out'), { recursive: true, force: true });

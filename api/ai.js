@@ -119,6 +119,15 @@ const gKey = w => 'gm:' + w + ':' + today();
 /* un «mensaje» = lo que la persona escribe una vez. Si compara 3 IA o el agente piensa antes, sigue siendo 1 mensaje
    (cada mensaje deja hasta 4 llamadas; así nadie se salta el límite repitiendo el mismo número) */
 const PER_TURN = 6;   /* v3.6: también caben «Continúa» y el arreglo automático del código */
+/* Fase 4 · costo cero: la lista de IAs, los ajustes y el «¿se cayeron todas?» son iguales para todos. Cada servidor los guarda
+   un ratito (60 s, 60 s y 30 s) en vez de leerlos de Redis en cada visita. Lo de cada persona (su EnerX, sus mensajes) sigue en vivo. */
+const MEMO = new Map();
+function memo(k, ms, fn){
+  const c = MEMO.get(k); if (c && Date.now() - c.t < ms) return c.p;
+  const p = Promise.resolve().then(fn); MEMO.set(k, { t:Date.now(), p });
+  p.catch(() => { if (MEMO.get(k)?.p === p) MEMO.delete(k); });
+  return p;
+}
 async function guestUsed(who, ipKey){ const [a, b] = (await pipe([['SCARD', gKey(who)], ['SCARD', gKey(ipKey)]])).map(x => +x || 0); return { used:a, usedIp:b }; }
 const guestErr = () => Object.assign(new Error('Para seguir FlowIAndo, entra o crea tu cuenta. Es gratis y tienes mucho más límite cada día.'), { status:429, code:'sz_guest' });
 async function whoOf(req){
@@ -129,9 +138,9 @@ async function whoOf(req){
 }
 export default route({
   async GET(req){
-    const [{ who, ipKey, me }, cat, set] = await Promise.all([whoOf(req), models(false), settings()]);
+    const [{ who, ipKey, me }, cat, set] = await Promise.all([whoOf(req), memo('models', 60e3, () => models(false)), memo('settings', 60e3, settings)]);
     const g = me ? null : await guestUsed(who, ipKey);
-    const alert = await outage().catch(() => false), alertN = me && roleOf(me) !== 'user' ? +(await redis('SCARD', 'alerts').catch(() => 0)) || 0 : 0;
+    const alert = await memo('outage', 30e3, () => outage()).catch(() => false), alertN = me && roleOf(me) !== 'user' ? +(await redis('SCARD', 'alerts').catch(() => 0)) || 0 : 0;
     return json({ provs:cat.provs.map(p => ({ id:p, name:PROV[p].name })), models:cat.list.map(m => ({ id:m.id, name:m.name, prov:m.prov, ctx:m.ctx })), limit:set.dayLimit, used:me && roleOf(me) !== 'user' ? 0 : await usedToday(who), team:!!(me && roleOf(me) !== 'user'), guest:g ? { used:Math.max(g.used, Math.min(g.usedIp, GUEST_MAX)), max:GUEST_MAX } : null, alert, alertN, img:me ? { max:roleOf(me) !== 'user' ? 5000 : set.imgDay, used:+(await redis('GET', 'img:' + me.sub + ':' + today())) || 0 } : null });
   },
   async POST(req){

@@ -1142,9 +1142,19 @@ async function api(path, o = {}){
   if (!r.ok) throw Object.assign(new Error(d.error || 'Error ' + r.status), { status:r.status, data:d });
   return d;
 }
+/* Fase 4 · costo cero: /api/config se pedía 2 veces al abrir cada página (las cuentas y el aviso de mantenimiento).
+   Ahora las dos usan la misma respuesta si tiene menos de 5 s. Devuelve { ok, d }. */
+let cfgP = null, cfgT = 0;
+function cfgFetch(maxAge = 5000){
+  if (cfgP && Date.now() - cfgT < maxAge) return cfgP;
+  cfgT = Date.now();
+  const p = cfgP = fetch('/api/config', { cache:'no-store' }).then(async r => ({ ok:r.ok, d:r.ok ? await r.json().catch(() => ({})) : {} }));
+  p.catch(() => { if (cfgP === p) cfgP = null; });
+  return p;
+}
 async function accConfig(){
   if (ACC.avail !== null) return ACC.avail;
-  try{ const r = await fetch('/api/config'); const d = r.ok ? await r.json() : {}; ACC.cid = d.googleClientId || ''; ACC.dcid = d.driveClientId || ''; ACC.sbg = !!d.sbGoogle; ACC.sb = d.sb || null; ACC.google = !!((d.google && ACC.cid) || ACC.sbg); ACC.missing = d.missing || (r.ok ? [] : ['servidor']); ACC.avail = !!d.ok; }
+  try{ const { ok, d } = await cfgFetch(); const r = { ok }; ACC.cid = d.googleClientId || ''; ACC.dcid = d.driveClientId || ''; ACC.sbg = !!d.sbGoogle; ACC.sb = d.sb || null; ACC.google = !!((d.google && ACC.cid) || ACC.sbg); ACC.missing = d.missing || (r.ok ? [] : ['servidor']); ACC.avail = !!d.ok; }
   catch(e){ ACC.avail = false; }
   return ACC.avail;
 }
@@ -4453,7 +4463,7 @@ window.SZ = { I18N, LANGS, t, lang, setLang, onLang, i18nApply, root, $, $$, cla
 /* v3.4 · SynthonIA (synthonia.js): lo que necesita de core, y cuándo se carga */
 window.SZ.synReady = synReady;
 window.SZ.__syn = { root, $, $$, clamp, CFG, PERF, reduce, sleepRaw, esc, isFlow, BRAND, zWord, t, onLang, ENERX, trStr, ACC, accHooks, api, accName, toast, pixelGrid, pixelRun, typeIn, SZQ, szCatalog, telPage, telEv, burst, portalOut, portalLock, authBox, cfgModal, plansModal, memAddCore, memList,
-  get LANG(){ return LANG; }, get SESS(){ return SESS; }, ready:synArrive };
+  cfgFetch, get LANG(){ return LANG; }, get SESS(){ return SESS; }, ready:synArrive };
 /* la portada la trae con su propia etiqueta (SynthonIA es la portada); las demás páginas, cuando ya cargaron */
 if (document.readyState === 'complete') setTimeout(synLoad, 300); else addEventListener('load', () => (window.requestIdleCallback || setTimeout)(synLoad, { timeout:1200 }), { once:true });
 window.SZ.turnNow = () => TURN && Date.now() - TURN.at < 600000 ? TURN.id : '';

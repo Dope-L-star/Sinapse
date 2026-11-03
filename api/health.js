@@ -18,6 +18,7 @@ async function whoOf(req){
   const dev = String(req.headers.get('x-sz-device') || ''), h = sha('dev:' + (/^[\w-]{12,48}$/.test(dev) ? dev : 'ip:' + ipOf(req))).slice(0, 10);
   return { id:'d:' + h, name:'Invitado ' + h.slice(0, 4).toUpperCase(), rank:'Invitado', sub:'' };
 }
+let BAD_CACHE = { t:0, v:null };   /* lista de modelos escondidos, guardada 30 s (se borra aquí mismo si cambia) */
 const clean = s => str(s, 160).replace(/(gsk_|sk-|cfat_|Bearer\s+)[\w-]{6,}/gi, '••');
 
 export default route({
@@ -50,11 +51,14 @@ export default route({
       return json({ now, use, supa, alerts:alertL, rank:RANK[roleOf(me)], canEdit:['owner', 'admin'].includes(roleOf(me)), online, events:evs, stat, perMin:mins.map(x => +x || 0).reverse(), dayLimit:set.dayLimit,
         keys:keys.map(k => ({ id:k.id, prov:k.prov, provName:k.provName, owner:k.owner && { name:k.owner.name, rank:k.owner.rank }, n:k.n, cap:k.cap, tok:k.tok, down:k.down, check:k.check, src:k.src })), provs:ORDER.map(p => ({ id:p, name:PROV[p].name })), help, feedback });
     }
+    /* Fase 4 · costo cero: todas las visitas piden esta misma lista al abrir la página; cada servidor la guarda 30 s */
+    if (BAD_CACHE.v && Date.now() - BAD_CACHE.t < 30e3) return json(BAD_CACHE.v);
     const all = await redis('HGETALL', 'mh:bad') || [];
     const now = Date.now(), bad = [], old = [];
     for (let i = 0; i < all.length; i += 2){ const t = +all[i + 1] || 0; if (now - t < TTL * 1000) bad.push({ id:all[i], t }); else old.push(all[i]); }
     if (old.length) await redis('HDEL', 'mh:bad', ...old).catch(() => {});
-    return json({ bad:bad.slice(0, 400) });
+    BAD_CACHE = { t:now, v:{ bad:bad.slice(0, 400) } };
+    return json(BAD_CACHE.v);
   },
   async POST(req){
     const b = await body(req, 4000), ip = ipOf(req);
@@ -79,11 +83,11 @@ export default route({
     const id = typeof b.id === 'string' ? b.id.trim() : '';
     if (!ID_RX.test(id)) return fail(400, 'Modelo no válido.');
     await limit('mh:ip:' + ip, 40, 3600);
-    if (b.ok === true){ await redis('HDEL', 'mh:bad', id); await redis('DEL', 'mh:r:' + id); return json({ ok:true }); }
+    if (b.ok === true){ BAD_CACHE.t = 0; await redis('HDEL', 'mh:bad', id); await redis('DEL', 'mh:r:' + id); return json({ ok:true }); }
     const me = await auth(req, true).catch(() => null), team = roleOf(me) !== 'user';
     const who = sha('ip:' + ip).slice(0, 16), k = 'mh:r:' + id;
     const [, , n] = await pipe([['SADD', k, who], ['EXPIRE', k, String(TTL)], ['SCARD', k]]);
-    if (team || +n >= 3) await redis('HSET', 'mh:bad', id, String(Date.now()));
+    if (team || +n >= 3){ BAD_CACHE.t = 0; await redis('HSET', 'mh:bad', id, String(Date.now())); }
     return json({ ok:true, hidden:team || +n >= 3 });
   }
 });
