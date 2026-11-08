@@ -1,6 +1,7 @@
 import Script from 'next/script';
 import ClarityConsent from '../../componentes/ClarityConsent';
 import AnalyticsConsent from '../../componentes/AnalyticsConsent';
+import Umami from '../../componentes/Umami';   /* v4.3 · visitas con Umami, sin cookies */
 
 /* Marco común de las páginas hechas en Next.js: fuentes, colores oscuros y la capa de animaciones compartida (movimiento.css/js),
    la misma que usan la portada y SynthFlow. */
@@ -14,6 +15,7 @@ export default function Layout({ children }){
   return (
     <html lang="es">
       <head>
+        <Umami />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Chakra+Petch:wght@500;600;700&family=Figtree:wght@300..800&family=IBM+Plex+Mono:wght@400;500&display=swap" />
