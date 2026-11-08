@@ -90,7 +90,7 @@ const WHATSNEW = { v:'3.0', items:[
   ['ajustes', 'Modo compacto: SynthFlow ahora se ve un poco más pequeño. Si prefieres el tamaño de antes, Ajustes → Tamaño → Normal.'],
   ['chat', 'Más seguro: lo que crea la IA corre aparte, en su propio espacio, y tu sesión queda protegida.'],
   ['ajustes', 'Pulsem (equipo): ahora cada quien puede quitar su llave con «Quitar».'],
-  ['chat', 'Planes en el menú «⋯» › Planes: Chispa (gratis), Syntonia, Timeless y Orquesta. Por ahora solo se muestran: los pagos están apagados y nadie te cobra.'],
+  ['chat', 'Planes en el menú «⋯» › Planes: Chispa (gratis), Chispa+, Syntonia, Timeless y Orquesta. Por ahora solo se muestran: los pagos están apagados y nadie te cobra.'],
   ['chat', 'Guía de 2 minutos: al terminar «Empieza en SynthFlow» arranca sola, sin preguntarte otra vez el tema ni la IA.'],
   ['chat', 'La caja para escribir ahora es más larga y más bajita, para que veas más chat.'],
   ['synthonia', 'Nueva página de Ayuda, en español y en inglés: preguntas frecuentes y botones para hablar con el equipo o conmigo.']
