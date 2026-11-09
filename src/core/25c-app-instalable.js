@@ -10,6 +10,26 @@ const APP = { evt:null, done:false };
 const APP_VIDEO = '/media/app/synthflow-app.mp4?v=30', APP_POSTER = '/media/app/synthflow-app.webp?v=30';
 const appStandalone = () => { try{ return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }catch(e){ return false; } };
 const appIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+/* v4.1 · Obertura: en un computador con Windows, la ventana ofrece además bajar el instalador propio (functions/descargar/windows.js) */
+const appWin = () => { try{ return /Windows NT/i.test(navigator.userAgent) && !matchMedia('(pointer:coarse)').matches; }catch(e){ return false; } };
+const WIN_LOGO = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M3 5.1 10.4 4v7.2H3zM11.3 3.9 21 2.5v8.7h-9.7zM3 12.1h7.4v7.2L3 18.2zM11.3 12.1H21v8.6l-9.7-1.4z"/></svg>';
+function winBox(o){
+  const b = document.createElement('div'); b.className = 'ap-win';
+  b.innerHTML = '<a class="ap-win-go" href="/descargar/windows" rel="nofollow"><span class="ap-win-ico">' + WIN_LOGO + '</span><span class="ap-win-t"><b>Descargar para Windows</b><small class="ap-win-n">Obertura · instalador gratis · Windows 10 y 11</small></span>'
+    + '<svg class="ap-win-ar" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></a>'
+    + '<ol class="ap-win-pasos" hidden><li><b>Abre el archivo</b> SymphorIA-Obertura.exe desde tus descargas.</li><li>Si Windows dice «protegió tu PC»: <b>Más información › Ejecutar de todas formas</b>.</li><li><b>Haz clic en Instalar</b> y listo: queda en tu escritorio.</li></ol>';
+  const go = $('.ap-win-go', b), n = $('.ap-win-n', b);
+  const pronto = () => { b.classList.add('pronto'); go.removeAttribute('href'); go.setAttribute('aria-disabled', 'true'); $('b', go).textContent = 'Muy pronto para Windows'; n.textContent = 'Mientras tanto, instálala desde el navegador'; };
+  fetch('/descargar/windows?info=1', { cache:'no-store' }).then(r => r.ok && /json/.test(r.headers.get('content-type') || '') ? r.json() : null).then(d => {
+    if (!d || !d.ok){ pronto(); return; }
+    n.textContent = 'Obertura ' + d.version + (d.tam ? ' · ' + Math.max(1, Math.round(d.tam / 1048576)) + ' MB' : '') + ' · gratis · Windows 10 y 11';
+  }).catch(pronto);
+  go.addEventListener('click', e => {
+    if (b.classList.contains('pronto')){ e.preventDefault(); return; }
+    $('.ap-win-pasos', b).hidden = false; b.classList.add('bajando');
+  });
+  return b;
+}
 const appPhone = () => { try{ return matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) <= 820; }catch(e){ return false; } };
 try{
   if ('serviceWorker' in navigator && location.protocol === 'https:') addEventListener('load', () => navigator.serviceWorker.register('/sw.js', { scope:'/' }).catch(() => {}));
@@ -66,6 +86,10 @@ function appPromo(force){
     + '<li><i>' + I('<path d="M20 4C10 4 5 10 4 20"/><path d="M20 4c0 8-5 12-12 12"/>') + '</i><span><b>Pesa casi nada</b> y siempre está al día: se instala desde aquí mismo.</span></li></ul>'
     + '<div class="ap-how"></div>'
     + '<div class="ap-acts"><button type="button" class="lnk" data-ap="no">Ahora no</button><button type="button" class="btn ap-go" data-ap="go">' + (canPrompt ? 'Instalar SynthFlow' : ios ? 'Ver cómo instalarla' : 'Instalar SynthFlow') + '</button></div></div></div>';
+  if (appWin()){
+    const how = $('.ap-how', o); how.before(winBox(o));
+    const g = $('[data-ap="go"]', o); g.classList.add('ap-go-alt'); g.textContent = 'Desde el navegador';
+  }
   document.body.appendChild(o); requestAnimationFrame(() => o.classList.add('on'));
   const v = $('video', o); if (v){ v.play().catch(() => {}); v.addEventListener('error', () => v.remove(), true); }
   const close = () => { if (!o.isConnected) return; o.classList.remove('on'); setTimeout(() => o.remove(), 420); };

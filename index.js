@@ -1023,6 +1023,8 @@ document.addEventListener('click', e => {
   e.preventDefault();
   const nd = document.getElementById('navDrop'); if (nd && nd.contains(b)) nd.hidden = true;
   /* sin instalación directa (iPhone, Firefox…), la ventana abre ya con los 3 pasos a la vista */
+  /* v4.1 · en Windows primero se ve la ventana: ahí está el instalador propio (Obertura) y, debajo, el del navegador */
+  if (SZ.appWin && SZ.appWin()){ SZ.appPromo(true); return; }
   Promise.resolve(SZ.appInstall ? SZ.appInstall() : SZ.appPromo(true)).then(ok => {
     if (ok){ hideAll(); return; }
     const go = document.querySelector('#appPromo [data-ap="go"]'); if (!go) return;
