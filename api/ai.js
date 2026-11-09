@@ -7,6 +7,7 @@
 import { route, body, json, fail, auth, sha, redis, pipe, today, ipOf, limit, str, roleOf } from './_lib.js';
 import { leer, sistema, reasonParams, temperatura } from './_cerebro.js';
 import { pick, pickHard, recordLite, used as usedProv } from './_ruta.js';
+import { perksOf, publicPerks, enerOf, offErr, capOf } from './_permisos.js';
 import { models, chat, reviewerModel, settings, usedToday, quotaKey, PROV, IMG, pickKeys, markPay, clearPay, outage, classify, searchWith, searchWiki, searchRss, readPage, PAY_RX, baseOf, pingModel } from './_pool.js';
 
 /* v2.0 · imágenes con Pollinations: solo con cuenta, con su propio límite diario (no gasta Puter ni tu límite de chat).
@@ -21,7 +22,8 @@ async function webSearch(req, me, who, b){
   /* v3.8 · la misma pregunta en 30 min sale de la caché: no gasta búsquedas de nadie */
   const ck = 'sc:' + lang + ':' + sha(q.toLowerCase().replace(/\s+/g, ' ').trim()).slice(0, 24), hit = await redis('GET', ck).catch(() => null);
   if (hit){ try{ return json(Object.assign(JSON.parse(hit), { cached:true })); }catch(e){} }
-  const team = me && roleOf(me) !== 'user', max = team ? 5000 : me ? 60 : 8, d = today();   /* v3.8 · más búsquedas al día: 60 con cuenta, 8 sin cuenta */
+  if (me && me.ux && !me.ux.f.search) throw offErr('Buscar en internet no está activado para tu cuenta. Escríbele al equipo de SymphorIA si lo necesitas.', 's_off');
+  const team = me && roleOf(me) !== 'user', max = capOf(me && me.ux, 'search', team ? 5000 : me ? 60 : 8), d = today();   /* v3.8 · más búsquedas al día: 60 con cuenta, 8 sin cuenta · v4.4: o la propia (Pulsem › Usuarios) */
   await limit('srch:' + who, 12, 60);
   const uk = 'srch:' + who + ':' + d, gk = 'srch:all:' + d;
   const [n, g] = (await pipe([['GET', uk], ['GET', gk]])).map(x => +x || 0);
@@ -94,10 +96,13 @@ async function transcribe(me, who, b){
   await pipe([['INCR', uk], ['EXPIRE', uk, '172800'], ['INCR', gk], ['EXPIRE', gk, '172800']]);
   return json({ text:text.trim().slice(0, 20000), left:Math.max(0, max - n - 1) });
 }
+/* v4.4 · imágenes al día: la propia (Pulsem › Usuarios), si no la del equipo (5000) o la de todos */
+const imgMax = (me, set) => me.ux && !me.ux.f.image ? 0 : capOf(me.ux, 'img', roleOf(me) !== 'user' ? 5000 : set.imgDay);
 async function makeImage(req, me, b){
   if (!me) throw Object.assign(new Error('Para crear imágenes entra a tu cuenta (es gratis).'), { status:401, code:'img_login' });
-  const set = await settings(), d = today(), team = roleOf(me) !== 'user';
-  const max = team ? 5000 : set.imgDay;   /* v3.0: el equipo, sin límite propio (solo el tope de todos, IMG_GLOBAL) */
+  const set = await settings(), d = today();
+  if (me.ux && !me.ux.f.image) throw offErr('Crear imágenes no está activado para tu cuenta. Escríbele al equipo de SymphorIA si lo necesitas.', 'img_off');
+  const max = imgMax(me, set);   /* v3.0: el equipo, sin límite propio (solo el tope de todos, IMG_GLOBAL) · v4.4: o el propio */
   if (!max) throw Object.assign(new Error('Crear imágenes está pausado por ahora.'), { status:403, code:'img_off' });
   await limit('img:' + me.sub, 6, 60);
   const prompt = str(b.prompt, 600); if (prompt.length < 3) throw Object.assign(new Error('Describe la imagen que quieres.'), { status:400, code:'img_empty' });
@@ -150,7 +155,8 @@ const REVIEW_SYS = [
   'Nunca menciones el borrador, la revisión, a otra IA ni a ti mismo. Si dudas de si algo está mal, no lo cambies: responde OK.'
 ].join('\n');
 const cut = (s, n) => { s = String(s || ''); return s.length > n ? s.slice(0, n) + '\n…(recortado)' : s; };
-async function review(who, ipKey, b, free){
+async function review(who, ipKey, b, free, me){
+  if (me && me.ux && !me.ux.f.review) return { verdict:'ok', off:true };   /* v4.4 · revisión apagada para esta cuenta: se entrega el borrador tal cual */
   const draft = cut(b.draft, 16000), q = cut(b.q, 8000);
   if (draft.length < 20 || q.length < 1) throw Object.assign(new Error('Nada que revisar.'), { status:400, code:'rv_empty' });
   const imgs = (Array.isArray(b.imgs) ? b.imgs : []).filter(u => typeof u === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(u.slice(0, 40))).slice(0, 4);
@@ -180,14 +186,15 @@ const SMART_ON = process.env.SYNTHZ_SMART !== '0';
 const SMART_DAY = +process.env.SYNTHZ_SMART_DAY || 600;   /* respuestas difíciles con modelos grandes al día, entre todos */
 async function smartOk(who, me, free){
   if (!SMART_ON) return false;
-  const d = today(), uk = 'sm:' + who + ':' + d, gk = 'sm:all:' + d, max = free ? 1000 : me ? 40 : 3;
+  if (me && me.ux && !me.ux.f.smart) return false;   /* v4.4 · sin «cerebro grande» para esta cuenta: responde la IA normal */
+  const d = today(), uk = 'sm:' + who + ':' + d, gk = 'sm:all:' + d, max = capOf(me && me.ux, 'smart', free ? 1000 : me ? 40 : 3);
   const [n, g] = (await pipe([['GET', uk], ['GET', gk]]).catch(() => [0, 0])).map(x => +x || 0);
   if (n >= max || g >= SMART_DAY) return false;
   await pipe([['INCR', uk], ['EXPIRE', uk, '172800'], ['INCR', gk], ['EXPIRE', gk, '172800']]).catch(() => {});
   return true;
 }
 const hasImg = msgs => (Array.isArray(msgs) ? msgs : []).some(m => m && Array.isArray(m.content) && m.content.some(p => p && p.type === 'image_url'));
-async function brainChat(who, ipKey, me, b, free){
+async function brainChat(who, ipKey, me, b, free, dayLimit = null){
   const model = typeof b.model === 'string' ? b.model : 'sz:auto', maxTokens = b.maxTokens ?? b.max_tokens;
   /* v4.3 · niveles Auto · Veloz (low) · Profundo (high) · Creativo (creative): Creativo no cambia lo difícil, solo sube la temperatura */
   const creative = b.effort === 'creative';
@@ -200,7 +207,7 @@ async function brainChat(who, ipKey, me, b, free){
     if (ranked.length){ route = ranked.map(x => x.m); firstMs = ranked.length > 1 ? 20000 : 0; }
   }
   const pend = [];
-  const r = await chat({ who, ipKey, messages:b.messages, model, maxTokens, stream:true, free, route, firstMs,
+  const r = await chat({ who, ipKey, messages:b.messages, model, maxTokens, stream:true, free, dayLimit, route, firstMs,
     onTry:({ m, ok, ms }) => { pend.push(recordLite(L.cat, m.id, ok, ms)); },
     brain:m => ({ system:sistema(L, m.prov, m.mid, { short }), extra:reasonParams(m.prov, m.mid, L.level), temperature:creative ? Math.max(.9, temperatura(L)) : temperatura(L), maxTokens:L.level === 'hard' && !short ? 8000 : undefined }) });
   pend.push(usedProv(r.meta.prov));
@@ -236,15 +243,15 @@ const guestErr = () => Object.assign(new Error('Para seguir FlowIAndo, entra o c
 async function whoOf(req){
   const me = await auth(req, true).catch(() => null);
   const dev = String(req.headers.get('x-sz-device') || ''), ipKey = 'ip:' + sha('ip:' + ipOf(req)).slice(0, 16);
-  if (me) return { who:'u:' + me.sub, ipKey, me };
+  if (me){ me.ux = await perksOf(me); return { who:'u:' + me.sub, ipKey, me }; }
   return { who:/^[\w-]{12,48}$/.test(dev) ? 'd:' + sha('dev:' + dev).slice(0, 16) : ipKey, ipKey, me:null };
 }
 export default route({
   async GET(req){
     const [{ who, ipKey, me }, cat, set] = await Promise.all([whoOf(req), memo('models', 60e3, () => models(false)), memo('settings', 60e3, settings)]);
-    const g = me ? null : await guestView(who, ipKey, set.dayLimit);
+    const g = me ? null : await guestView(who, ipKey, set.dayLimit), en = enerOf(me && me.ux);
     const alert = await memo('outage', 30e3, () => outage()).catch(() => false), alertN = me && roleOf(me) !== 'user' ? +(await redis('SCARD', 'alerts').catch(() => 0)) || 0 : 0;
-    return json({ provs:cat.provs.map(p => ({ id:p, name:PROV[p].name })), models:cat.list.map(m => ({ id:m.id, name:m.name, prov:m.prov, ctx:m.ctx })), limit:set.dayLimit, used:me && roleOf(me) !== 'user' ? 0 : await usedToday(who), team:!!(me && roleOf(me) !== 'user'), guest:g, alert, alertN, img:me ? { max:roleOf(me) !== 'user' ? 5000 : set.imgDay, used:+(await redis('GET', 'img:' + me.sub + ':' + today())) || 0 } : null });
+    return json({ provs:cat.provs.map(p => ({ id:p, name:PROV[p].name })), models:cat.list.map(m => ({ id:m.id, name:m.name, prov:m.prov, ctx:m.ctx })), limit:en.dayLimit ?? set.dayLimit, used:en.free ? 0 : await usedToday(who), team:!!(me && roleOf(me) !== 'user'), unl:en.free, guest:g, alert, alertN, img:me ? { max:imgMax(me, set), used:+(await redis('GET', 'img:' + me.sub + ':' + today())) || 0 } : null, perks:publicPerks(me && me.ux) });
   },
   async POST(req){
     const b = await body(req, 6_000_000), { who, ipKey, me } = await whoOf(req); let guest = null;
@@ -267,9 +274,9 @@ export default route({
       if (!isNew && (+n || 0) >= PER_TURN) throw guestErr();
       guest = { turn, isNew, ipNew:!(+inIp) };
     }
-    const free = !!(me && roleOf(me) !== 'user');
+    const { free, dayLimit } = enerOf(me && me.ux);   /* v4.4 · el equipo, o quien tenga «sin límite», no gasta EnerX; los demás, su tope propio o el de todos */
     /* v3.7 · la revisión de calidad la pide la página, no la persona: no gasta su EnerX (antes un «hola» bajaba la batería 2 veces, la segunda sin hacer nada) */
-    const r = b.action === 'review' ? await review(who, ipKey, b, true) : await brainChat(who, ipKey, me, b, free);
+    const r = b.action === 'review' ? await review(who, ipKey, b, true, me) : await brainChat(who, ipKey, me, b, free, dayLimit);
     let gu = '';
     if (guest){
       const tk = 'gt:' + who + ':' + guest.turn;

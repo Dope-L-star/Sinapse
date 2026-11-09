@@ -27,6 +27,8 @@ export const ICO = {
   back: ['M19 12H5', 'M11 18l-6-6 6-6'],
   warn: ['M12 3l10 18H2z', 'M12 10v4', 'M12 18h.01'],
   send: ['M4 12l16-8-6 16-2-6z', 'M12 14l8-10'],
+  users: ['M9 11a4 4 0 1 0 0-8a4 4 0 0 0 0 8z', 'M2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1', 'M16 3.5a4 4 0 0 1 0 7', 'M22 21v-1a6 6 0 0 0-4-5.6'],
+  shield: ['M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z', 'M9 12l2 2 4-4'],
 };
 
 /* #40 · el saldo de SynXCoin se ve como ••••• hasta que tocas el ojo (útil al compartir pantalla) */
