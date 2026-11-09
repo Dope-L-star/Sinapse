@@ -6,7 +6,7 @@ function helpGuide(opts){
   const S = [
     ['¿Qué es SymphorIA?', 'Un lugar para hablar con muchas IA, gratis. Escribes lo que necesitas y una IA te responde. No tienes que configurar nada.'],
     ['¿Cómo lo uso?', 'Entra a SynthFlow, escribe tu pregunta abajo y pulsa Enter. Si no sabes qué pedir, toca un ejemplo. Tus chats quedan en la barrita de la izquierda (en el celular, abajo).'],
-    ['¿Qué son las IAs conectadas?', 'Las IAs conectadas son IAs gratis que ya vienen listas en SymphorIA. No tienes que configurar nada ni dar tarjeta: solo escribes. Sin cuenta pruebas con 5 mensajes al día; con tu cuenta gratis, mucho más.'],
+    ['¿Qué son las IAs conectadas?', 'Las IAs conectadas son IAs gratis que ya vienen listas en SymphorIA. No tienes que configurar nada ni dar tarjeta: solo escribes. Sin cuenta pruebas con una EnerX de prueba cada día; con tu cuenta gratis dura mucho más.'],
     ['¿Qué es el límite de hoy?', 'Cada día tienes un límite gratis para usar las IAs conectadas. A medianoche se vuelve a llenar. El anillo se va vaciando mientras chateas.'],
     ['¿Qué es Puter y cómo lo conecto?', 'Con Puter usas la versión pro de las IAs más usadas, como ChatGPT, Claude o Gemini. Es gratis y tiene un saldo que se renueva cada mes. Se conecta en Ajustes › IAs y memoria › «Conectar Puter u otra IA» › «Conectar con Puter».'],
     ['Varias IA a la vez', 'Con «+» sumas otra IA (hasta 4). Todas responden lo mismo y tú eliges la que más te gusta con «Esta tiene más Flow».'],
@@ -76,7 +76,7 @@ function guestGate(o = {}){
   const el = document.createElement('div'); el.id = 'szGate'; el.className = 'szm';
   el.innerHTML = '<div class="tcard" role="dialog" aria-modal="true" aria-label="Entra para seguir"><div class="word">' + zWord('Synth') + '</div><div class="tn">SIGUE FLOWIANDO</div>'
     + '<div class="tb"><div class="gtface" aria-hidden="true">' + face('guino', 64) + '</div><h3>Para seguir FlowIAndo, entra a tu cuenta</h3>'
-    + '<p>Ya usaste tus mensajes de hoy sin cuenta. Crear tu cuenta es <b>gratis</b>, no pide correo ni tarjeta, y te da mucho más límite cada día. Además tus chats te siguen a cualquier celular o computador.</p>'
+    + '<p>Se acabó tu EnerX de prueba de hoy. Crear tu cuenta es <b>gratis</b>, no pide correo ni tarjeta, y te da mucho más límite cada día. Además tus chats te siguen a cualquier celular o computador.</p>'
     + '<div id="gateBox"></div></div><div class="tbtn" style="margin-top:14px"><button class="lnk" type="button" data-close>Ahora no</button>' + (pu ? '<button class="lnk" type="button" data-pu>Seguir con mi Puter</button>' : '') + '</div></div>';
   document.body.appendChild(el); requestAnimationFrame(() => el.classList.add('on'));
   $('.tcard', el).animate([{ transform:'scale(.92) translateY(20px)', opacity:0, filter:'blur(8px)' }, { transform:'none', opacity:1, filter:'blur(0)' }], { duration:650, easing:'cubic-bezier(.22,1,.36,1)' });

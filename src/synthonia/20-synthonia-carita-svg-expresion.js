@@ -1,5 +1,5 @@
 /* ---------- SynthonIA: su carita (SVG), con una expresión para cada momento ---------- */
-const FACE_G = '#f6d9a0';
+const FACE_G = '#3DE0FF';   /* 2026-11-09 · Partitura: los ojos y la boca de SynthonIA son cian (antes dorados) */
 /* v2.5 · SynthonIA idéntica al boceto «Cuerpo maestro» y «Expresiones»:
    casco de vidrio perlado (rosa, lila y un filo cian abajo), visor negro grande con borde rosa que brilla,
    ojos cian alargados, cuello de anillos, torso con núcleo cian, brazos por partes, base de pedestal y anillo flotante.
@@ -18,11 +18,15 @@ const FACE_EYE = '#3de0ff';
     + '<radialGradient id="szSub" cx=".7" cy=".86" r=".7"><stop offset="0" stop-color="#5ff4ff" stop-opacity=".55"/><stop offset=".55" stop-color="#ff3d9a" stop-opacity=".16"/><stop offset="1" stop-color="#ff3d9a" stop-opacity="0"/></radialGradient>'
     + '<radialGradient id="szVisor" cx=".42" cy=".32" r=".8"><stop offset="0" stop-color="#1d1236"/><stop offset=".55" stop-color="#0b0719"/><stop offset="1" stop-color="#030209"/></radialGradient>'
     /* v2.7 · vidrio de las manitas: casi transparente, filo de luz cian, borde iridiscente con los colores de la marca */
-    + '<radialGradient id="sgGlass" cx=".42" cy=".34" r=".78"><stop offset="0" stop-color="#3a2340" stop-opacity=".38"/><stop offset=".6" stop-color="#1d1518" stop-opacity=".55"/><stop offset=".86" stop-color="#c98a6a" stop-opacity=".45"/><stop offset="1" stop-color="#fff1d6" stop-opacity=".9"/></radialGradient>'
-    + '<radialGradient id="sgCaus" cx=".5" cy=".96" r=".62"><stop offset="0" stop-color="#ffd9a0" stop-opacity=".7"/><stop offset=".5" stop-color="#c9566c" stop-opacity=".22"/><stop offset="1" stop-color="#c9566c" stop-opacity="0"/></radialGradient>'
-    + '<linearGradient id="sgIri" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1d6"/><stop offset=".3" stop-color="#e6b65f"/><stop offset=".68" stop-color="#e0607e"/><stop offset="1" stop-color="#9b7bff"/></linearGradient>'
-    + '<linearGradient id="sgArm" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff1d6" stop-opacity=".9"/><stop offset=".22" stop-color="#8a5a4a" stop-opacity=".55"/><stop offset=".55" stop-color="#1d1518" stop-opacity=".6"/><stop offset=".82" stop-color="#e6b65f" stop-opacity=".55"/><stop offset="1" stop-color="#ffffff" stop-opacity=".85"/></linearGradient>'
+    + '<radialGradient id="sgGlass" cx=".42" cy=".34" r=".78"><stop offset="0" stop-color="#2a2840" stop-opacity=".45"/><stop offset=".6" stop-color="#0d0c16" stop-opacity=".7"/><stop offset=".86" stop-color="#3d6fa0" stop-opacity=".45"/><stop offset="1" stop-color="#bff6ff" stop-opacity=".85"/></radialGradient>'
+    + '<radialGradient id="sgCaus" cx=".5" cy=".96" r=".62"><stop offset="0" stop-color="#3DE0FF" stop-opacity=".55"/><stop offset=".5" stop-color="#7B3FF2" stop-opacity=".2"/><stop offset="1" stop-color="#7B3FF2" stop-opacity="0"/></radialGradient>'
+    + '<linearGradient id="sgIri" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e6fdff"/><stop offset=".3" stop-color="#3DE0FF"/><stop offset=".68" stop-color="#7B3FF2"/><stop offset="1" stop-color="#FF3D9A"/></linearGradient>'
+    + '<linearGradient id="sgArm" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e6fdff" stop-opacity=".9"/><stop offset=".22" stop-color="#2a3a5a" stop-opacity=".55"/><stop offset=".55" stop-color="#0d0c16" stop-opacity=".7"/><stop offset=".82" stop-color="#3DE0FF" stop-opacity=".45"/><stop offset="1" stop-color="#ffffff" stop-opacity=".85"/></linearGradient>'
     + '<radialGradient id="sgHalo" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffc857" stop-opacity=".5"/><stop offset=".55" stop-color="#ff3d9a" stop-opacity=".16"/><stop offset="1" stop-color="#ff3d9a" stop-opacity="0"/></radialGradient>'
+    /* 2026-11-09 · Partitura: la bola negra de vidrio de SynthonIA (brillo arriba a la izquierda, filo cian abajo) */
+    + '<radialGradient id="szBall" cx=".38" cy=".3" r=".8"><stop offset="0" stop-color="#3a3550"/><stop offset=".45" stop-color="#16141f"/><stop offset="1" stop-color="#07060c"/></radialGradient>'
+    + '<radialGradient id="szBallRim" cx=".5" cy=".18" r=".95"><stop offset=".72" stop-color="#3DE0FF" stop-opacity="0"/><stop offset=".93" stop-color="#3DE0FF" stop-opacity=".35"/><stop offset="1" stop-color="#bff6ff" stop-opacity=".7"/></radialGradient>'
+    + '<filter id="szEye" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
     + '<filter id="szBlur3" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2"/></filter>'
     + '<filter id="szBlur1" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>'
     + '</defs></svg>';
@@ -77,14 +81,16 @@ const FACE_GOOD = ['feliz', 'riendo', 'guino', 'encantada', 'celebrando', 'flow'
 function headSvg(f){
   const G = FACE_G, P = (d, st) => d ? '<path d="' + d + '" ' + st + '/>' : '';
   const eyes = f.glasses
-    ? '<path d="M27 45h20v6.5a7 7 0 0 1-7 7h-6a7 7 0 0 1-7-7z" fill="#07070a" stroke="#e6b65f" stroke-width="2.2"/><path d="M53 45h20v6.5a7 7 0 0 1-7 7h-6a7 7 0 0 1-7-7z" fill="#07070a" stroke="#e6b65f" stroke-width="2.2"/><path d="M47 47.5q3-2.5 6 0" stroke="#e6b65f" stroke-width="2.2" fill="none"/><path d="M31 49l5-3M57 49l5-3" stroke="rgba(255,255,255,.55)" stroke-width="1.6" stroke-linecap="round"/>'
+    ? '<path d="M27 45h20v6.5a7 7 0 0 1-7 7h-6a7 7 0 0 1-7-7z" fill="#07070a" stroke="#3DE0FF" stroke-width="2.2"/><path d="M53 45h20v6.5a7 7 0 0 1-7 7h-6a7 7 0 0 1-7-7z" fill="#07070a" stroke="#3DE0FF" stroke-width="2.2"/><path d="M47 47.5q3-2.5 6 0" stroke="#3DE0FF" stroke-width="2.2" fill="none"/><path d="M31 49l5-3M57 49l5-3" stroke="rgba(255,255,255,.55)" stroke-width="1.6" stroke-linecap="round"/>'
     : f.e.map(d => P(d, 'stroke="' + (f.ec || G) + '" stroke-width="' + (f.ew || 7) + '" stroke-linecap="round" stroke-linejoin="round" fill="' + (f.ef || 'none') + '"')).join('');
-  return '<path class="fa" d="M50 20V10" stroke="#e6b65f" stroke-width="2.5" stroke-linecap="round"/><circle class="fb" cx="50" cy="8" r="4.5" fill="#c9566c"/>'
-    + '<rect x="6" y="46" width="8" height="18" rx="4" fill="#c9566c"/><rect x="86" y="46" width="8" height="18" rx="4" fill="#c9566c"/>'
-    + '<rect x="12" y="20" width="76" height="70" rx="30" fill="#1d1518" stroke="#e6b65f" stroke-opacity=".55" stroke-width="2"/><rect x="21" y="31" width="58" height="49" rx="21" fill="#110c0e"/>'
-    + (f.ck ? '<circle cx="31" cy="64" r="4.5" fill="#c9566c" fill-opacity=".55"/><circle cx="69" cy="64" r="4.5" fill="#c9566c" fill-opacity=".55"/>' : '')
+  /* 2026-11-09 · Partitura (Sammuel: «me encanta la nueva SynthonIA, la bola negra con ojos azules»): una bola de vidrio negro,
+     brillo arriba, filo cian abajo y la cara en luz cian. Las expresiones son las mismas de siempre. */
+  return '<ellipse cx="50" cy="93" rx="26" ry="3.5" fill="#3DE0FF" opacity=".14"/>'
+    + '<circle cx="50" cy="52" r="40" fill="url(#szBall)" stroke="rgba(255,255,255,.16)" stroke-width="1"/><circle cx="50" cy="52" r="40" fill="url(#szBallRim)"/>'
+    + '<ellipse cx="36" cy="27" rx="14" ry="7" transform="rotate(-28 36 27)" fill="#fff" opacity=".14"/><circle cx="28" cy="34" r="2.2" fill="#fff" opacity=".35"/>'
+    + (f.ck ? '<circle cx="29" cy="64" r="4.5" fill="#FF3D9A" fill-opacity=".28"/><circle cx="71" cy="64" r="4.5" fill="#FF3D9A" fill-opacity=".28"/>' : '')
     + P(f.b, 'stroke="' + G + '" stroke-width="2.6" stroke-linecap="round" fill="none"')
-    + '<g class="fe">' + eyes + '</g>'
+    + '<g class="fe" filter="url(#szEye)">' + eyes + '</g>'
     + P(f.m, 'class="fm" stroke="' + G + '" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" fill="' + (f.mf ? G : 'none') + '"')
     + P(f.x, 'class="fx" stroke="#e6b65f" stroke-width="' + (f.xw || 2.4) + '" stroke-linecap="round" stroke-linejoin="round" fill="none"')
     + (f.drop ? '<path class="fdrop" d="M83 28q-6 9-1 12.5q6 2.5 7-3.5q0-3-6-9z" fill="#8fd3e8" fill-opacity=".9"/>' : '')

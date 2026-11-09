@@ -12,6 +12,7 @@ import {
   revokeClarity,
   writeClarityChoice,
 } from '../lib/clarity-client.mjs';
+import { setUmamiOptOut } from '../lib/umami.mjs';
 
 /*
  * Clarity remains inactive unless its release gates are true and a visitor opts in. Two ways to release it:
@@ -111,6 +112,7 @@ export default function ClarityConsent() {
 
   const accept = useCallback(() => {
     writeClarityChoice(getStorageSafely(), 'granted');
+    setUmamiOptOut(getStorageSafely(), false);   /* v4.3 · Umami vuelve a contar visitas */
     setHasChoice(true);
     setOpen(false);
     startClarity();
@@ -118,6 +120,7 @@ export default function ClarityConsent() {
 
   const reject = useCallback(() => {
     revokeClarity({ windowObject: window, documentObject: document, storage: getStorageSafely() });
+    setUmamiOptOut(getStorageSafely(), true);   /* v4.3 · «Rechazar» también apaga Umami */
     setHasChoice(true);
     setOpen(false);
   }, []);

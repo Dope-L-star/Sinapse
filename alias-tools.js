@@ -376,6 +376,17 @@
   A.feedback = function (cat, model, up) { return post({ action: 'feedback', cat: cat, model: model, up: !!up }); };
   A.routes = function () { return post({ action: 'rutas' }); };
 
+  /* v4.3 · agente que trabaja solo: la persona escribe algo con el plan en marcha y A.L.I.A.S. rehace los pasos que faltan.
+     done = ids de los pasos hechos o en marcha (no se tocan). Responde { ok, steps, reply, changed }. */
+  A.adjust = async function (plan, done, note) {
+    note = String(note || '').trim().slice(0, 300);
+    if (!note) return { ok: false, error: T('alias_err_goal') };
+    var r = await post({ action: 'ajustar', plan: plan, done: Array.isArray(done) ? done : [], note: note });
+    if (!r || !r.ok) return r || { ok: false, error: T('alias_err_server') };
+    if (!Array.isArray(r.steps)) return { ok: false, error: T('alias_err_server') };
+    return r;
+  };
+
   /* v3.0: opts.synth === false apaga la Síntesis del paso final (por defecto está encendida) */
   A.runStep = async function (plan, stepId, prev, opts) {
     var body = { action: 'step', plan: plan, stepId: stepId, prev: Array.isArray(prev) ? prev : [] };

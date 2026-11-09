@@ -8,10 +8,14 @@
       Si no está claro qué recordar, escribe [recordar: ?] y te pregunta. La página te pregunta «¿Lo recuerdo?» como antes,
       y si ya había algo parecido (otro nombre, otra ciudad) se ACTUALIZA en vez de duplicarse (memAddCore en core 14).
    Las marcas nunca se ven: se quitan mientras la respuesta llega. */
-const MK_RX = /\s*\[(titulo|título|title|recordar|remember)\s*:\s*([^\]\n]{0,240})\]/gi;
-/* mientras llega: también se esconde una marca a medio escribir al final («[tit…») */
-const MK_TAIL = /\s*\[(?:t(?:[ií](?:t(?:u(?:l(?:o)?)?|l(?:e)?)?)?)?|r(?:e(?:c(?:o(?:r(?:d(?:a(?:r)?)?)?)?)?|m(?:e(?:m(?:b(?:e(?:r)?)?)?)?)?)?)?)?(?:\s*:[^\]\n]*)?$/i;
+/* v4.1 · la marca se reconoce aunque la IA la escriba con espacios «[ titulo: - ]», escapada «\[titulo: …\]»,
+   en negrita «**[titulo: …]**», entre comillas invertidas o con «=» o «：» (antes se colaba en la respuesta visible) */
+const MK_RX = /\s*(?:\*\*|__|`)?\\?\[\s*(titulo|título|title|recordar|remember)\s*[:=：]\s*([^\]\n]{0,240}?)\s*\\?\](?:\*\*|__|`)?/gi;
+/* mientras llega: también se esconde una marca a medio escribir al final («[tit…», «[ titulo: Ide…») */
+const MK_TAIL = /\s*(?:\*\*|__|`)?\\?\[\s*(?:t(?:[ií](?:t(?:u(?:l(?:o)?)?|l(?:e)?)?)?)?|r(?:e(?:c(?:o(?:r(?:d(?:a(?:r)?)?)?)?)?|m(?:e(?:m(?:b(?:e(?:r)?)?)?)?)?)?)?)?(?:\s*[:=：][^\]\n]*)?$/i;
 const sinMarcas = t => String(t || '').replace(MK_RX, '').replace(MK_TAIL, '');
+/* para lo ya guardado (historial, copiar, exportar): solo marcas completas, sin tocar un final cualquiera */
+const quitaMarcas = t => String(t || '').replace(MK_RX, '').replace(/\s+$/, '');
 function marcas(t){
   let title = null, mem = null;
   const text = String(t || '').replace(MK_RX, (m, k, v) => { v = v.replace(/^["'«“\s]+|["'»”\s]+$/g, '').trim(); if (/^t/i.test(k)){ if (title == null) title = v.replace(/[.\s]+$/, ''); } else if (mem == null) mem = v === '?' || !v ? v : /[.!?]$/.test(v) ? v : v + '.'; return ''; }).replace(MK_TAIL, '').trim();

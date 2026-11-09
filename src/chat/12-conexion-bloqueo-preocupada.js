@@ -54,8 +54,8 @@ function paintLock(){
   if (L){
     const done = trialOn && trialLeft() <= 0;
     const gm = (SZ.SZQ.guest && SZ.SZQ.guest.max) || 5;
-    $('#lockT').textContent = gst ? 'Para seguir FlowIAndo, entra a tu cuenta' : done ? 'Se acabaron tus mensajes de prueba' : SZ.SZQ.on === false ? 'Las IAs gratis están descansando' : 'Usaste tu límite gratis de hoy';
-    $('#lockS').textContent = gst ? 'Ya usaste tus mensajes de hoy sin cuenta. Crear tu cuenta es gratis, sin correo ni tarjeta, y te da mucho más límite cada día.' : done ? 'Para seguir chateando conecta tu cuenta de Puter (gratis, con un clic).' : 'Vuelve en un momento, o sigue ya con Puter. Conecta tu versión pro de las IAs más usadas.';
+    $('#lockT').textContent = gst ? 'Para seguir FlowIAndo, entra a tu cuenta' : done ? 'Se acabó tu EnerX de prueba' : SZ.SZQ.on === false ? 'Las IAs gratis están descansando' : 'Usaste tu límite gratis de hoy';
+    $('#lockS').textContent = gst ? 'Se acabó tu EnerX de prueba de hoy. Crear tu cuenta es gratis, sin correo ni tarjeta, y te da mucho más límite cada día.' : done ? 'Para seguir chateando conecta tu cuenta de Puter (gratis, con un clic).' : 'Vuelve en un momento, o sigue ya con Puter. Conecta tu versión pro de las IAs más usadas.';
     SZ.telEv('noai', 'sin IA: la de SymphorIA está apagada y no hay Puter');
     if (side.classList.contains('open')) closeSide();
   } else { wHide(); }

@@ -382,7 +382,8 @@ function cmpWhyNot(id, base){
 function pickModel(id, node, avisado){
   /* v4.3 · Chispa+: un modelo premium de alto consumo pide confirmación con un aviso grande, cada vez que se elige (hoy apagado: no hay modelos premium en la lista) */
   { const pm = info(id); if (pm && pm.premium && pm.heavy && node !== null && !avisado && id !== selId()){ premiumAviso(pm).then(ok => { if (ok) pickModel(id, node, true); }); return; } }
-  { const mm = info(id); if (mm && mm.spend === 3 && node !== null){ try{ if (!sessionStorage.getItem('synthz:spendw')){ sessionStorage.setItem('synthz:spendw', '1'); setTimeout(() => toast('Ojo: ' + mm.name + ' gasta mucho de tu Puter. Para cosas sencillas usa una con rayitas verdes y tu saldo te dura más.'), 600); } }catch(e){} } }
+  /* 2026-11-09 · Partitura: las demás IAs caras (gasto alto) también avisan en grande, con «Elegir otra IA» o «Usarla igual» (src/chat/16x) */
+  { const mm = info(id); if (node !== null && !avisado && !(mm && mm.premium && mm.heavy) && ptEsCara(mm)) setTimeout(() => ptAvisoConsumo(mm, () => { try{ openSide('set'); }catch(e){} }), 350); }
   if (mode === 'cmp' || pickMode === 'add'){
     const base = mode === 'cmp' ? st().cmp : [selId()].filter(x => x !== TRIAL_ID), why = cmpWhyNot(id, base);
     if (why === 'ya'){ toast('Esa IA ya está en la comparación.'); return; }
@@ -462,8 +463,21 @@ function paintPay(){
   if (mode === 'cmp'){ c = ''; l = 'Comparando · cada IA cuenta como un mensaje'; s = 'Cada IA cuenta como un mensaje'; }
   else if (trialOn){ const left = trialLeft(), mx = (SZ.trialGet() || {}).max || 5; c = 'tr'; ex = true; l = left > 0 ? 'Prueba guiada · te quedan ' + left + ' de ' + mx + ' · la paga SymphorIA' : 'Prueba guiada terminada'; s = left > 0 ? 'Prueba · ' + left + ' de ' + mx + ' · paga SymphorIA' : 'Prueba terminada'; }
   else { const id = selId(), p = payOf(id); c = p[0]; l = p[1]; s = p[2]; if (!connected(id)){ c = 'off'; l = /^pu:/.test(id) ? 'Puter · sin conectar' : l; s = /^pu:/.test(id) ? 'Puter sin conectar' : s; } }
-  const P = $('#payL'), M = $('#payM');
+  const P = $('#payL');
+  /* v4.3 (8 nov) · Sammuel: bajo la caja ya no va «Gratis · te queda 100 % de EnerX» (eso ya se ve arriba y en la barra),
+     sino el aviso de siempre: «<la IA> puede equivocarse. Revisa lo importante.». Se queda el texto de antes solo cuando
+     hay algo que hacer: la prueba guiada (con su «Salir») o una IA que no está disponible / sin conectar. */
+  if (P && !ex && !/off/.test(c)){ P.className = 'payl note'; P.textContent = errTxt(); return paintPayM(c, s); }
   if (P){ P.className = 'payl ' + c; P.innerHTML = '<i aria-hidden="true"></i>' + esc(l) + (ex ? '<button type="button" class="lnk" data-tx="exit">Salir</button>' : ''); }
+  paintPayM(c, s);
+}
+function errTxt(){
+  if (mode === 'cmp') return 'Las IAs pueden equivocarse. Revisa lo importante.';
+  const id = selId(), m = !agentOn() && id !== 'sz:auto' && info(id);
+  return m && m.name && !/^Autom/i.test(m.name) ? m.name + ' puede equivocarse. Revisa lo importante.' : 'La IA puede equivocarse. Revisa lo importante.';
+}
+function paintPayM(c, s){
+  const M = $('#payM');
   if (M){
     const bar = !document.body.classList.contains('fresh') && mode !== 'cmp' && !trialOn && (c === 'sz' || agentOn());
     if (bar){ const pc = SZ.battPct(), lv = SZ.limLvl();
@@ -512,7 +526,7 @@ function renderNow(){
 function renderFoot(){
   const left = SZ.msgsLeft(), lv = SZ.limLvl();
   /* v3.0 · «Medidor del día» como batería: la pila se descarga mientras chateas y se carga a medianoche */
-  const k = Math.max(0, 1 - SZ.limPct()), g = SZ.isGuestQ(), big = g ? SZ.guestLeft() + '' : SZ.battPct() + ' %', of = g ? SZ.t('enerx.of', { n:SZ.SZQ.guest.max || 5 }) : SZ.SZQ.team ? 'sin límite · equipo' : k > 0 ? 'se carga a medianoche' : 'sin EnerX · se carga a medianoche';
+  const k = Math.max(0, 1 - SZ.limPct()), g = SZ.isGuestQ(), big = SZ.battPct() + ' %', of = g ? SZ.t('enerx.ofGuest') : SZ.SZQ.team ? 'sin límite · equipo' : k > 0 ? 'se carga a medianoche' : 'sin EnerX · se carga a medianoche';
   $('#sideFoot').innerHTML = '<button class="sxfoot lim gauge gbatt ' + lv + '" id="sxBtn" type="button" title="Tu EnerX de hoy (tu batería): toca para ver el detalle">'
     + '<span class="gz-t">EnerX de hoy</span>' + SZ.limRing(40)
     + '<span class="gz-n"><b>' + esc(big) + '</b><small>' + esc(of) + '</small></span><span class="sr">' + esc(SZ.limTxt()) + '</span></button>';
@@ -1564,7 +1578,7 @@ function renderMsgs(){
   chat.forEach((m, i) => {
     if (isFix(m)){ lane.appendChild(fixNoteEl(m)); srcs = null; }
     else if (m.role === 'user'){ const u = userEl(m.content, m.files); u.style.animation = 'none'; lane.appendChild(u); if (m.agent) lane.appendChild(agentSumEl(m.agent)); srcs = m.sources && m.sources.length ? m.sources : null; if (srcs) lane.appendChild(sourcesEl(m)); }
-    else { const b = botEl(m.model || selId()); b.style.animation = 'none'; b._raw = m.content; b._ck = ck0; b._ci = i; b.dataset.ci = i; if (m.work) b.insertBefore(SZ.workSaved(m.work), $('.body', b)); $('.body', b).innerHTML = md(m.content); if (m.imgId) imgFill($('.body', b), m); b._sources = srcs; finishBot(b, m.meta, i === chat.length - 1, m.cont, m.star); revBadge(b, m); if (!isFix(chat[i + 1])) ckIdle(b); lane.appendChild(b); }
+    else { const b = botEl(m.model || selId()); b.style.animation = 'none'; b._raw = quitaMarcas(m.content); b._ck = ck0; b._ci = i; b.dataset.ci = i; if (m.work) b.insertBefore(SZ.workSaved(m.work), $('.body', b)); $('.body', b).innerHTML = md(quitaMarcas(m.content)); if (m.imgId) imgFill($('.body', b), m); b._sources = srcs; finishBot(b, m.meta, i === chat.length - 1, m.cont, m.star); revBadge(b, m); if (!isFix(chat[i + 1])) ckIdle(b); lane.appendChild(b); }
   });
   if (live && live.chat === chat && live.el){ $$('.m.last', lane).forEach(x => x.classList.remove('last')); lane.appendChild(live.el); }   /* v3.3 · la respuesta en vivo no se pierde al repintar */
   else if (thinking) lane.appendChild(thinkEl(thinking));
@@ -2675,10 +2689,14 @@ function memModal(){ SZ.cfgModal('mem'); }
       Si no está claro qué recordar, escribe [recordar: ?] y te pregunta. La página te pregunta «¿Lo recuerdo?» como antes,
       y si ya había algo parecido (otro nombre, otra ciudad) se ACTUALIZA en vez de duplicarse (memAddCore en core 14).
    Las marcas nunca se ven: se quitan mientras la respuesta llega. */
-const MK_RX = /\s*\[(titulo|título|title|recordar|remember)\s*:\s*([^\]\n]{0,240})\]/gi;
-/* mientras llega: también se esconde una marca a medio escribir al final («[tit…») */
-const MK_TAIL = /\s*\[(?:t(?:[ií](?:t(?:u(?:l(?:o)?)?|l(?:e)?)?)?)?|r(?:e(?:c(?:o(?:r(?:d(?:a(?:r)?)?)?)?)?|m(?:e(?:m(?:b(?:e(?:r)?)?)?)?)?)?)?)?(?:\s*:[^\]\n]*)?$/i;
+/* v4.1 · la marca se reconoce aunque la IA la escriba con espacios «[ titulo: - ]», escapada «\[titulo: …\]»,
+   en negrita «**[titulo: …]**», entre comillas invertidas o con «=» o «：» (antes se colaba en la respuesta visible) */
+const MK_RX = /\s*(?:\*\*|__|`)?\\?\[\s*(titulo|título|title|recordar|remember)\s*[:=：]\s*([^\]\n]{0,240}?)\s*\\?\](?:\*\*|__|`)?/gi;
+/* mientras llega: también se esconde una marca a medio escribir al final («[tit…», «[ titulo: Ide…») */
+const MK_TAIL = /\s*(?:\*\*|__|`)?\\?\[\s*(?:t(?:[ií](?:t(?:u(?:l(?:o)?)?|l(?:e)?)?)?)?|r(?:e(?:c(?:o(?:r(?:d(?:a(?:r)?)?)?)?)?|m(?:e(?:m(?:b(?:e(?:r)?)?)?)?)?)?)?)?(?:\s*[:=：][^\]\n]*)?$/i;
 const sinMarcas = t => String(t || '').replace(MK_RX, '').replace(MK_TAIL, '');
+/* para lo ya guardado (historial, copiar, exportar): solo marcas completas, sin tocar un final cualquiera */
+const quitaMarcas = t => String(t || '').replace(MK_RX, '').replace(/\s+$/, '');
 function marcas(t){
   let title = null, mem = null;
   const text = String(t || '').replace(MK_RX, (m, k, v) => { v = v.replace(/^["'«“\s]+|["'»”\s]+$/g, '').trim(); if (/^t/i.test(k)){ if (title == null) title = v.replace(/[.\s]+$/, ''); } else if (mem == null) mem = v === '?' || !v ? v : /[.!?]$/.test(v) ? v : v + '.'; return ''; }).replace(MK_TAIL, '').trim();
@@ -2865,7 +2883,7 @@ async function send(){
   if (Object.keys(busy).length){ toast('Espera a que termine de responder, o detenla con el botón ■.'); return; }
   if (files.some(f => f.state === 'load')){ toast('Espera a que terminen de cargar los archivos.'); return; }
   try{ SZ.setTurn(text + '|' + Date.now()); }catch(e){}
-  if (trialOn && trialLeft() <= 0){ toast('Se acabaron tus mensajes de prueba.'); const tb = $('#trialBar'); tb.classList.remove('pulse'); void tb.offsetWidth; tb.classList.add('pulse'); return; }
+  if (trialOn && trialLeft() <= 0){ toast('Se acabó tu EnerX de prueba.'); const tb = $('#trialBar'); tb.classList.remove('pulse'); void tb.offsetWidth; tb.classList.add('pulse'); return; }
   if (!budgetOk()) return;
   /* v3.8 · si todavía se está comprobando la IA que elegiste, espera esa respuesta (1-2 s); si no responde, tu texto se queda en la caja */
   { const h = HEALTH.get(selId()), m1 = selId(); if (h && h.p){ sendBtn.disabled = true; try{ await h.p; }finally{ sendBtn.disabled = false; } if (selId() !== m1) return; } }
@@ -3054,7 +3072,7 @@ async function runSolo(onFail, o = {}){
   };
   try{
     let r = !o.fresh && canCache ? cacheGet(ck) : null;
-    if (r){ r = Object.assign({}, r, { ms:0, cached:true }); st().sx.saved += r.prompt + r.completion; st().sx.hits += 1; save(); mount(); if (rv) rv.push(r.text); }
+    if (r){ r = Object.assign({}, r, { ms:0, cached:true }); st().sx.saved += r.prompt + r.completion; st().sx.hits += 1; save(); mount(); if (rv) rv.push(sinMarcas(r.text)); }
     else {
       const ctl = new AbortController(); ctls.add(ctl);
       try{ r = await SZ.askStream(OR, sent, Object.assign({ model:mid, maxTokens: saver ? 700 : 0, signal:ctl.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { if (holdWeb(txt)) return; txt = sinMarcas(txt); mount(); W.write(txt); if (rv) rv.push(txt); }); }finally{ ctls.delete(ctl); }
@@ -3097,7 +3115,7 @@ async function runSolo(onFail, o = {}){
     }
     if (!r.aborted) r.text = limpiaBucles(r.text);
     /* v4.0 · las marcas de título y memoria se quitan del texto y se usan */
-    { const mk = marcas(r.text); r.text = mk.text || r.text; if (!r.aborted){ titleSet(chat, mk.title); memNext = mk.mem; } }
+    { const mk = marcas(r.text); if (mk.text !== String(r.text || '').trim()) r.text = mk.text || (SZ.lang() === 'en' ? '(The AI returned an empty answer.)' : '(La IA devolvió una respuesta vacía.)'); if (!r.aborted){ titleSet(chat, mk.title); memNext = mk.mem; } }
     const tail = r.aborted ? ' · detenido' : r.cut ? ' · se cortó la conexión' : r.finish === 'length' ? ' · se cortó porque era muy larga (toca «Continuar»)' : '';
     const who = r.swapped ? ' · se acabó tu saldo de Puter este mes; respondió ' + (r.real || 'otra IA') : '';
     W.write(r.text); W.finish({ ms:r.ms, real:r.real || '' });
@@ -3193,7 +3211,7 @@ function qualitySystem(saver, ask, mid){
   if (saver) return 'Hoy es ' + day + '. Piensa en silencio antes de responder; revisa cálculos y lógica. No inventes datos.';
   const q = String(ask || '').trim(), easy = !q || Q_EASY.test(q);
   const kind = (Q_KIND.find(([, rx]) => rx.test(q)) || ['reason'])[0];
-  const hard = !easy && (st().sx && st().sx.effort === 'high' || (Q_HARD.test(q) ? 2 : 0) + (/\d\s*[-+*/^=]\s*\d/.test(q) ? 2 : 0) + (/```/.test(q) ? 2 : 0) + (q.length > 400 ? 1 : 0) + (/code|data/.test(kind) ? 1 : 0) >= 3);
+  const hard = !easy && (effKey() === 'deep' || (Q_HARD.test(q) ? 2 : 0) + (/\d\s*[-+*/^=]\s*\d/.test(q) ? 2 : 0) + (/```/.test(q) ? 2 : 0) + (q.length > 400 ? 1 : 0) + (/code|data/.test(kind) ? 1 : 0) >= 3);
   const base = 'Hoy es ' + day + '. Responde como los mejores asistentes del mundo, con precisión y criterio. Empieza por la respuesta (sin saludos, sin repetir la pregunta, sin relleno) y luego explica lo necesario.'
     + ' No inventes datos, citas, enlaces ni funciones: si no lo sabes con certeza o pudo cambiar después de lo que aprendiste, dilo en una frase. Si la pregunta es ambigua, elige la lectura más probable y dilo.'
     + ' Mantén el hilo de la conversación. Markdown limpio (listas, tablas al comparar, código en bloques con su lenguaje); el largo justo. Responde siempre en el idioma en que te escribe la persona.'
@@ -3263,7 +3281,7 @@ async function qualityAfter(el, chat, msg, mid, r){
   const alive = chat.includes(msg) && msg.content === draft;
   if (!d || !alive || !d.verdict){ const c = $('.qrev', el); if (c) c.remove(); return; }
   if (d.verdict === 'ok'){ msg.rev = 'ok'; save(); if (g0 === gen && el.isConnected) revBadge(el, msg); return; }
-  msg.rev = 'fix'; msg.orig = draft; msg.revNote = String(d.note || '').slice(0, 140); msg.revBy = d.by || ''; msg.content = d.text;
+  msg.rev = 'fix'; msg.orig = draft; msg.revNote = String(d.note || '').slice(0, 140); msg.revBy = d.by || ''; d.text = quitaMarcas(d.text); msg.content = d.text;
   touchThread(); save();
   if (g0 !== gen || !el.isConnected) return;
   const body = $('.body', el);
@@ -3277,7 +3295,7 @@ document.addEventListener('click', e => {
   const b = e.target.closest && e.target.closest('.qrev-o'); if (!b) return;
   const el = b.closest('.m'), m = el && chatArr()[+el.dataset.ci]; if (!m || !m.orig) return;
   const showO = b.getAttribute('aria-pressed') !== 'true', body = $('.body', el);
-  body.innerHTML = md(showO ? m.orig : m.content); codeButtons(body);
+  body.innerHTML = md(quitaMarcas(showO ? m.orig : m.content)); codeButtons(body);
   b.setAttribute('aria-pressed', String(showO)); b.textContent = showO ? RL('Ver mejorada', 'See improved') : RL('Ver original', 'See original');
 });
 /* ---------- v3.8 · ¿la IA que elegiste funciona de verdad? ----------
@@ -4014,7 +4032,7 @@ async function runGuide(o = {}){
     /* v3.0: lo nuevo, para que nadie se quede sin saber dónde está */
     await gPoint(gT('#sNav [data-sn="new"]', '#rail [data-r="new"]') || gT('#cNew', '#rail [data-r="new"]') || gT('#rail [data-r="new"]', '#tabbar [data-tab="chats"]'), 'Con «Nuevo chat» empiezas una conversación limpia cuando cambies de tema. La anterior queda guardada.', { side:true });
     await gPoint(gAny('#cMode'), 'Aquí eliges el modo: «Automática» escoge la mejor IA por ti, «Chat» te deja elegirla, y «SuperiorSynth» trabaja por pasos como un agente.');
-    await gPoint(gAny('#cEffort'), 'Y aquí, cuánto piensa: Auto, Bajo (rápido), Medio o Alto (con calma, para cosas difíciles).');
+    await gPoint(gAny('#cEffort'), 'Y aquí, cómo piensa: Auto, Veloz (rápido), Profundo (a fondo, el que más gasta) o Creativo (ideas originales).');
     await gPoint(gT('#sNav [data-sn="proj"]', '#cProj') || gT('#railProj', '#cProj') || gT('#cProj', '#cProj'), '«Proyectos» junta chats, instrucciones y archivos de un mismo tema. La IA los tiene en cuenta en cada chat del proyecto, como en Claude.', { side:true });
     await gPoint(gT('#sNav [data-sn="syn"]', '#cSyn') || gT('#railSyn', '#cSyn') || gT('#cSyn', '#cSyn'), '«Sintéticos» guarda todo lo que la IA crea: páginas, juegos, dibujos y documentos. Cuando una respuesta trae uno, se abre solo al lado del chat.', { side:true });
     const cfgB = gT('#cfgBtn', '#tabbar [data-tab="cfg"]');
@@ -4063,12 +4081,12 @@ async function runGuide(o = {}){
     const useSz = szOn() && !trialOn;
     let ok = useSz || (trialOn && trialLeft() > 0);
     if (useSz){ const pk = recommendTop(k0, 8).find(m => /^sz:/.test(m.id)) || info(APODEX); if (selId() !== pk.id) pickModel(pk.id, null); }
-    if (!ok){ H.talk('Preparando tus 5 mensajes de prueba…', { mood:'pensando' }); ok = await enterTrial(); }
+    if (!ok){ H.talk('Preparando tu EnerX de prueba…', { mood:'pensando' }); ok = await enterTrial(); }
     gNeed();
     if (!ok){
       await H.talk(connected(selId()) ? 'La prueba no está disponible ahora, pero ya tienes una IA conectada: practica con ella.' : 'Las IAs gratis están descansando un momento. Ahora te muestro Puter: una cuenta gratis para seguir.', { mood:'disculpa', buttons:[{ label:'Siguiente' }] });
     } else {
-      await H.talk(useSz ? 'Ya puedes chatear gratis. Te escribo un mensaje de ejemplo sobre «' + TOPIC[k0].l + '».' : '¡Listo! Tienes ' + trialLeft() + ' mensajes de prueba gratis, solo para aprender. Te escribo uno de ejemplo sobre «' + TOPIC[k0].l + '».', { mood:'celebrando', auto:3200, buttons:[{ label:'Siguiente' }] });
+      await H.talk(useSz ? 'Ya puedes chatear gratis. Te escribo un mensaje de ejemplo sobre «' + TOPIC[k0].l + '».' : '¡Listo! Tu EnerX de prueba está al 100 %, solo para aprender. Te escribo uno de ejemplo sobre «' + TOPIC[k0].l + '».', { mood:'celebrando', auto:3200, buttons:[{ label:'Siguiente' }] });
       gNeed(); H.quiet();
       const myN = $$('.m.user', lane).length, errN = $$('.m.err', lane).length, left0 = trialLeft();
       await H.type(inp, GUIDE_PROMPTS[k0] || q); autoGrow(); updateHint(); gNeed();
@@ -4088,7 +4106,7 @@ async function runGuide(o = {}){
         } else {
         if (last) await H.moveTo(last, { shape:'arrow', fx:.15, fy:.2 });
         SZ.SND.done();
-        await H.talk(useSz ? '¡Lo lograste! Puedes seguir chateando gratis. Abajo ves cómo va tu límite de hoy.' : '¡Lo lograste! Te quedan ' + trialLeft() + ' mensajes de prueba para seguir practicando. Abajo dice quién la paga: SymphorIA.', { near:last || inp, mood:'celebrando', buttons:[{ label:'Siguiente' }], auto:9000 });
+        await H.talk(useSz ? '¡Lo lograste! Puedes seguir chateando gratis. Abajo ves cómo va tu límite de hoy.' : '¡Lo lograste! Todavía tienes EnerX de prueba para seguir practicando. Abajo dice quién la paga: SymphorIA.', { near:last || inp, mood:'celebrando', buttons:[{ label:'Siguiente' }], auto:9000 });
         }
       } else await H.talk('Puedes enviarlo después: el mensaje te espera en la caja.', { mood:'guino', buttons:[{ label:'Siguiente' }] });
     }
@@ -4168,7 +4186,7 @@ const TOPIC_STEPS = {
     await gPoint((gT('#sNav [data-sn="more"]', '#tabbar [data-tab="chats"]') || gT('#railFav', '#tabbar [data-tab="chats"]')), 'Y aquí tus favoritos: las respuestas que guardas con la estrella ★.', { side:true });
   },
   limite:async () => {
-    await gPoint(gAny('#payPill', '#railCoin', '#payL', '#payM'), 'Aquí ves cómo va tu límite gratis de hoy: el anillo se va vaciando y a medianoche se llena otra vez. Sin cuenta son 5 mensajes al día; con tu cuenta gratis, mucho más.', { pad:6 });
+    await gPoint(gAny('#payPill', '#railCoin', '#payL', '#payM'), 'Aquí ves cómo va tu límite gratis de hoy: el anillo se va vaciando y a medianoche se llena otra vez. Sin cuenta tienes una EnerX de prueba; con tu cuenta gratis dura mucho más.', { pad:6 });
   },
   cuenta:async () => {
     await gPoint((gT('#sAcc', '#tabbar [data-tab="me"]') || gT('#accBtn', '#tabbar [data-tab="me"]')), 'Aquí entras o creas tu cuenta gratis: sin correo ni tarjeta. Tus chats y favoritos te siguen a todas partes.', { side:true });
@@ -4393,8 +4411,8 @@ function paintLock(){
   if (L){
     const done = trialOn && trialLeft() <= 0;
     const gm = (SZ.SZQ.guest && SZ.SZQ.guest.max) || 5;
-    $('#lockT').textContent = gst ? 'Para seguir FlowIAndo, entra a tu cuenta' : done ? 'Se acabaron tus mensajes de prueba' : SZ.SZQ.on === false ? 'Las IAs gratis están descansando' : 'Usaste tu límite gratis de hoy';
-    $('#lockS').textContent = gst ? 'Ya usaste tus mensajes de hoy sin cuenta. Crear tu cuenta es gratis, sin correo ni tarjeta, y te da mucho más límite cada día.' : done ? 'Para seguir chateando conecta tu cuenta de Puter (gratis, con un clic).' : 'Vuelve en un momento, o sigue ya con Puter. Conecta tu versión pro de las IAs más usadas.';
+    $('#lockT').textContent = gst ? 'Para seguir FlowIAndo, entra a tu cuenta' : done ? 'Se acabó tu EnerX de prueba' : SZ.SZQ.on === false ? 'Las IAs gratis están descansando' : 'Usaste tu límite gratis de hoy';
+    $('#lockS').textContent = gst ? 'Se acabó tu EnerX de prueba de hoy. Crear tu cuenta es gratis, sin correo ni tarjeta, y te da mucho más límite cada día.' : done ? 'Para seguir chateando conecta tu cuenta de Puter (gratis, con un clic).' : 'Vuelve en un momento, o sigue ya con Puter. Conecta tu versión pro de las IAs más usadas.';
     SZ.telEv('noai', 'sin IA: la de SymphorIA está apagada y no hay Puter');
     if (side.classList.contains('open')) closeSide();
   } else { wHide(); }
@@ -5507,23 +5525,28 @@ addEventListener('synthz-saver', () => { $$('#sxSw, #saverBtn').forEach(x => x.s
   if (!$('.tb-head', tb)) tb.insertAdjacentHTML('afterbegin', '<div class="tb-head" aria-hidden="true"><span class="tbw"></span></div>');
   const w = $('.tbw', tb); if (w) w.innerHTML = SZ.zWord('Synth');
 }
-/* ---------- v2.3.1 · esfuerzo: cuánto piensa la IA antes de responder (Auto · Bajo · Medio · Alto) ----------
-   Cómo se aplica: (1) una pista en el mensaje de sistema, que sirve con cualquier IA; (2) «Bajo» además limita el largo;
-   (3) con OpenRouter (llave propia o de equipo) también se manda reasoning.effort. «Alto» pide cuenta (es gratis). */
+/* ---------- v4.3 (8 nov) · esfuerzo: Auto · Veloz · Profundo · Creativo (antes Auto · Bajo · Medio · Alto) ----------
+   Pedido de Sammuel: cuatro niveles, cada uno con una frase de para qué sirve. Profundo es el que más gasta.
+   Cómo se aplica: (1) una pista en el mensaje de sistema, que sirve con cualquier IA; (2) Veloz además limita el largo;
+   (3) al servidor va api: Veloz = 'low' (responde directo), Profundo = 'high' (IA grande, piensa y revisa, hasta 8000 tokens:
+   por eso es el que más EnerX gasta, porque se descuenta el gasto real), Creativo = 'creative' (más temperatura).
+   Con OpenRouter directo solo se manda reasoning.effort cuando es low/high. Profundo pide cuenta (entrar es gratis).
+   Lo guardado con los nombres viejos se lee así: Bajo → Veloz, Alto → Profundo, Medio → Auto. */
 const EFF = {
-  auto:   { n:'Auto',  d:'La IA decide cuánto pensar.',            hint:'',  tok:0, ico:'<path d="M4.5 16a8 8 0 1 1 15 0"/><path d="M12 14l3.5-4"/>' },
-  low:    { n:'Bajo',  d:'Respuestas rápidas y cortas.',           hint:'Responde rápido y directo, en pocas frases y sin rodeos.', tok:700, ico:'<path d="M5 19c8 0 13-5 14-14-9 0-14 5-14 14z"/><path d="M5 19l8-8"/>' },
-  medium: { n:'Medio', d:'Equilibrio entre rapidez y detalle.',    hint:'Responde con una explicación clara y equilibrada: lo importante primero y un poco de detalle.', tok:0, ico:'<path d="M4.5 16a8 8 0 1 1 15 0"/><path d="M12 14l0-6"/>' },
-  high:   { n:'Alto',  d:'Piensa con calma y revisa su respuesta.', hint:'Razona con cuidado antes de responder: analiza el problema paso a paso, revisa tu respuesta y entrega una respuesta completa y bien fundamentada.', tok:0, ico:'<path d="M5 15c0-5 3-9 9-11 1 6-1 10-5 12l-2 3z"/><path d="M9 16l-3 1 1-3"/>' }
+  auto:     { n:'Auto',     d:'La IA decide cuánto pensar según tu pregunta.',              api:'',         hint:'',  tok:0, ico:'<path d="M4.5 16a8 8 0 1 1 15 0"/><path d="M12 14l3.5-4"/>' },
+  fast:     { n:'Veloz',    d:'Respuestas rápidas y cortas, para lo del día a día.',          api:'low',      hint:'Responde rápido y directo, en pocas frases y sin rodeos.', tok:700, ico:'<path d="M13 3L5 14h6l-1 7 8-11h-6l1-7z"/>' },
+  deep:     { n:'Profundo', d:'Piensa a fondo y revisa su respuesta. Es el que más EnerX gasta.', api:'high', hint:'Razona con cuidado antes de responder: analiza el problema paso a paso, revisa tu respuesta y entrega una respuesta completa y bien fundamentada.', tok:0, ico:'<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/><path d="M11 8v3l2 1.5"/>' },
+  creative: { n:'Creativo', d:'Ideas originales y textos con chispa, para crear.',            api:'creative', hint:'Sé creativo y original: propone ideas poco obvias, usa imágenes y ejemplos vivos, juega con el tono y evita lo genérico, sin perder la claridad ni inventar datos.', tok:0, ico:'<path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/><circle cx="12" cy="12" r="2.5"/>' }
 };
-const EFF_KEYS = ['auto', 'low', 'medium', 'high'];
-function effKey(){ const e = st().sx && st().sx.effort; return EFF[e] ? e : 'auto'; }
+const EFF_KEYS = ['auto', 'fast', 'deep', 'creative'];
+const EFF_OLD = { low:'fast', high:'deep', medium:'auto' };
+function effKey(){ let e = st().sx && st().sx.effort; if (EFF_OLD[e]) e = EFF_OLD[e]; return EFF[e] ? e : 'auto'; }
 function effortHint(){ return EFF[effKey()].hint; }
-function effortOpts(saver){ const k = effKey(); if (k === 'auto') return {}; const o = { effort:k }; if (EFF[k].tok && !saver) o.maxTokens = EFF[k].tok; return o; }
+function effortOpts(saver){ const k = effKey(); if (k === 'auto') return {}; const o = { effort:EFF[k].api }; if (EFF[k].tok && !saver) o.maxTokens = EFF[k].tok; return o; }
 (function esfuerzo(){
   const btn = $('#cEffort'), menu = $('#effMenu'), lab = $('#cEffortL'); if (!btn || !menu) return;
   const svg = k => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + EFF[k].ico + '</svg>';
-  const locked = k => k === 'high' && !SZ.ACC.ready;
+  const locked = k => k === 'deep' && !SZ.ACC.ready;
   function paint(){
     const k = effKey(); lab.textContent = k === 'auto' ? '' : EFF[k].n; btn.classList.toggle('on', k !== 'auto');
     btn.title = 'Esfuerzo: ' + EFF[k].n + ' · cuánto piensa la IA antes de responder';
@@ -5534,7 +5557,7 @@ function effortOpts(saver){ const k = effKey(); if (k === 'auto') return {}; con
   btn.addEventListener('click', e => { e.stopPropagation(); open(menu.hidden); });
   menu.addEventListener('click', e => {
     const b = e.target.closest('[data-eff]'); if (!b) return; const k = b.dataset.eff;
-    if (locked(k)){ open(false); toast('El esfuerzo Alto es para cuentas (entrar es gratis).'); SZ.guestGate({ mode:'signup' }); return; }
+    if (locked(k)){ open(false); toast('El esfuerzo Profundo es para cuentas (entrar es gratis).'); SZ.guestGate({ mode:'signup' }); return; }
     st().sx.effort = k; save(); paint(); open(false); btn.focus(); toast('Esfuerzo: ' + EFF[k].n + (k === 'auto' ? '' : ' · ' + EFF[k].d));
   });
   document.addEventListener('pointerdown', e => { if (!menu.hidden && !menu.contains(e.target) && !btn.contains(e.target)) open(false); });
@@ -5751,6 +5774,104 @@ function premiumAviso(m){
   });
 }
 SZ.premiumAviso = premiumAviso;   /* para probarlo y para la vista previa de Pulsem */
+/* ---------- 2026-11-09 · aviso grande al elegir una IA de alto consumo (pedido de Sammuel) ----------
+   «Que cada vez que elijan modelos de alto consumo, como Claude Fable, les salte un anuncio gigante que les avise».
+   Sale cada vez que eliges a mano una de esas IAs (antes era un aviso chiquito, una vez por visita). No bloquea:
+   «Usarla igual» la deja elegida y «Elegir otra» vuelve a la lista. Habla de EnerX, nunca de mensajes. ES/EN. */
+const PT_CARAS = /claude|fable|opus|sonnet|gpt-5|gpt-4\.5|\bo1\b|\bo3\b|o1-pro|o3-pro|grok-4|gemini[- ]?(2\.5|3)[- ]?pro|deep[- ]?research/i;
+function ptEsCara(mm){ return !!mm && !mm.free && (mm.spend === 3 || PT_CARAS.test((mm.id || '') + ' ' + (mm.name || ''))); }
+function ptAvisoConsumo(mm, alVolver){
+  if (!mm || document.getElementById('ptAviso')) return;
+  const en = SZ.lang && SZ.lang() === 'en';
+  const T = en
+    ? { k:'HEADS UP · HIGH-CONSUMPTION AI', t:mm.name + ' uses a lot of energy', p:'It is one of the most powerful AIs, so each answer spends much more EnerX (or credit on your own key) than a normal one. Use it for hard tasks; for simple things, Auto picks a lighter AI and your energy lasts longer.', si:'Use it anyway', no:'Pick another AI' }
+    : { k:'OJO · IA DE ALTO CONSUMO', t:mm.name + ' gasta mucha energía', p:'Es de las IAs más potentes, así que cada respuesta gasta mucha más EnerX (o saldo de tu llave) que una normal. Úsala para tareas difíciles; para lo sencillo, Auto elige una IA más liviana y tu energía te dura más.', si:'Usarla igual', no:'Elegir otra IA' };
+  const o = document.createElement('div');
+  o.id = 'ptAviso'; o.className = 'pt-aviso'; o.setAttribute('role', 'alertdialog'); o.setAttribute('aria-modal', 'true'); o.setAttribute('aria-labelledby', 'ptAvisoT');
+  o.innerHTML = '<div class="pt-av-card"><div class="pt-av-bat" aria-hidden="true"><i></i></div><p class="pt-av-k">' + esc(T.k) + '</p><h2 id="ptAvisoT">' + esc(T.t) + '</h2><p class="pt-av-p">' + esc(T.p) + '</p>'
+    + '<div class="pt-av-b"><button type="button" class="pt-av-no">' + esc(T.no) + '</button><button type="button" class="pt-av-si">' + esc(T.si) + '</button></div></div>';
+  const cerrar = () => { o.classList.add('fuera'); setTimeout(() => o.remove(), 220); document.removeEventListener('keydown', tecla); };
+  const tecla = e => { if (e.key === 'Escape') cerrar(); };
+  o.addEventListener('click', e => {
+    if (e.target === o || e.target.closest('.pt-av-si')) cerrar();
+    else if (e.target.closest('.pt-av-no')){ cerrar(); if (typeof alVolver === 'function') setTimeout(alVolver, 240); }
+  });
+  document.addEventListener('keydown', tecla);
+  document.body.appendChild(o);
+  setTimeout(() => { const b = o.querySelector('.pt-av-si'); if (b) b.focus(); }, 60);
+}
+/* ---------- 2026-11-09 · rediseño «Partitura»: el selector de 4 modos en la caja de escribir ----------
+   Sammuel: «hay muchas IAs, el modo auto, comparar y A.L.I.A.S.: ¿cómo se va a elegir?». Respuesta concreta, siempre a la vista:
+     Auto      SymphorIA elige la IA para cada pedido (y dice cuál usó).            → applyMode('auto')
+     Una IA    tú eliges de la lista con buscador; abajo se ve cuál tienes.          → applyMode('chat') + abre la lista
+     Comparar  2 a 3 IAs lado a lado; te quedas con la mejor.                         → cmpOpen()
+     Agente    A.L.I.A.S.: arma un plan, lo apruebas una vez y trabaja solo.          → abre alias.html con lo escrito
+   Y el esfuerzo, al lado: Auto · Veloz · Profundo · Creativo (los niveles de v4.3, Profundo pide cuenta) · SuperiorSynth (el agente de SynthFlow elige la IA y mejora tu pedido).
+   Reemplaza a los botones «Modo», «Esfuerzo» y «Comparar con otra IA», que se esconden con CSS (siguen en el DOM para el motor). */
+(function partituraSelector(){
+  const row = $('#cPickRow'); if (!row || $('#ptModos')) return;
+  const en = () => SZ.lang && SZ.lang() === 'en';
+  const T = () => en()
+    ? { modos:{ auto:'Auto', una:'One AI', cmp:'Compare', agente:'Agent' }, esf:['Auto', 'Fast', 'Deep', 'Creative', 'SuperiorSynth'], modo:'Mode', esfuerzo:'Effort',
+        ayuda:{ auto:'SymphorIA picks the AI for each request and tells you which one.', una:'You pick the AI from the list.', cmp:'Several AIs answer side by side. Keep the best one.', agente:'A.L.I.A.S. makes a plan, you approve it once and it works on its own.' } }
+    : { modos:{ auto:'Auto', una:'Una IA', cmp:'Comparar', agente:'Agente' }, esf:['Auto', 'Veloz', 'Profundo', 'Creativo', 'SuperiorSynth'], modo:'Modo', esfuerzo:'Esfuerzo',
+        ayuda:{ auto:'SymphorIA elige la IA para cada pedido y te dice cuál usó.', una:'Tú eliges la IA de la lista.', cmp:'Varias IAs responden lado a lado. Te quedas con la mejor.', agente:'A.L.I.A.S. arma un plan, lo apruebas una vez y trabaja solo.' } };
+  const MODOS = ['auto', 'una', 'cmp', 'agente'];
+  const actual = () => mode === 'cmp' ? 'cmp' : selId() === 'sz:auto' && !agentOn() ? 'auto' : 'una';
+  const NIV = ['auto', 'fast', 'deep', 'creative'], SS = NIV.length;
+  const esfActual = () => agentOn() ? SS : Math.max(0, NIV.indexOf(effKey()));
+  const bloqueado = i => NIV[i] === 'deep' && !SZ.ACC.ready;
+
+  const bar = document.createElement('div');
+  bar.className = 'pt-sel'; bar.id = 'ptModos';
+  row.insertBefore(bar, row.firstChild);
+  document.body.classList.add('pt-flow');
+
+  function pinta(){
+    const t = T(), m = actual(), e = esfActual();
+    bar.innerHTML =
+      '<div class="pt-m" role="radiogroup" aria-label="' + t.modo + '">' + MODOS.map(k => '<button type="button" role="radio" data-pm="' + k + '" aria-checked="' + (k === m) + '" title="' + esc(t.ayuda[k]) + '">' + t.modos[k] + '</button>').join('') + '</div>' +
+      '<div class="pt-e" role="radiogroup" aria-label="' + t.esfuerzo + '">' + t.esf.map((n, i) => '<button type="button" role="radio" data-pe="' + i + '" aria-checked="' + (i === e) + '"' + (i === SS ? ' data-ss="1"' : '') + (bloqueado(i) ? ' class="lk" title="' + (en() ? 'Needs an account' : 'Con cuenta') + '"' : '') + '>' + n + '</button>').join('') + '</div>';
+    document.body.dataset.ptModo = m;
+  }
+  function salirDeComparar(){ if (mode === 'cmp') setMode('solo'); }
+  bar.addEventListener('click', ev => {
+    const b = ev.target.closest('button'); if (!b) return;
+    if (b.dataset.pm){
+      const k = b.dataset.pm;
+      if (k === 'agente'){
+        const q = (inp.value || '').trim();
+        location.href = 'alias.html?' + new URLSearchParams(q ? { from:'flow', meta:q } : { from:'flow' }).toString();
+        return;
+      }
+      if (k === 'cmp'){ cmpOpen(b); setTimeout(pinta, 50); return; }
+      salirDeComparar();
+      if (k === 'auto'){ if (agentOn()) setAgent(false); applyMode('auto'); }
+      if (k === 'una'){ if (agentOn()) setAgent(false); if (selId() === 'sz:auto') applyMode('chat'); openSide('set', b); }
+      pinta(); return;
+    }
+    if (b.dataset.pe){
+      const i = +b.dataset.pe;
+      if (i === SS){ if (!agentOn()) setAgent(true); }
+      else if (bloqueado(i)){ toast(en() ? 'Deep effort needs an account (signing in is free).' : 'El esfuerzo Profundo es para cuentas (entrar es gratis).'); SZ.guestGate({ mode:'signup' }); }
+      else { if (agentOn()) setAgent(false); st().sx.effort = NIV[i]; save(); }
+      pinta(); return;
+    }
+  });
+  /* el motor cambia de IA o de modo por muchos caminos: se repinta cuando cambia algo que se ve */
+  const obs = new MutationObserver(() => { const m = actual(), e = esfActual(); if (m !== document.body.dataset.ptModo || !bar.querySelector('[data-pe="' + e + '"][aria-checked="true"]')) pinta(); });
+  obs.observe(document.body, { attributes:true, attributeFilter:['class', 'data-cmode'] });
+  new MutationObserver(pinta).observe(document.documentElement, { attributes:true, attributeFilter:['lang'] });
+  addEventListener('storage', e => { if (e.key === 'synthz:lang') setTimeout(pinta, 0); });
+
+  /* lo que pidió la portada: ?esfuerzo=auto|veloz|profundo|creativo|superiorsynth y ?elegir=1 (Una IA).
+     Se aceptan también los nombres de antes (rapido, normal) por si alguien tiene el enlace guardado. */
+  const ef = params.get('esfuerzo'), DE = { auto:'auto', normal:'auto', veloz:'fast', rapido:'fast', profundo:'deep', creativo:'creative' };
+  if (DE[ef]){ const k = DE[ef] === 'deep' && !SZ.ACC.ready ? 'auto' : DE[ef]; if (agentOn()) setAgent(false); st().sx.effort = k; save(); }
+  else if (ef === 'superiorsynth' && !agentOn()) setTimeout(() => { try{ setAgent(true); pinta(); }catch(er){} }, 400);
+  if (params.get('elegir') === '1') setTimeout(() => { try{ if (selId() === 'sz:auto') applyMode('chat'); openSide('set'); pinta(); }catch(er){} }, 1800);
+  pinta();
+})();
 /* ===== v3.7 · puente entre el motor de SynthFlow (este chat.js) y sus componentes React =====
    Los componentes de next/componentes/synthflow/ llaman a estas funciones en vez de depender de IDs y clics simulados.
    Se avisa con el evento «synthflow-ready» (y queda en window.SZFlow) para que React sepa que ya puede usarlas. */

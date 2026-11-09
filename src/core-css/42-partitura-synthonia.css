@@ -1,0 +1,6 @@
+/* 2026-11-09 · rediseño «Partitura»: en todas las páginas (core.css) */
+/* SynthonIA nueva: la bola negra flota sola, sin el aro dorado de antes */
+#szBot{border:0 !important;background:transparent !important;box-shadow:none !important}
+#szBot .szface{width:58px;height:58px;filter:drop-shadow(0 12px 22px rgba(0,0,0,.6)) drop-shadow(0 0 14px rgba(61,224,255,.18))}
+#szBot.inhead .szface{width:34px;height:34px}
+

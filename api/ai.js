@@ -189,6 +189,8 @@ async function smartOk(who, me, free){
 const hasImg = msgs => (Array.isArray(msgs) ? msgs : []).some(m => m && Array.isArray(m.content) && m.content.some(p => p && p.type === 'image_url'));
 async function brainChat(who, ipKey, me, b, free){
   const model = typeof b.model === 'string' ? b.model : 'sz:auto', maxTokens = b.maxTokens ?? b.max_tokens;
+  /* v4.3 · niveles Auto · Veloz (low) · Profundo (high) · Creativo (creative): Creativo no cambia lo difícil, solo sube la temperatura */
+  const creative = b.effort === 'creative';
   const L = leer(b.messages, { effort:['low', 'medium', 'high'].includes(b.effort) ? b.effort : '' });
   const short = +maxTokens > 0 && +maxTokens <= 900;
   let route = null, firstMs = 0;
@@ -200,7 +202,7 @@ async function brainChat(who, ipKey, me, b, free){
   const pend = [];
   const r = await chat({ who, ipKey, messages:b.messages, model, maxTokens, stream:true, free, route, firstMs,
     onTry:({ m, ok, ms }) => { pend.push(recordLite(L.cat, m.id, ok, ms)); },
-    brain:m => ({ system:sistema(L, m.prov, m.mid, { short }), extra:reasonParams(m.prov, m.mid, L.level), temperature:temperatura(L), maxTokens:L.level === 'hard' && !short ? 8000 : undefined }) });
+    brain:m => ({ system:sistema(L, m.prov, m.mid, { short }), extra:reasonParams(m.prov, m.mid, L.level), temperature:creative ? Math.max(.9, temperatura(L)) : temperatura(L), maxTokens:L.level === 'hard' && !short ? 8000 : undefined }) });
   pend.push(usedProv(r.meta.prov));
   await Promise.all(pend).catch(() => {});
   r.meta.cat = L.cat; r.meta.level = L.level;

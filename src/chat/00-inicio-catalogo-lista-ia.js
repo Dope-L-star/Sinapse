@@ -382,7 +382,8 @@ function cmpWhyNot(id, base){
 function pickModel(id, node, avisado){
   /* v4.3 · Chispa+: un modelo premium de alto consumo pide confirmación con un aviso grande, cada vez que se elige (hoy apagado: no hay modelos premium en la lista) */
   { const pm = info(id); if (pm && pm.premium && pm.heavy && node !== null && !avisado && id !== selId()){ premiumAviso(pm).then(ok => { if (ok) pickModel(id, node, true); }); return; } }
-  { const mm = info(id); if (mm && mm.spend === 3 && node !== null){ try{ if (!sessionStorage.getItem('synthz:spendw')){ sessionStorage.setItem('synthz:spendw', '1'); setTimeout(() => toast('Ojo: ' + mm.name + ' gasta mucho de tu Puter. Para cosas sencillas usa una con rayitas verdes y tu saldo te dura más.'), 600); } }catch(e){} } }
+  /* 2026-11-09 · Partitura: las demás IAs caras (gasto alto) también avisan en grande, con «Elegir otra IA» o «Usarla igual» (src/chat/16x) */
+  { const mm = info(id); if (node !== null && !avisado && !(mm && mm.premium && mm.heavy) && ptEsCara(mm)) setTimeout(() => ptAvisoConsumo(mm, () => { try{ openSide('set'); }catch(e){} }), 350); }
   if (mode === 'cmp' || pickMode === 'add'){
     const base = mode === 'cmp' ? st().cmp : [selId()].filter(x => x !== TRIAL_ID), why = cmpWhyNot(id, base);
     if (why === 'ya'){ toast('Esa IA ya está en la comparación.'); return; }

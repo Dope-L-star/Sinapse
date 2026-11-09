@@ -75,9 +75,9 @@ const spentPct = (tok, after) => {
   const a = after == null ? SZQ.used || 0 : after;
   return String(Math.max(1, battAt(a - tok) - battAt(a)));
 };
-const coinNote = (mid, r) => /^sz:/.test(String(mid)) && r && !r.cached && ((r.prompt || 0) + (r.completion || 0)) > 0 ? (isGuestQ() ? gN('enerx.usedGuest', guestLeft()) : t('enerx.used', { u:spentPct((r.prompt || 0) + (r.completion || 0)), n:battPct() })) : '';
-const limTxt = () => SZQ.on === false ? t('enerx.rest') : guestFull() ? t('enerx.guestNone') : isGuestQ() ? gN('enerx.guestLeft', guestLeft()) : limPct() >= 1 ? t('enerx.empty') : t('enerx.left', { n:battPct() });
-const limShort = () => SZQ.on === false ? t('enerx.restShort') : isGuestQ() ? gN('enerx.guestShort', guestLeft()) : limPct() >= 1 ? t('enerx.emptyShort') : battPct() + ' %';
+const coinNote = (mid, r) => /^sz:/.test(String(mid)) && r && !r.cached && ((r.prompt || 0) + (r.completion || 0)) > 0 ? (isGuestQ() ? t('enerx.usedGuest', { n:battPct() }) : t('enerx.used', { u:spentPct((r.prompt || 0) + (r.completion || 0)), n:battPct() })) : '';
+const limTxt = () => SZQ.on === false ? t('enerx.rest') : guestFull() ? t('enerx.guestNone') : isGuestQ() ? t('enerx.left', { n:battPct() }) : limPct() >= 1 ? t('enerx.empty') : t('enerx.left', { n:battPct() });
+const limShort = () => SZQ.on === false ? t('enerx.restShort') : guestFull() ? t('enerx.emptyShort') : isGuestQ() ? battPct() + ' %' : limPct() >= 1 ? t('enerx.emptyShort') : battPct() + ' %';
 const limLvl = () => { const k = limPct(); return k >= 1 ? 'full' : k >= .8 ? 'warn' : 'ok'; };
 /* la pila: cuerpo de vidrio, polo y carga que baja; con poca carga se pone ámbar y vacía, coral. size = alto de referencia (antes era el anillo) */
 function limRing(size){
@@ -86,7 +86,7 @@ function limRing(size){
 }
 function limBar(o = {}){
   const k = 1 - limPct();
-  return '<div class="lbar ' + limLvl() + '"><div class="lb-h"><b>' + (o.title || t('enerx.today')) + '</b><span>' + limTxt() + '</span></div><div class="lb-t"><i style="transform:scaleX(' + k.toFixed(3) + ')"></i></div>' + (o.small === false ? '' : '<small>' + (isGuestQ() ? t('enerx.guest', { n:SZQ.guest.max || 5 }) + ' ' : '') + t('enerx.small') + (o.puter ? ' ' + t('enerx.puter') : '') + '</small>') + '</div>';
+  return '<div class="lbar ' + limLvl() + '"><div class="lb-h"><b>' + (o.title || t('enerx.today')) + '</b><span>' + limTxt() + '</span></div><div class="lb-t"><i style="transform:scaleX(' + k.toFixed(3) + ')"></i></div>' + (o.small === false ? '' : '<small>' + (isGuestQ() ? t('enerx.guest') + ' ' : '') + t('enerx.small') + (o.puter ? ' ' + t('enerx.puter') : '') + '</small>') + '</div>';
 }
 /* v3.4 · las IAs conectadas que ven fotos (el servidor usa la misma lista: api/_pool.js VISION_RX). Automática también: con fotos elige sola una que ve */
 const SZ_VISION = /gemini|gemma-3(?!n)|llama-4|pixtral|mistral-(small|medium)|[-_/]vl\b|-vl-|vision|qwen2\.5-vl|kimi-vl/i;

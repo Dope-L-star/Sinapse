@@ -20,6 +20,7 @@ const TITLE = 'Título editado por la prueba';
 const rows = [];
 let baseUrl = '';
 const runs = new Map();
+let lastAdjust = null, lastNotes = null;
 let seq = 0;
 
 function clip(s) {
@@ -62,13 +63,29 @@ function doble(body) {
     ];
     return { status: 200, json: { ok: true, plan: { id, goal, steps } } };
   }
+  if (body.action === 'ajustar') {
+    /* v4.3 · la persona escribió algo a mitad de camino: se añade un paso al final */
+    lastAdjust = body;
+    const plan = body.plan || {};
+    const ids = (Array.isArray(plan.steps) ? plan.steps : []).map(s => +s.id || 0);
+    const fixed = new Set((body.done || []).map(Number));
+    const rest = (plan.steps || []).filter(s => !fixed.has(+s.id));
+    const next = Math.max(0, ...ids) + 1;
+    const steps = rest.map((s, i) => ({ id: next + i, title: s.title, tool: s.tool, input: s.input }));
+    steps.push({ id: next + steps.length, title: lang === 'en' ? 'Step added by the note' : 'Paso añadido por la nota', tool: 'think', input: body.note || '' });
+    return { status: 200, json: { ok: true, changed: true, steps, reply: lang === 'en' ? 'Got it, I added a step.' : 'Entendido, añadí un paso.' } };
+  }
   if (body.action === 'step') {
     const plan = body.plan || {};
+    if (Array.isArray(plan.notes) && plan.notes.length) lastNotes = plan.notes.slice();
     const steps = Array.isArray(plan.steps) ? plan.steps : [];
     const step = steps.find(s => String(s.id) === String(body.stepId)) || { id: body.stepId, tool: 'think', title: '' };
     const key = String(plan.id || 'x') + ':' + String(body.stepId);
     const n = (runs.get(key) || 0) + 1;
     runs.set(key, n);
+    if (String(plan.goal || '').includes('ZXALIAS-UI-FLAKY') && n === 1) {
+      return { status: 200, json: { ok: true, step: { id: body.stepId, status: 'error', output: '', sources: [], file: null, error: 'falló una vez' } } };
+    }
     if (String(plan.goal || '').includes('ZXALIAS-UI-ERROR')) {
       return {
         status: 200,
@@ -189,6 +206,12 @@ async function start(page) {
   await page.waitForFunction(() => window.ALIAS && typeof window.ALIAS.plan === 'function');
 }
 async function must(page, name) {
+  if (name === 'lang-en' || name === 'lang-es') {   /* v4.3 · en computador el idioma está en la barra común de arriba */
+    const vis = page.locator('[data-alias="' + name + '"]:visible');
+    if (await vis.count()) return vis;
+    const top = page.locator('.top .lang button', { hasText: name.slice(-2).toUpperCase() });
+    if (await top.count()) return top;
+  }
   /* "run" está en Empezar, Aprobar y Seguir: la persona solo ve uno a la vez */
   const loc = page.locator('[data-alias="' + name + '"]' + (name === 'run' ? ':visible' : ''));
   if (!(await loc.count())) throw new Error('falta data-alias="' + name + '"');
@@ -225,6 +248,7 @@ async function runNext(page) {
   await run.first().click();
   await page.waitForFunction(beforeN => {
     return document.querySelectorAll('[data-alias="step"][data-status="done"], [data-alias="step"][data-state="done"]').length > beforeN
+      || !!(document.querySelector('[data-react="alias"] #vResult'))   /* v4.3: al terminar, los pasos se resumen en una línea */
       || !!(document.querySelector('[data-alias="error"]') && document.querySelector('[data-alias="error"]').innerText.trim());
   }, before);
 }
@@ -287,7 +311,8 @@ async function paused(page) {
 async function testPause(page) {
   /* En modo "aprobar cada paso" la app ya se detiene sola; pausar tiene sentido en automático */
   await planFor(page, GOAL + ' ZXALIAS-UI-SLOW');
-  await page.locator('input[name="mode"][value="auto"]').check();
+  const radio = page.locator('input[name="mode"][value="auto"]');
+  if (await radio.count()) await radio.check();   /* la página estática; en React el automático es lo normal */
   await (await must(page, 'run')).first().click();
   await page.locator('[data-alias="step"][data-status="running"]').first().waitFor();
   await (await must(page, 'pause')).first().click();
@@ -419,6 +444,57 @@ async function testLang(page) {
   if (!changed) throw new Error('al pasar a inglés el texto visible no cambió');
 }
 
+/* ---- v4.3 · agente que trabaja solo (solo la versión React) ---- */
+async function isAgent(page) { return page.evaluate(() => !!document.querySelector('[data-react="alias"]')); }
+async function testAuto(page) {
+  await planFor(page, GOAL);
+  if (!(await isAgent(page))) return;
+  const total = await page.locator('[data-alias="step"]').count();
+  await (await must(page, 'run')).first().click();
+  await page.waitForFunction(n => document.querySelectorAll('[data-alias="step"][data-status="done"]').length >= n || !!document.getElementById('vResult'), total, { timeout: 15000 });
+  await page.locator('#vResult').waitFor({ timeout: 15000 });
+  const runs = await page.locator('[data-alias="run"]:visible').count();
+  if (runs) throw new Error('al terminar sigue habiendo un botón de continuar');
+}
+async function testSteer(page) {
+  await planFor(page, GOAL + ' ZXALIAS-UI-SLOW');
+  if (!(await isAgent(page))) return;
+  lastAdjust = null; lastNotes = null;
+  await (await must(page, 'run')).first().click();
+  await page.locator('[data-alias="step"][data-status="running"]').first().waitFor();
+  const box = page.locator('[data-alias="steer"]');
+  await box.fill('Que sea en inglés ZXNOTA');
+  await box.press('Enter');
+  await page.waitForFunction(() => /añadí un paso|added a step/i.test(document.body.innerText));
+  if (!lastAdjust || !Array.isArray(lastAdjust.done) || !lastAdjust.done.length) throw new Error('no mandó qué pasos ya estaban hechos o en marcha');
+  /* no se detuvo: sigue solo hasta el final, con el paso nuevo */
+  await page.locator('#vResult').waitFor({ timeout: 20000 });
+  if (!lastNotes || !lastNotes.some(n => n.includes('ZXNOTA'))) throw new Error('la nota no viajó con el plan a los pasos siguientes');
+  await page.getByRole('button', { name: /ver cada paso|see each step/i }).click();
+  const titles = await page.locator('[data-alias="step"]').allInnerTexts();
+  if (!titles.some(x => /Paso añadido por la nota|Step added by the note/.test(x))) throw new Error('el paso añadido no aparece en el plan');
+}
+async function testRetry(page) {
+  await planFor(page, GOAL + ' ZXALIAS-UI-FLAKY');
+  if (!(await isAgent(page))) return;
+  await (await must(page, 'run')).first().click();
+  await page.locator('#vResult').waitFor({ timeout: 15000 });
+  const err = await page.locator('#errBox').isVisible();
+  if (err) throw new Error('preguntó por un error que se arreglaba solo reintentando');
+}
+async function testStop(page) {
+  await planFor(page, GOAL + ' ZXALIAS-UI-SLOW');
+  if (!(await isAgent(page))) return;
+  await (await must(page, 'run')).first().click();
+  await page.waitForFunction(() => document.querySelectorAll('[data-alias="step"][data-status="done"]').length >= 1, null, { timeout: 8000 });
+  await page.locator('#bCancel').click();
+  await page.locator('#vResult').waitFor();
+  const n0 = await page.evaluate(() => document.querySelectorAll('[data-alias="step"]').length);
+  await page.waitForTimeout(1800);
+  const plan = await page.locator('[data-alias="plan"]').getAttribute('data-state');
+  if (plan !== 'done') throw new Error('Detener no dejó lo hecho como resultado: ' + plan + ' ' + n0);
+}
+
 const TESTS = [
   ['abre alias.html', 'Carga la página, el campo del objetivo y window.ALIAS con plan, runStep y tools search, file, memory e image.', testOpen],
   ['escribe el objetivo y ve el plan', 'Escribe un objetivo, pide el plan y aparecen de 3 a 7 pasos.', testPlan],
@@ -430,8 +506,14 @@ const TESTS = [
   ['descarga el archivo', 'Al llegar al paso file se puede descargar un archivo con texto.', testDownload],
   ['descarga la presentación', 'Un paso file que entrega el borrador de presentación baja un .pptx real (zip con las diapositivas), no el JSON.', testPptx],
   ['pasos de memoria e imagen se resuelven en el navegador', 'El marcador del servidor se cambia por lo guardado (solo lectura) y por una imagen descargable.', testMarkers],
+  ['aprueba una vez y termina solo', 'v4.3: un solo toque en Aprobar y todos los pasos corren hasta el resultado, sin más botones de continuar.', testAuto],
+  ['agrégale algo sin pararlo', 'v4.3: lo que se escribe a mitad de camino se suma (action ajustar), no lo detiene, añade el paso y la nota viaja a los pasos siguientes.', testSteer],
+  ['reintenta solo con otra IA', 'v4.3: si un paso falla una vez, lo vuelve a intentar solo y no pregunta.', testRetry],
+  ['detener entrega lo hecho', 'v4.3: Detener para el trabajo y muestra lo que alcanzó a hacer como resultado.', testStop],
   ['cambia el idioma con el diccionario', 'Los textos visibles salen de textos.json y cambian al pulsar inglés.', testLang]
 ];
+
+const MANUAL = new Set(['ejecuta paso a paso', 'rehace un paso', 'descarga el archivo', 'descarga la presentación', 'pasos de memoria e imagen se resuelven en el navegador']);
 
 function printTable() {
   console.log('\n| Prueba | Cubre | Resultado |');
@@ -469,6 +551,8 @@ async function main() {
       const page = await context.newPage();
       const logs = [];
       page.setDefaultTimeout(8000);
+      /* v4.3 · las pruebas de «un clic, un paso» usan el ajuste «Pedirme permiso en cada paso» (la página estática ya es así) */
+      await page.addInitScript(v => { try { localStorage.setItem('alias:cada', v); } catch (e) {} }, MANUAL.has(t[0]) ? '1' : '0');
       page.on('pageerror', err => logs.push(String(err && err.message ? err.message : err)));
       try {
         await t[2](page);

@@ -7,12 +7,13 @@ import assert from 'node:assert/strict';
 const nextDir = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(nextDir, '..');
 const routes = [
-  { html: 'index.html', route: 'app/(site)/page.jsx', module: 'contenido/legado/index.js', tree: 'contenido/arboles-react/index.json' },
   { html: 'ayuda.html', route: 'app/(site)/ayuda/page.jsx', module: 'contenido/legado/ayuda.js', tree: 'contenido/arboles-react/ayuda.json' },
   { html: 'offline.html', route: 'app/(site)/offline/page.jsx', module: 'contenido/legado/offline.js', tree: 'contenido/arboles-react/offline.json' },
 ];
 /* v3.8 · páginas ya reescritas en componentes React (sin árbol copiado del HTML ni el .js viejo de la página) */
 const reactNative = [
+  /* 2026-11-09 · rediseño «Partitura»: la portada ya es React de verdad */
+  { html: 'index.html', route: 'app/(site)/page.jsx', app: 'componentes/portada/PortadaApp.jsx', old: 'index.js', needs: 'core.js', masks: [] },
   { html: 'pulsem.html', route: 'app/(panel)/pulsem/page.jsx', app: 'componentes/pulsem/PulsemApp.jsx', old: 'pulsem.js', needs: 'core.js' },
   { html: 'alias.html', route: 'app/(site)/alias/page.jsx', app: 'componentes/alias/AliasApp.jsx', old: 'alias.js', needs: 'alias-tools.js', masks: ['vPlan', 'vResult'] },
 ];
