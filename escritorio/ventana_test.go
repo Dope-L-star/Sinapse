@@ -20,7 +20,7 @@ func (a *accPrueba) instalar(esc bool, av func(string)) (bool, error) {
 	return false, nil
 }
 func (a *accPrueba) desinstalar(av func(string)) error { return nil }
-func (a *accPrueba) abrirApp()                        {}
+func (a *accPrueba) abrirApp()                         {}
 
 func TestVentana(t *testing.T) {
 	acc := &accPrueba{}
