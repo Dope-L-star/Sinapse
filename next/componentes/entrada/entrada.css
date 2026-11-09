@@ -1,0 +1,93 @@
+/* SymphorIA · «Entrada»: la animación de carga del tablero de Gestión, hecha pieza común para todo el sitio.
+   Tres momentos, siempre en este orden:
+   1. Esqueleto con brillo (.sy-esq): mientras algo carga se dibuja su forma en vacío y una franja de luz con los colores
+      de la marca la recorre, cada bloque un poco después del anterior.
+   2. Telón (.sy-telon): al abrir una página, ese esqueleto cubre la pantalla sobre tinta (#0B0A12), así nunca se ve un
+      fogonazo de color ni la página «armándose». Si la página está lista en menos de 0,2 s el esqueleto ni se alcanza a ver.
+   3. Llegada: el telón se funde, el titular destella una vez (.sy-brilla) y los bloques suben en cascada (Entrada.jsx).
+   Con Animaciones apagadas en Ajustes (html.noanim) no se mueve nada: el telón se quita al instante y no hay brillo. */
+
+/* ---------- 1. esqueleto ---------- */
+.sy-esq{--sy-fondo:rgba(255,255,255,.045);--sy-linea:rgba(255,255,255,.075);display:grid;gap:14px;width:100%}
+.sy-esq .sy-b{position:relative;overflow:hidden;border-radius:18px;border:1px solid rgba(255,255,255,.07);background:var(--sy-fondo);min-height:120px;
+  display:flex;flex-direction:column;gap:12px;padding:20px;--i:0}
+.sy-esq .sy-b > i,.sy-esq .sy-b > b{display:block;height:11px;width:58%;border-radius:8px;background:var(--sy-linea)}
+.sy-esq .sy-b > b{height:40px;width:42%;border-radius:12px}
+.sy-esq .sy-b > i:last-child{width:84%}
+.sy-esq .sy-b::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(100deg,transparent 28%,rgba(61,224,255,.09) 42%,rgba(123,63,242,.13) 50%,rgba(255,61,154,.08) 58%,transparent 72%);
+  transform:translateX(-100%);animation:syBrilloEsq 1.6s cubic-bezier(.4,0,.2,1) infinite;animation-delay:calc(var(--i) * 90ms)}
+@keyframes syBrilloEsq{to{transform:translateX(100%)}}
+
+/* formas */
+.sy-esq.tablero{grid-template-columns:repeat(3,1fr)}
+.sy-esq.tablero .sy-b:first-child{grid-row:span 2;min-height:256px;background:linear-gradient(150deg,rgba(123,63,242,.13),rgba(255,61,154,.06) 60%,rgba(255,255,255,.03))}
+.sy-esq.tablero .sy-b.ancho{grid-column:span 2}
+.sy-esq.panel{grid-template-columns:repeat(4,1fr)}
+.sy-esq.panel .sy-b{min-height:96px}
+.sy-esq.panel .sy-b.ancho{grid-column:span 2;min-height:200px}
+.sy-esq.lista .sy-b{min-height:0;flex-direction:row;align-items:center;padding:14px 16px}
+.sy-esq.lista .sy-b > b{width:34px;height:34px;border-radius:50%;flex:none}
+.sy-esq.lista .sy-b > i{width:45%}.sy-esq.lista .sy-b > i:last-child{width:18%;margin-left:auto}
+.sy-esq.tarjeta{max-width:440px}
+.sy-esq.tarjeta .sy-b{min-height:150px}
+
+/* la página entera (lo que tapa el telón): titular, bajada y tarjetas */
+.sy-esq.pagina{max-width:1120px;margin:0 auto;padding:0 32px;grid-template-columns:repeat(3,1fr)}
+.sy-esq.pagina .sy-t{grid-column:1 / -1;display:grid;gap:14px;justify-items:start;padding:clamp(28px,7vh,72px) 0 10px}
+.sy-esq.pagina.centro .sy-t{justify-items:center}
+.sy-esq.pagina .sy-t b,.sy-esq.pagina .sy-t i{display:block;border-radius:14px;background:rgba(255,255,255,.07);position:relative;overflow:hidden}
+.sy-esq.pagina .sy-t b{height:clamp(44px,7vw,78px);width:min(560px,70%)}
+.sy-esq.pagina .sy-t i{height:14px;width:min(420px,52%);border-radius:8px}
+.sy-esq.pagina .sy-t i + i{width:min(300px,38%)}
+.sy-esq.pagina .sy-t b::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(61,224,255,.12) 45%,rgba(255,61,154,.1) 55%,transparent 70%);transform:translateX(-100%);animation:syBrilloEsq 1.6s cubic-bezier(.4,0,.2,1) infinite}
+.sy-esq.pagina .sy-b.ancho{grid-column:span 2}
+.sy-esq.pagina.centro .sy-caja{grid-column:1 / -1;justify-self:center;width:min(720px,100%);min-height:150px}
+
+/* SynthFlow: lateral, saludo y la caja de escribir */
+.sy-esq.chat{position:absolute;inset:0;grid-template-columns:minmax(260px,330px) 1fr;gap:0}
+.sy-esq.chat .sy-lado{display:flex;flex-direction:column;gap:12px;padding:22px 16px;border-right:1px solid rgba(255,255,255,.06)}
+.sy-esq.chat .sy-lado .sy-b{min-height:40px;padding:0;border-radius:12px}
+.sy-esq.chat .sy-lado .sy-b:first-child{min-height:30px;width:60%}
+.sy-esq.chat .sy-centro{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:0 24px}
+.sy-esq.chat .sy-centro .sy-titulo{width:min(520px,80%);min-height:54px;padding:0;border-radius:16px}
+.sy-esq.chat .sy-centro .sy-fila{display:flex;gap:12px;width:min(640px,100%)}
+.sy-esq.chat .sy-centro .sy-fila .sy-b{flex:1;min-height:64px;padding:0;border-radius:14px}
+.sy-esq.chat .sy-centro .sy-caja{width:min(760px,100%);min-height:96px;border-radius:24px;padding:0}
+
+/* ---------- 2. telón ---------- */
+.sy-telon{position:fixed;inset:0;z-index:2147482000;background:radial-gradient(900px 520px at 50% -12%,rgba(123,63,242,.14),transparent 62%),#0B0A12;
+  display:block;overflow:hidden;transition:opacity .55s cubic-bezier(.22,1,.36,1),visibility 0s linear .55s}
+.sy-telon > .sy-esq{opacity:0;animation:syAparece .45s ease .2s forwards}   /* si la página tarda menos de 0,2 s, no se alcanza a ver */
+.sy-telon .sy-pie{position:absolute;left:0;right:0;top:0;height:2px;overflow:hidden}
+.sy-telon .sy-pie::before{content:"";position:absolute;inset:0;width:40%;background:linear-gradient(90deg,transparent,#3DE0FF,#7B3FF2,#FF3D9A,#FF7A45,#FFC857,transparent);animation:syCorre 1.3s cubic-bezier(.4,0,.2,1) infinite}
+@keyframes syCorre{from{transform:translateX(-100%)}to{transform:translateX(250%)}}
+@keyframes syAparece{to{opacity:1}}
+.sy-telon.fuera{opacity:0;visibility:hidden;pointer-events:none}
+.sy-telon.fuera > .sy-esq{transform:scale(1.01);transition:transform .55s cubic-bezier(.22,1,.36,1)}
+
+/* ---------- 3. llegada ---------- */
+/* el titular destella una vez, de izquierda a derecha, con los colores de la marca (no cambia el color de lo que ya es degradado) */
+.sy-brilla{background-image:linear-gradient(100deg,currentColor 0 40%,#3DE0FF 47%,#FF3D9A 53%,currentColor 60% 100%);background-size:260% 100%;background-position:0 0;
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:syDestello 1.6s cubic-bezier(.22,1,.36,1) both}
+@keyframes syDestello{from{background-position:100% 0}to{background-position:0 0}}
+
+/* ---------- teléfono ---------- */
+@media (max-width:760px){
+  .sy-esq.tablero,.sy-esq.panel,.sy-esq.pagina{grid-template-columns:1fr}
+  .sy-esq.tablero .sy-b:first-child{grid-row:auto;min-height:200px}
+  .sy-esq .sy-b.ancho{grid-column:auto !important}
+  .sy-esq.pagina{padding:0 16px}
+  .sy-esq.pagina .sy-b:nth-of-type(n+4){display:none}
+  .sy-esq.chat{grid-template-columns:1fr}
+  .sy-esq.chat .sy-lado{display:none}
+  .sy-esq.chat .sy-centro{justify-content:flex-end;padding:0 12px 22px}
+  .sy-esq.chat .sy-centro .sy-fila{flex-direction:column}
+}
+
+/* ---------- nada se mueve si la persona lo pidió (Ajustes › Animaciones) ---------- */
+html.noanim .sy-esq .sy-b::after,html.noanim .sy-esq.pagina .sy-t b::after,html.noanim .sy-telon .sy-pie{display:none}
+html.noanim .sy-telon > .sy-esq{animation:none;opacity:1}
+html.noanim .sy-telon{transition:none}
+html.noanim .sy-brilla{animation:none;background:none;-webkit-text-fill-color:currentColor}
+@media print{.sy-telon{display:none}}

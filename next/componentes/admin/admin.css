@@ -369,6 +369,9 @@ html.noanim .pa *,html.noanim .pa *::before,html.noanim .pa *::after{animation:n
 @media (hover:none){.pa-top .pa-ib[data-tip]::after,.pa-top .pa-ib[data-tip]::before{display:none}}
 html.noanim .pa-top .pa-ib[data-tip]::after,html.noanim .pa-top .pa-ib[data-tip]::before{transition:none}
 
+/* v4.4 · mientras lee los datos: el esqueleto con brillo de «Entrada» (el mismo de Gestión) con la forma del panel */
+.pa-cargando{padding:18px 0 40px}
+.pa-load{margin:0 0 16px;color:var(--pa-mute);font-size:14px}
 /* ---------- v4.4 · Usuarios: permisos y límites por persona (lista + ficha, como la bandeja de Ayuda) ---------- */
 .pa-us .pa-ib2{grid-template-columns:minmax(0,4fr) minmax(0,7fr);min-height:520px}
 .pa-us-l{display:flex;flex-direction:column;gap:10px;min-width:0}

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { TEXTOS } from './textos.mjs';
 import { resumen, pct, num } from './calculos.mjs';
 import './gestion.css';
+import Esqueleto from '../entrada/Esqueleto';
 
 /* ===== Tablero de gestión (Fase 3), aparte de Pulsem
    Una sola página para ver cómo va el proyecto: métrica central, calidad, gente, tropiezos, capacidad gratis, voz de la gente,
@@ -84,7 +85,8 @@ export default function Gestion({ api, demo = false }) {
   if (!R) return (
     <div className="gx">{cab}<main className="gx-main" aria-busy={!err}>
       <div className="gx-head"><h1>{T.titulo}</h1><p className="gx-load" role="status">{err ? T.error : T.cargando}</p></div>
-      {err ? null : <div className="gx-grid gx-skel" aria-hidden="true">{['gx-norte', '', '', 'gx-wide', '', ''].map((c, i) => <div key={i} className={'gx-card ' + c} style={{ '--i': i }}><i /><b /><i /><i /></div>)}</div>}
+      {/* v4.4 · el esqueleto ahora es la pieza común «Entrada» (next/componentes/entrada): el mismo en todo el sitio */}
+      {err ? null : <Esqueleto forma="tablero" className="gx-esq" />}
     </main></div>
   );
 

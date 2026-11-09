@@ -161,6 +161,7 @@ export default function LegacyRuntime({ page, scripts = [], puter = false }) {
       if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
         navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
       }
+      window.__syLegacyListo = page;
       window.dispatchEvent(new CustomEvent('symphoria:react-page-ready', { detail: { page } }));
     };
 

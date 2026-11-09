@@ -1,6 +1,7 @@
 import LegacyPage from '../../../componentes/LegacyPage';
 import { inlineStyle } from '../../../contenido/legado/offline';
 import reactTree from '../../../contenido/arboles-react/offline.json';
+import Telon from '../../../componentes/entrada/Telon';
 
 export const metadata = {
   title: 'Sin conexión · SynthFlow',
@@ -23,5 +24,5 @@ h1{font-family:'Bricolage Grotesque',system-ui,sans-serif !important;letter-spac
 `;
 
 export default function OfflinePage() {
-  return <LegacyPage page="offline" tree={reactTree.nodes} inlineStyle={inlineStyle + PARTITURA} />;
+  return <><Telon centro /><LegacyPage page="offline" tree={reactTree.nodes} inlineStyle={inlineStyle + PARTITURA} /></>;
 }
