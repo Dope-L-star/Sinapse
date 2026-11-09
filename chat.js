@@ -1562,7 +1562,7 @@ function renderMsgs(){
   chat.forEach((m, i) => {
     if (isFix(m)){ lane.appendChild(fixNoteEl(m)); srcs = null; }
     else if (m.role === 'user'){ const u = userEl(m.content, m.files); u.style.animation = 'none'; lane.appendChild(u); if (m.agent) lane.appendChild(agentSumEl(m.agent)); srcs = m.sources && m.sources.length ? m.sources : null; if (srcs) lane.appendChild(sourcesEl(m)); }
-    else { const b = botEl(m.model || selId()); b.style.animation = 'none'; b._raw = m.content; b._ck = ck0; b._ci = i; b.dataset.ci = i; if (m.work) b.insertBefore(SZ.workSaved(m.work), $('.body', b)); $('.body', b).innerHTML = md(m.content); if (m.imgId) imgFill($('.body', b), m); b._sources = srcs; finishBot(b, m.meta, i === chat.length - 1, m.cont, m.star); revBadge(b, m); if (!isFix(chat[i + 1])) ckIdle(b); lane.appendChild(b); }
+    else { const b = botEl(m.model || selId()); b.style.animation = 'none'; b._raw = quitaMarcas(m.content); b._ck = ck0; b._ci = i; b.dataset.ci = i; if (m.work) b.insertBefore(SZ.workSaved(m.work), $('.body', b)); $('.body', b).innerHTML = md(quitaMarcas(m.content)); if (m.imgId) imgFill($('.body', b), m); b._sources = srcs; finishBot(b, m.meta, i === chat.length - 1, m.cont, m.star); revBadge(b, m); if (!isFix(chat[i + 1])) ckIdle(b); lane.appendChild(b); }
   });
   if (live && live.chat === chat && live.el){ $$('.m.last', lane).forEach(x => x.classList.remove('last')); lane.appendChild(live.el); }   /* v3.3 · la respuesta en vivo no se pierde al repintar */
   else if (thinking) lane.appendChild(thinkEl(thinking));
@@ -2673,10 +2673,14 @@ function memModal(){ SZ.cfgModal('mem'); }
       Si no está claro qué recordar, escribe [recordar: ?] y te pregunta. La página te pregunta «¿Lo recuerdo?» como antes,
       y si ya había algo parecido (otro nombre, otra ciudad) se ACTUALIZA en vez de duplicarse (memAddCore en core 14).
    Las marcas nunca se ven: se quitan mientras la respuesta llega. */
-const MK_RX = /\s*\[(titulo|título|title|recordar|remember)\s*:\s*([^\]\n]{0,240})\]/gi;
-/* mientras llega: también se esconde una marca a medio escribir al final («[tit…») */
-const MK_TAIL = /\s*\[(?:t(?:[ií](?:t(?:u(?:l(?:o)?)?|l(?:e)?)?)?)?|r(?:e(?:c(?:o(?:r(?:d(?:a(?:r)?)?)?)?)?|m(?:e(?:m(?:b(?:e(?:r)?)?)?)?)?)?)?)?(?:\s*:[^\]\n]*)?$/i;
+/* v4.1 · la marca se reconoce aunque la IA la escriba con espacios «[ titulo: - ]», escapada «\[titulo: …\]»,
+   en negrita «**[titulo: …]**», entre comillas invertidas o con «=» o «：» (antes se colaba en la respuesta visible) */
+const MK_RX = /\s*(?:\*\*|__|`)?\\?\[\s*(titulo|título|title|recordar|remember)\s*[:=：]\s*([^\]\n]{0,240}?)\s*\\?\](?:\*\*|__|`)?/gi;
+/* mientras llega: también se esconde una marca a medio escribir al final («[tit…», «[ titulo: Ide…») */
+const MK_TAIL = /\s*(?:\*\*|__|`)?\\?\[\s*(?:t(?:[ií](?:t(?:u(?:l(?:o)?)?|l(?:e)?)?)?)?|r(?:e(?:c(?:o(?:r(?:d(?:a(?:r)?)?)?)?)?|m(?:e(?:m(?:b(?:e(?:r)?)?)?)?)?)?)?)?(?:\s*[:=：][^\]\n]*)?$/i;
 const sinMarcas = t => String(t || '').replace(MK_RX, '').replace(MK_TAIL, '');
+/* para lo ya guardado (historial, copiar, exportar): solo marcas completas, sin tocar un final cualquiera */
+const quitaMarcas = t => String(t || '').replace(MK_RX, '').replace(/\s+$/, '');
 function marcas(t){
   let title = null, mem = null;
   const text = String(t || '').replace(MK_RX, (m, k, v) => { v = v.replace(/^["'«“\s]+|["'»”\s]+$/g, '').trim(); if (/^t/i.test(k)){ if (title == null) title = v.replace(/[.\s]+$/, ''); } else if (mem == null) mem = v === '?' || !v ? v : /[.!?]$/.test(v) ? v : v + '.'; return ''; }).replace(MK_TAIL, '').trim();
@@ -3052,7 +3056,7 @@ async function runSolo(onFail, o = {}){
   };
   try{
     let r = !o.fresh && canCache ? cacheGet(ck) : null;
-    if (r){ r = Object.assign({}, r, { ms:0, cached:true }); st().sx.saved += r.prompt + r.completion; st().sx.hits += 1; save(); mount(); if (rv) rv.push(r.text); }
+    if (r){ r = Object.assign({}, r, { ms:0, cached:true }); st().sx.saved += r.prompt + r.completion; st().sx.hits += 1; save(); mount(); if (rv) rv.push(sinMarcas(r.text)); }
     else {
       const ctl = new AbortController(); ctls.add(ctl);
       try{ r = await SZ.askStream(OR, sent, Object.assign({ model:mid, maxTokens: saver ? 700 : 0, signal:ctl.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { if (holdWeb(txt)) return; txt = sinMarcas(txt); mount(); W.write(txt); if (rv) rv.push(txt); }); }finally{ ctls.delete(ctl); }
@@ -3095,7 +3099,7 @@ async function runSolo(onFail, o = {}){
     }
     if (!r.aborted) r.text = limpiaBucles(r.text);
     /* v4.0 · las marcas de título y memoria se quitan del texto y se usan */
-    { const mk = marcas(r.text); r.text = mk.text || r.text; if (!r.aborted){ titleSet(chat, mk.title); memNext = mk.mem; } }
+    { const mk = marcas(r.text); if (mk.text !== String(r.text || '').trim()) r.text = mk.text || (SZ.lang() === 'en' ? '(The AI returned an empty answer.)' : '(La IA devolvió una respuesta vacía.)'); if (!r.aborted){ titleSet(chat, mk.title); memNext = mk.mem; } }
     const tail = r.aborted ? ' · detenido' : r.cut ? ' · se cortó la conexión' : r.finish === 'length' ? ' · se cortó porque era muy larga (toca «Continuar»)' : '';
     const who = r.swapped ? ' · se acabó tu saldo de Puter este mes; respondió ' + (r.real || 'otra IA') : '';
     W.write(r.text); W.finish({ ms:r.ms, real:r.real || '' });
@@ -3261,7 +3265,7 @@ async function qualityAfter(el, chat, msg, mid, r){
   const alive = chat.includes(msg) && msg.content === draft;
   if (!d || !alive || !d.verdict){ const c = $('.qrev', el); if (c) c.remove(); return; }
   if (d.verdict === 'ok'){ msg.rev = 'ok'; save(); if (g0 === gen && el.isConnected) revBadge(el, msg); return; }
-  msg.rev = 'fix'; msg.orig = draft; msg.revNote = String(d.note || '').slice(0, 140); msg.revBy = d.by || ''; msg.content = d.text;
+  msg.rev = 'fix'; msg.orig = draft; msg.revNote = String(d.note || '').slice(0, 140); msg.revBy = d.by || ''; d.text = quitaMarcas(d.text); msg.content = d.text;
   touchThread(); save();
   if (g0 !== gen || !el.isConnected) return;
   const body = $('.body', el);
@@ -3275,7 +3279,7 @@ document.addEventListener('click', e => {
   const b = e.target.closest && e.target.closest('.qrev-o'); if (!b) return;
   const el = b.closest('.m'), m = el && chatArr()[+el.dataset.ci]; if (!m || !m.orig) return;
   const showO = b.getAttribute('aria-pressed') !== 'true', body = $('.body', el);
-  body.innerHTML = md(showO ? m.orig : m.content); codeButtons(body);
+  body.innerHTML = md(quitaMarcas(showO ? m.orig : m.content)); codeButtons(body);
   b.setAttribute('aria-pressed', String(showO)); b.textContent = showO ? RL('Ver mejorada', 'See improved') : RL('Ver original', 'See original');
 });
 /* ---------- v3.8 · ¿la IA que elegiste funciona de verdad? ----------
