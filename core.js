@@ -1153,7 +1153,15 @@ function setSess(t, cookie){ SESS = t ? (cookie ? sessMark() : t) : ''; try{ if 
 /* dispositivos que entraron antes: piden su cookie una vez con el token de siempre y luego lo borran del navegador */
 const sessMove = SESS.length > 20 ? fetch('/api/auth', { method:'POST', headers:{ 'content-type':'application/json', authorization:'Bearer ' + SESS }, body:'{"mode":"cookie"}' })
   .then(r => { if (r.ok) setSess(SESS, true); }).catch(() => {}) : Promise.resolve();
-const accFire = k => accHooks.forEach(f => { try{ f(k); }catch(_){} });
+/* v4.5 · el primer nombre se guarda en este navegador para que las frases de carga (next/componentes/entrada/frases.js) te llamen por tu nombre
+   desde el primer instante, antes de que la cuenta termine de cargar. Solo el primer nombre, solo aquí; se borra al cerrar sesión. */
+function accNombre(){
+  try{
+    if (ACC.ready && ACC.user){ const n = String((ACC.profile && ACC.profile.name) || ACC.user.name || '').trim().split(/\s+/)[0].replace(/^@/, '').slice(0, 24); if (n && /\p{L}/u.test(n)) localStorage.setItem('synthz:nombre', n); }
+    else if (!ACC.user && !SESS) localStorage.removeItem('synthz:nombre');
+  }catch(e){}
+}
+const accFire = k => { accNombre(); accHooks.forEach(f => { try{ f(k); }catch(_){} }); };
 async function api(path, o = {}){
   const h = { 'content-type':'application/json' }; if (SESS) h.authorization = 'Bearer ' + SESS;
   let r; try{ r = await fetch('/api/' + path, { method:o.method || 'GET', headers:h, body:o.body ? JSON.stringify(o.body) : undefined, signal:o.signal }); }
@@ -1643,6 +1651,9 @@ const PIXART = [
   ['Café', '..2.2...|...2.2..|.11111..|.1...111|.1...1.1|.1...111|..111...|........']
 ].map(([n, s]) => [n, s.split('|').join('').replace(/ /g, '.')]);
 const WORDS = ['Leyendo tu mensaje', 'Pensando', 'Sopesando ideas', 'Aclarando', 'Ordenando las ideas', 'Buscando las palabras', 'Revisando', 'Casi listo'];
+/* v4.5 · las frases de «qué está haciendo la IA» ya no salen siempre en el mismo orden: son al azar, distintas cada vez, y a veces llevan tu nombre
+   (como en Claude). Salen de next/componentes/entrada/frases.js (window.SZFrases, ES/EN); si no está, quedan las de siempre. */
+const FR = (ctx, otra) => { try{ const f = window.SZFrases && window.SZFrases.frase(ctx, LANG === 'en' ? 'en' : 'es'); if (f) return f; }catch(e){} return otra; };
 const pixelGrid = () => '<span class="pxg" aria-hidden="true">' + '<i></i>'.repeat(64) + '</span>';
 /* motor del dibujo: se enciende píxel a píxel; al completarse brilla, se deshace y empieza otro */
 function pixelRun(host, startAt){
@@ -1663,9 +1674,10 @@ function pixelRun(host, startAt){
 function workView(o = {}){
   const el = document.createElement('div'); el.className = 'work';
   el.innerHTML = '<button type="button" class="wk-row" aria-expanded="false"><span class="pxw">' + pixelGrid() + '</span><span class="wk-t"><b class="wk-w">Leyendo tu mensaje</b><small class="wk-s"></small></span><svg class="wk-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button><div class="wk-d" hidden><ol class="wk-steps"></ol><div class="wk-r" hidden><b>Lo que pensó la IA</b><p></p></div></div>';
-  const S = { t0:performance.now(), phase:'read', words:0, reason:'', steps:[], wi:0, done:false };
+  const S = { t0:performance.now(), phase:'read', words:0, reason:'', steps:[], wi:0, done:false, n:-1 };
   const px = pixelRun($('.pxw', el), o.art);
   const w = $('.wk-w', el), sm = $('.wk-s', el), row = $('.wk-row', el), det = $('.wk-d', el);
+  w.textContent = FR('leyendo', w.textContent);
   const secs = () => ((performance.now() - S.t0) / 1000).toFixed(1).replace('.', ',') + ' s';
   const step = txt => { S.steps.push([performance.now() - S.t0, txt]); if (!det.hidden) paintSteps(); };
   const paintSteps = () => { $('.wk-steps', el).innerHTML = S.steps.map(([ms, x]) => '<li><em>' + (ms / 1000).toFixed(1).replace('.', ',') + ' s</em>' + esc(x) + '</li>').join(''); const r = $('.wk-r', el); r.hidden = !S.reason; if (S.reason) $('p', r).textContent = S.reason.slice(-4000); };
@@ -1673,15 +1685,16 @@ function workView(o = {}){
   let iv = setInterval(() => {
     if (S.done) return;
     if (S.phase === 'read' && performance.now() - S.t0 > 700){ S.phase = 'think'; step('Leyó tu mensaje'); }
-    if (S.phase === 'think'){ const n = Math.floor((performance.now() - S.t0 - 700) / 1700); setW(WORDS[1 + (n % (WORDS.length - 1))]); }
+    if (S.phase === 'think'){ const n = Math.floor((performance.now() - S.t0 - 700) / 1700); if (n !== S.n){ S.n = n; setW(FR('pensando', WORDS[1 + (n % (WORDS.length - 1))])); } }
+    else if (S.phase === 'reason'){ const n = Math.floor((performance.now() - S.t0) / 2400); if (n !== S.n){ S.n = n; setW(FR('razonando', 'Razonando')); } }
     sm.textContent = S.phase === 'write' ? secs() + ' · ' + fmt(S.words) + (S.words === 1 ? ' palabra' : ' palabras') : S.phase === 'reason' ? secs() + ' · pensando antes de responder' : secs();
   }, 250);
   row.addEventListener('click', () => { const on = det.hidden; det.hidden = !on; row.setAttribute('aria-expanded', String(on)); el.classList.toggle('open', on); if (on) paintSteps(); });
   if (o.model) step('Eligió ' + o.model);
   return {
     el, state:S,
-    reason(txt){ if (S.done) return; if (!S.reason) step('Empezó a razonar'); S.reason = txt; if (S.phase !== 'write'){ S.phase = 'reason'; setW('Razonando'); } px.speed(2); if (!det.hidden) paintSteps(); },
-    write(txt){ if (S.done) return; if (S.phase !== 'write'){ step('Empezó a escribir'); S.phase = 'write'; setW('Escribiendo'); } S.words = (String(txt).match(/\S+/g) || []).length; px.speed(1 + Math.floor(S.words / 120)); },
+    reason(txt){ if (S.done) return; if (!S.reason) step('Empezó a razonar'); S.reason = txt; if (S.phase !== 'write' && S.phase !== 'reason'){ S.phase = 'reason'; S.n = Math.floor((performance.now() - S.t0) / 2400); setW(FR('razonando', 'Razonando')); } px.speed(2); if (!det.hidden) paintSteps(); },
+    write(txt){ if (S.done) return; if (S.phase !== 'write'){ step('Empezó a escribir'); S.phase = 'write'; setW(FR('escribiendo', 'Escribiendo')); } S.words = (String(txt).match(/\S+/g) || []).length; px.speed(1 + Math.floor(S.words / 120)); },
     note(txt){ step(txt); },
     finish(r = {}){
       if (S.done) return; S.done = true; clearInterval(iv); px.stop();

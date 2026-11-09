@@ -13,7 +13,15 @@ function setSess(t, cookie){ SESS = t ? (cookie ? sessMark() : t) : ''; try{ if 
 /* dispositivos que entraron antes: piden su cookie una vez con el token de siempre y luego lo borran del navegador */
 const sessMove = SESS.length > 20 ? fetch('/api/auth', { method:'POST', headers:{ 'content-type':'application/json', authorization:'Bearer ' + SESS }, body:'{"mode":"cookie"}' })
   .then(r => { if (r.ok) setSess(SESS, true); }).catch(() => {}) : Promise.resolve();
-const accFire = k => accHooks.forEach(f => { try{ f(k); }catch(_){} });
+/* v4.5 · el primer nombre se guarda en este navegador para que las frases de carga (next/componentes/entrada/frases.js) te llamen por tu nombre
+   desde el primer instante, antes de que la cuenta termine de cargar. Solo el primer nombre, solo aquí; se borra al cerrar sesión. */
+function accNombre(){
+  try{
+    if (ACC.ready && ACC.user){ const n = String((ACC.profile && ACC.profile.name) || ACC.user.name || '').trim().split(/\s+/)[0].replace(/^@/, '').slice(0, 24); if (n && /\p{L}/u.test(n)) localStorage.setItem('synthz:nombre', n); }
+    else if (!ACC.user && !SESS) localStorage.removeItem('synthz:nombre');
+  }catch(e){}
+}
+const accFire = k => { accNombre(); accHooks.forEach(f => { try{ f(k); }catch(_){} }); };
 async function api(path, o = {}){
   const h = { 'content-type':'application/json' }; if (SESS) h.authorization = 'Bearer ' + SESS;
   let r; try{ r = await fetch('/api/' + path, { method:o.method || 'GET', headers:h, body:o.body ? JSON.stringify(o.body) : undefined, signal:o.signal }); }

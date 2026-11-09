@@ -1,9 +1,11 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useFrase } from '../entrada/FraseCarga';
 
 /* «La IA está pensando»: lluvia de caracteres estilo Matrix (idea del Uiverse #47; no copiada) con palabras del sitio en los colores del tema.
    Cae en columnas suaves detrás del texto; con Animaciones apagadas queda quieta y solo late el texto.
+   v4.5 · la frase ya no es siempre «está pensando»: es una al azar (con tu nombre a veces) que cambia cada par de segundos (entrada/frases.js).
    Estilos: src/core-css/25-v38-efectos.css (prefijo .pm-). */
 const T = { es: ['Pensando', 'está pensando'], en: ['Thinking', 'is thinking'] };
 /* v3.8.1 · Sammuel: «sin tanta letra china, cosas referentes a la página y por ahí una carita de SynthonIA».
@@ -17,6 +19,7 @@ const Carita = () => (
 
 export default function PensandoMatrix({ lang = 'es', ia, columnas = 16, alto = 64 }) {
   const t = T[lang] || T.es;
+  const f = useFrase('pensando', lang, { cada: 2600 });
   const cols = useMemo(() => Array.from({ length: columnas }, (_, i) => {
     const cara = i % 6 === 3;                                       /* ~1 de cada 6 columnas: la carita de SynthonIA */
     const w = PALABRAS[(i * 5) % PALABRAS.length], sym = SIMBOLOS[(i * 7) % SIMBOLOS.length];
@@ -29,7 +32,7 @@ export default function PensandoMatrix({ lang = 'es', ia, columnas = 16, alto = 
           ? <span key={i} className="pm-face" style={{ '--d': c.d + 's', '--v': (c.v + .8) + 's' }}><Carita /></span>
           : <span key={i} style={{ '--d': c.d + 's', '--v': c.v + 's' }}>{c.s}</span>)}
       </div>
-      <p className="pm-tx">{ia ? <><b>{ia}</b> {t[1]}</> : t[0]}<i>.</i><i>.</i><i>.</i></p>
+      <p className="pm-tx">{ia ? <><b>{ia}</b> · </> : null}<span key={f || 'x'} className="pm-fr">{f || (ia ? t[1] : t[0])}</span><i>.</i><i>.</i><i>.</i></p>
     </div>
   );
 }

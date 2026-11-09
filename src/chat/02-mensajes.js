@@ -100,12 +100,29 @@ function previewDoc(M, sibs){
 /* v2.9.1 · «Sintéticos» (Synthetics): la vista previa ya no es un srcdoc (heredaba las reglas de seguridad de SynthFlow y se rompía con la CSP).
    Ahora carga /sintetico.html, una página aparte con reglas abiertas, y le pasa el código por postMessage. Igual que los artefactos de Claude. */
 const SYN_URL = '/sintetico.html';
+/* v4.5 · mientras un Sintético se prepara (vista previa a la vista, no las pruebas escondidas) sale la mancha de color de #6 con una frase al azar;
+   se quita sola cuando la página ya corre (o a los 7 s, pase lo que pase) */
+function synVeil(f){
+  try{
+    const host = f.parentElement;
+    if (!host || f.getAttribute('aria-hidden') === 'true' || !window.SZFx) return () => {};
+    const v = document.createElement('div'); v.className = 'fxsyn';
+    if (!window.SZFx.mount(v, 'blob', { lang:SZ.lang(), alto:'100%' })) return () => {};
+    if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+    host.appendChild(v);
+    let done = false;
+    const end = () => { if (done) return; done = true; v.classList.add('off'); setTimeout(() => { try{ window.SZFx.unmount(v); }catch(e){} v.remove(); }, 380); };
+    setTimeout(end, 7000);
+    return end;
+  }catch(e){ return () => {}; }
+}
 function synLoad(f, html){
   const k = 's' + Math.random().toString(36).slice(2, 10); f._synK = k;
+  const veilEnd = synVeil(f);
   const on = e => {
-    if (f._synK !== k || !f.isConnected){ removeEventListener('message', on); return; }
+    if (f._synK !== k || !f.isConnected){ removeEventListener('message', on); veilEnd(); return; }
     if (e.source !== f.contentWindow || !e.data || e.data.szs !== 'ready') return;
-    removeEventListener('message', on); f.contentWindow.postMessage({ szs:'doc', html }, '*');
+    removeEventListener('message', on); f.contentWindow.postMessage({ szs:'doc', html }, '*'); setTimeout(veilEnd, 650);
   };
   addEventListener('message', on);
   f.src = SYN_URL + '?k=' + k;

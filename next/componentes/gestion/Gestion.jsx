@@ -5,6 +5,7 @@ import { TEXTOS } from './textos.mjs';
 import { resumen, pct, num } from './calculos.mjs';
 import './gestion.css';
 import Esqueleto from '../entrada/Esqueleto';
+import FraseCarga from '../entrada/FraseCarga';
 
 /* ===== Tablero de gestión (Fase 3), aparte de Pulsem
    Una sola página para ver cómo va el proyecto: métrica central, calidad, gente, tropiezos, capacidad gratis, voz de la gente,
@@ -84,7 +85,7 @@ export default function Gestion({ api, demo = false }) {
   /* mientras llegan los datos: el tablero en «esqueleto» con un brillo que lo recorre (en vez de un «Cargando…» suelto) */
   if (!R) return (
     <div className="gx">{cab}<main className="gx-main" aria-busy={!err}>
-      <div className="gx-head"><h1>{T.titulo}</h1><p className="gx-load" role="status">{err ? T.error : T.cargando}</p></div>
+      <div className="gx-head"><h1>{T.titulo}</h1>{err ? <p className="gx-load" role="status">{T.error}</p> : <FraseCarga ctx="datos" lang={lang} respaldo={T.cargando} className="gx-load" />}</div>
       {/* v4.4 · el esqueleto ahora es la pieza común «Entrada» (next/componentes/entrada): el mismo en todo el sitio */}
       {err ? null : <Esqueleto forma="tablero" className="gx-esq" />}
     </main></div>

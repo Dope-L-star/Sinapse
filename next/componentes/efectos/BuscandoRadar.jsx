@@ -4,6 +4,8 @@
    modo: 'web' (buscando en internet), 'archivo' (leyendo tu archivo) o 'analizar' (revisando la respuesta).
    hallazgos: lista opcional de textos cortos (fuentes) que aparecen como chips debajo, uno por uno.
    Estilos: src/core-css/25-v38-efectos.css (prefijo .br-). */
+import { useFrase } from '../entrada/FraseCarga';
+const CTX = { web: 'buscando', archivo: 'archivo', analizar: 'datos' };
 const T = {
   es: { web: 'Buscando en internet', archivo: 'Leyendo tu archivo', analizar: 'Analizando la respuesta' },
   en: { web: 'Searching the web', archivo: 'Reading your file', analizar: 'Analyzing the answer' },
@@ -11,6 +13,7 @@ const T = {
 
 export default function BuscandoRadar({ lang = 'es', modo = 'web', hallazgos = [], texto }) {
   const t = T[lang] || T.es;
+  const f = useFrase(CTX[modo] || 'buscando', lang, { cada: 2800 });   /* la frase de abajo cambia sola: al azar, con tu nombre a veces */
   return (
     <div className="br notr" role="status" aria-live="polite">
       <div className="br-o" aria-hidden="true">
@@ -19,6 +22,7 @@ export default function BuscandoRadar({ lang = 'es', modo = 'web', hallazgos = [
       </div>
       <div className="br-tx">
         <p>{texto || t[modo] || t.web}<i>.</i><i>.</i><i>.</i></p>
+        {!texto && f ? <small key={f} className="br-fr">{f}</small> : null}
         {hallazgos.length ? <ul>{hallazgos.slice(0, 4).map((h, i) => <li key={h} style={{ '--d': i * 280 + 'ms' }}>{h}</li>)}</ul> : null}
       </div>
     </div>

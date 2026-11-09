@@ -57,9 +57,10 @@ const webMaybe = t => { t = String(t || '').replace(/^\s+/, ''); return !t || /^
 function webCard(){
   const el = document.createElement('div'); el.className = 'agrun webrun';
   el.innerHTML = '<div class="ag-h"><span class="pxw">' + SZ.pixelGrid() + '</span><span class="ag-t"><b>Buscando en internet</b><small>Leo varias páginas para responderte con datos de hoy…</small></span></div>';
-  /* v3.8 · con SynthFlow en React la búsqueda se ve como un radar (#41) y, al llegar, las fuentes aparecen como chips */
+  /* v3.8 · con SynthFlow en React la búsqueda se ve como un radar (#41) y, al llegar, las fuentes aparecen como chips
+     v4.5 · mientras busca, el libro que hojea sus páginas (#10, lo pidió Sammuel «para cuando busque en la web»); al llegar las fuentes, el radar con sus chips */
   const fx = document.createElement('div'); fx.className = 'fxhost';
-  if (window.SZFx && window.SZFx.mount(fx, 'radar', { lang:SZ.lang(), modo:'web' })){ el.innerHTML = ''; el.classList.add('fxr'); el.appendChild(fx); el._fx = fx; el._px = { stop(){} }; return el; }
+  if (window.SZFx && (window.SZFx.mount(fx, 'libro', { lang:SZ.lang() }) || window.SZFx.mount(fx, 'radar', { lang:SZ.lang(), modo:'web' }))){ el.innerHTML = ''; el.classList.add('fxr'); el.appendChild(fx); el._fx = fx; el._px = { stop(){} }; return el; }
   el._px = SZ.pixelRun($('.pxw', el)); return el;
 }
 async function webSearch(q){

@@ -636,12 +636,29 @@ function previewDoc(M, sibs){
 /* v2.9.1 · «Sintéticos» (Synthetics): la vista previa ya no es un srcdoc (heredaba las reglas de seguridad de SynthFlow y se rompía con la CSP).
    Ahora carga /sintetico.html, una página aparte con reglas abiertas, y le pasa el código por postMessage. Igual que los artefactos de Claude. */
 const SYN_URL = '/sintetico.html';
+/* v4.5 · mientras un Sintético se prepara (vista previa a la vista, no las pruebas escondidas) sale la mancha de color de #6 con una frase al azar;
+   se quita sola cuando la página ya corre (o a los 7 s, pase lo que pase) */
+function synVeil(f){
+  try{
+    const host = f.parentElement;
+    if (!host || f.getAttribute('aria-hidden') === 'true' || !window.SZFx) return () => {};
+    const v = document.createElement('div'); v.className = 'fxsyn';
+    if (!window.SZFx.mount(v, 'blob', { lang:SZ.lang(), alto:'100%' })) return () => {};
+    if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+    host.appendChild(v);
+    let done = false;
+    const end = () => { if (done) return; done = true; v.classList.add('off'); setTimeout(() => { try{ window.SZFx.unmount(v); }catch(e){} v.remove(); }, 380); };
+    setTimeout(end, 7000);
+    return end;
+  }catch(e){ return () => {}; }
+}
 function synLoad(f, html){
   const k = 's' + Math.random().toString(36).slice(2, 10); f._synK = k;
+  const veilEnd = synVeil(f);
   const on = e => {
-    if (f._synK !== k || !f.isConnected){ removeEventListener('message', on); return; }
+    if (f._synK !== k || !f.isConnected){ removeEventListener('message', on); veilEnd(); return; }
     if (e.source !== f.contentWindow || !e.data || e.data.szs !== 'ready') return;
-    removeEventListener('message', on); f.contentWindow.postMessage({ szs:'doc', html }, '*');
+    removeEventListener('message', on); f.contentWindow.postMessage({ szs:'doc', html }, '*'); setTimeout(veilEnd, 650);
   };
   addEventListener('message', on);
   f.src = SYN_URL + '?k=' + k;
@@ -2385,7 +2402,11 @@ async function toJpeg(dataUrl){
 function imgWorkEl(){
   const el = document.createElement('div'); el.className = 'm bot brand think-wrap imgwork';
   el.innerHTML = '<div class="who"><b>Creador de imágenes</b></div><div class="work"><div class="wk-row"><span class="pxw">' + SZ.pixelGrid() + '</span><span class="wk-t"><b class="wk-w">Creando tu imagen</b><small class="wk-s">puede tardar unos segundos</small></span></div></div>';
-  el._px = SZ.pixelRun($('.pxw', el)); el._t0 = performance.now(); return el;
+  el._t0 = performance.now();
+  /* v4.5 · con SynthFlow en React, mientras se crea la imagen sale el anillo de luz con una frase al azar en las letras («Generating», dexter-st) */
+  const fx = document.createElement('div'); fx.className = 'fxhost';
+  if (window.SZFx && window.SZFx.mount(fx, 'imagen', { lang:SZ.lang(), tam:170 })){ el.innerHTML = '<div class="who"><b>Creador de imágenes</b></div>'; el.appendChild(fx); el.classList.add('fxi'); el._fx = fx; el._px = { stop(){} }; return el; }
+  el._px = SZ.pixelRun($('.pxw', el)); return el;
 }
 async function createImage(prompt){
   if (!SZ.ACC.ready){ toast('Para crear imágenes entra a tu cuenta (es gratis).'); SZ.guestGate({ mode:'signup' }); return; }
@@ -2516,9 +2537,10 @@ const webMaybe = t => { t = String(t || '').replace(/^\s+/, ''); return !t || /^
 function webCard(){
   const el = document.createElement('div'); el.className = 'agrun webrun';
   el.innerHTML = '<div class="ag-h"><span class="pxw">' + SZ.pixelGrid() + '</span><span class="ag-t"><b>Buscando en internet</b><small>Leo varias páginas para responderte con datos de hoy…</small></span></div>';
-  /* v3.8 · con SynthFlow en React la búsqueda se ve como un radar (#41) y, al llegar, las fuentes aparecen como chips */
+  /* v3.8 · con SynthFlow en React la búsqueda se ve como un radar (#41) y, al llegar, las fuentes aparecen como chips
+     v4.5 · mientras busca, el libro que hojea sus páginas (#10, lo pidió Sammuel «para cuando busque en la web»); al llegar las fuentes, el radar con sus chips */
   const fx = document.createElement('div'); fx.className = 'fxhost';
-  if (window.SZFx && window.SZFx.mount(fx, 'radar', { lang:SZ.lang(), modo:'web' })){ el.innerHTML = ''; el.classList.add('fxr'); el.appendChild(fx); el._fx = fx; el._px = { stop(){} }; return el; }
+  if (window.SZFx && (window.SZFx.mount(fx, 'libro', { lang:SZ.lang() }) || window.SZFx.mount(fx, 'radar', { lang:SZ.lang(), modo:'web' }))){ el.innerHTML = ''; el.classList.add('fxr'); el.appendChild(fx); el._fx = fx; el._px = { stop(){} }; return el; }
   el._px = SZ.pixelRun($('.pxw', el)); return el;
 }
 async function webSearch(q){
@@ -2991,10 +3013,14 @@ function agentCard(){
   const el = document.createElement('div'); el.className = 'agrun';
   el.innerHTML = '<div class="ag-h"><span class="pxw">' + SZ.pixelGrid() + '</span><span class="ag-t"><b>SuperiorSynth</b><small>Trabajando en tu pedido…</small></span></div><ol class="ag-s">' + AG_STEPS.map((t, i) => '<li data-i="' + i + '"><i aria-hidden="true"></i><span>' + t + '</span></li>').join('') + '</ol>';
   const px = SZ.pixelRun($('.pxw', el));
+  /* v4.5 · la línea de abajo es una frase al azar (con tu nombre a veces) que cambia sola mientras trabaja */
+  const sm = $('.ag-t small', el); let seen = false;
+  const fr = () => { try{ if (el.isConnected) seen = true; else if (seen){ clearInterval(fiv); return; } const f = window.SZFrases && window.SZFrases.frase('agente', SZ.lang() === 'en' ? 'en' : 'es'); if (f && sm) sm.textContent = f + '…'; }catch(e){} };
+  const fiv = setInterval(fr, 2800); fr();
   return {
     el,
     set(i, txt){ $$('li', el).forEach((li, j) => { li.classList.toggle('done', j < i); li.classList.toggle('on', j === i); }); if (txt) $('li[data-i="' + i + '"] span', el).textContent = txt; follow(); },
-    stop(){ px.stop(); $$('li', el).forEach(li => { li.classList.remove('on'); li.classList.add('done'); }); }
+    stop(){ clearInterval(fiv); px.stop(); $$('li', el).forEach(li => { li.classList.remove('on'); li.classList.add('done'); }); }
   };
 }
 /* lo que queda guardado debajo de tu mensaje: «El agente eligió …» con el pedido mejorado para ver */

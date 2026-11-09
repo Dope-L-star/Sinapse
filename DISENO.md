@@ -56,6 +56,14 @@ Nunca un «Cargando…» suelto, nunca un circulito que gira, nunca un fogonazo 
 
 Dónde está hoy: portada, SynthFlow (en el velo de arranque), A.L.I.A.S. (página y «Qué IA hace cada cosa»), Pulsem (puerta y panel), Gestión, Ayuda, Términos, Privacidad y Sin conexión.
 
+### 3b. Las frases de carga y cada animación en su lugar (v4.5)
+
+La carga habla: **una frase al azar, distinta cada vez y, a veces, con el nombre de la persona** (como hace Claude). Nunca más un «Cargando…» fijo.
+- Todas las frases viven en `next/componentes/entrada/frases.js` (ES/EN, por momento: `pagina`, `datos`, `leyendo`, `pensando`, `razonando`, `escribiendo`, `agente`, `buscando`, `imagen`, `sintetico`, `archivo`). Para agregar una, se pone en ES **y** en EN con `{n}` donde va el nombre; `node --test t/web/frases-carga.test.mjs` revisa que vayan parejas, que no sean largas y que nunca se repita la misma seguida.
+- En React: `<FraseCarga ctx="datos" lang={lang} respaldo={t.cargando} />` (texto que cambia solo) o `<FraseTelon />` (la píldora con las 5 barritas de la marca; ya la trae `<Telon />`). El motor viejo de SynthFlow las usa por `window.SZFrases.frase(ctx, lang)`.
+- El nombre sale de la cuenta abierta (`SZ.ACC`) o de `localStorage['synthz:nombre']` (solo el primer nombre, lo guarda core.js y se borra al cerrar sesión). Sin cuenta, solo salen frases sin nombre.
+- Cada animación de carga va donde le toca (en SynthFlow, por `window.SZFx.mount`): **lluvia Matrix** (`matrix`) = la IA piensa · **libro** (`libro`) = busca en internet · **radar** (`radar`) = encontró fuentes / lee un archivo · **anillo de luz** (`imagen`) = crea una imagen · **mancha de color** (`blob`) = se prepara un Sintético · **esqueleto con brillo** = lo que carga dentro de una página · **telón** = se abre una página. No se mezclan dos en el mismo sitio.
+
 ## 4. Reglas fijas de Sammuel (no se discuten)
 
 - **Todo texto visible en español e inglés.** Nada de inglés suelto en la versión en español ni al revés.
