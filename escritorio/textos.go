@@ -17,7 +17,7 @@ var es = textos{
 	preguntaDesinstalar: "¿Quito SymphorIA de este equipo?\n\nSe borran la app y sus accesos directos. Tus chats siguen en tu cuenta.",
 	desinstalado:        "SymphorIA se quitó de este equipo. ¡Gracias por probarla!",
 	errDesinstalar:      "No pude quitar todo:\n\n",
-	sinNavegador:        "No encontré Microsoft Edge ni Google Chrome, así que abro SymphorIA en tu navegador.",
+	sinNavegador:        "No encontré un navegador que abra SymphorIA como app, así que la abro en tu navegador de siempre.",
 	descAtajo:           "SymphorIA: un chat gratis con varias IAs a la vez",
 	actualizado:         "SymphorIA se actualizó a la versión ",
 }
@@ -32,7 +32,7 @@ var en = textos{
 	preguntaDesinstalar: "Remove SymphorIA from this computer?\n\nThe app and its shortcuts are deleted. Your chats stay in your account.",
 	desinstalado:        "SymphorIA was removed from this computer. Thanks for trying it!",
 	errDesinstalar:      "I couldn't remove everything:\n\n",
-	sinNavegador:        "I couldn't find Microsoft Edge or Google Chrome, so I'm opening SymphorIA in your browser.",
+	sinNavegador:        "I couldn't find a browser that can open SymphorIA as an app, so I'm opening it in your usual browser.",
 	descAtajo:           "SymphorIA: one free chat with several AIs at once",
 	actualizado:         "SymphorIA was updated to version ",
 }

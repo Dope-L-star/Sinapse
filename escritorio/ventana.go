@@ -4,7 +4,7 @@ package main
 // con el diseño de SymphorIA (escritorio/interfaz/, va dentro del .exe). Cómo funciona:
 //   - El .exe levanta un servidor diminuto solo en 127.0.0.1, en un puerto al azar y con una clave al azar
 //     en la dirección (nadie más del equipo ni de internet puede usarlo).
-//   - Abre esa dirección en Edge (o Chrome/Brave) en modo app, con un perfil temporal: una ventana limpia,
+//   - Abre esa dirección en el navegador de la persona (Chrome, Brave…; Edge solo si no hay otro) en modo app, con un perfil temporal: una ventana limpia,
 //     sin pestañas ni barra, del tamaño justo.
 //   - La página pide los pasos (instalar, abrir, quitar) y muestra el avance. Al cerrar la ventana, el .exe termina
 //     y borra el perfil temporal.

@@ -3,7 +3,7 @@
 // Un solo .exe hace todo:
 //   - Desde Descargas (o cualquier otro lugar): instala en %LOCALAPPDATA%\Programs\SymphorIA (sin administrador),
 //     crea los accesos directos (escritorio e Inicio), se registra en «Aplicaciones instaladas» y abre la app.
-//   - Desde su carpeta (el acceso directo): abre SymphorIA en su propia ventana (Edge o Chrome en modo app)
+//   - Desde su carpeta (el acceso directo): abre SymphorIA en su propia ventana (en el navegador de la persona, en modo app; Edge solo si no hay otro)
 //     y busca actualizaciones en segundo plano.
 //   - Con --desinstalar (lo llama Windows desde «Aplicaciones instaladas»): lo quita todo, limpio.
 //
