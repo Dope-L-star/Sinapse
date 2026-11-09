@@ -236,12 +236,12 @@ async function runGuide(o = {}){
     const useSz = szOn() && !trialOn;
     let ok = useSz || (trialOn && trialLeft() > 0);
     if (useSz){ const pk = recommendTop(k0, 8).find(m => /^sz:/.test(m.id)) || info(APODEX); if (selId() !== pk.id) pickModel(pk.id, null); }
-    if (!ok){ H.talk('Preparando tus 5 mensajes de prueba…', { mood:'pensando' }); ok = await enterTrial(); }
+    if (!ok){ H.talk('Preparando tu EnerX de prueba…', { mood:'pensando' }); ok = await enterTrial(); }
     gNeed();
     if (!ok){
       await H.talk(connected(selId()) ? 'La prueba no está disponible ahora, pero ya tienes una IA conectada: practica con ella.' : 'Las IAs gratis están descansando un momento. Ahora te muestro Puter: una cuenta gratis para seguir.', { mood:'disculpa', buttons:[{ label:'Siguiente' }] });
     } else {
-      await H.talk(useSz ? 'Ya puedes chatear gratis. Te escribo un mensaje de ejemplo sobre «' + TOPIC[k0].l + '».' : '¡Listo! Tienes ' + trialLeft() + ' mensajes de prueba gratis, solo para aprender. Te escribo uno de ejemplo sobre «' + TOPIC[k0].l + '».', { mood:'celebrando', auto:3200, buttons:[{ label:'Siguiente' }] });
+      await H.talk(useSz ? 'Ya puedes chatear gratis. Te escribo un mensaje de ejemplo sobre «' + TOPIC[k0].l + '».' : '¡Listo! Tu EnerX de prueba está al 100 %, solo para aprender. Te escribo uno de ejemplo sobre «' + TOPIC[k0].l + '».', { mood:'celebrando', auto:3200, buttons:[{ label:'Siguiente' }] });
       gNeed(); H.quiet();
       const myN = $$('.m.user', lane).length, errN = $$('.m.err', lane).length, left0 = trialLeft();
       await H.type(inp, GUIDE_PROMPTS[k0] || q); autoGrow(); updateHint(); gNeed();
@@ -261,7 +261,7 @@ async function runGuide(o = {}){
         } else {
         if (last) await H.moveTo(last, { shape:'arrow', fx:.15, fy:.2 });
         SZ.SND.done();
-        await H.talk(useSz ? '¡Lo lograste! Puedes seguir chateando gratis. Abajo ves cómo va tu límite de hoy.' : '¡Lo lograste! Te quedan ' + trialLeft() + ' mensajes de prueba para seguir practicando. Abajo dice quién la paga: SymphorIA.', { near:last || inp, mood:'celebrando', buttons:[{ label:'Siguiente' }], auto:9000 });
+        await H.talk(useSz ? '¡Lo lograste! Puedes seguir chateando gratis. Abajo ves cómo va tu límite de hoy.' : '¡Lo lograste! Todavía tienes EnerX de prueba para seguir practicando. Abajo dice quién la paga: SymphorIA.', { near:last || inp, mood:'celebrando', buttons:[{ label:'Siguiente' }], auto:9000 });
         }
       } else await H.talk('Puedes enviarlo después: el mensaje te espera en la caja.', { mood:'guino', buttons:[{ label:'Siguiente' }] });
     }

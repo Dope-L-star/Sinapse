@@ -4,7 +4,7 @@ const newRid = () => DEV + ':' + Date.now().toString(36) + ':' + (++ridN);
 /* v3.6 · avisa cada vez que se gasta un mensaje de prueba (sin cuenta o la prueba guiada), con lo que queda de verdad según el servidor */
 function spentNote(before, after){
   if (!(before > after)) return;
-  try{ toast(after > 0 ? t(after === 1 ? 'enerx.spent1' : 'enerx.spent', { n:after }) : t('enerx.spent0')); }catch(e){}
+  try{ toast(after > 0 ? t('enerx.spent', { n:battPct() }) : t('enerx.spent0')); }catch(e){}   /* v4.3 · solo energía en %, nunca «mensajes» (Sammuel, 9 nov) */
 }
 async function askStream(p, messages, opts = {}, onDelta){
   const sig = opts.signal, t0 = performance.now(); let acc = '', ttft = 0, usage = null, fin = '', cut = '', via = '', provX = '', real = '', swap = false;

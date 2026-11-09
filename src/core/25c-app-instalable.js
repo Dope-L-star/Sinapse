@@ -52,7 +52,7 @@ function appPromo(force){
   const lite = reduce || !!(navigator.connection && navigator.connection.saveData);
   const scr = APP_VIDEO ? '<video muted playsinline loop' + (lite ? ' controls' : ' autoplay') + ' preload="none" poster="' + APP_POSTER + '" width="768" height="432" aria-label="SynthFlow en acción"><source src="' + APP_VIDEO + '" type="video/mp4"></video>'
     /* v2.9: la pantalla es la SynthFlow de hoy en el celular: esfera, plan, la pregunta, el cuadro con «Automática» y la barra de abajo */
-    : '<span class="ap-top">' + flowOrb() + '<b>SynthFlow</b><i class="ap-dots"></i></span><span class="ap-chip"><i></i>Gratis · 5 mensajes</span>'
+    : '<span class="ap-top">' + flowOrb() + '<b>SynthFlow</b><i class="ap-dots"></i></span><span class="ap-chip"><i></i>Gratis · EnerX 100 %</span>'
       + '<span class="ap-q">¿Qué quieres<br><em>FlowIA’r</em> hoy?</span>'
       + '<span class="ap-m me"></span><span class="ap-m ai"><i></i><i></i><i></i></span>'
       + '<span class="ap-in"><span class="ap-auto">Automática</span><i></i></span>'
