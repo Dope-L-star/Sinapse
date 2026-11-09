@@ -2753,6 +2753,210 @@ function memLimpia(fact){
   return /[.!?]$/.test(s) ? s : s + '.';
 }
 let memNext = null;   /* el dato que redactó la IA en la última respuesta (lo usa memOffer) */
+/* ---------- 2026-11-09 · Importar chats y memoria: LECTOR (sin pantalla, se puede probar aparte: t/importar/importar.mjs) ----------
+   Entiende lo que exportan otras IAs y lo convierte en conversaciones y recuerdos de SynthFlow:
+   · ChatGPT: el .zip de «Exportar datos» o su conversations.json (árbol «mapping»: se sigue la rama que estaba abierta).
+   · Claude: el .zip de «Exportar datos» o su conversations.json (chat_messages) y memories.json (la memoria en texto).
+   · JSON genérico: [{role, content}], {messages:[…]}, [{title, messages:[…]}] o la copia de SynthFlow ({chats:{…}}).
+   · Markdown / texto: con marcas «## Tú», «Usuario:», «Assistant:»… es un chat; sin marcas, una lista de recuerdos.
+   Nada sale del navegador: todo se lee aquí. Devuelve { chats:[{ src, sid, title, t, msgs:[{role, content}] }], mem:[texto], skipped }. */
+const IMP = (() => {
+  const MAX_MSG = 400, MAX_TXT = 30000, MAX_MEM = 300;
+  const str = v => typeof v === 'string' ? v : '';
+  const clip = s => s.length > MAX_TXT ? s.slice(0, MAX_TXT) + '\n\n[…]' : s;
+  const ms = v => { if (v == null || v === '') return 0; if (typeof v === 'number') return v < 1e12 ? Math.round(v * 1000) : Math.round(v); const d = Date.parse(v); return Number.isFinite(d) ? d : 0; };
+  const USER_R = /^(user|human|humano|usuario|you|t[uú]|yo|me|persona|prompt)$/i;
+  const BOT_R = /^(assistant|asistente|ai|ia|bot|model|modelo|gpt|chatgpt|claude|gemini|copilot|llama|mistral|deepseek|grok|perplexity|synthflow|synthonia|response|respuesta)$/i;
+  const role = r => { r = str(r).trim(); return USER_R.test(r) ? 'user' : BOT_R.test(r) ? 'assistant' : ''; };
+  /* texto de un mensaje en cualquiera de las formas habituales */
+  function textOf(c){
+    if (typeof c === 'string') return c;
+    if (Array.isArray(c)) return c.map(x => typeof x === 'string' ? x : x && (x.type === 'text' || x.type == null) ? str(x.text) || str(x.content) : '').filter(Boolean).join('\n\n');
+    if (c && typeof c === 'object'){ if (Array.isArray(c.parts)) return textOf(c.parts); return str(c.text) || str(c.content) || str(c.value); }
+    return '';
+  }
+  /* une mensajes seguidos del mismo lado (ChatGPT parte una respuesta cuando usa herramientas) y descarta los vacíos */
+  function tidy(list){
+    const out = [];
+    list.forEach(m => {
+      const content = str(m.content).replace(/\r\n?/g, '\n').trim(); if (!m.role || !content) return;
+      const last = out[out.length - 1];
+      if (last && last.role === m.role) last.content = clip(last.content + '\n\n' + content); else out.push({ role:m.role, content:clip(content) });
+    });
+    return out.slice(-MAX_MSG);
+  }
+  const conv = (src, sid, title, t, msgs) => { msgs = tidy(msgs); return msgs.length ? { src, sid:String(sid || ''), title:str(title).replace(/\s+/g, ' ').trim().slice(0, 60), t:t || 0, msgs } : null; };
+
+  /* ---- ChatGPT: cada conversación es un árbol; se camina desde el último mensaje (current_node) hacia arriba ---- */
+  const isGpt = c => c && typeof c === 'object' && c.mapping && typeof c.mapping === 'object';
+  function fromGpt(c){
+    const M = c.mapping, path = [];
+    let id = c.current_node && M[c.current_node] ? c.current_node : null;
+    if (!id){ /* sin current_node: el último nodo sin hijos */ const ks = Object.keys(M).filter(k => !(M[k].children || []).length); id = ks[ks.length - 1]; }
+    const seen = new Set();
+    while (id && M[id] && !seen.has(id)){ seen.add(id); path.push(M[id]); id = M[id].parent; }
+    path.reverse();
+    const msgs = path.map(n => n && n.message).filter(m => m && m.author && !(m.metadata && (m.metadata.is_visually_hidden_from_conversation || m.metadata.is_user_system_message)))
+      .map(m => {
+        const r = role(m.author.role), ct = m.content && m.content.content_type;
+        if (!r || (ct && !/^(text|multimodal_text)$/.test(ct))) return null;
+        const parts = (m.content.parts || []).map(p => typeof p === 'string' ? p : p && p.content_type === 'image_asset_pointer' ? '[imagen]' : '').filter(Boolean);
+        return { role:r, content:parts.join('\n\n') };
+      }).filter(Boolean);
+    return conv('chatgpt', c.conversation_id || c.id, c.title, ms(c.update_time) || ms(c.create_time), msgs);
+  }
+  /* ---- Claude: chat_messages con sender human/assistant y bloques de texto ---- */
+  const isClaude = c => c && typeof c === 'object' && Array.isArray(c.chat_messages);
+  function fromClaude(c){
+    const msgs = c.chat_messages.map(m => {
+      let t = Array.isArray(m.content) && m.content.some(b => b && b.type === 'text') ? textOf(m.content.filter(b => b && b.type === 'text')) : str(m.text);
+      const att = (m.attachments || []).concat(m.files || []).map(a => a && (a.file_name || a.name)).filter(Boolean);
+      if (att.length) t += '\n\n[' + att.map(n => 'Archivo: ' + n).join(' · ') + ']';
+      return { role:role(m.sender), content:t };
+    });
+    return conv('claude', c.uuid, c.name, ms(c.updated_at) || ms(c.created_at), msgs);
+  }
+  /* ---- genérico: una lista de mensajes {role|sender|author|from, content|text|message} ---- */
+  const msgRole = m => role(m.role || m.sender || (m.author && (m.author.role || m.author)) || m.from || m.speaker);
+  const isMsgList = a => Array.isArray(a) && a.length > 0 && a.filter(m => m && typeof m === 'object' && msgRole(m)).length >= Math.max(1, a.length * 0.6);
+  const fromList = (src, a, title, sid, t) => conv(src, sid, title, t, a.map(m => m && typeof m === 'object' ? { role:msgRole(m), content:textOf(m.content != null ? m.content : m.text != null ? m.text : m.message != null ? m.message : m.parts) } : null).filter(Boolean));
+
+  /* ---- memoria en texto: una línea por recuerdo (viñetas, números o frases sueltas); fuera títulos y relleno ---- */
+  function memLines(text){
+    const out = [];
+    str(text).replace(/\r\n?/g, '\n').split('\n').forEach(l => {
+      l = l.trim(); if (!l || /^#{1,6}\s/.test(l) || /^(\*\*|__)[^*_]{1,60}(\*\*|__):?$/.test(l) || /^(-{3,}|\*{3,}|_{3,}|```)/.test(l)) return;
+      l = l.replace(/^(?:[-*•·◦▪►‣]|\d{1,3}[.)])\s+/, '').replace(/\*\*|__|`/g, '').replace(/^\[[ x]\]\s*/i, '').trim();
+      if (l.length < 4 || /:$/.test(l)) return;
+      /* un párrafo largo se parte en frases */
+      (l.length > 300 ? l.split(/(?<=[.!?])\s+/) : [l]).forEach(s => { s = s.trim(); if (s.length >= 4) out.push(s.slice(0, 300)); });
+    });
+    return [...new Set(out)].slice(0, MAX_MEM);
+  }
+  /* cualquier campo con «memor» en el nombre (memories.json de Claude: conversations_memory, project_memories…) */
+  function memOf(o, depth){
+    const out = []; if (!o || typeof o !== 'object' || depth > 4) return out;
+    if (Array.isArray(o)){ o.forEach(x => { if (typeof x === 'string') out.push(...memLines(x)); else out.push(...memOf(x, depth + 1)); }); return out; }
+    Object.keys(o).forEach(k => {
+      const v = o[k];
+      if (/memor|recuerd|facts?$/i.test(k)){
+        if (typeof v === 'string') out.push(...memLines(v));
+        else if (Array.isArray(v)) v.forEach(x => { if (typeof x === 'string') out.push(...memLines(x)); else if (x && typeof x === 'object') out.push(...memLines(str(x.text) || str(x.content) || str(x.memory) || str(x.value))); out.push(...memOf(x, depth + 1)); });
+        else if (v && typeof v === 'object') Object.keys(v).forEach(kk => { if (typeof v[kk] === 'string') out.push(...memLines(v[kk])); else out.push(...memOf(v[kk], depth + 1)); });
+      } else if (v && typeof v === 'object' && depth < 2) out.push(...memOf(v, depth + 1));
+    });
+    return out;
+  }
+
+  /* ---- JSON: decide qué es ---- */
+  function fromJson(j, name){
+    const res = { chats:[], mem:[], skipped:0 };
+    const add = c => { if (c) res.chats.push(c); else res.skipped++; };
+    const one = (x, i) => {
+      if (isGpt(x)) return add(fromGpt(x));
+      if (isClaude(x)) return add(fromClaude(x));
+      if (x && typeof x === 'object' && isMsgList(x.messages)) return add(fromList('json', x.messages, x.title || x.name, x.id || x.uuid || name + ':' + i, ms(x.updated_at || x.update_time || x.created_at || x.date)));
+      if (x && typeof x === 'object' && isMsgList(x.conversation)) return add(fromList('json', x.conversation, x.title || x.name, x.id || name + ':' + i, ms(x.updated_at || x.date)));
+      return false;
+    };
+    if (isMsgList(j)) add(fromList('json', j, '', name, 0));
+    else if (Array.isArray(j)) j.forEach((x, i) => { if (one(x, i) === false) res.mem.push(...memOf(x, 1)); });
+    else if (j && typeof j === 'object'){
+      if (one(j, 0) === false){
+        if (Array.isArray(j.conversations)) j.conversations.forEach((x, i) => one(x, i));
+        /* la copia de SynthFlow: { chats:{ 'openrouter::modelo::tid':[…] }, threads:{…} } */
+        if (j.chats && typeof j.chats === 'object' && !Array.isArray(j.chats)) Object.keys(j.chats).forEach(k => { if (isMsgList(j.chats[k])){ const p = k.split('::'), tid = p[2] || '', th = ((j.threads || {})[p[1]] || []).find(e => e && e.id === tid) || {}; add(fromList('synthflow', j.chats[k], th.title, k, th.t || 0)); } });
+        if (Array.isArray(j.chats)) j.chats.forEach((x, i) => one(x, i));
+        res.mem.push(...memOf(j, 0));
+      }
+    }
+    return res;
+  }
+
+  /* ---- Markdown / texto: ¿tiene marcas de quién habla? ---- */
+  /* «Usuario: hola», «**Tú:** hola», «**Claude**: …», «### Assistant» o «**ChatGPT**» sola en su línea */
+  const MARK_IN = /^\s*(?:#{1,4}\s*)?(?:\*\*|__)?([\p{L}][\p{L}\d .-]{0,30}?)(?:\*\*|__)?\s*[:：]\s*(?:\*\*|__)?\s*(.*)$/u;
+  const MARK_SOLO = /^\s*(?:#{1,4}\s*(?:\*\*|__)?|\*\*|__)([\p{L}][\p{L}\d .-]{0,30}?)(?:\*\*|__)?\s*$/u;
+  function fromText(text, name){
+    text = str(text).replace(/\r\n?/g, '\n').replace(/^﻿/, '');
+    const lines = text.split('\n'), msgs = []; let cur = null, mine = false, users = 0;
+    /* la copia que hace SynthFlow («Descargar como texto»): «## Tú» y luego «## Nombre de la IA» */
+    const own = /^##\s+(T[uú]|You)\s*$/m.test(text);
+    lines.forEach(l => {
+      let r = '', rest = '';
+      const h = own && /^##\s+\S/.test(l) ? l.replace(/^##\s+/, '').trim() : null;
+      if (h != null){ if (/^(T[uú]|You)$/i.test(h)){ r = 'user'; } else if (cur && cur.role === 'user'){ r = 'assistant'; } }
+      else {
+        const a = l.match(MARK_SOLO), b = !a && l.match(MARK_IN);
+        if (a && role(a[1])) r = role(a[1]);
+        else if (b && role(b[1])){ r = role(b[1]); rest = str(b[2]); }
+      }
+      if (r){ if (cur) msgs.push(cur); cur = { role:r, content:rest }; if (r === 'user') users++; mine = true; return; }
+      if (cur) cur.content += (cur.content ? '\n' : '') + l;
+    });
+    if (cur) msgs.push(cur);
+    if (mine && users && msgs.some(m => m.role === 'assistant')){
+      const first = msgs.find(m => m.role === 'user'), title = str(name).replace(/\.(md|markdown|txt)$/i, '').replace(/[_-]+/g, ' ').trim();
+      const c = conv(own ? 'synthflow' : 'texto', name, /^(chat( |$)|pegado$)/i.test(title) || !title ? (first ? first.content.split('\n')[0] : '') : title, 0, msgs);
+      return { chats:c ? [c] : [], mem:[], skipped:c ? 0 : 1 };
+    }
+    return { chats:[], mem:memLines(text), skipped:0 };
+  }
+
+  /* ---- .zip sin librerías: se lee el índice del final y se descomprime con DecompressionStream ---- */
+  async function unzip(buf, want){
+    const v = new DataView(buf), u8 = new Uint8Array(buf), out = [];
+    let e = -1; for (let i = buf.byteLength - 22; i >= Math.max(0, buf.byteLength - 70000); i--){ if (v.getUint32(i, true) === 0x06054b50){ e = i; break; } }
+    if (e < 0) throw new Error('zip');
+    const n = v.getUint16(e + 10, true); let p = v.getUint32(e + 16, true);
+    const dec = new TextDecoder();
+    for (let k = 0; k < n && p + 46 <= buf.byteLength; k++){
+      if (v.getUint32(p, true) !== 0x02014b50) break;
+      const method = v.getUint16(p + 10, true), csize = v.getUint32(p + 20, true), nl = v.getUint16(p + 28, true), xl = v.getUint16(p + 30, true), cl = v.getUint16(p + 32, true), off = v.getUint32(p + 42, true);
+      const name = dec.decode(u8.subarray(p + 46, p + 46 + nl)); p += 46 + nl + xl + cl;
+      if (/\/$/.test(name) || !want(name)) continue;
+      const lo = off + 30 + v.getUint16(off + 26, true) + v.getUint16(off + 28, true), raw = u8.subarray(lo, lo + csize);
+      let data;
+      if (method === 0) data = raw;
+      else if (method === 8 && typeof DecompressionStream === 'function') data = new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());
+      else continue;
+      out.push({ name, text:dec.decode(data) });
+    }
+    return out;
+  }
+  const NOISE = /(^|\/)(users?|projects?|message_feedback|shared_conversations|model_comparisons|user_settings|group_chats|sora|chat)\.(json|html)$/i;
+  const wantIn = n => /\.(json|md|markdown|txt)$/i.test(n) && !NOISE.test(n) && !/(^|\/)(__MACOSX|\.)/.test(n);
+
+  function merge(into, r){ into.chats.push(...r.chats); into.mem.push(...r.mem); into.skipped += r.skipped || 0; return into; }
+  /* lee un texto ya abierto (sirve para el cuadro de «pegar» y para las pruebas) */
+  function parseText(text, name){
+    name = str(name) || 'pegado.txt';
+    const t = str(text).trim(); if (!t) return { chats:[], mem:[], skipped:0 };
+    if (/\.json$/i.test(name) || /^[[{]/.test(t)){ try{ return fromJson(JSON.parse(t), name); }catch(e){ if (/\.json$/i.test(name)) return { chats:[], mem:[], skipped:1, bad:true }; } }
+    return fromText(t, name);
+  }
+  /* lee archivos del navegador (File/Blob con .name) */
+  async function parseFiles(files){
+    const all = { chats:[], mem:[], skipped:0, bad:[] };
+    for (const f of files){
+      try{
+        if (/\.zip$/i.test(f.name) || f.type === 'application/zip' || f.type === 'application/x-zip-compressed'){
+          const inner = await unzip(await f.arrayBuffer(), wantIn);
+          if (!inner.length) all.bad.push(f.name);
+          inner.forEach(x => merge(all, parseText(x.text, x.name.split('/').pop())));
+        } else {
+          const r = parseText(await f.text(), f.name); if (r.bad) all.bad.push(f.name); merge(all, r);
+        }
+      }catch(e){ all.bad.push(f.name); }
+    }
+    /* sin repetidos: misma fuente + mismo id, y recuerdos iguales */
+    const seen = new Set(); all.chats = all.chats.filter(c => { const k = c.src + ':' + (c.sid || c.title + c.msgs.length); if (seen.has(k)) return false; seen.add(k); return true; });
+    all.chats.sort((a, b) => (b.t || 0) - (a.t || 0));
+    all.mem = [...new Set(all.mem)].slice(0, MAX_MEM);
+    return all;
+  }
+  return { parseText, parseFiles, unzip, memLines, fromJson, fromText };
+})();
 /* ---------- v1.8 · modo agente: tú escribes; el agente entiende y mejora tu pedido, elige la IA que más sabe de eso
    y te muestra cada paso. Al final decides: quedarte con esa IA o seguir en modo agente ---------- */
 let agentBusy = false;
@@ -4793,7 +4997,7 @@ function touchThread(){
 function allThreads(){
   return Object.keys(st().chats).filter(k => /^openrouter::./.test(k) && Array.isArray(st().chats[k]) && st().chats[k].length).map(k => {
     const { model, id } = parseKey(k), e = thMeta(model, id, false) || {}, u = st().chats[k].find(x => x.role === 'user');
-    return { k, model, id, title:e.title || (u ? titleLocal(st().chats[k]) : 'Conversación'), t:e.t || 0, n:st().chats[k].length };
+    return { k, model, id, title:e.title || (u ? titleLocal(st().chats[k]) : 'Conversación'), t:e.t || 0, n:st().chats[k].length, imp:e.imp };
   }).sort((a, b) => b.t - a.t);
 }
 /* ---------- tus chats y tus favoritos (panel de la izquierda) ---------- */
@@ -4831,7 +5035,7 @@ function renderChats(anim){
   L.forEach(x => {
     const g = grp(x.t); if (g !== g0){ h += '<div class="thg">' + g + '</div>'; g0 = g; }
     const cur = mode === 'solo' && x.model === thModel() && x.id === curT(), m = info(x.model);
-    h += '<div class="thi' + (cur ? ' cur' : '') + '" data-k="' + esc(x.k) + '" title="' + esc(m.name + ' · ' + x.n + ' mensajes') + '" style="--i:' + Math.min(n++, 20) + ';--vc:' + vendorColor(m.vendor) + '"><i class="thd" aria-hidden="true"></i><div class="tt"><b>' + hlq(x.title) + '</b>' + (x.sn ? '<span class="snip">' + hlq(x.sn) + '</span>' : '') + '</div>'
+    h += '<div class="thi' + (cur ? ' cur' : '') + '" data-k="' + esc(x.k) + '" title="' + esc(m.name + ' · ' + x.n + ' mensajes') + '" style="--i:' + Math.min(n++, 20) + ';--vc:' + vendorColor(m.vendor) + '"><i class="thd" aria-hidden="true"></i><div class="tt"><b>' + hlq(x.title) + '</b>' + (x.imp ? '<em class="thimp">' + esc({ chatgpt:'ChatGPT', claude:'Claude' }[x.imp] || (SZ.lang() === 'en' ? 'Imported' : 'Importado')) + '</em>' : '') + (x.sn ? '<span class="snip">' + hlq(x.sn) + '</span>' : '') + '</div>'
       + '<button type="button" data-ren aria-label="Renombrar">' + PEN + '</button><button type="button" data-del aria-label="Borrar">' + BIN + '</button></div>';
   });
   box.innerHTML = h;
@@ -5251,7 +5455,7 @@ function mmOpen(){
   const L = [{ label:'Nuevo chat', ico:'new', fn:() => newChat() }];
   if (mode === 'solo') L.push({ label:'Copiar la conversación', ico:'copy', fn:() => { copyText(chatMd()); toast('Conversación copiada.'); } }, { label:'Descargar como texto', ico:'down', fn:exportMd });
   else L.push({ label:'Empezar otra comparación', ico:'cmp', fn:() => clearChat() }, { label:'Volver a una sola IA', ico:'exit', fn:() => removeCmp(st().cmp[st().cmp.length - 1]) });
-  L.push('—', { label:'Lo que recuerdo de ti', ico:'brain', fn:() => SZ.cfgModal('mem') }, { label:'Ajustes', ico:'cog', fn:() => SZ.cfgModal() }, { label:'Planes', ico:'trophy', fn:() => SZ.plansModal() }, ...(SZ.planOf() === 'orquesta' ? [{ label:'A.L.I.A.S. · equipo', ico:'ai', fn:() => { location.href = 'alias.html'; } }] : []), { label:SZ.lang() === 'en' ? 'Español' : 'English', ico:'globe', fn:() => SZ.setLang(SZ.lang() === 'en' ? 'es' : 'en') }, { label:'Ayuda: algo no carga', ico:'help', fn:helpLoad });
+  L.push('—', { label:'Lo que recuerdo de ti', ico:'brain', fn:() => SZ.cfgModal('mem') }, ...(SZ.importOpen ? [{ label:'Importar chats y memoria', ico:'up', fn:() => SZ.importOpen() }] : []), { label:'Ajustes', ico:'cog', fn:() => SZ.cfgModal() }, { label:'Planes', ico:'trophy', fn:() => SZ.plansModal() }, ...(SZ.planOf() === 'orquesta' ? [{ label:'A.L.I.A.S. · equipo', ico:'ai', fn:() => { location.href = 'alias.html'; } }] : []), { label:SZ.lang() === 'en' ? 'Español' : 'English', ico:'globe', fn:() => SZ.setLang(SZ.lang() === 'en' ? 'es' : 'en') }, { label:'Ayuda: algo no carga', ico:'help', fn:helpLoad });
   if (trialOn) L.push({ label:'Salir de la prueba guiada', ico:'exit', fn:() => exitTrial() });
   if (mode === 'solo') L.push('—', { label:'Borrar este chat', ico:'trash', danger:true, fn:() => clearChat(true) });
   const r = mb.getBoundingClientRect(), m = SZ.menuOpen(L, 0, r.bottom + 8, 'mm');
@@ -5774,6 +5978,159 @@ function premiumAviso(m){
   });
 }
 SZ.premiumAviso = premiumAviso;   /* para probarlo y para la vista previa de Pulsem */
+/* ---------- 2026-11-09 · Importar chats y memoria desde otras IAs (ChatGPT, Claude, JSON, Markdown) ----------
+   APAGADO para todos: solo aparece con ?importar=1 (queda recordado en este navegador; ?importar=0 lo vuelve a apagar)
+   o si alguien pone window.SZ_IMPORTAR = true antes de chat.js. Encendido, sale en el menú «⋯» y en Ajustes › Tus IAs.
+   Paso 1: eliges archivos (o pegas texto). Paso 2: ves todo y marcas qué traer. Paso 3: listo, con botón para abrirlo.
+   Los archivos se leen aquí (IMP, 05h); se guardan como chats normales de la IA que tienes elegida y los recuerdos
+   pasan por memAddCore (sin duplicar, máx. 40). Lo ya importado se recuerda (st().impIds) para no traerlo dos veces. */
+const IMP_ON = (() => {
+  try{
+    const q = new URLSearchParams(location.search).get('importar');
+    if (q === '1') localStorage.setItem('synthz:f:importar', '1'); else if (q === '0') localStorage.removeItem('synthz:f:importar');
+    return window.SZ_IMPORTAR === true || localStorage.getItem('synthz:f:importar') === '1';
+  }catch(e){ return window.SZ_IMPORTAR === true; }
+})();
+const IMP_SRC = { chatgpt:'ChatGPT', claude:'Claude', synthflow:'SynthFlow', json:'JSON', texto:'Texto' };
+const IMP_MAX = 200, IMP_PRE = 50, MEM_CAP = 40;
+const impL = (es, en) => SZ.lang() === 'en' ? en : es;
+function impOpen(){
+  if ($('#impm')) return;
+  const o = document.createElement('div'); o.id = 'impm'; o.className = 'szm impm notr';
+  const ICO_UP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>';
+  const tip = (name, es, en) => '<details class="imp-how"><summary>' + name + '</summary><p>' + impL(es, en) + '</p></details>';
+  o.innerHTML = '<div class="tcard imp-card" role="dialog" aria-modal="true" aria-labelledby="impT">'
+    + '<i class="imp-staff" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b></i>'
+    + '<button type="button" class="imp-x" data-imp="close" aria-label="' + impL('Cerrar', 'Close') + '">✕</button>'
+    /* paso 1 */
+    + '<section data-step="1"><p class="imp-k">' + impL('Importar', 'Import') + '</p><h3 id="impT">' + impL('Trae tus chats y tu memoria', 'Bring your chats and memory') + '</h3>'
+    + '<p class="imp-sub">' + impL('Desde ChatGPT, Claude u otra IA. Primero ves todo y eliges qué traer.', 'From ChatGPT, Claude or another AI. You see everything first and choose what to bring.') + '</p>'
+    + '<label class="imp-drop" for="impFile">' + ICO_UP + '<b>' + impL('Arrastra aquí tus archivos', 'Drop your files here') + '</b><small>' + impL('o toca para elegirlos · .zip, .json, .md o .txt', 'or tap to choose them · .zip, .json, .md or .txt') + '</small>'
+    + '<input id="impFile" type="file" multiple accept=".zip,.json,.md,.markdown,.txt,application/zip,application/json,text/plain,text/markdown"></label>'
+    + '<div class="imp-hows">'
+    + tip('ChatGPT', 'Ajustes › Controles de datos › <b>Exportar datos</b>. Te llega un correo con un .zip: súbelo tal cual. Su memoria no viene en el .zip: pregúntale «Haz una lista de todo lo que recuerdas de mí» y pega la respuesta abajo.', 'Settings › Data controls › <b>Export data</b>. You get an email with a .zip: upload it as is. Its memory is not in the .zip: ask it «Make a list of everything you remember about me» and paste the answer below.')
+    + tip('Claude', 'Ajustes › Privacidad › <b>Exportar datos</b>. Sube el .zip que te llega: trae tus chats y, si la tienes, tu memoria.', 'Settings › Privacy › <b>Export data</b>. Upload the .zip you get: it brings your chats and, if you have it, your memory.')
+    + tip(impL('Otra IA', 'Another AI'), 'Un .json con mensajes, o un .md/.txt con «Usuario:» y «Asistente:». Una lista sin esas marcas se lee como cosas para recordar.', 'A .json with messages, or a .md/.txt with «User:» and «Assistant:». A list without those marks is read as things to remember.')
+    + '</div>'
+    + '<div class="imp-paste"><textarea id="impTxt" rows="3" placeholder="' + impL('…o pega aquí lo que tu otra IA recuerda de ti (o una conversación)', '…or paste here what your other AI remembers about you (or a conversation)') + '" aria-label="' + impL('Pegar texto', 'Paste text') + '"></textarea><button type="button" class="btn sm ghost" data-imp="paste">' + impL('Leer', 'Read') + '</button></div>'
+    + '<p class="imp-priv">' + impL('Se lee aquí mismo, en tu navegador. Solo se guarda lo que elijas, igual que tus otros chats.', 'It is read right here, in your browser. Only what you choose is saved, like your other chats.') + '</p></section>'
+    /* leyendo */
+    + '<section data-step="0" hidden class="imp-load"><i class="imp-tune" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b></i><p>' + impL('Leyendo tus archivos…', 'Reading your files…') + '</p></section>'
+    /* paso 2 */
+    + '<section data-step="2" hidden><p class="imp-k">' + impL('Vista previa', 'Preview') + '</p><h3>' + impL('Elige qué traer', 'Choose what to bring') + '</h3><p class="imp-sum" aria-live="polite"></p><div class="imp-lists"></div>'
+    + '<div class="tbtn imp-foot"><button class="lnk" type="button" data-imp="back">' + impL('Volver', 'Back') + '</button><button class="btn sm" type="button" data-imp="go"></button></div></section>'
+    /* paso 3 */
+    + '<section data-step="3" hidden class="imp-done"><svg class="imp-ok" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="23"/><path d="M15 27l7 7 15-16"/></svg><h3></h3><p class="imp-sub"></p>'
+    + '<div class="tbtn imp-foot"><button class="lnk" type="button" data-imp="close">' + impL('Cerrar', 'Close') + '</button><button class="btn sm" type="button" data-imp="open">' + impL('Abrir el más reciente', 'Open the latest') + '</button></div></section>'
+    + '</div>';
+  document.body.appendChild(o); requestAnimationFrame(() => o.classList.add('on'));
+  const back = document.activeElement; let gone = false, data = null, last = null;
+  const step = n => { $$('section[data-step]', o).forEach(s => { s.hidden = s.dataset.step !== String(n); }); const f = $('section[data-step="' + n + '"] h3', o); if (f){ f.tabIndex = -1; f.focus({ preventScroll:true }); } };
+  const close = () => { if (gone) return; gone = true; removeEventListener('keydown', key, true); o.classList.remove('on'); setTimeout(() => o.remove(), 400); try{ if (back && back.focus) back.focus(); }catch(e){} };
+  const key = e => { if (e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); close(); } };
+  addEventListener('keydown', key, true);
+  o.addEventListener('pointerdown', e => { if (e.target === o) close(); });
+  const done0 = () => new Set(st().impIds || []);
+  const idOf = c => c.src + ':' + (c.sid || c.title + ':' + c.msgs.length);
+  async function read(fn){
+    step(0);
+    const t0 = Date.now(); let r;
+    try{ r = await fn(); }catch(e){ r = { chats:[], mem:[], bad:['?'] }; }
+    await new Promise(res => setTimeout(res, Math.max(0, 500 - (Date.now() - t0))));   /* que el «leyendo» se alcance a ver */
+    const had = done0(), memNow = new Set(((st().mem || {}).items || []).map(x => x.text.toLowerCase()));
+    r.chats.forEach(c => { c.id = idOf(c); c.old = had.has(c.id); });
+    r.mem = r.mem.filter(x => !memNow.has(x.toLowerCase()));
+    const fresh = r.chats.filter(c => !c.old); fresh.forEach((c, i) => { c.on = i < IMP_PRE; });
+    const free = Math.max(0, MEM_CAP - ((st().mem || {}).items || []).length);
+    data = { chats:r.chats, mem:r.mem.map((text, i) => ({ text, on:i < free })), bad:r.bad || [], free, q:'' };
+    if (!r.chats.length && !r.mem.length){ step(1); toast(data.bad.length ? impL('No pude leer ' + data.bad.join(', ') + '. ¿Es el archivo que te mandó tu otra IA?', "I couldn't read " + data.bad.join(', ') + '. Is it the file your other AI sent you?') : impL('No encontré chats ni recuerdos ahí.', "I didn't find chats or memories there.")); return; }
+    paint(); step(2);
+  }
+  const fmtD = t => t ? new Date(t).toLocaleDateString(SZ.lang() === 'en' ? 'en-US' : 'es-CO', { day:'numeric', month:'short', year:'numeric' }) : '';
+  function paint(){
+    const d = data, q = d.q.toLowerCase(), nC = d.chats.filter(c => c.on).length, nM = d.mem.filter(m => m.on).length, nOld = d.chats.filter(c => c.old).length;
+    const L = d.chats.filter(c => !q || c.title.toLowerCase().includes(q) || c.msgs.some(m => m.content.toLowerCase().includes(q)));
+    const firstU = c => { const u = c.msgs.find(m => m.role === 'user'); return u ? u.content.replace(/\s+/g, ' ').slice(0, 110) : ''; };
+    let h = '';
+    if (d.chats.length){
+      h += '<div class="imp-grp"><div class="imp-gh"><b>' + impL('Chats', 'Chats') + ' <em>' + d.chats.length + '</em></b>'
+        + (d.chats.length > 6 ? '<input class="imp-q" type="search" value="' + esc(d.q) + '" placeholder="' + impL('Buscar…', 'Search…') + '" aria-label="' + impL('Buscar en los chats', 'Search the chats') + '">' : '')
+        + '<button type="button" class="lnk" data-imp="allc">' + (nC ? impL('Ninguno', 'None') : impL('Todos', 'All')) + '</button></div><ul class="imp-l" role="list">'
+        + L.slice(0, 400).map(c => '<li' + (c.old ? ' class="old"' : '') + '><label><input type="checkbox" data-c="' + esc(c.id) + '"' + (c.on ? ' checked' : '') + (c.old ? ' disabled' : '') + '><span class="imp-t"><b></b><small>' + esc(IMP_SRC[c.src] || c.src) + ' · ' + impL(c.msgs.length + ' mensajes', c.msgs.length + ' messages') + (c.t ? ' · ' + esc(fmtD(c.t)) : '') + (c.old ? ' · ' + impL('ya lo trajiste', 'already imported') : '') + '</small><i></i></span></label></li>').join('')
+        + (L.length > 400 ? '<li class="imp-more">' + impL('…y ' + (L.length - 400) + ' más: búscalos arriba', '…and ' + (L.length - 400) + ' more: search for them above') + '</li>' : '')
+        + (!L.length ? '<li class="imp-more">' + impL('Nada coincide.', 'Nothing matches.') + '</li>' : '') + '</ul></div>';
+    }
+    if (d.mem.length){
+      h += '<div class="imp-grp"><div class="imp-gh"><b>' + impL('Para recordar', 'To remember') + ' <em>' + d.mem.length + '</em></b><button type="button" class="lnk" data-imp="allm">' + (nM ? impL('Ninguno', 'None') : impL('Todos', 'All')) + '</button></div>'
+        + '<p class="imp-note">' + (d.free ? impL('Tu memoria tiene espacio para ' + d.free + ' cosas más. Lo repetido se actualiza, no se duplica.', 'Your memory has room for ' + d.free + ' more things. Repeats are updated, not duplicated.') : impL('Tu memoria está llena (40). Olvida algo en Ajustes para hacer espacio.', 'Your memory is full (40). Forget something in Settings to make room.')) + '</p>'
+        + '<ul class="imp-l mem" role="list">' + d.mem.map((m, i) => '<li><label><input type="checkbox" data-m="' + i + '"' + (m.on ? ' checked' : '') + '><span class="imp-t"><b></b></span></label></li>').join('') + '</ul></div>';
+    }
+    const box = $('.imp-lists', o); box.innerHTML = h;
+    /* los textos que vienen de afuera van con textContent, nunca como HTML */
+    $$('[data-c]', box).forEach(x => { const c = d.chats.find(cc => cc.id === x.dataset.c); const li = x.closest('li'); $('.imp-t b', li).textContent = c.title || firstU(c) || impL('Conversación', 'Conversation'); $('.imp-t i', li).textContent = c.title ? firstU(c) : ''; });
+    $$('[data-m]', box).forEach(x => { $('.imp-t b', x.closest('li')).textContent = d.mem[+x.dataset.m].text; });
+    const qi = $('.imp-q', box); if (qi && d.qf){ qi.focus(); qi.setSelectionRange(qi.value.length, qi.value.length); d.qf = false; }
+    sum();
+  }
+  function sum(){
+    const d = data, nC = d.chats.filter(c => c.on).length, nM = d.mem.filter(m => m.on).length, nOld = d.chats.filter(c => c.old).length;
+    const pl = (n, a, b) => n + ' ' + (n === 1 ? a : b);
+    $('.imp-sum', o).textContent = impL('Encontré ' + pl(d.chats.length, 'chat', 'chats') + ' y ' + pl(d.mem.length, 'cosa para recordar', 'cosas para recordar') + '.', 'I found ' + pl(d.chats.length, 'chat', 'chats') + ' and ' + pl(d.mem.length, 'thing to remember', 'things to remember') + '.')
+      + (nOld ? impL(' ' + nOld + ' ya los habías traído.', ' ' + nOld + ' you had already imported.') : '') + (d.bad.length ? impL(' No pude leer: ' + d.bad.join(', ') + '.', " Couldn't read: " + d.bad.join(', ') + '.') : '');
+    const go = $('[data-imp="go"]', o), over = nC > IMP_MAX || nM > d.free;
+    go.disabled = (!nC && !nM) || over;
+    go.textContent = nC > IMP_MAX ? impL('Máximo ' + IMP_MAX + ' chats por vez', 'Up to ' + IMP_MAX + ' chats at a time') : nM > d.free ? impL('Solo caben ' + d.free + ' recuerdos', 'Only ' + d.free + ' memories fit')
+      : !nC && !nM ? impL('Marca algo para traer', 'Pick something to bring') : impL('Traer ', 'Bring ') + [nC ? pl(nC, 'chat', 'chats') : '', nM ? pl(nM, impL('recuerdo', 'memory'), impL('recuerdos', 'memories')) : ''].filter(Boolean).join(impL(' y ', ' and '));
+  }
+  function apply(){
+    const d = data, chats = d.chats.filter(c => c.on && !c.old), mem = d.mem.filter(m => m.on).slice(0, d.free);
+    const model = st().model.openrouter || APODEX, ids = st().impIds || [];
+    let n = 0, firstKey = null;
+    chats.forEach((c, i) => {
+      const tid = 't' + Date.now().toString(36) + i.toString(36) + Math.random().toString(36).slice(2, 5);
+      st().chats['openrouter::' + model + '::' + tid] = c.msgs.map(m => ({ role:m.role, content:m.content }));
+      const e = thMeta(model, tid, true); e.title = (c.title || (c.msgs.find(m => m.role === 'user') || { content:'' }).content).replace(/\s+/g, ' ').trim().slice(0, 60) || impL('Conversación importada', 'Imported conversation');
+      e.t = c.t || Date.now() - i; e.manual = true; e.imp = c.src;
+      ids.push(c.id); n++; if (!firstKey) firstKey = { model, id:tid };
+    });
+    st().impIds = ids.slice(-3000);
+    save();
+    let k = 0; mem.forEach(m => { if (SZ.memAddCore(m.text)) k++; });
+    last = firstKey; renderChats(true);
+    $('.imp-done h3', o).textContent = impL('¡Listo! Ya están aquí', 'Done! They are here');
+    $('.imp-done .imp-sub', o).textContent = [n ? impL(n + (n === 1 ? ' chat quedó' : ' chats quedaron') + ' en tu lista de la izquierda, para seguirlos con cualquier IA.', n + (n === 1 ? ' chat is' : ' chats are') + ' in your list on the left, ready to continue with any AI.') : '', k ? impL(k + (k === 1 ? ' cosa nueva' : ' cosas nuevas') + ' en «Lo que recuerdo de ti».', k + (k === 1 ? ' new thing' : ' new things') + ' in «What I remember about you».') : ''].filter(Boolean).join(' ');
+    $('[data-imp="open"]', o).hidden = !last;
+    step(3);
+  }
+  o.addEventListener('change', e => {
+    if (e.target.id === 'impFile'){ const fs = [...e.target.files]; e.target.value = ''; if (fs.length) read(() => IMP.parseFiles(fs)); return; }
+    const c = e.target.closest('[data-c]'), m = e.target.closest('[data-m]');
+    if (c){ const x = data.chats.find(cc => cc.id === c.dataset.c); if (x) x.on = c.checked; sum(); paintAll(); }
+    if (m){ data.mem[+m.dataset.m].on = m.checked; sum(); paintAll(); }
+  });
+  const paintAll = () => { const nC = data.chats.some(c => c.on), nM = data.mem.some(m => m.on); const a = $('[data-imp="allc"]', o), b = $('[data-imp="allm"]', o); if (a) a.textContent = nC ? impL('Ninguno', 'None') : impL('Todos', 'All'); if (b) b.textContent = nM ? impL('Ninguno', 'None') : impL('Todos', 'All'); };
+  o.addEventListener('input', e => { if (e.target.classList.contains('imp-q')){ data.q = e.target.value; data.qf = true; paint(); } });
+  o.addEventListener('click', e => {
+    const b = e.target.closest('[data-imp]'); if (!b) return; const a = b.dataset.imp;
+    if (a === 'close') close();
+    else if (a === 'paste'){ const t = $('#impTxt', o).value; if (!t.trim()){ $('#impTxt', o).focus(); return; } read(async () => { const r = IMP.parseText(t, 'pegado.txt'); return { chats:r.chats, mem:r.mem, bad:[] }; }); }
+    else if (a === 'back') step(1);
+    else if (a === 'go') apply();
+    else if (a === 'allc'){ const on = !data.chats.some(c => c.on); data.chats.filter(c => !c.old).forEach((c, i) => { c.on = on && i < IMP_MAX; }); paint(); }
+    else if (a === 'allm'){ const on = !data.mem.some(m => m.on); data.mem.forEach((m, i) => { m.on = on && i < data.free; }); paint(); }
+    else if (a === 'open' && last){ const l = last; close(); setTimeout(() => openThread(l.model, l.id), 250); }
+  });
+  /* arrastrar y soltar */
+  const drop = $('.imp-drop', o);
+  ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, () => drop.classList.remove('over')));
+  drop.addEventListener('drop', e => { e.preventDefault(); const fs = [...(e.dataTransfer && e.dataTransfer.files || [])]; if (fs.length) read(() => IMP.parseFiles(fs)); });
+  setTimeout(() => { const h = $('#impT', o); if (h){ h.tabIndex = -1; h.focus({ preventScroll:true }); } }, 60);
+}
+if (IMP_ON){
+  SZ.importOpen = impOpen;
+  SZ.cfgLinks.unshift(['Importar de otra IA', () => impOpen(), 'Trae tus chats y lo que recuerda ChatGPT, Claude u otra']);
+}
 /* ---------- 2026-11-09 · aviso grande al elegir una IA de alto consumo (pedido de Sammuel) ----------
    «Que cada vez que elijan modelos de alto consumo, como Claude Fable, les salte un anuncio gigante que les avise».
    Sale cada vez que eliges a mano una de esas IAs (antes era un aviso chiquito, una vez por visita). No bloquea:

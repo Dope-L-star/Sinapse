@@ -1,0 +1,104 @@
+/* ---------- 2026-11-09 · Importar chats y memoria (src/chat/16i-importar.js) ----------
+   Vidrio de Partitura: tinta, borde fino, las cinco líneas del pentagrama arriba como firma y en el «leyendo». */
+.impm .tcard.imp-card{position:relative;width:min(560px,calc(100vw - 32px));max-height:min(760px,calc(100dvh - 32px));display:flex;flex-direction:column;padding:34px 26px 22px;overflow:hidden;
+  background:linear-gradient(180deg,rgba(28,26,42,.82),rgba(14,13,22,.9)) !important;border:1px solid rgba(255,255,255,.1) !important;border-radius:26px !important;
+  box-shadow:0 30px 90px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.07) !important;backdrop-filter:blur(26px) saturate(1.3);color:#F4F2FA;text-align:left}
+.impm .imp-card>section{display:flex;flex-direction:column;min-height:0;flex:1}
+.impm .imp-card>section[hidden]{display:none}
+.imp-staff{position:absolute;inset:0 0 auto 0;height:16px;display:grid;gap:2px;padding:0 26px;pointer-events:none;opacity:.8}
+.imp-staff b{height:1px;border-radius:1px;transform-origin:left;animation:impLine 1.1s cubic-bezier(.2,.8,.2,1) both}
+.imp-staff b:nth-child(1){background:#3DE0FF}.imp-staff b:nth-child(2){background:#7B3FF2;animation-delay:.06s}.imp-staff b:nth-child(3){background:#FF3D9A;animation-delay:.12s}.imp-staff b:nth-child(4){background:#FF7A45;animation-delay:.18s}.imp-staff b:nth-child(5){background:#FFC857;animation-delay:.24s}
+.imp-staff{top:12px}
+.impm .imp-card h3:focus,.impm .imp-card h3:focus-visible{outline:none !important}
+@keyframes impLine{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:.55}}
+.imp-x{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#B3AFC4;font-size:13px;cursor:pointer;z-index:2;transition:background .2s,color .2s}
+.imp-x:hover{background:rgba(255,255,255,.1);color:#F4F2FA}
+.impm .imp-k{margin:10px 0 4px;font:600 11px/1 'IBM Plex Mono',ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:#3DE0FF}
+.imp-card h3{margin:0 40px 6px 0;font:700 clamp(22px,4.6vw,27px)/1.15 'Bricolage Grotesque',var(--sans);letter-spacing:-.02em;color:#F4F2FA;outline:none}
+.impm .imp-sub{margin:0 0 16px;color:#B3AFC4;font-size:14.5px;line-height:1.5}
+.imp-drop{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:26px 16px;border-radius:20px;cursor:pointer;text-align:center;
+  border:1.5px dashed rgba(61,224,255,.35);background:radial-gradient(120% 90% at 50% 0%,rgba(61,224,255,.08),rgba(123,63,242,.05) 60%,transparent);transition:border-color .2s,background .2s,transform .2s}
+.imp-drop svg{width:30px;height:30px;color:#3DE0FF;transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.imp-drop b{font-weight:600;font-size:15.5px;color:#F4F2FA}
+.imp-drop small{color:#8E8AA2;font-size:12.5px}
+.imp-drop:hover,.imp-drop.over{border-color:#3DE0FF;background:radial-gradient(120% 90% at 50% 0%,rgba(61,224,255,.16),rgba(123,63,242,.08) 60%,transparent)}
+.imp-drop:hover svg,.imp-drop.over svg{transform:translateY(-3px)}
+.imp-drop.over{transform:scale(1.01)}
+.imp-drop input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.imp-drop:focus-within{outline:2px solid #3DE0FF;outline-offset:3px}
+.imp-hows{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
+.imp-how{flex:1 1 140px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.035);transition:background .2s}
+.imp-how[open]{flex-basis:100%;background:rgba(255,255,255,.055)}
+.imp-how summary{list-style:none;cursor:pointer;padding:10px 12px;font-weight:600;font-size:13.5px;color:#F4F2FA;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.imp-how summary::-webkit-details-marker{display:none}
+.imp-how summary::after{content:'';width:7px;height:7px;border-right:1.6px solid #8E8AA2;border-bottom:1.6px solid #8E8AA2;transform:rotate(45deg);transition:transform .2s;margin-top:-3px}
+.imp-how[open] summary::after{transform:rotate(-135deg);margin-top:3px}
+.imp-how p{margin:0;padding:0 12px 12px;color:#B3AFC4;font-size:13px;line-height:1.5}
+.imp-how p b{color:#F4F2FA}
+.imp-paste{display:flex;gap:8px;align-items:flex-end;margin-top:12px}
+.imp-paste textarea{flex:1;min-height:46px;max-height:160px;resize:vertical;padding:11px 13px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.25);color:#F4F2FA;font:14px/1.45 var(--sans)}
+.imp-paste textarea:focus{outline:none;border-color:rgba(61,224,255,.6);box-shadow:0 0 0 3px rgba(61,224,255,.12)}
+.impm .imp-priv{margin:12px 0 0;color:#8E8AA2;font-size:12px;line-height:1.45;display:flex;gap:6px;align-items:flex-start}
+
+/* leyendo: las cinco líneas se juntan en un latido */
+.imp-load{align-items:center;justify-content:center;gap:14px;min-height:240px;color:#B3AFC4}
+.imp-tune{display:flex;gap:5px;align-items:center;height:40px}
+.imp-tune b{width:5px;height:100%;border-radius:4px;animation:impTune 1s ease-in-out infinite}
+.imp-tune b:nth-child(1){background:#3DE0FF}.imp-tune b:nth-child(2){background:#7B3FF2;animation-delay:.1s}.imp-tune b:nth-child(3){background:#FF3D9A;animation-delay:.2s}.imp-tune b:nth-child(4){background:#FF7A45;animation-delay:.3s}.imp-tune b:nth-child(5){background:#FFC857;animation-delay:.4s}
+@keyframes impTune{0%,100%{transform:scaleY(.25)}50%{transform:scaleY(1)}}
+
+/* vista previa */
+.impm .imp-sum{margin:0 0 12px;color:#B3AFC4;font-size:14px;line-height:1.5}
+.imp-lists{flex:1;min-height:120px;overflow:auto;margin:0 -8px;padding:0 8px;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent}
+.imp-grp+.imp-grp{margin-top:16px}
+.imp-gh{position:sticky;top:0;z-index:1;display:flex;align-items:center;gap:10px;padding:8px 0;background:rgb(19,18,29)}
+.imp-gh b{font-weight:600;font-size:14px;color:#F4F2FA;white-space:nowrap}
+.imp-gh b em{font-style:normal;font:600 11.5px/1 'IBM Plex Mono',monospace;color:#3DE0FF;background:rgba(61,224,255,.1);padding:3px 7px;border-radius:999px;margin-left:4px;vertical-align:1px}
+.imp-gh .lnk{margin-left:auto;font-size:13px}
+.imp-q{flex:1;min-width:0;padding:7px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.25);color:#F4F2FA;font:13px var(--sans)}
+.imp-q:focus{outline:none;border-color:rgba(61,224,255,.6)}
+.impm .imp-note{margin:0 0 8px;color:#8E8AA2;font-size:12.5px;line-height:1.45}
+.imp-l{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.imp-l li{min-width:0}
+.imp-l li label{min-width:0;overflow:hidden;display:flex;gap:12px;align-items:flex-start;padding:11px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.03);cursor:pointer;transition:background .18s,border-color .18s}
+.imp-l li label:hover{background:rgba(255,255,255,.06)}
+.imp-l li label:has(input:checked){border-color:rgba(61,224,255,.35);background:rgba(61,224,255,.06)}
+.imp-l li.old label{opacity:.5;cursor:default}
+.imp-l input{appearance:none;-webkit-appearance:none;flex:none;width:20px;height:20px;margin:1px 0 0;border-radius:6px;border:1.5px solid rgba(255,255,255,.3);background:transparent;display:grid;place-items:center;cursor:pointer;transition:background .15s,border-color .15s}
+.imp-l input::after{content:'';width:9px;height:5px;border-left:2px solid #0B0A12;border-bottom:2px solid #0B0A12;transform:rotate(-45deg) scale(0);margin-top:-2px;transition:transform .18s cubic-bezier(.34,1.56,.64,1)}
+.imp-l input:checked{background:#3DE0FF;border-color:#3DE0FF}
+.imp-l input:checked::after{transform:rotate(-45deg) scale(1)}
+.imp-l input:focus-visible{outline:2px solid #3DE0FF;outline-offset:2px}
+.imp-t{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}
+.imp-t b{font-weight:500;font-size:14px;color:#F4F2FA;line-height:1.35;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.imp-t small{color:#8E8AA2;font-size:12px}
+.imp-t i{font-style:normal;color:#8E8AA2;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.imp-t i:empty{display:none}
+.imp-l.mem .imp-t b{-webkit-line-clamp:3}
+.imp-more{color:#8E8AA2;font-size:12.5px;padding:6px 4px}
+.imp-foot{margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.07)}
+.imp-foot .btn[disabled]{opacity:.5;cursor:not-allowed}
+
+/* listo */
+.imp-done{align-items:center;text-align:center;padding-top:10px}
+.imp-done h3{margin:12px 0 6px}
+.imp-done .imp-foot{align-self:stretch}
+.imp-ok{width:64px;height:64px}
+.imp-ok circle{fill:rgba(61,224,255,.1);stroke:#3DE0FF;stroke-width:2;stroke-dasharray:146;stroke-dashoffset:146;animation:impDraw .6s ease-out forwards}
+.imp-ok path{fill:none;stroke:#3DE0FF;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:40;stroke-dashoffset:40;animation:impDraw .4s .45s ease-out forwards}
+@keyframes impDraw{to{stroke-dashoffset:0}}
+
+/* en la lista de chats: de dónde vino */
+.thi .tt .thimp{display:inline-block;margin-top:2px;font-style:normal;font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;color:#8E8AA2;border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:2px 6px}
+
+@media (max-width:560px){
+  .impm .tcard.imp-card{padding:24px 18px 18px;border-radius:22px !important;max-height:calc(100dvh - 24px);width:calc(100vw - 24px)}
+  .imp-staff{padding:0 18px}
+  .imp-drop{padding:20px 14px}
+  .imp-hows{gap:6px}
+  .imp-how{flex-basis:100%}
+}
+@media (prefers-reduced-motion:reduce){
+  .imp-staff b,.imp-tune b,.imp-ok circle,.imp-ok path{animation:none;stroke-dashoffset:0}
+  .imp-drop,.imp-drop svg,.imp-l input::after{transition:none}
+}

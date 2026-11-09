@@ -37,10 +37,16 @@ export function config(env = (typeof process !== 'undefined' && process.env) || 
   };
 }
 
-/* ¿esta cuenta pagó? Solo cuenta si los planes están encendidos y su plan sigue vigente */
+/* ¿esta cuenta pagó? Solo cuenta si los planes están encendidos y su plan sigue vigente.
+   v4.4 · o se lo REGALÓ el equipo en Pulsem › Usuarios (me.ux.f.premium, api/_permisos.js): no hace falta que los planes estén
+   encendidos, pero sí la llave premium (cfg.on). Nadie paga nada por esto. */
+export const gifted = me => !!(me && me.ux && me.ux.f && me.ux.f.premium === true);
 export function isPremium(me, cfg, now = Date.now()){
-  return !!(cfg && cfg.on && cfg.plansOn && me && me.plan === 'premium' && +me.planUntil > now);
+  if (!cfg || !cfg.on || !me) return false;
+  return gifted(me) || !!(cfg.plansOn && me.plan === 'premium' && +me.planUntil > now);
 }
+/* v4.4 · el crédito del mes de esta persona: el propio (Pulsem › Usuarios) o el de todos */
+export const creditOf = (me, cfg) => me && me.ux && me.ux.credit != null && Number.isFinite(+me.ux.credit) ? Math.max(0, +me.ux.credit) : cfg.credit;
 
 /* precio de un modelo de la lista de OpenRouter (/api/v1/models trae pricing en US$ por token, como texto) → US$ por millón */
 export function price(m){
@@ -97,7 +103,7 @@ export function decide({ me, model = null, energyLeft = Infinity, creditUsed = 0
   if (!isPremium(me, cfg, now)) return { tier:'free', why:'sin_plan' };
   if (!modelOk(model, cfg)) return { tier:'free', why:'no_ofrecido' };
   if (energyLeft <= 0) return { tier:'none', why:'sin_enerx' };
-  const left = cfg.credit - creditUsed;
+  const left = creditOf(me, cfg) - creditUsed;
   if (left <= 0) return { tier:'cut', why:'sin_credito', left:0 };
   if (worst({ inTok, maxOut }, model) > left) return { tier:'cut', why:'no_alcanza', left };
   if (usdToday >= cfg.usdDay) return { tier:'free', why:'tope_dia' };

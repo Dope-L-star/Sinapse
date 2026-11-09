@@ -36,3 +36,9 @@ import PanelAdmin from '../../componentes/admin/PanelAdmin';
 - **SynXCoin gastadas** oculto con un ojo, por si compartes pantalla.
 - **Qué estamos arreglando**: muestra cómo lo contaría SynthonIA mientras escribes.
 - Celular: el menú pasa a una barra abajo con los numeritos.
+
+## Usuarios: permisos y límites por persona (v4.4)
+
+`Usuarios.jsx` es la sección 6 (tecla **6**, Ctrl+K «Dar permisos o límites a alguien», o el botón «Permisos» en «En línea»).
+Busca cuentas y abre su ficha: lo que usó hoy, interruptores de permisos (A.L.I.A.S., imágenes, internet, revisión, cerebro grande e IAs premium de regalo) y límites (EnerX con atajos ×2 · ×5 · Sin límite · Sin IAs, imágenes, búsquedas, cerebro grande, A.L.I.A.S. ×, crédito premium). Vacío = como todos.
+Servidor: `api/_permisos.js` (clave `perm:<sub>`, historial `perm:log`) y `api/_usuarios.js` por `/api/trial` (`users`, `user`, `uset`, `ublock`). Lo aplican `api/ai.js`, `api/alias.js` y `api/_premium.js` en cada pedido. Symmetrix ve; Prime y ZFlow cambian; a Prime solo lo cambia Prime. Prueba: `node t/humo/permisos.mjs` (redis-server local).

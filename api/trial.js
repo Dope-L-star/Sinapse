@@ -7,10 +7,12 @@
    POST { action:'limit', dayLimit }           → tope de SynXCoin's al día por persona (Prime/ZFlow)
    POST { action:'google', clientId }          → «ID de cliente» de Google para entrar con Google y Drive (Prime/ZFlow)
    POST { action:'drive', clientId }           → (opcional) otro ID solo para Drive (Prime/ZFlow)
+   POST { action:'users' | 'user' | 'uset' | 'ublock', … } → Pulsem › Usuarios: permisos y límites por persona (ver api/_usuarios.js)
    POST { action:'start' } / { action:'chat', token, messages } → prueba de la guía (5 mensajes), ahora con la IA de SymphorIA
    Reglas: cero cobros (solo modelos gratis y topes propios), las llaves nunca salen del servidor. */
 import { route, body, json, fail, auth, redis, pipe, getJ, setJ, rid, limit, today, str, roleOf, sha, sbOn, sbAccount, sbProfile, sbPrefs, sbChats, ipOf } from './_lib.js';
 import { CID_RX } from './config.js';
+import { usersAction, USERS_ACTIONS } from './_usuarios.js';
 import { loadKeys, saveOwnerKeys, removeKey, status, checkKey, settings, saveSettings, chat, models, ownersRaw, mask, ORDER, PROV, KEY_PROVS, provName } from './_pool.js';
 
 export const TRIAL_MAX = 5;
@@ -44,6 +46,14 @@ export default route({
   },
   async POST(req){
     const ip = ipOf(req), b = await body(req, 600_000), a = b.action;
+
+    /* v4.4 · Pulsem › Usuarios: el equipo ve; solo Prime y ZFlow cambian (se revisa otra vez dentro de usersAction) */
+    if (USERS_ACTIONS.has(a)){
+      const me = await auth(req);
+      if (!team(me)) return fail(403, 'Solo el equipo de SymphorIA puede ver esto.');
+      await limit('trial-users:' + me.sub, 120, 600);
+      return json(await usersAction(me, b));
+    }
 
     if (a === 'delkey'){
       const me = await auth(req);

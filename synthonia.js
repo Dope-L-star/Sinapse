@@ -20,7 +20,7 @@ const synMd = s => {
   return h;
 };
 /* ---------- SynthonIA: su carita (SVG), con una expresión para cada momento ---------- */
-const FACE_G = '#3DE0FF';   /* 2026-11-09 · Partitura: los ojos y la boca de SynthonIA son cian (antes dorados) */
+const FACE_G = '#3DE0FF';   /* 2026-11-09 · Partitura: los ojos de SynthonIA son cian (antes dorados) */
 /* v2.5 · SynthonIA idéntica al boceto «Cuerpo maestro» y «Expresiones»:
    casco de vidrio perlado (rosa, lila y un filo cian abajo), visor negro grande con borde rosa que brilla,
    ojos cian alargados, cuello de anillos, torso con núcleo cian, brazos por partes, base de pedestal y anillo flotante.
@@ -72,7 +72,7 @@ const FACE = (() => {
   return {
     feliz:{ e:open(0, 0), m:'M42 64q8 7 16 0', ck:1 },
     neutral:{ e:open(0, 0), m:'M45 66h10' },
-    encantada:{ e:[heart(40), heart(60)], ec:'#ef7f93', ew:1.6, ef:'#ef7f93', m:'M41 63q9 10 18 0z', mf:1, ck:1 },
+    encantada:{ e:[heart(40), heart(60)], ew:1.6, ef:FACE_G, m:'M41 63q9 10 18 0z', mf:1, ck:1 },
     riendo:{ e:happy, m:'M41 62q9 11 18 0z', mf:1, ck:1 },
     guino:{ e:['M40 48v8', 'M55 54q5-7 10 0'], m:'M42 64q8 7 16 0', ck:1 },
     pensando:{ e:open(3, -3), m:'M45 67q5-3 10-1', x:'M84 26h.1M91 16h.1', xw:5 },
@@ -105,14 +105,14 @@ function headSvg(f){
     ? '<path d="M27 45h20v6.5a7 7 0 0 1-7 7h-6a7 7 0 0 1-7-7z" fill="#07070a" stroke="#3DE0FF" stroke-width="2.2"/><path d="M53 45h20v6.5a7 7 0 0 1-7 7h-6a7 7 0 0 1-7-7z" fill="#07070a" stroke="#3DE0FF" stroke-width="2.2"/><path d="M47 47.5q3-2.5 6 0" stroke="#3DE0FF" stroke-width="2.2" fill="none"/><path d="M31 49l5-3M57 49l5-3" stroke="rgba(255,255,255,.55)" stroke-width="1.6" stroke-linecap="round"/>'
     : f.e.map(d => P(d, 'stroke="' + (f.ec || G) + '" stroke-width="' + (f.ew || 7) + '" stroke-linecap="round" stroke-linejoin="round" fill="' + (f.ef || 'none') + '"')).join('');
   /* 2026-11-09 · Partitura (Sammuel: «me encanta la nueva SynthonIA, la bola negra con ojos azules»): una bola de vidrio negro,
-     brillo arriba, filo cian abajo y la cara en luz cian. Las expresiones son las mismas de siempre. */
+     brillo arriba, filo cian abajo y la cara en luz cian. Las expresiones son las mismas de siempre.
+     Sammuel, 9 nov: «que no tenga boca ni cachetitos ni esa cosa roja, como en el boceto»: solo ojos (y cejas cuando la cara las pide).
+     Cuando habla, lo dicen las ondas naranjas que laten con cada sílaba; ya no se dibuja boca ni lengua. */
   return '<ellipse cx="50" cy="93" rx="26" ry="3.5" fill="#3DE0FF" opacity=".14"/>'
     + '<circle cx="50" cy="52" r="40" fill="url(#szBall)" stroke="rgba(255,255,255,.16)" stroke-width="1"/><circle cx="50" cy="52" r="40" fill="url(#szBallRim)"/>'
     + '<ellipse cx="36" cy="27" rx="14" ry="7" transform="rotate(-28 36 27)" fill="#fff" opacity=".14"/><circle cx="28" cy="34" r="2.2" fill="#fff" opacity=".35"/>'
-    + (f.ck ? '<circle cx="29" cy="64" r="4.5" fill="#FF3D9A" fill-opacity=".28"/><circle cx="71" cy="64" r="4.5" fill="#FF3D9A" fill-opacity=".28"/>' : '')
     + P(f.b, 'stroke="' + G + '" stroke-width="2.6" stroke-linecap="round" fill="none"')
     + '<g class="fe" filter="url(#szEye)">' + eyes + '</g>'
-    + P(f.m, 'class="fm" stroke="' + G + '" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" fill="' + (f.mf ? G : 'none') + '"')
     + P(f.x, 'class="fx" stroke="#e6b65f" stroke-width="' + (f.xw || 2.4) + '" stroke-linecap="round" stroke-linejoin="round" fill="none"')
     + (f.drop ? '<path class="fdrop" d="M83 28q-6 9-1 12.5q6 2.5 7-3.5q0-3-6-9z" fill="#8fd3e8" fill-opacity=".9"/>' : '')
     + (f.fx ? FFX[f.fx] : '');
@@ -270,7 +270,7 @@ function talkEls(svg){
   const mo = document.createElementNS(NS, 'ellipse'), tg = document.createElementNS(NS, 'ellipse');
   mo.setAttribute('cx', '50'); mo.setAttribute('cy', '65'); mo.setAttribute('fill', '#2a0d18'); mo.setAttribute('stroke', FACE_G); mo.setAttribute('stroke-width', '3');
   tg.setAttribute('cx', '50'); tg.setAttribute('fill', '#e07a93');
-  g.appendChild(mo); g.appendChild(tg); svg.appendChild(g);
+  g.appendChild(mo); g.appendChild(tg);   /* 2026-11-09 · sin boca: la boca y la lengua ya no se ponen en la cara; solo laten las ondas */
   return (svg._talk = { g, mo, tg, w:svg.querySelector('.fwr') });
 }
 function lipSync(svgs, text){
