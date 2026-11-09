@@ -1,0 +1,25 @@
+/* ===== v4.4 · iconos de las IAs: círculo oscuro con el logo de cada marca a color (pedido de Sammuel, 3-nov) =====
+   Reemplaza la baldosa de vidrio de color. Vale en todo el sitio (portada, SynthFlow, Pulsem, comparar…), en todos los temas. */
+.gico,main .gico,.av.gav>.gico,.mfam .gico,.gico.lgi,body.pt-flow .m.bot .who .gico{
+  border-radius:50% !important;
+  background:radial-gradient(circle at 32% 24%,#2a2838,#14131d 62%,#0d0c14) !important;
+  border:1px solid rgba(255,255,255,.12) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),inset 0 -2px 6px rgba(0,0,0,.45),0 4px 14px -6px rgba(0,0,0,.7) !important;
+  backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
+  transition:border-color .25s,box-shadow .25s,transform .25s}
+.gico::before,.gico::after{content:none !important}
+.gico img,.gico svg{width:56%;height:56%;filter:none}
+.gico .zmini{width:78%;height:78%}
+.gico b{font-weight:700;color:#ece9f6}
+/* al pasar por encima (o elegirla): el borde toma el color de la marca, sin pintar el círculo */
+:is(.mi,.krow,.mk,.bf-ai,.cmp-card,button,a,[role="option"]):is(:hover,:focus-visible) .gico,.mi.sel .gico,.mi.on .gico{
+  border-color:color-mix(in srgb,var(--b1) 65%,rgba(255,255,255,.2)) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 0 3px color-mix(in srgb,var(--b1) 16%,transparent),0 6px 18px -8px color-mix(in srgb,var(--b1) 70%,transparent) !important}
+html.noanim .gico{transition:none}
+
+/* ===== v4.4 · logo de SynthFlow: la F de corriente (media/v44/synthflow.svg), sin la esfera de antes ===== */
+.sforb{background:none !important;border:0 !important;box-shadow:none !important;border-radius:0;overflow:visible}
+.sforb img{width:118%;height:118%;max-width:none;object-fit:contain;pointer-events:none;filter:drop-shadow(0 0 .18em rgba(123,63,242,.45))}
+.sforb img{animation:sfF 4.6s ease-in-out infinite}
+@keyframes sfF{50%{transform:translateY(-4%) rotate(-2deg);filter:drop-shadow(0 0 .3em rgba(255,61,154,.5))}}
+html.noanim .sforb img{animation:none}

@@ -79,7 +79,8 @@ const GS = '<span class="gS">S</span>ynth';
    y, si el primero de la página estaba escondido, las ondas de todos los logos de SynthFlow desaparecían */
 /* v2.5 · logos del boceto: SymphorIA = Z de vidrio + «Synth» blanco con la Z en degradado; SynthFlow = la esfera de vidrio con la onda */
 const LOGO_Z = '<img class="lgz" src="media/v30/symphoria.svg" alt="" draggable="false">';
-const flowOrb = cls => '<span class="sforb' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M8 32c5-14 10-14 14 0s9 14 14 0 9-14 14 0 5 8 6 4" stroke="url(#sfOrbG)" stroke-width="5" stroke-linecap="round"/></svg></span>';
+/* v4.4 · SynthFlow: la F de corriente en vidrio líquido (misma familia que la S de SymphorIA) */
+const flowOrb = cls => '<span class="sforb' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><img src="media/v44/synthflow.svg" alt="" draggable="false"></span>';
 /* íconos de archivo: se dibujan en código (giFile, en core 25g); si no hay uno para esa extensión, null */
 const fileIco = ext => giFile(ext);
 const flowWord = () => '<span class="flw-w">' + flowOrb() + '<span class="fw-t">SynthFlow</span></span>';
@@ -1426,7 +1427,7 @@ if (SESS) setTimeout(accStart, 0);
 const paintPulse = () => { const b = document.getElementById('railPulse'); if (b) b.hidden = !(ACC.ready && ACC.user && ['owner', 'admin', 'staff'].includes(ACC.user.role)); };
 accHooks.push(paintPulse);
 
-/* ---------- icono de la pestaña: la Z de vidrio (SymphorIA) o la esfera con la onda (SynthFlow) ---------- */
+/* ---------- icono de la pestaña: la S de vidrio (SymphorIA) o la F de corriente (SynthFlow) ---------- */
 function cradleAngles(t, A){
   const u = (t % 1150) / 1150, out = x => 1 - Math.pow(1 - x, 2.4), inn = x => Math.pow(x, 2.4);
   const L = u < .25 ? out(u / .25) : u < .5 ? 1 - inn((u - .25) / .25) : 0;
@@ -1436,17 +1437,16 @@ function cradleAngles(t, A){
 (function favCradle(){
   const link = document.getElementById('favi'); if (!link) return;
   const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); if (!g) return;
-  /* v2.5 · SynthFlow: la esfera de vidrio con la onda (cian → violeta → rosa → naranja), que ondula un poquito */
+  /* v4.4 · SynthFlow: la F de corriente (media/v44/synthflow.svg); la chispa de la punta late un poquito */
+  const fimg = new Image(); fimg.src = 'media/v44/synthflow.svg'; fimg.onload = () => { if (isFlow()) drawFlow(performance.now()); };
   const drawFlow = now => {
+    if (!fimg.complete || !fimg.naturalWidth) return;
     g.clearRect(0, 0, 64, 64);
-    const bg = g.createRadialGradient(24, 20, 2, 32, 32, 31); bg.addColorStop(0, 'rgba(255,255,255,.55)'); bg.addColorStop(.45, 'rgba(123,63,242,.55)'); bg.addColorStop(1, 'rgba(14,8,40,.95)');
-    g.fillStyle = bg; g.beginPath(); g.arc(32, 32, 30, 0, Math.PI * 2); g.fill();
-    g.strokeStyle = 'rgba(255,255,255,.45)'; g.lineWidth = 1.5; g.stroke();
-    const wg = g.createLinearGradient(8, 20, 56, 44); wg.addColorStop(0, '#3de0ff'); wg.addColorStop(.45, '#7b3ff2'); wg.addColorStop(.75, '#ff3d9a'); wg.addColorStop(1, '#ff7a45');
-    g.strokeStyle = wg; g.lineWidth = 5.5; g.lineCap = 'round'; g.beginPath();
-    const ph = now ? now / 600 : 0;
-    for (let x = 12; x <= 52; x++){ const y = 32 + Math.sin((x - 12) / 40 * Math.PI * 3 + ph) * 9; x === 12 ? g.moveTo(x, y) : g.lineTo(x, y); }
-    g.stroke();
+    const ph = now ? now / 700 : 0, dy = Math.sin(ph) * 1.2;
+    g.drawImage(fimg, -2, -2 + dy, 68, 68);
+    const r = 5 + Math.sin(ph * 1.7) * 1.6, sp = g.createRadialGradient(55, 10 + dy, 0, 55, 10 + dy, r);
+    sp.addColorStop(0, 'rgba(255,255,255,.95)'); sp.addColorStop(.4, 'rgba(255,233,168,.6)'); sp.addColorStop(1, 'rgba(255,200,87,0)');
+    g.fillStyle = sp; g.beginPath(); g.arc(55, 10 + dy, r, 0, Math.PI * 2); g.fill();
     try{ link.href = c.toDataURL('image/png'); }catch(e){}
   };
   /* SymphorIA: la Z de vidrio del boceto, quieta */
@@ -3992,7 +3992,7 @@ function appPromo(force){
       + '<span class="ap-tabs"><i></i><i></i><i class="ring"></i><i></i><i></i></span>';
   o.innerHTML = '<div class="ap-card" role="dialog" aria-modal="true" aria-label="Descarga la app SynthFlow">'
     + '<div class="ap-hero' + (APP_VIDEO ? ' vid' : '') + '" aria-hidden="true"><i class="ap-glow"></i>' + (APP_VIDEO ? '<div class="ap-tv">' + scr + '</div>' : '<div class="ap-phone"><div class="ap-scr">' + scr + '</div></div>')
-    + '<span class="ap-ico"><img src="/media/app/sf-192.png?v=29" alt="" width="54" height="54"></span><i class="ap-sp s1"></i><i class="ap-sp s2"></i><i class="ap-sp s3"></i></div>'
+    + '<span class="ap-ico"><img src="/media/app/sf-192.png?v=44" alt="" width="54" height="54"></span><i class="ap-sp s1"></i><i class="ap-sp s2"></i><i class="ap-sp s3"></i></div>'
     + '<div class="ap-body"><span class="ap-kick">App gratis · sin tiendas</span><h3>Descarga nuestra app <em>SynthFlow</em></h3>'
     + '<ul class="ap-why"><li><i>' + I('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>') + '</i><span><b>Va más fluida</b>: a pantalla completa, sin pestañas ni barra del navegador.</span></li>'
     + '<li><i>' + I('<path d="M2 12c2.5-4 5-4 7.5 0s5 4 7.5 0 3.5-3 5-1"/><path d="M2 18c2.5-4 5-4 7.5 0s5 4 7.5 0 3.5-3 5-1" opacity=".5"/>') + '</i><span><b>Más Flow</b>: tus chats y SuperiorSynth a un toque, desde tu pantalla de inicio.</span></li>'

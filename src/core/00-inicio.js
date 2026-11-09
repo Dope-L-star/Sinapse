@@ -79,7 +79,8 @@ const GS = '<span class="gS">S</span>ynth';
    y, si el primero de la página estaba escondido, las ondas de todos los logos de SynthFlow desaparecían */
 /* v2.5 · logos del boceto: SymphorIA = Z de vidrio + «Synth» blanco con la Z en degradado; SynthFlow = la esfera de vidrio con la onda */
 const LOGO_Z = '<img class="lgz" src="media/v30/symphoria.svg" alt="" draggable="false">';
-const flowOrb = cls => '<span class="sforb' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M8 32c5-14 10-14 14 0s9 14 14 0 9-14 14 0 5 8 6 4" stroke="url(#sfOrbG)" stroke-width="5" stroke-linecap="round"/></svg></span>';
+/* v4.4 · SynthFlow: la F de corriente en vidrio líquido (misma familia que la S de SymphorIA) */
+const flowOrb = cls => '<span class="sforb' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><img src="media/v44/synthflow.svg" alt="" draggable="false"></span>';
 /* íconos de archivo: se dibujan en código (giFile, en core 25g); si no hay uno para esa extensión, null */
 const fileIco = ext => giFile(ext);
 const flowWord = () => '<span class="flw-w">' + flowOrb() + '<span class="fw-t">SynthFlow</span></span>';

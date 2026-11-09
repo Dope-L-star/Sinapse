@@ -1,4 +1,4 @@
-/* ---------- icono de la pestaña: la Z de vidrio (SymphorIA) o la esfera con la onda (SynthFlow) ---------- */
+/* ---------- icono de la pestaña: la S de vidrio (SymphorIA) o la F de corriente (SynthFlow) ---------- */
 function cradleAngles(t, A){
   const u = (t % 1150) / 1150, out = x => 1 - Math.pow(1 - x, 2.4), inn = x => Math.pow(x, 2.4);
   const L = u < .25 ? out(u / .25) : u < .5 ? 1 - inn((u - .25) / .25) : 0;
@@ -8,17 +8,16 @@ function cradleAngles(t, A){
 (function favCradle(){
   const link = document.getElementById('favi'); if (!link) return;
   const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); if (!g) return;
-  /* v2.5 · SynthFlow: la esfera de vidrio con la onda (cian → violeta → rosa → naranja), que ondula un poquito */
+  /* v4.4 · SynthFlow: la F de corriente (media/v44/synthflow.svg); la chispa de la punta late un poquito */
+  const fimg = new Image(); fimg.src = 'media/v44/synthflow.svg'; fimg.onload = () => { if (isFlow()) drawFlow(performance.now()); };
   const drawFlow = now => {
+    if (!fimg.complete || !fimg.naturalWidth) return;
     g.clearRect(0, 0, 64, 64);
-    const bg = g.createRadialGradient(24, 20, 2, 32, 32, 31); bg.addColorStop(0, 'rgba(255,255,255,.55)'); bg.addColorStop(.45, 'rgba(123,63,242,.55)'); bg.addColorStop(1, 'rgba(14,8,40,.95)');
-    g.fillStyle = bg; g.beginPath(); g.arc(32, 32, 30, 0, Math.PI * 2); g.fill();
-    g.strokeStyle = 'rgba(255,255,255,.45)'; g.lineWidth = 1.5; g.stroke();
-    const wg = g.createLinearGradient(8, 20, 56, 44); wg.addColorStop(0, '#3de0ff'); wg.addColorStop(.45, '#7b3ff2'); wg.addColorStop(.75, '#ff3d9a'); wg.addColorStop(1, '#ff7a45');
-    g.strokeStyle = wg; g.lineWidth = 5.5; g.lineCap = 'round'; g.beginPath();
-    const ph = now ? now / 600 : 0;
-    for (let x = 12; x <= 52; x++){ const y = 32 + Math.sin((x - 12) / 40 * Math.PI * 3 + ph) * 9; x === 12 ? g.moveTo(x, y) : g.lineTo(x, y); }
-    g.stroke();
+    const ph = now ? now / 700 : 0, dy = Math.sin(ph) * 1.2;
+    g.drawImage(fimg, -2, -2 + dy, 68, 68);
+    const r = 5 + Math.sin(ph * 1.7) * 1.6, sp = g.createRadialGradient(55, 10 + dy, 0, 55, 10 + dy, r);
+    sp.addColorStop(0, 'rgba(255,255,255,.95)'); sp.addColorStop(.4, 'rgba(255,233,168,.6)'); sp.addColorStop(1, 'rgba(255,200,87,0)');
+    g.fillStyle = sp; g.beginPath(); g.arc(55, 10 + dy, r, 0, Math.PI * 2); g.fill();
     try{ link.href = c.toDataURL('image/png'); }catch(e){}
   };
   /* SymphorIA: la Z de vidrio del boceto, quieta */
