@@ -15,7 +15,7 @@ async function maint(){ try{ const c = await getJ('cfg:maint'); return c && c.on
    n = personas que DEJARON SU CORREO (uno por correo, fd:e:<id>). Es lo único que se muestra como interés.
    Los clics sin correo se guardan aparte (fd:n:<id>, uno por IP como hash) y no se muestran como «personas que lo quieren».
    El correo va cifrado; solo el equipo lo puede leer. */
-export const PUERTAS = ['voz', 'grupo', 'agenda', 'extension', 'escritorio', 'plan-syntonia', 'plan-timeless', 'plan-orquesta'];
+export const PUERTAS = ['voz', 'grupo', 'agenda', 'extension', 'escritorio', 'plan-chispaplus', 'plan-syntonia', 'plan-timeless', 'plan-orquesta'];
 async function puertasGet(){
   if (missing().length) return json({ puertas:{}, clics:{} });
   const r = await pipe(PUERTAS.flatMap(id => [['HLEN', 'fd:e:' + id], ['GET', 'fd:n:' + id]])).catch(() => []);
