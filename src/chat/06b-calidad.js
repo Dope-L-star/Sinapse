@@ -27,7 +27,7 @@ function qualitySystem(saver, ask, mid){
   if (saver) return 'Hoy es ' + day + '. Piensa en silencio antes de responder; revisa cálculos y lógica. No inventes datos.';
   const q = String(ask || '').trim(), easy = !q || Q_EASY.test(q);
   const kind = (Q_KIND.find(([, rx]) => rx.test(q)) || ['reason'])[0];
-  const hard = !easy && (st().sx && st().sx.effort === 'high' || (Q_HARD.test(q) ? 2 : 0) + (/\d\s*[-+*/^=]\s*\d/.test(q) ? 2 : 0) + (/```/.test(q) ? 2 : 0) + (q.length > 400 ? 1 : 0) + (/code|data/.test(kind) ? 1 : 0) >= 3);
+  const hard = !easy && (effKey() === 'deep' || (Q_HARD.test(q) ? 2 : 0) + (/\d\s*[-+*/^=]\s*\d/.test(q) ? 2 : 0) + (/```/.test(q) ? 2 : 0) + (q.length > 400 ? 1 : 0) + (/code|data/.test(kind) ? 1 : 0) >= 3);
   const base = 'Hoy es ' + day + '. Responde como los mejores asistentes del mundo, con precisión y criterio. Empieza por la respuesta (sin saludos, sin repetir la pregunta, sin relleno) y luego explica lo necesario.'
     + ' No inventes datos, citas, enlaces ni funciones: si no lo sabes con certeza o pudo cambiar después de lo que aprendiste, dilo en una frase. Si la pregunta es ambigua, elige la lectura más probable y dilo.'
     + ' Mantén el hilo de la conversación. Markdown limpio (listas, tablas al comparar, código en bloques con su lenguaje); el largo justo. Responde siempre en el idioma en que te escribe la persona.'
@@ -97,7 +97,7 @@ async function qualityAfter(el, chat, msg, mid, r){
   const alive = chat.includes(msg) && msg.content === draft;
   if (!d || !alive || !d.verdict){ const c = $('.qrev', el); if (c) c.remove(); return; }
   if (d.verdict === 'ok'){ msg.rev = 'ok'; save(); if (g0 === gen && el.isConnected) revBadge(el, msg); return; }
-  msg.rev = 'fix'; msg.orig = draft; msg.revNote = String(d.note || '').slice(0, 140); msg.revBy = d.by || ''; msg.content = d.text;
+  msg.rev = 'fix'; msg.orig = draft; msg.revNote = String(d.note || '').slice(0, 140); msg.revBy = d.by || ''; d.text = quitaMarcas(d.text); msg.content = d.text;
   touchThread(); save();
   if (g0 !== gen || !el.isConnected) return;
   const body = $('.body', el);
@@ -111,6 +111,6 @@ document.addEventListener('click', e => {
   const b = e.target.closest && e.target.closest('.qrev-o'); if (!b) return;
   const el = b.closest('.m'), m = el && chatArr()[+el.dataset.ci]; if (!m || !m.orig) return;
   const showO = b.getAttribute('aria-pressed') !== 'true', body = $('.body', el);
-  body.innerHTML = md(showO ? m.orig : m.content); codeButtons(body);
+  body.innerHTML = md(quitaMarcas(showO ? m.orig : m.content)); codeButtons(body);
   b.setAttribute('aria-pressed', String(showO)); b.textContent = showO ? RL('Ver mejorada', 'See improved') : RL('Ver original', 'See original');
 });

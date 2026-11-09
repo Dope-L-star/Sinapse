@@ -1970,3 +1970,9 @@ html.noanim .pl-quiero::after{animation:none;display:none}
 @keyframes szChispa{0%{transform:translate(-50%,-50%) scale(0) rotate(0)}30%{transform:translate(calc(-50% + var(--dx) * .4),calc(-50% + var(--dy) * .4)) scale(1) rotate(45deg);opacity:1}
   100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.2) rotate(120deg);opacity:0}}
 html.noanim .sz-chispa{display:none}
+/* 2026-11-09 · rediseño «Partitura»: en todas las páginas (core.css) */
+/* SynthonIA nueva: la bola negra flota sola, sin el aro dorado de antes */
+#szBot{border:0 !important;background:transparent !important;box-shadow:none !important}
+#szBot .szface{width:58px;height:58px;filter:drop-shadow(0 12px 22px rgba(0,0,0,.6)) drop-shadow(0 0 14px rgba(61,224,255,.18))}
+#szBot.inhead .szface{width:34px;height:34px}
+

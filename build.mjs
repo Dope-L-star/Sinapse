@@ -43,7 +43,7 @@ if (bad) process.exit(1);
    Las funciones de api/ las arma Vercel aparte, por eso tampoco van aquí. */
 if (dist){
   const { transform } = await import('esbuild');
-  const out = join(here, 'dist'), SKIP = new Set(['dist', 'cloudflare', 'functions', 'vercel-portal', 'next', 'escritorio', 'node_modules', 'src', 't', 'api', 'build.mjs', 'package.json', 'package-lock.json', 'vercel.json', '.git', '.github', '.vercelignore', '.gitignore']);
+  const out = join(here, 'dist'), SKIP = new Set(['dist', 'cloudflare', 'functions', 'vercel-portal', 'next', 'escritorio', 'rust', 'node_modules', 'src', 't', 'api', 'build.mjs', 'package.json', 'package-lock.json', 'vercel.json', '.git', '.github', '.vercelignore', '.gitignore']);
   rmSync(out, { recursive:true, force:true }); mkdirSync(out);
   for (const f of readdirSync(here)) if (!SKIP.has(f) && !f.endsWith('.md')) cpSync(join(here, f), join(out, f), { recursive:true });
   let before = 0, after = 0;

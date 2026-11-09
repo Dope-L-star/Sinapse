@@ -60,8 +60,21 @@ function paintPay(){
   if (mode === 'cmp'){ c = ''; l = 'Comparando · cada IA cuenta como un mensaje'; s = 'Cada IA cuenta como un mensaje'; }
   else if (trialOn){ const left = trialLeft(), mx = (SZ.trialGet() || {}).max || 5; c = 'tr'; ex = true; l = left > 0 ? 'Prueba guiada · te quedan ' + left + ' de ' + mx + ' · la paga SymphorIA' : 'Prueba guiada terminada'; s = left > 0 ? 'Prueba · ' + left + ' de ' + mx + ' · paga SymphorIA' : 'Prueba terminada'; }
   else { const id = selId(), p = payOf(id); c = p[0]; l = p[1]; s = p[2]; if (!connected(id)){ c = 'off'; l = /^pu:/.test(id) ? 'Puter · sin conectar' : l; s = /^pu:/.test(id) ? 'Puter sin conectar' : s; } }
-  const P = $('#payL'), M = $('#payM');
+  const P = $('#payL');
+  /* v4.3 (8 nov) · Sammuel: bajo la caja ya no va «Gratis · te queda 100 % de EnerX» (eso ya se ve arriba y en la barra),
+     sino el aviso de siempre: «<la IA> puede equivocarse. Revisa lo importante.». Se queda el texto de antes solo cuando
+     hay algo que hacer: la prueba guiada (con su «Salir») o una IA que no está disponible / sin conectar. */
+  if (P && !ex && !/off/.test(c)){ P.className = 'payl note'; P.textContent = errTxt(); return paintPayM(c, s); }
   if (P){ P.className = 'payl ' + c; P.innerHTML = '<i aria-hidden="true"></i>' + esc(l) + (ex ? '<button type="button" class="lnk" data-tx="exit">Salir</button>' : ''); }
+  paintPayM(c, s);
+}
+function errTxt(){
+  if (mode === 'cmp') return 'Las IAs pueden equivocarse. Revisa lo importante.';
+  const id = selId(), m = !agentOn() && id !== 'sz:auto' && info(id);
+  return m && m.name && !/^Autom/i.test(m.name) ? m.name + ' puede equivocarse. Revisa lo importante.' : 'La IA puede equivocarse. Revisa lo importante.';
+}
+function paintPayM(c, s){
+  const M = $('#payM');
   if (M){
     const bar = !document.body.classList.contains('fresh') && mode !== 'cmp' && !trialOn && (c === 'sz' || agentOn());
     if (bar){ const pc = SZ.battPct(), lv = SZ.limLvl();
@@ -110,7 +123,7 @@ function renderNow(){
 function renderFoot(){
   const left = SZ.msgsLeft(), lv = SZ.limLvl();
   /* v3.0 · «Medidor del día» como batería: la pila se descarga mientras chateas y se carga a medianoche */
-  const k = Math.max(0, 1 - SZ.limPct()), g = SZ.isGuestQ(), big = g ? SZ.guestLeft() + '' : SZ.battPct() + ' %', of = g ? SZ.t('enerx.of', { n:SZ.SZQ.guest.max || 5 }) : SZ.SZQ.team ? 'sin límite · equipo' : k > 0 ? 'se carga a medianoche' : 'sin EnerX · se carga a medianoche';
+  const k = Math.max(0, 1 - SZ.limPct()), g = SZ.isGuestQ(), big = SZ.battPct() + ' %', of = g ? SZ.t('enerx.ofGuest') : SZ.SZQ.team ? 'sin límite · equipo' : k > 0 ? 'se carga a medianoche' : 'sin EnerX · se carga a medianoche';
   $('#sideFoot').innerHTML = '<button class="sxfoot lim gauge gbatt ' + lv + '" id="sxBtn" type="button" title="Tu EnerX de hoy (tu batería): toca para ver el detalle">'
     + '<span class="gz-t">EnerX de hoy</span>' + SZ.limRing(40)
     + '<span class="gz-n"><b>' + esc(big) + '</b><small>' + esc(of) + '</small></span><span class="sr">' + esc(SZ.limTxt()) + '</span></button>';

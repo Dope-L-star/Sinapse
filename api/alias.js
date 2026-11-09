@@ -7,6 +7,10 @@
      route = { cat, model, name, prov, why:'quality'|'fast'|'learned'|'backup'|'synth', first?, slow?, voices? } (también en plan.route)
    { action:'feedback', lang, cat, model, up } → { ok }   (👍/👎 de la persona: la próxima elección lo tiene en cuenta)
    { action:'rutas', lang } → { ok, cats:{ <tipo>:[{ name, prov, n, rate, ms, up, down }] }, today:{ ok, fail } }   (lo aprendido)
+   v4.3 · agente que trabaja solo: la persona aprueba el plan una vez y puede escribir algo a mitad de camino.
+   { action:'ajustar', lang, plan, done:[ids], note } → { ok, steps:[{ id, title, tool, input }], reply, changed }
+     done = pasos hechos o en marcha (no se tocan). steps = los pasos que faltan, ya ajustados a la nota (ids nuevos).
+     plan.notes = lo que la persona fue añadiendo (máx. 6); cada paso lo lee como indicación suya.
    (v3.0: el último paso de razonar se hace con Síntesis: 4 IAs y se combinan en una; synth:false lo apaga. synth = { voices:[{ name, prov, text, aporte? }], fused })
    Errores: { ok:false, error } · límite diario: { ok:false, error, limit:true }
    Textos visibles: todos salen de alias-textos.json (raíz, para que viaje con la función) con t(). Los prompts del modelo no se ven y viven aquí. */
@@ -16,7 +20,7 @@ import { chat, pickKeys, searchWith, searchWiki, markPay, PAY_RX, classify } fro
 import { webRule } from './_web-regla.js';
 import { classify as kindOf, pick, why, record, feedback, learned, used, CATS } from './_ruta.js';
 
-const MAX_GOAL = 500, MAX_STEPS = 7, MIN_STEPS = 3;
+const MAX_GOAL = 500, MAX_STEPS = 7, MIN_STEPS = 3, MAX_TOTAL = 9, MAX_NOTES = 6, MAX_NOTE = 300;   /* con notas el plan puede crecer hasta 9 pasos */
 const TOOLS = ['search', 'file', 'memory', 'image', 'think'];
 const PLANS_DAY = +process.env.SYNTHZ_ALIAS_PLANS || 8;           /* por persona y día (el equipo ×2) */
 const STEPS_DAY = +process.env.SYNTHZ_ALIAS_STEPS || 50;
@@ -143,16 +147,17 @@ function jsonOf(txt){
   for (const x of [s, fixed, fixed + ']}', fixed + '}', fixed + '}]}']){ try{ return JSON.parse(x); }catch(e){} }   /* los últimos casos arreglan respuestas cortadas */
   return null;
 }
-function cleanSteps(raw, keepIds, min){
+function cleanSteps(raw, keepIds, min, max = MAX_STEPS){
   const arr = Array.isArray(raw) ? raw : raw && Array.isArray(raw.steps) ? raw.steps : null; if (!arr) return null;
   const out = [], used = new Set();
   for (const x of arr){
     if (!x || typeof x !== 'object') continue;
     const tool = TOOLS.includes(String(x.tool || '').toLowerCase().trim()) ? String(x.tool).toLowerCase().trim() : 'think';
     const title = str(x.title, 90), input = str(x.input, 400); if (!title && !input) continue;
-    let id = out.length + 1; if (keepIds && Number.isInteger(+x.id) && +x.id >= 1 && +x.id <= 20 && !used.has(+x.id)) id = +x.id;
+    let id = out.length + 1; if (keepIds && Number.isInteger(+x.id) && +x.id >= 1 && +x.id <= 99 && !used.has(+x.id)) id = +x.id;
+    while (used.has(id)) id++;
     used.add(id); out.push({ id, title:title || str(input, 60), tool, input:input || title });
-    if (out.length >= MAX_STEPS) break;
+    if (out.length >= max) break;
   }
   return out.length >= min ? out : null;
 }
@@ -202,9 +207,12 @@ async function doPlan(req, me, b, lang){
 /* ---------- action: step ---------- */
 function cleanPlan(p){
   if (!p || typeof p !== 'object') return null;
-  const goal = str(p.goal, MAX_GOAL), steps = cleanSteps(p.steps, true, 1);   /* el plan viaja con el cliente: se vuelve a validar siempre */
-  return goal && steps ? { goal, steps } : null;
+  const goal = str(p.goal, MAX_GOAL), steps = cleanSteps(p.steps, true, 1, MAX_TOTAL);   /* el plan viaja con el cliente: se vuelve a validar siempre */
+  return goal && steps ? { goal, steps, notes:cleanNotes(p.notes) } : null;
 }
+const cleanNotes = n => (Array.isArray(n) ? n : []).map(x => str(x, MAX_NOTE)).filter(Boolean).slice(-MAX_NOTES);
+/* lo que la persona escribió mientras trabajaba: lo dice ella (como el objetivo), así que va como indicación, no como <datos> */
+const notesTxt = plan => plan.notes && plan.notes.length ? '\nIndicaciones que la persona añadió después (síguelas; si chocan con el plan, mandan ellas):\n' + plan.notes.map(n => '- ' + n).join('\n') : '';
 function cleanPrev(prev, plan){
   return (Array.isArray(prev) ? prev.slice(-6) : []).map(p => {
     if (typeof p === 'string') return { title:'', output:clip(p, 1500) };
@@ -214,6 +222,7 @@ function cleanPrev(prev, plan){
   }).filter(x => x && x.output);
 }
 const ctx = (plan, step, prev) => 'Objetivo: ' + plan.goal + '\nPlan: ' + plan.steps.map(s => s.id + '. ' + s.title).join(' | ')
+  + notesTxt(plan)
   + '\nPaso actual (' + step.id + '): ' + step.title + ' — ' + step.input
   + (prev.length ? '\nResultados de pasos anteriores:\n' + datos(prev.map(p => (p.title ? '[' + p.title + '] ' : '') + p.output).join('\n---\n')) : '');
 
@@ -307,6 +316,32 @@ async function doStep(req, me, b, lang){
   }
 }
 
+/* ---------- action: ajustar (v4.3) · la persona escribe algo con el plan en marcha y A.L.I.A.S. rehace solo lo que falta ---------- */
+async function doAdjust(req, me, b, lang){
+  const plan = cleanPlan(b.plan); if (!plan) throw A('srv.planRoto');
+  const note = str(b.note, MAX_NOTE); if (note.length < 2) throw A('srv.notaVacia');
+  const fixed = new Set((Array.isArray(b.done) ? b.done : []).map(x => Math.round(+x)));
+  const done = plan.steps.filter(s => fixed.has(s.id)), rest = plan.steps.filter(s => !fixed.has(s.id));
+  const room = Math.max(1, MAX_TOTAL - done.length), next = Math.max(0, ...plan.steps.map(s => s.id)) + 1;
+  const keep = { ok:true, steps:rest, reply:t(lang, 'srv.notaAnotada'), changed:false };   /* si la IA no ayuda: la nota igual viaja en plan.notes */
+  if (!rest.length && !done.length) return json(keep);
+  const undo = await spend(me.sub, 's', STEPS_DAY * mult(me));
+  let txt; const R = {};
+  try{
+    txt = await ask(req, me, lang, 'Objetivo: ' + plan.goal + notesTxt(plan)
+      + '\nPasos ya hechos o en marcha (NO se tocan): ' + (done.length ? done.map(s => s.title + ' [' + s.tool + ']').join(' | ') : 'ninguno')
+      + '\nPasos que faltan: ' + (rest.length ? rest.map(s => s.title + ' [' + s.tool + '] — ' + s.input).join(' | ') : 'ninguno')
+      + '\n\nLa persona acaba de escribir: «' + note + '»\n\nAjusta SOLO los pasos que faltan para cumplir eso: puedes cambiarlos, quitarlos o añadir pasos (máximo ' + room + ' en total). '
+      + 'Si ya no falta ninguno, añade los pasos necesarios para aplicar el cambio al resultado. Si lo que pide ya está cubierto, devuelve los mismos pasos. El último paso entrega el resultado final. '
+      + 'Herramientas: search, file, memory, image, think (las mismas de antes). '
+      + 'Responde SOLO con JSON, sin ```: {"reply":"una frase corta en ' + t(lang, 'srv.idiomaNombre') + ', en primera persona, diciendo qué cambiaste","steps":[{"title":"máx. 8 palabras","tool":"search|file|memory|image|think","input":"máx. 200 caracteres"}]}', 700, 'plan', R);
+  }catch(e){ await undo(); if (e.code === 'sz_limit' || e.code === 'sz_limit_ip') throw e; return json(keep); }
+  const j = jsonOf(txt), steps = cleanSteps(j, false, 1, room);
+  if (!steps){ await undo(); return json(keep); }
+  steps.forEach((s, i) => { s.id = next + i; });
+  return json({ ok:true, steps, reply:str(j && j.reply, 200) || t(lang, 'srv.notaAplicada'), changed:true });
+}
+
 /* ---------- v3.9 · 👍/👎 de la persona sobre la IA que eligió el enrutador (un voto por persona, modelo y tipo al día) ---------- */
 async function doFeedback(me, b){
   const cat = String(b.cat || ''), model = String(b.model || '');
@@ -336,6 +371,7 @@ export default route({
       await limit('alias:' + me.sub, 30, 60);
       if (b.action === 'plan') return await doPlan(req, me, b, lang);
       if (b.action === 'step') return await doStep(req, me, b, lang);
+      if (b.action === 'ajustar') return await doAdjust(req, me, b, lang);
       if (b.action === 'feedback') return await doFeedback(me, b);
       if (b.action === 'rutas') return json(Object.assign({ ok:true }, await learned()));
       throw A('srv.accion');

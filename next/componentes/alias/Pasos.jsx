@@ -1,14 +1,11 @@
 'use client';
-/* A.L.I.A.S. · lista de pasos: mover, renombrar y borrar antes de ejecutar; rehacer después. */
+/* A.L.I.A.S. · lista de pasos: mover, renombrar, borrar y añadir antes de aprobar; después se vuelve la línea de trabajo en vivo. */
 import { useEffect, useRef, useState } from 'react';
 import { Icono } from './iconos';
 import { Texto } from './Resultado';
 
 const TOOLS = ['search', 'file', 'memory', 'image', 'think'];
 
-function Punto({ st }) {
-  return <span className="sdot" aria-hidden="true">{st === 'done' ? <Icono n="check" /> : st === 'error' ? <Icono n="x" /> : st === 'running' ? <i className="ring" /> : <i className="hole" />}</span>;
-}
 function Btn({ act, icon, label, off, wide, onClick }) {
   return (
     <button type="button" className={'iconbtn' + (off ? ' is-off' : '') + (wide ? ' wide' : '')} data-act={act}
@@ -64,6 +61,19 @@ function Ruta({ rt, id, S, t }) {
   );
 }
 
+/* v4.3 · agente: el paso en marcha dice en vivo «Voy a continuar con: …», quién lo hace y cuánto lleva */
+function EnVivo({ S, st, n, t }) {
+  const sec = S.t0[st.id] ? Math.max(0, Math.round((Date.now() - S.t0[st.id]) / 1000)) : 0;
+  const prevRt = S.plan.steps.map((x) => S.results[x.id] && S.results[x.id].route).filter(Boolean).pop();
+  const who = (prevRt && prevRt.name) || t('ag_una_ia');
+  return (
+    <div className="pa-live" data-alias="live">
+      <span className="pa-livepill"><span className="pa-shim">{t(n === 1 ? 'ag_empiezo' : 'ag_continuo')} <b>{st.title}</b></span></span>
+      <span className="pa-sub">{S.retrying === st.id ? t('ag_reintento') : t('ag_hace_' + (TOOLS.includes(st.tool) ? st.tool : 'think'), { name: who })} · {t('ag_seg', { s: sec })}</span>
+    </div>
+  );
+}
+
 export default function Pasos({ S, t, act, focusRef }) {
   const steps = S.plan.steps, total = steps.length;
   const editable = S.phase === 'edit', canRedo = S.phase !== 'edit' && S.phase !== 'running';
@@ -72,26 +82,29 @@ export default function Pasos({ S, t, act, focusRef }) {
   const pop = {};
   steps.forEach((st) => { const was = prev.current[st.id]; if ((S.status[st.id] || 'pending') === 'done' && was && was !== 'done') pop[st.id] = true; });
   useEffect(() => { const o = {}; steps.forEach((st) => { o[st.id] = S.skipped[st.id] ? 'skipped' : S.status[st.id] || 'pending'; }); prev.current = o; });
+  const doneN = steps.filter((st) => (S.status[st.id] || '') === 'done' || S.skipped[st.id]).length;
 
   return (
-    <ol id="stepList" className="steps" aria-label={t('pasos_lista_aria')}>
+    <ol id="stepList" className={'steps pa-steps' + (editable ? ' is-edit' : '')} aria-label={t('pasos_lista_aria')} style={{ '--pdone': (total ? Math.round((doneN / total) * 100) : 0) + '%' }}>
       {steps.map((st, i) => {
         const n = i + 1, stt = S.status[st.id] || 'pending', skipped = !!S.skipped[st.id], r = S.results[st.id];
-        const key = String(st.id);
+        const key = String(st.id), live = stt === 'running' && S.cur === st.id;
         return (
-          <li key={key} className={'step' + (pop[st.id] ? ' pop' : '')} data-alias="step" data-id={key} data-status={skipped ? 'skipped' : stt}
-            aria-current={S.cur === st.id && S.phase === 'running' ? 'step' : undefined} ref={(el) => { if (el) focusRef.current[key] = el; }}>
-            <span className="num" aria-hidden="true">{n}</span>
-            <Punto st={stt} />
+          <li key={key} className={'step st-' + (skipped ? 'skipped' : stt) + (pop[st.id] ? ' pop' : '') + (S.fresh[st.id] ? ' fresh' : '')} data-alias="step" data-id={key} data-status={skipped ? 'skipped' : stt}
+            aria-current={live ? 'step' : undefined} ref={(el) => { if (el) focusRef.current[key] = el; }}>
+            <span className="sdot" aria-hidden="true">{stt === 'done' ? <Icono n="check" /> : stt === 'error' ? <Icono n="x" /> : n}</span>
             <div className="sbody">
-              {S.editing === st.id
+              {live ? <EnVivo S={S} st={st} n={n} t={t} /> : S.editing === st.id
                 ? <Renombrar st={st} n={n} t={t} onDone={(v, save) => act('rename', st.id, { v, save })} />
-                : <div className="stitle" data-alias="step-title">{st.title || t('paso_n', { n })}</div>}
-              <div className="smeta">
-                <span className="stag">{t('paso_n', { n })}</span>
-                {TOOLS.includes(st.tool) ? <span className="stool">{t('tool_' + st.tool)}</span> : null}
-                <span className="sst">{t(skipped ? 'st_skipped' : 'st_' + stt)}</span>
-              </div>
+                : <div className="stitle" data-alias="step-title">{st.title || t('paso_n', { n })}{S.fresh[st.id] ? <span className="pa-new">{t('ag_nuevo')}</span> : null}</div>}
+              {live ? null : (
+                <div className="smeta">
+                  {TOOLS.includes(st.tool) ? <span className="stool">{t('tool_' + st.tool)}</span> : null}
+                  {stt === 'done' && r && r.route && r.route.name ? <span>{r.route.name}</span> : null}
+                  {stt === 'done' && S.ms[st.id] ? <span>{t('ag_seg', { s: Math.max(1, Math.round(S.ms[st.id] / 1000)) })}</span> : null}
+                  {skipped || stt === 'error' ? <span className="sst">{t(skipped ? 'st_skipped' : 'st_' + stt)}</span> : null}
+                </div>
+              )}
               {stt === 'error' && S.errors[st.id] ? <div className="serr">{S.errors[st.id]}</div> : null}
               {r && r.route && r.route.cat && stt === 'done' ? <Ruta rt={r.route} id={st.id} S={S} t={t} /> : null}
               {r && (r.output || '').trim() ? (
@@ -112,6 +125,9 @@ export default function Pasos({ S, t, act, focusRef }) {
           </li>
         );
       })}
+      {editable && total < 9 ? (
+        <li className="step pa-add"><button type="button" className="pa-addbtn" data-act="add" onClick={() => act('add')}><span className="sdot" aria-hidden="true">+</span>{t('ag_anadir')}</button></li>
+      ) : null}
     </ol>
   );
 }

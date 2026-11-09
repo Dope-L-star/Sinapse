@@ -128,7 +128,7 @@ async function send(){
   if (Object.keys(busy).length){ toast('Espera a que termine de responder, o detenla con el botón ■.'); return; }
   if (files.some(f => f.state === 'load')){ toast('Espera a que terminen de cargar los archivos.'); return; }
   try{ SZ.setTurn(text + '|' + Date.now()); }catch(e){}
-  if (trialOn && trialLeft() <= 0){ toast('Se acabaron tus mensajes de prueba.'); const tb = $('#trialBar'); tb.classList.remove('pulse'); void tb.offsetWidth; tb.classList.add('pulse'); return; }
+  if (trialOn && trialLeft() <= 0){ toast('Se acabó tu EnerX de prueba.'); const tb = $('#trialBar'); tb.classList.remove('pulse'); void tb.offsetWidth; tb.classList.add('pulse'); return; }
   if (!budgetOk()) return;
   /* v3.8 · si todavía se está comprobando la IA que elegiste, espera esa respuesta (1-2 s); si no responde, tu texto se queda en la caja */
   { const h = HEALTH.get(selId()), m1 = selId(); if (h && h.p){ sendBtn.disabled = true; try{ await h.p; }finally{ sendBtn.disabled = false; } if (selId() !== m1) return; } }
@@ -317,7 +317,7 @@ async function runSolo(onFail, o = {}){
   };
   try{
     let r = !o.fresh && canCache ? cacheGet(ck) : null;
-    if (r){ r = Object.assign({}, r, { ms:0, cached:true }); st().sx.saved += r.prompt + r.completion; st().sx.hits += 1; save(); mount(); if (rv) rv.push(r.text); }
+    if (r){ r = Object.assign({}, r, { ms:0, cached:true }); st().sx.saved += r.prompt + r.completion; st().sx.hits += 1; save(); mount(); if (rv) rv.push(sinMarcas(r.text)); }
     else {
       const ctl = new AbortController(); ctls.add(ctl);
       try{ r = await SZ.askStream(OR, sent, Object.assign({ model:mid, maxTokens: saver ? 700 : 0, signal:ctl.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { if (holdWeb(txt)) return; txt = sinMarcas(txt); mount(); W.write(txt); if (rv) rv.push(txt); }); }finally{ ctls.delete(ctl); }
@@ -360,7 +360,7 @@ async function runSolo(onFail, o = {}){
     }
     if (!r.aborted) r.text = limpiaBucles(r.text);
     /* v4.0 · las marcas de título y memoria se quitan del texto y se usan */
-    { const mk = marcas(r.text); r.text = mk.text || r.text; if (!r.aborted){ titleSet(chat, mk.title); memNext = mk.mem; } }
+    { const mk = marcas(r.text); if (mk.text !== String(r.text || '').trim()) r.text = mk.text || (SZ.lang() === 'en' ? '(The AI returned an empty answer.)' : '(La IA devolvió una respuesta vacía.)'); if (!r.aborted){ titleSet(chat, mk.title); memNext = mk.mem; } }
     const tail = r.aborted ? ' · detenido' : r.cut ? ' · se cortó la conexión' : r.finish === 'length' ? ' · se cortó porque era muy larga (toca «Continuar»)' : '';
     const who = r.swapped ? ' · se acabó tu saldo de Puter este mes; respondió ' + (r.real || 'otra IA') : '';
     W.write(r.text); W.finish({ ms:r.ms, real:r.real || '' });

@@ -167,19 +167,19 @@ Object.assign(I18N.es, {
   'enerx.of': 'de {enerx} · se carga a medianoche',
   'enerx.ofEmpty': 'sin {enerx} · se carga a medianoche',
   'enerx.used': ' · usó {u} % de tu {enerx} · te queda {n} %',
-  'enerx.usedGuest': ' · sin cuenta: te quedan {n} mensajes hoy',
-  'enerx.usedGuest1': ' · sin cuenta: te queda 1 mensaje hoy',
+  'enerx.usedGuest': ' · sin cuenta: te queda {n} % de {enerx}',
+  'enerx.usedGuest1': ' · sin cuenta: te queda {n} % de {enerx}',
   'enerx.small': 'Gratis. Tu {enerx} (tu batería) baja un poco con cada mensaje (lo que escribes y lo que te responde). A medianoche se carga al 100 %.',
   'enerx.hint': 'Tu {enerx} de hoy (tu batería): toca para ver el detalle',
-  'enerx.guestLeft': 'Te quedan {n} mensajes hoy',
-  'enerx.guestLeft1': 'Te queda 1 mensaje hoy',
-  'enerx.guestNone': 'Te quedan 0 mensajes hoy · entra para seguir',
-  'enerx.of': 'de {n} mensajes de hoy',
-  'enerx.spent': 'Usaste 1 mensaje. Te quedan {n} hoy.',
-  'enerx.spent1': 'Usaste 1 mensaje. Te queda 1 hoy.',
-  'enerx.spent0': 'Usaste tu último mensaje de hoy.',
-  'enerx.guestShort': '{n} mensajes',
-  'enerx.guestShort1': '1 mensaje',
+  'enerx.guestLeft': 'Te queda {n} % de {enerx}',
+  'enerx.guestLeft1': 'Te queda {n} % de {enerx}',
+  'enerx.guestNone': 'Sin {enerx} de prueba · entra gratis para seguir',
+  'enerx.ofGuest': 'de {enerx} de prueba · entra gratis para más',
+  'enerx.spent': 'Te queda {n} % de {enerx}.',
+  'enerx.spent1': 'Te queda {n} % de {enerx}.',
+  'enerx.spent0': 'Se acabó tu {enerx} de prueba por hoy.',
+  'enerx.guestShort': '{n} %',
+  'enerx.guestShort1': '{n} %',
   'enerx.rest': 'Las IAs gratis están descansando',
   'enerx.restShort': 'Descansando',
   'enerx.signin': 'Entra a tu cuenta para seguir FlowIAndo',
@@ -206,19 +206,19 @@ Object.assign(I18N.en, {
   'enerx.of': '{enerx} · recharges at midnight',
   'enerx.ofEmpty': 'no {enerx} · recharges at midnight',
   'enerx.used': ' · used {u} % of your {enerx} · {n} % left',
-  'enerx.usedGuest': ' · without an account: {n} messages left today',
-  'enerx.usedGuest1': ' · without an account: 1 message left today',
+  'enerx.usedGuest': ' · without an account: {n} % {enerx} left',
+  'enerx.usedGuest1': ' · without an account: {n} % {enerx} left',
   'enerx.small': 'Free. Your {enerx} (your battery) drops a little with each message (what you write and what you get back). At midnight it recharges to 100 %.',
   'enerx.hint': "Today's {enerx} (your battery): tap for details",
-  'enerx.guestLeft': '{n} messages left today',
-  'enerx.guestLeft1': '1 message left today',
-  'enerx.guestNone': '0 messages left today · sign in to keep going',
-  'enerx.of': 'of {n} messages today',
-  'enerx.spent': 'You used 1 message. {n} left today.',
-  'enerx.spent1': 'You used 1 message. 1 left today.',
-  'enerx.spent0': 'You used your last message for today.',
-  'enerx.guestShort': '{n} messages',
-  'enerx.guestShort1': '1 message',
+  'enerx.guestLeft': '{n} % {enerx} left',
+  'enerx.guestLeft1': '{n} % {enerx} left',
+  'enerx.guestNone': 'Trial {enerx} used up · sign in free to keep going',
+  'enerx.ofGuest': 'of trial {enerx} · sign in free for more',
+  'enerx.spent': '{n} % {enerx} left.',
+  'enerx.spent1': '{n} % {enerx} left.',
+  'enerx.spent0': 'Your trial {enerx} is used up for today.',
+  'enerx.guestShort': '{n} %',
+  'enerx.guestShort1': '{n} %',
   'enerx.rest': 'The free AIs are resting',
   'enerx.restShort': 'Resting',
   'enerx.signin': 'Sign in to keep going',
@@ -786,7 +786,7 @@ Object.assign(I18N.en,{
 Object.assign(I18N.es,{
  "ix.stOn":"Listas",
  "ix.stOff":"Descansando",
- "ix.connDesc":"Las IAs conectadas son IAs gratis que ya vienen listas en SymphorIA. No tienes que configurar nada ni dar tarjeta: solo escribes. Sin cuenta pruebas con 5 mensajes al día; con tu cuenta gratis, mucho más. Si una está llena, pasa sola a otra.",
+ "ix.connDesc":"Las IAs conectadas son IAs gratis que ya vienen listas en SymphorIA. No tienes que configurar nada ni dar tarjeta: solo escribes. Sin cuenta pruebas con una EnerX de prueba cada día; con tu cuenta gratis dura mucho más. Si una está llena, pasa sola a otra.",
  "ix.today":"hoy",
  "ix.in14":"en 14 días",
  "ix.topDay":"tu día más activo",
@@ -870,8 +870,8 @@ Object.assign(I18N.es, { 'pm.spent':'palabras de '+ENERX+' gastadas hoy · IAs c
 Object.assign(I18N.en, { 'pm.spent':ENERX+' words spent today · connected AIs', 'pm.capP':'How much each person can use per day with the connected AIs (Puter does not count). Stored in tokens: {tok} tokens ≈ {w} '+ENERX+' words (one word ≈ 4/3 of a token). Between 1,000 and 500,000.' });
 Object.assign(I18N.es, { 'pm.test':'Probar', 'pm.del':'Quitar', 'pm.deling':'Quitando…', 'pm.delQ':'¿Quitar la llave de {n}?', 'pm.delP':'Se borra del servidor y deja de usarse para las IAs conectadas. Las llaves de los demás siguen funcionando.', 'pm.delPo':'Es la llave de otra persona del equipo. Se borra del servidor y deja de usarse para las IAs conectadas.', 'pm.deled':'Llave de {n} quitada.' });
 Object.assign(I18N.en, { 'pm.test':'Test', 'pm.del':'Remove', 'pm.deling':'Removing…', 'pm.delQ':'Remove the {n} key?', 'pm.delP':'It is deleted from the server and stops being used for the connected AIs. Everyone else\'s keys keep working.', 'pm.delPo':'This key belongs to someone else on the team. It is deleted from the server and stops being used for the connected AIs.', 'pm.deled':'{n} key removed.' });
-Object.assign(I18N.es, { 'enerx.guest':'Sin cuenta tienes {n} mensajes al día. Con tu cuenta gratis tienes mucho más.', 'enerx.puter':'Si se acaba, puedes seguir con Puter, que te da la versión pro de las IAs más usadas.' });
-Object.assign(I18N.en, { 'enerx.guest':'Without an account you get {n} messages a day. With your free account you get much more.', 'enerx.puter':'If it runs out, you can keep going with Puter, which gives you the pro version of the most popular AIs.' });
+Object.assign(I18N.es, { 'enerx.guest':'Sin cuenta tienes una {enerx} de prueba. Con tu cuenta gratis tienes mucha más.', 'enerx.puter':'Si se acaba, puedes seguir con Puter, que te da la versión pro de las IAs más usadas.' });
+Object.assign(I18N.en, { 'enerx.guest':'Without an account you get a trial {enerx}. With your free account you get much more.', 'enerx.puter':'If it runs out, you can keep going with Puter, which gives you the pro version of the most popular AIs.' });
 /* ===== v3.0 · SynthFlow y las ventanas de core en inglés =====
    SynthFlow arma sus textos en JS (miles de trozos). En vez de cambiar cada uno por t(), cuando el idioma es inglés
    se trae idioma-en.json (español → inglés, solo si hace falta) y se traduce lo que aparece en pantalla:
@@ -2016,9 +2016,9 @@ const spentPct = (tok, after) => {
   const a = after == null ? SZQ.used || 0 : after;
   return String(Math.max(1, battAt(a - tok) - battAt(a)));
 };
-const coinNote = (mid, r) => /^sz:/.test(String(mid)) && r && !r.cached && ((r.prompt || 0) + (r.completion || 0)) > 0 ? (isGuestQ() ? gN('enerx.usedGuest', guestLeft()) : t('enerx.used', { u:spentPct((r.prompt || 0) + (r.completion || 0)), n:battPct() })) : '';
-const limTxt = () => SZQ.on === false ? t('enerx.rest') : guestFull() ? t('enerx.guestNone') : isGuestQ() ? gN('enerx.guestLeft', guestLeft()) : limPct() >= 1 ? t('enerx.empty') : t('enerx.left', { n:battPct() });
-const limShort = () => SZQ.on === false ? t('enerx.restShort') : isGuestQ() ? gN('enerx.guestShort', guestLeft()) : limPct() >= 1 ? t('enerx.emptyShort') : battPct() + ' %';
+const coinNote = (mid, r) => /^sz:/.test(String(mid)) && r && !r.cached && ((r.prompt || 0) + (r.completion || 0)) > 0 ? (isGuestQ() ? t('enerx.usedGuest', { n:battPct() }) : t('enerx.used', { u:spentPct((r.prompt || 0) + (r.completion || 0)), n:battPct() })) : '';
+const limTxt = () => SZQ.on === false ? t('enerx.rest') : guestFull() ? t('enerx.guestNone') : isGuestQ() ? t('enerx.left', { n:battPct() }) : limPct() >= 1 ? t('enerx.empty') : t('enerx.left', { n:battPct() });
+const limShort = () => SZQ.on === false ? t('enerx.restShort') : guestFull() ? t('enerx.emptyShort') : isGuestQ() ? battPct() + ' %' : limPct() >= 1 ? t('enerx.emptyShort') : battPct() + ' %';
 const limLvl = () => { const k = limPct(); return k >= 1 ? 'full' : k >= .8 ? 'warn' : 'ok'; };
 /* la pila: cuerpo de vidrio, polo y carga que baja; con poca carga se pone ámbar y vacía, coral. size = alto de referencia (antes era el anillo) */
 function limRing(size){
@@ -2027,7 +2027,7 @@ function limRing(size){
 }
 function limBar(o = {}){
   const k = 1 - limPct();
-  return '<div class="lbar ' + limLvl() + '"><div class="lb-h"><b>' + (o.title || t('enerx.today')) + '</b><span>' + limTxt() + '</span></div><div class="lb-t"><i style="transform:scaleX(' + k.toFixed(3) + ')"></i></div>' + (o.small === false ? '' : '<small>' + (isGuestQ() ? t('enerx.guest', { n:SZQ.guest.max || 5 }) + ' ' : '') + t('enerx.small') + (o.puter ? ' ' + t('enerx.puter') : '') + '</small>') + '</div>';
+  return '<div class="lbar ' + limLvl() + '"><div class="lb-h"><b>' + (o.title || t('enerx.today')) + '</b><span>' + limTxt() + '</span></div><div class="lb-t"><i style="transform:scaleX(' + k.toFixed(3) + ')"></i></div>' + (o.small === false ? '' : '<small>' + (isGuestQ() ? t('enerx.guest') + ' ' : '') + t('enerx.small') + (o.puter ? ' ' + t('enerx.puter') : '') + '</small>') + '</div>';
 }
 /* v3.4 · las IAs conectadas que ven fotos (el servidor usa la misma lista: api/_pool.js VISION_RX). Automática también: con fotos elige sola una que ve */
 const SZ_VISION = /gemini|gemma-3(?!n)|llama-4|pixtral|mistral-(small|medium)|[-_/]vl\b|-vl-|vision|qwen2\.5-vl|kimi-vl/i;
@@ -3361,7 +3361,7 @@ const newRid = () => DEV + ':' + Date.now().toString(36) + ':' + (++ridN);
 /* v3.6 · avisa cada vez que se gasta un mensaje de prueba (sin cuenta o la prueba guiada), con lo que queda de verdad según el servidor */
 function spentNote(before, after){
   if (!(before > after)) return;
-  try{ toast(after > 0 ? t(after === 1 ? 'enerx.spent1' : 'enerx.spent', { n:after }) : t('enerx.spent0')); }catch(e){}
+  try{ toast(after > 0 ? t('enerx.spent', { n:battPct() }) : t('enerx.spent0')); }catch(e){}   /* v4.3 · solo energía en %, nunca «mensajes» (Sammuel, 9 nov) */
 }
 async function askStream(p, messages, opts = {}, onDelta){
   const sig = opts.signal, t0 = performance.now(); let acc = '', ttft = 0, usage = null, fin = '', cut = '', via = '', provX = '', real = '', swap = false;
@@ -3436,7 +3436,7 @@ async function askStream(p, messages, opts = {}, onDelta){
   if (viaTeam) body.teamId = state.useTeam;
   if (opts.maxTokens) body.max_tokens = opts.maxTokens;
   if (opts.effort && viaSz) body.effort = opts.effort;   /* v4.0 · el servidor usa el esfuerzo para decidir si la IA piensa antes (Alto) o responde directo (Bajo) */
-  if (opts.effort && p.id === 'openrouter' && !viaSz && !viaGroq && !viaTrial) body.reasoning = { effort:opts.effort };   /* v2.3.1 · esfuerzo: OpenRouter lo ignora en las IA que no razonan */
+  if ((opts.effort === 'low' || opts.effort === 'high') && p.id === 'openrouter' && !viaSz && !viaGroq && !viaTrial) body.reasoning = { effort:opts.effort };   /* v2.3.1 · esfuerzo: OpenRouter lo ignora en las IA que no razonan */
   const ctl = new AbortController(); let idle = 0;
   const bump = () => { clearTimeout(idle); idle = setTimeout(() => ctl.abort(), 70000); };
   if (sig){ if (sig.aborted) ctl.abort(); else sig.addEventListener('abort', () => ctl.abort(), { once:true }); }
@@ -3632,7 +3632,7 @@ function helpGuide(opts){
   const S = [
     ['¿Qué es SymphorIA?', 'Un lugar para hablar con muchas IA, gratis. Escribes lo que necesitas y una IA te responde. No tienes que configurar nada.'],
     ['¿Cómo lo uso?', 'Entra a SynthFlow, escribe tu pregunta abajo y pulsa Enter. Si no sabes qué pedir, toca un ejemplo. Tus chats quedan en la barrita de la izquierda (en el celular, abajo).'],
-    ['¿Qué son las IAs conectadas?', 'Las IAs conectadas son IAs gratis que ya vienen listas en SymphorIA. No tienes que configurar nada ni dar tarjeta: solo escribes. Sin cuenta pruebas con 5 mensajes al día; con tu cuenta gratis, mucho más.'],
+    ['¿Qué son las IAs conectadas?', 'Las IAs conectadas son IAs gratis que ya vienen listas en SymphorIA. No tienes que configurar nada ni dar tarjeta: solo escribes. Sin cuenta pruebas con una EnerX de prueba cada día; con tu cuenta gratis dura mucho más.'],
     ['¿Qué es el límite de hoy?', 'Cada día tienes un límite gratis para usar las IAs conectadas. A medianoche se vuelve a llenar. El anillo se va vaciando mientras chateas.'],
     ['¿Qué es Puter y cómo lo conecto?', 'Con Puter usas la versión pro de las IAs más usadas, como ChatGPT, Claude o Gemini. Es gratis y tiene un saldo que se renueva cada mes. Se conecta en Ajustes › IAs y memoria › «Conectar Puter u otra IA» › «Conectar con Puter».'],
     ['Varias IA a la vez', 'Con «+» sumas otra IA (hasta 4). Todas responden lo mismo y tú eliges la que más te gusta con «Esta tiene más Flow».'],
@@ -3702,7 +3702,7 @@ function guestGate(o = {}){
   const el = document.createElement('div'); el.id = 'szGate'; el.className = 'szm';
   el.innerHTML = '<div class="tcard" role="dialog" aria-modal="true" aria-label="Entra para seguir"><div class="word">' + zWord('Synth') + '</div><div class="tn">SIGUE FLOWIANDO</div>'
     + '<div class="tb"><div class="gtface" aria-hidden="true">' + face('guino', 64) + '</div><h3>Para seguir FlowIAndo, entra a tu cuenta</h3>'
-    + '<p>Ya usaste tus mensajes de hoy sin cuenta. Crear tu cuenta es <b>gratis</b>, no pide correo ni tarjeta, y te da mucho más límite cada día. Además tus chats te siguen a cualquier celular o computador.</p>'
+    + '<p>Se acabó tu EnerX de prueba de hoy. Crear tu cuenta es <b>gratis</b>, no pide correo ni tarjeta, y te da mucho más límite cada día. Además tus chats te siguen a cualquier celular o computador.</p>'
     + '<div id="gateBox"></div></div><div class="tbtn" style="margin-top:14px"><button class="lnk" type="button" data-close>Ahora no</button>' + (pu ? '<button class="lnk" type="button" data-pu>Seguir con mi Puter</button>' : '') + '</div></div>';
   document.body.appendChild(el); requestAnimationFrame(() => el.classList.add('on'));
   $('.tcard', el).animate([{ transform:'scale(.92) translateY(20px)', opacity:0, filter:'blur(8px)' }, { transform:'none', opacity:1, filter:'blur(0)' }], { duration:650, easing:'cubic-bezier(.22,1,.36,1)' });
@@ -3985,7 +3985,7 @@ function appPromo(force){
   const lite = reduce || !!(navigator.connection && navigator.connection.saveData);
   const scr = APP_VIDEO ? '<video muted playsinline loop' + (lite ? ' controls' : ' autoplay') + ' preload="none" poster="' + APP_POSTER + '" width="768" height="432" aria-label="SynthFlow en acción"><source src="' + APP_VIDEO + '" type="video/mp4"></video>'
     /* v2.9: la pantalla es la SynthFlow de hoy en el celular: esfera, plan, la pregunta, el cuadro con «Automática» y la barra de abajo */
-    : '<span class="ap-top">' + flowOrb() + '<b>SynthFlow</b><i class="ap-dots"></i></span><span class="ap-chip"><i></i>Gratis · 5 mensajes</span>'
+    : '<span class="ap-top">' + flowOrb() + '<b>SynthFlow</b><i class="ap-dots"></i></span><span class="ap-chip"><i></i>Gratis · EnerX 100 %</span>'
       + '<span class="ap-q">¿Qué quieres<br><em>FlowIA’r</em> hoy?</span>'
       + '<span class="ap-m me"></span><span class="ap-m ai"><i></i><i></i><i></i></span>'
       + '<span class="ap-in"><span class="ap-auto">Automática</span><i></i></span>'
@@ -4568,15 +4568,17 @@ try{
     try{ const u = new URL(location.href); u.searchParams.delete('ayuda'); window.history.replaceState(window.history.state, '', u.pathname + u.search + u.hash); }catch(e){}
   }, 2200);
 }catch(e){}
-/* ---------- v3.0 · Planes (Chispa, Syntonia, Timeless y Orquesta) ----------
+/* ---------- v3.0 · Planes (Chispa, Chispa+, Syntonia, Timeless y Orquesta) ----------
+   v4.3 (Sammuel, 8 nov) · Chispa+: todas las IAs gratis + los modelos de pago de OpenRouter con un crédito del mes (api/_premium.js, APAGADO).
    Los pagos están APAGADOS (PENDIENTES.md › Plan de pagos): nadie puede pagar todavía y nada se cobra.
    Esta ventana solo muestra qué traerá cada plan y en cuál estás. Hoy todos están en Chispa (gratis, con las IAs gratis de siempre)
    y el equipo (Prime, ZFlow y Symmetrix) en Orquesta: sin límite de EnerX, búsquedas ni imágenes, y con los colores Aurora y Oro negro.
    El servidor es quien decide el límite (api/_pool.js › free); aquí solo se muestra. */
 const PLANS = [
   { id:'chispa', n:'Chispa', p:'Gratis', c:'#e6b65f', L:['Las IAs gratis de hoy: Groq, Gemini Flash, Mistral y más', 'Tu EnerX diaria, que se carga a medianoche', 'Imágenes con límite, internet y memoria', 'Proyectos, Sintéticos y A.L.I.A.S.'] },
-  { id:'syntonia', n:'Syntonia', p:'US$7,99 al mes', c:'#9fffd6', L:['Todo lo de Chispa con un límite mucho más amplio', '400 mensajes al mes con IAs pro (GPT, Claude, Grok, Gemini Pro)', '30 imágenes pro', 'Los colores Aurora y Oro negro'] },
-  { id:'timeless', n:'Timeless', p:'US$17,99 al mes', c:'#a98bff', L:['Todo lo de Syntonia', '900 mensajes pro y 50 con lo más potente', '80 imágenes y 2 videos cortos', 'SynthFlow en WhatsApp y Telegram'] },
+  { id:'chispaplus', n:'Chispa+', p:'US$4,99 al mes', c:'#ffb36b', L:['Todo lo de Chispa con 5 veces más EnerX', 'Cientos de IAs premium: Claude, ChatGPT, Gemini Pro y más', 'Un crédito premium cada mes; las premium gastan más EnerX', 'Si se acaba el crédito, sigues con las gratis'] },
+  { id:'syntonia', n:'Syntonia', p:'US$7,99 al mes', c:'#9fffd6', L:['Todo lo de Chispa con un límite mucho más amplio', 'EnerX extra cada mes para las IAs pro (GPT, Claude, Grok, Gemini Pro)', '30 imágenes pro', 'Los colores Aurora y Oro negro'] },
+  { id:'timeless', n:'Timeless', p:'US$17,99 al mes', c:'#a98bff', L:['Todo lo de Syntonia', 'Mucha más EnerX para las IAs pro y lo más potente', '80 imágenes y 2 videos cortos', 'SynthFlow en WhatsApp y Telegram'] },
   { id:'orquesta', n:'Orquesta', p:'US$8,99 por persona', c:'#ffd27a', L:['Para equipos (desde 3 personas)', 'Lo de Syntonia para cada persona', 'Chats y panel de equipo', 'A.L.I.A.S. con 100 veces más pasos y búsquedas', 'Hoy lo usan Prime, ZFlow y Symmetrix, sin límites, para probar todo'] }
 ];
 let szTeam = false; try{ szTeam = localStorage.getItem('synthz:team') === '1'; }catch(e){}

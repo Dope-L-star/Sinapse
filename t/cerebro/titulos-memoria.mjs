@@ -35,6 +35,17 @@ check('un saludo no se vuelve el título (queda «Charla nueva»)', t1 === 'Char
 check('las marcas no se ven en la respuesta', await p.evaluate(() => !/\[titulo/i.test(document.querySelector('#lane').innerText)));
 await shot('1-saludo.png');
 
+/* bug 3 nov: la IA escribió la marca con espacios y se veía en la respuesta */
+await say('¿Quién eres?', 'Soy SynthonIA, tu guía en SymphorIA.\n\n[ titulo: - ]');
+check('marca con espacios «[ titulo: - ]» no se ve', await p.evaluate(() => !/titulo/i.test(document.querySelector('#lane').innerText)));
+await say('¿Y qué sabes hacer?', 'Te ayudo con chats, archivos y páginas web.\n\\[ titulo: Identidad de la IA \\]');
+check('marca escapada «\\[ titulo: … \\]» no se ve', await p.evaluate(() => !/titulo/i.test(document.querySelector('#lane').innerText)));
+await shot('1b-marca-con-espacios.png');
+check('y su título sí se usa', (await title()) === 'Identidad de la IA', await title());
+await p.reload(); await p.waitForTimeout(3500);
+await p.evaluate(() => { document.querySelectorAll('#blk, .szgt, .gt-pop').forEach(x => x.remove()); });
+check('al volver a abrir el chat (historial) tampoco se ve', await p.evaluate(() => !/titulo/i.test(document.querySelector('#lane').innerText)));
+
 await say('Ayúdame a armar un documento de requisitos para mi app de recetas', 'Claro. Un documento de requisitos tiene estas partes:\n\n1. Objetivo\n2. Usuarios\n3. Funciones\n\n[titulo: Documento de requisitos para app de recetas]');
 const t2 = await title();
 check('con el tema real, el título lo resume', t2 === 'Documento de requisitos para app de recetas', t2);
