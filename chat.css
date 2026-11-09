@@ -3334,3 +3334,5 @@ body.pt-flow .empty h1,body.pt-flow .empty h2,body.pt-flow .hero h1{font-family:
 @keyframes ptAvPop{from{opacity:0;transform:translateY(16px) scale(.94)}}
 @keyframes ptAvBat{to{width:12%}}
 @media (prefers-reduced-motion:reduce){.pt-aviso,.pt-av-card,.pt-av-bat i{animation:none}}
+/* v4.3 (8 nov) · bajo la caja: «La IA puede equivocarse. Revisa lo importante.» en letra normal, suave y sin píldora (como en todas las apps de IA) */
+.payl.note{margin:0 auto;padding:0;border:0;border-radius:0;font-family:Figtree,system-ui,sans-serif;font-size:12px;letter-spacing:0;color:var(--mute);opacity:.9}

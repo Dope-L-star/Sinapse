@@ -1,3 +1,4 @@
+import Umami from '../../componentes/Umami';   /* v4.3 · visitas con Umami, sin cookies */
 /* Marco de Pulsem (panel del equipo) en Next.js: sus estilos de siempre (pulsem.css + core.css) y la capa de animaciones.
    Es otro «layout raíz» (grupo (panel)) porque no comparte nada con Términos y Privacidad. */
 export const metadata = {
@@ -11,6 +12,7 @@ export default function Layout({ children }){
   return (
     <html lang="es">
       <head>
+        <Umami />
         <link rel="icon" id="favi" href="/media/v30/fav-s.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />

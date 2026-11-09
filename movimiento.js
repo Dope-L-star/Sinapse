@@ -226,12 +226,13 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 
   /* --- la página entera --- */
   let pageT = null, pageB = null;
-  const header = () => document.querySelector('header.top, .ptop');
+  const header = () => document.querySelector('header.top, .ptop, .pa-top');
   function pagePaint(){
     const s = se(), long = s.scrollHeight > innerHeight + 40;
     if (long && !pageB){ pageB = mk('div', 'szBlur abajo'); pageB.id = 'szBlurAbajo'; pageT = mk('div', 'szBlur arriba'); pageT.id = 'szBlurArriba'; document.body.append(pageB, pageT); }
     if (!pageB) return;
-    const h = header(); pageT.style.top = h && getComputedStyle(h).position !== 'static' ? h.offsetHeight + 'px' : '0px';
+    const h = header(); /* v4.3 · debajo de la cabecera aunque flote separada del borde (la de Gestión va a 10 px): se mide dónde termina de verdad */
+    const hp = h && getComputedStyle(h).position; pageT.style.top = hp === 'sticky' || hp === 'fixed' ? Math.max(0, Math.round(h.getBoundingClientRect().bottom)) + 'px' : '0px';
     pageB.classList.toggle('on', long && s.scrollTop + innerHeight < s.scrollHeight - 140);
     pageT.classList.toggle('on', long && s.scrollTop > 60);
   }
@@ -243,7 +244,7 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
     const vis = sc.offsetParent !== null && sc.clientHeight > 80, can = sc.scrollHeight > sc.clientHeight + 4;
     o.el.hidden = !vis || !can; if (o.el.hidden) return;
     if (o.el.previousElementSibling !== sc) sc.after(o.el);
-    const h = Math.round(Math.min(56, Math.max(28, sc.clientHeight * .14)));
+    const h = Math.round(Math.min(32, Math.max(16, sc.clientHeight * .08)));
     Object.assign(o.el.style, { left:sc.offsetLeft + sc.clientLeft + 'px', top:sc.offsetTop + sc.clientTop + 'px', width:sc.clientWidth + 'px', height:sc.clientHeight + 'px' });
     o.el.style.setProperty('--h', h + 'px');
     const z = getComputedStyle(sc).zIndex; o.el.style.zIndex = z === 'auto' ? '' : String(+z + 1);

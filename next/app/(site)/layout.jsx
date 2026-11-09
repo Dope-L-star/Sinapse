@@ -4,6 +4,7 @@ import AnalyticsConsent from '../../componentes/AnalyticsConsent';
 import PuenteVistaTemas from '../../componentes/ajustes/PuenteVistaTemas';
 import fs from 'node:fs';
 import path from 'node:path';
+import Umami from '../../componentes/Umami';   /* v4.3 · visitas con Umami, sin cookies */
 export const metadata = {
   metadataBase: new URL('https://symphoria.pages.dev'),
   title: 'SymphorIA · Tu IA en una sola mesa',
@@ -32,6 +33,7 @@ export default function SiteLayout({ children }) {
     <html lang="es" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: brandJs }} />
+        <Umami />
         {portadaJs ? <script dangerouslySetInnerHTML={{ __html: portadaJs }} /> : <script src="/portada-guardian.js" />}
         <link rel="icon" id="favi" href="/media/v30/fav-s.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
