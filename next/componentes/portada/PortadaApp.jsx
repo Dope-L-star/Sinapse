@@ -85,7 +85,7 @@ export default function PortadaApp() {
   const [idioma, setIdioma] = useState('es');
   const t = TEXTOS[idioma];
   const [modo, setModo] = useState('auto');
-  const [esfuerzo, setEsfuerzo] = useState(1);
+  const [esfuerzo, setEsfuerzo] = useState(0);
   const [q, setQ] = useState('');
   const [idea, setIdea] = useState(0);
   const [empuja, setEmpuja] = useState(false);
@@ -117,7 +117,7 @@ export default function PortadaApp() {
     if (!texto) { setEmpuja(false); requestAnimationFrame(() => setEmpuja(true)); area.current?.focus(); return; }
     try { sessionStorage.setItem('synthz:q', JSON.stringify({ q: texto, t: Date.now() })); } catch (er) {}
     if (modo === 'agente') { location.href = '/alias.html?' + new URLSearchParams({ from: 'home', meta: texto }); return; }
-    const p = new URLSearchParams({ from: 'home', q: texto, esfuerzo: ['rapido', 'normal', 'superiorsynth'][esfuerzo] });
+    const p = new URLSearchParams({ from: 'home', q: texto, esfuerzo: ['auto', 'veloz', 'profundo', 'creativo', 'superiorsynth'][esfuerzo] });
     if (modo === 'comparar') p.set('mode', 'cmp');
     if (modo === 'una') p.set('elegir', '1');
     location.href = '/chat.html?' + p;

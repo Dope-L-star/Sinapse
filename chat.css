@@ -3259,7 +3259,8 @@ body.pt-flow #cPickRow{flex-wrap:wrap;row-gap:6px}
 .pt-m button[aria-checked="true"],.pt-e button[aria-checked="true"]{background:rgba(255,255,255,.1);color:#F4F2FA;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
 .pt-m button[data-pm="agente"]{color:#B08CFF}
 .pt-m button[data-pm="cmp"][aria-checked="true"]{color:#FFC857}
-.pt-e button[data-pe="2"][aria-checked="true"]{background:linear-gradient(120deg,rgba(255,200,87,.25),rgba(255,122,69,.2));color:#FFC857}
+.pt-e button[data-ss][aria-checked="true"]{background:linear-gradient(120deg,rgba(255,200,87,.25),rgba(255,122,69,.2));color:#FFC857}
+.pt-e button.lk{opacity:.55}
 .pt-m button:focus-visible,.pt-e button:focus-visible{outline:2px solid #3DE0FF;outline-offset:2px}
 
 /* barra lateral y tarjetas con el vidrio de Partitura */

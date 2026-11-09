@@ -157,6 +157,8 @@
   .pt-modos button{padding:7px 11px;font-size:13px}
   .pt-caja textarea{font-size:17px;min-height:92px;padding:12px 18px 4px}
   .pt-ayuda{flex-basis:100%;padding:0 6px;order:-1}
+  .pt .seg{flex-wrap:wrap;justify-content:center;border-radius:18px;flex:1 1 100%;order:0}
+  .pt .seg button{padding:6px 9px;font-size:12.5px}
   .pt-sec{padding:64px 0}
   .pt-pasos,.pt-inst,.pt-dos,.pt-planes,.pt-obe{grid-template-columns:1fr}
   .pt-pasos{margin-bottom:48px}
