@@ -1,15 +1,16 @@
 /* ---------- 2026-11-09 · Importar chats y memoria desde otras IAs (ChatGPT, Claude, JSON, Markdown) ----------
-   APAGADO para todos: solo aparece con ?importar=1 (queda recordado en este navegador; ?importar=0 lo vuelve a apagar)
-   o si alguien pone window.SZ_IMPORTAR = true antes de chat.js. Encendido, sale en el menú «⋯» y en Ajustes › Tus IAs.
+   Encendido para todos desde v4.5. Sale en el menú «⋯» y en Ajustes › Tus IAs.
    Paso 1: eliges archivos (o pegas texto). Paso 2: ves todo y marcas qué traer. Paso 3: listo, con botón para abrirlo.
    Los archivos se leen aquí (IMP, 05h); se guardan como chats normales de la IA que tienes elegida y los recuerdos
    pasan por memAddCore (sin duplicar, máx. 40). Lo ya importado se recuerda (st().impIds) para no traerlo dos veces. */
+/* v4.5 (Sammuel, 9 nov: «lo de importar queda para todos»): ENCENDIDO para todos. ?importar=0 lo esconde solo en ese navegador
+   (por si alguien quiere probar sin él); ?importar=1 lo vuelve a mostrar. */
 const IMP_ON = (() => {
   try{
     const q = new URLSearchParams(location.search).get('importar');
-    if (q === '1') localStorage.setItem('synthz:f:importar', '1'); else if (q === '0') localStorage.removeItem('synthz:f:importar');
-    return window.SZ_IMPORTAR === true || localStorage.getItem('synthz:f:importar') === '1';
-  }catch(e){ return window.SZ_IMPORTAR === true; }
+    if (q === '0') localStorage.setItem('synthz:f:importar', '0'); else if (q === '1') localStorage.removeItem('synthz:f:importar');
+    return localStorage.getItem('synthz:f:importar') !== '0';
+  }catch(e){ return true; }
 })();
 const IMP_SRC = { chatgpt:'ChatGPT', claude:'Claude', synthflow:'SynthFlow', json:'JSON', texto:'Texto' };
 const IMP_MAX = 200, IMP_PRE = 50, MEM_CAP = 40;

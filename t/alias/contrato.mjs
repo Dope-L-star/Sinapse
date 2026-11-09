@@ -280,6 +280,8 @@ function makeUser(label) {
   const sub = 'sub-alias-' + userN;
   store.set('s:' + sha(token), sub);
   store.set('u:' + sub, JSON.stringify({ sub, name: 'Prueba Alias', email: 'alias' + userN + '@test.local', blocked: false }));
+  /* v4.5: A.L.I.A.S. viene apagado para los Synthers; a la cuenta de prueba se le prende a mano, como en Pulsem › Usuarios */
+  store.set('perm:' + sub, JSON.stringify({ f: { alias: true } }));
   return { token, sub };
 }
 function goalOk(got, sent) {

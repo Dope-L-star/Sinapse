@@ -5,7 +5,7 @@
    y el equipo (Prime, ZFlow y Symmetrix) en Orquesta: sin límite de EnerX, búsquedas ni imágenes, y con los colores Aurora y Oro negro.
    El servidor es quien decide el límite (api/_pool.js › free); aquí solo se muestra. */
 const PLANS = [
-  { id:'chispa', n:'Chispa', p:'Gratis', c:'#e6b65f', L:['Las IAs gratis de hoy: Groq, Gemini Flash, Mistral y más', 'Tu EnerX diaria, que se carga a medianoche', 'Imágenes con límite, internet y memoria', 'Proyectos, Sintéticos y A.L.I.A.S.'] },
+  { id:'chispa', n:'Chispa', p:'Gratis', c:'#e6b65f', L:['Las IAs gratis de hoy: Groq, Gemini Flash, Mistral y más', 'Tu EnerX diaria, que se carga a medianoche', 'Imágenes con límite, internet y memoria', 'Proyectos y Sintéticos'] },
   { id:'chispaplus', n:'Chispa+', p:'US$4,99 al mes', c:'#ffb36b', L:['Todo lo de Chispa con 5 veces más EnerX', 'Cientos de IAs premium: Claude, ChatGPT, Gemini Pro y más', 'Un crédito premium cada mes; las premium gastan más EnerX', 'Si se acaba el crédito, sigues con las gratis'] },
   { id:'syntonia', n:'Syntonia', p:'US$7,99 al mes', c:'#9fffd6', L:['Todo lo de Chispa con un límite mucho más amplio', 'EnerX extra cada mes para las IAs pro (GPT, Claude, Grok, Gemini Pro)', '30 imágenes pro', 'Los colores Aurora y Oro negro'] },
   { id:'timeless', n:'Timeless', p:'US$17,99 al mes', c:'#a98bff', L:['Todo lo de Syntonia', 'Mucha más EnerX para las IAs pro y lo más potente', '80 imágenes y 2 videos cortos', 'SynthFlow en WhatsApp y Telegram'] },
@@ -13,6 +13,11 @@ const PLANS = [
 ];
 let szTeam = false; try{ szTeam = localStorage.getItem('synthz:team') === '1'; }catch(e){}
 const planOf = () => szTeam ? 'orquesta' : 'chispa';
+/* v4.5 (Sammuel, 9 nov: «quita a todos el ALIAS excepto los admins»): A.L.I.A.S. solo se ve si el servidor dice que esta cuenta lo tiene
+   (perks.f.alias de /api/ai: el equipo, o alguien a quien se lo prendieron en Pulsem › Usuarios). Se recuerda en synthz:alias para no
+   parpadear al cargar; la portada y la barra de arriba (React, next/lib/solo-equipo.js) leen la misma llave. El servidor bloquea igual. */
+let szAlias = false; try{ szAlias = localStorage.getItem('synthz:alias') === '1'; }catch(e){}
+const aliasOk = () => szAlias;
 /* el equipo estrena los colores de pago (Aurora y Oro negro): se quita el «Pronto» y se vuelve a pintar el tema */
 function planPerks(){
   THEMES.forEach(t => { if (t[0] === 'aurora' || t[0] === 'oro') t[3] = szTeam ? 0 : 1; });
@@ -20,7 +25,12 @@ function planPerks(){
 }
 planPerks();
 addEventListener('synthz-szq', e => {
-  const d = e.detail || {}; if (d.team == null) return;
+  const d = e.detail || {};
+  if (d.alias != null && !!d.alias !== szAlias){
+    szAlias = !!d.alias; try{ szAlias ? localStorage.setItem('synthz:alias', '1') : localStorage.removeItem('synthz:alias'); }catch(er){}
+    try{ dispatchEvent(new CustomEvent('synthz-alias', { detail:{ on:szAlias } })); }catch(er){}
+  }
+  if (d.team == null) return;
   const t = !!d.team; if (t === szTeam) return;
   szTeam = t; try{ t ? localStorage.setItem('synthz:team', '1') : localStorage.removeItem('synthz:team'); }catch(er){}
   planPerks();

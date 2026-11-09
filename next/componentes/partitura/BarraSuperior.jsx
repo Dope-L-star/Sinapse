@@ -3,6 +3,7 @@
    Uso: import BarraSuperior from '../partitura/BarraSuperior'; <BarraSuperior producto="alias" idioma="es" />
    Requiere importar una vez './partitura.css' (tokens y piezas base). */
 import './partitura.css';
+import { useAliasVisible } from '../../lib/solo-equipo';
 
 const PRODUCTOS = [
   { id: 'synthflow', nombre: 'SynthFlow', href: '/chat.html', color: 'var(--c)' },
@@ -16,6 +17,8 @@ const T = {
 
 export default function BarraSuperior({ producto = '', idioma = 'es', onIdioma, derecha = null, sinEntrar = false }) {
   const t = T[idioma] || T.es;
+  /* v4.5: A.L.I.A.S. solo aparece para el equipo (o dentro de su propia página, que ya revisó la cuenta) */
+  const conAlias = useAliasVisible() || producto === 'alias';
   return (
     <header className="top">
       <div className="wrap">
@@ -25,7 +28,7 @@ export default function BarraSuperior({ producto = '', idioma = 'es', onIdioma, 
         </a>
         <span className="alpha hide-m">{t.alfa}</span>
         <nav className="switch" aria-label={t.productos}>
-          {PRODUCTOS.map((p) => (
+          {PRODUCTOS.filter((p) => p.id !== 'alias' || conAlias).map((p) => (
             <a key={p.id} href={p.href} className={p.id === producto ? 'on' : undefined} aria-current={p.id === producto ? 'page' : undefined}>
               <span className="dot" style={{ background: p.color }} />
               {p.nombre}

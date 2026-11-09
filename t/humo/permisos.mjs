@@ -76,9 +76,9 @@ check('buscar por @usuario encuentra justo esa cuenta', r.s === 200 && r.d.users
 r = await T('prime', { action:'users', q:'bet' });
 check('buscar por un pedazo del nombre también', r.s === 200 && r.d.users.length === 1 && r.d.users[0].handle === '@beto', JSON.stringify(r.d).slice(0, 200));
 r = await T('prime', { action:'user', sub:'p:beto' });
-check('lo viejo de octubre (ux:) no revive', r.s === 200 && r.d.now.f.alias === true && r.d.now.day === r.d.base.day && !r.d.user.own, JSON.stringify(r.d).slice(0, 300));
+check('lo viejo de octubre (ux:) no revive', r.s === 200 && r.d.now.f.alias === false && r.d.now.day === r.d.base.day && !r.d.user.own, JSON.stringify(r.d).slice(0, 300));
 r = await T('prime', { action:'user', sub:'p:ana' });
-check('la ficha trae lo de todos y lo que vale ahora', r.s === 200 && r.d.now.f.alias === true && r.d.now.f.premium === false && r.d.now.day === r.d.base.day && r.d.canEdit && r.d.canBlock, JSON.stringify(r.d).slice(0, 300));
+check('la ficha trae lo de todos y lo que vale ahora (A.L.I.A.S. apagado para los Synthers, v4.5)', r.s === 200 && r.d.now.f.alias === false && r.d.now.f.premium === false && r.d.now.day === r.d.base.day && r.d.canEdit && r.d.canBlock, JSON.stringify(r.d).slice(0, 300));
 r = await T('sym', { action:'user', sub:'p:ana' });
 check('Symmetrix ve la ficha pero no puede editar', r.s === 200 && !r.d.canEdit && !r.d.canBlock, JSON.stringify(r.d).slice(0, 200));
 
@@ -99,7 +99,7 @@ check('el historial guarda quién cambió qué', r.s === 200 && r.d.log && r.d.l
 
 /* se aplica en el servidor */
 r = await call(alias, 'ana', 'alias', 'POST', { action:'plan', goal:'hola mundo', lang:'en' });
-check('A.L.I.A.S. quitada: 403 con su texto en el idioma pedido', r.s === 403 && /not turned on/.test(r.d.error || ''), r.s + ' ' + JSON.stringify(r.d));
+check('A.L.I.A.S. quitada: 403 con su texto en el idioma pedido', r.s === 403 && /in testing/.test(r.d.error || ''), r.s + ' ' + JSON.stringify(r.d));
 r = await call(ai, 'ana', 'ai', 'POST', { action:'image', prompt:'un gato' });
 check('imágenes quitadas: 403', r.s === 403 && /no está activado/.test(r.d.error || ''), r.s + ' ' + JSON.stringify(r.d));
 r = await call(ai, 'ana', 'ai', 'POST', { action:'search', q:'clima' });
@@ -110,6 +110,17 @@ r = await call(ai, 'ana', 'ai', 'GET');
 check('la página recibe su tope propio (50.000) y sus permisos', r.s === 200 && r.d.limit === 50000 && r.d.perks && r.d.perks.f.alias === false && r.d.img.max === 0, JSON.stringify(r.d).slice(0, 300));
 r = await call(ai, 'beto', 'ai', 'POST', { action:'search', q:'' });
 check('a Beto (sin cambios) internet le sigue funcionando', r.s === 400, r.s + ' ' + JSON.stringify(r.d));
+/* v4.5 (Sammuel, 9 nov): A.L.I.A.S. solo para el equipo. Un Synther sin cambios no entra por ninguna acción; el equipo sí */
+for (const action of ['plan', 'step', 'ajustar', 'feedback', 'rutas']){
+  r = await call(alias, 'beto', 'alias', 'POST', { action, goal:'hola mundo', lang:'es' });
+  check('A.L.I.A.S. cerrado para un Synther sin cambios (' + action + ')', r.s === 403 && /solo lo usa el equipo/.test(r.d.error || ''), r.s + ' ' + JSON.stringify(r.d));
+}
+r = await call(ai, 'beto', 'ai', 'GET');
+check('la página de Beto sabe que no tiene A.L.I.A.S.', r.s === 200 && r.d.perks && r.d.perks.f.alias === false, JSON.stringify(r.d.perks));
+r = await call(alias, 'zflow', 'alias', 'POST', { action:'rutas', lang:'es' });
+check('el equipo (ZFlow) sí entra a A.L.I.A.S.', r.s === 200, r.s + ' ' + JSON.stringify(r.d).slice(0, 200));
+r = await call(ai, 'sym', 'ai', 'GET');
+check('la página de Symmetrix (equipo) ve A.L.I.A.S.', r.s === 200 && r.d.perks && r.d.perks.f.alias === true, JSON.stringify(r.d.perks));
 
 /* EnerX propia en chat(): subir, bajar a cero y sin límite */
 const d = new Date(Date.now() - 5 * 3600e3).toISOString().slice(0, 10);

@@ -2036,7 +2036,7 @@ async function szCatalog(){
   const d = await r.json().catch(() => ({}));
   if (!r.ok){ szqSet({ on:false, t:Date.now() }); return []; }
   const arr = Array.isArray(d.models) ? d.models : [];
-  szqSet({ on:arr.length > 0, used:+d.used || 0, limit:+d.limit || 20000, guest:d.guest && d.guest.max ? { used:+d.guest.used || 0, max:+d.guest.max, left:d.guest.left != null ? +d.guest.left : null } : null, img:d.img || null, team:!!d.team, alert:!!d.alert, alertN:+d.alertN || 0, n:arr.length, t:Date.now() });
+  szqSet({ on:arr.length > 0, used:+d.used || 0, limit:+d.limit || 20000, guest:d.guest && d.guest.max ? { used:+d.guest.used || 0, max:+d.guest.max, left:d.guest.left != null ? +d.guest.left : null } : null, img:d.img || null, team:!!d.team, alias:!!(d.perks && d.perks.f && d.perks.f.alias), alert:!!d.alert, alertN:+d.alertN || 0, n:arr.length, t:Date.now() });
   if (!arr.length) return [];
   const out = arr.filter(m => m && typeof m.id === 'string' && /^sz:/.test(m.id) && !/allam|infron|openrouter\/(free|auto)|models?[-_ ]router/i.test(m.id) && !/free models router|router/i.test(String(m.name || ''))).map(m => {
     const mid = m.id.split(':').slice(2).join(':'), vendor = szVendor(mid, m.prov);
@@ -4575,7 +4575,7 @@ try{
    y el equipo (Prime, ZFlow y Symmetrix) en Orquesta: sin límite de EnerX, búsquedas ni imágenes, y con los colores Aurora y Oro negro.
    El servidor es quien decide el límite (api/_pool.js › free); aquí solo se muestra. */
 const PLANS = [
-  { id:'chispa', n:'Chispa', p:'Gratis', c:'#e6b65f', L:['Las IAs gratis de hoy: Groq, Gemini Flash, Mistral y más', 'Tu EnerX diaria, que se carga a medianoche', 'Imágenes con límite, internet y memoria', 'Proyectos, Sintéticos y A.L.I.A.S.'] },
+  { id:'chispa', n:'Chispa', p:'Gratis', c:'#e6b65f', L:['Las IAs gratis de hoy: Groq, Gemini Flash, Mistral y más', 'Tu EnerX diaria, que se carga a medianoche', 'Imágenes con límite, internet y memoria', 'Proyectos y Sintéticos'] },
   { id:'chispaplus', n:'Chispa+', p:'US$4,99 al mes', c:'#ffb36b', L:['Todo lo de Chispa con 5 veces más EnerX', 'Cientos de IAs premium: Claude, ChatGPT, Gemini Pro y más', 'Un crédito premium cada mes; las premium gastan más EnerX', 'Si se acaba el crédito, sigues con las gratis'] },
   { id:'syntonia', n:'Syntonia', p:'US$7,99 al mes', c:'#9fffd6', L:['Todo lo de Chispa con un límite mucho más amplio', 'EnerX extra cada mes para las IAs pro (GPT, Claude, Grok, Gemini Pro)', '30 imágenes pro', 'Los colores Aurora y Oro negro'] },
   { id:'timeless', n:'Timeless', p:'US$17,99 al mes', c:'#a98bff', L:['Todo lo de Syntonia', 'Mucha más EnerX para las IAs pro y lo más potente', '80 imágenes y 2 videos cortos', 'SynthFlow en WhatsApp y Telegram'] },
@@ -4583,6 +4583,11 @@ const PLANS = [
 ];
 let szTeam = false; try{ szTeam = localStorage.getItem('synthz:team') === '1'; }catch(e){}
 const planOf = () => szTeam ? 'orquesta' : 'chispa';
+/* v4.5 (Sammuel, 9 nov: «quita a todos el ALIAS excepto los admins»): A.L.I.A.S. solo se ve si el servidor dice que esta cuenta lo tiene
+   (perks.f.alias de /api/ai: el equipo, o alguien a quien se lo prendieron en Pulsem › Usuarios). Se recuerda en synthz:alias para no
+   parpadear al cargar; la portada y la barra de arriba (React, next/lib/solo-equipo.js) leen la misma llave. El servidor bloquea igual. */
+let szAlias = false; try{ szAlias = localStorage.getItem('synthz:alias') === '1'; }catch(e){}
+const aliasOk = () => szAlias;
 /* el equipo estrena los colores de pago (Aurora y Oro negro): se quita el «Pronto» y se vuelve a pintar el tema */
 function planPerks(){
   THEMES.forEach(t => { if (t[0] === 'aurora' || t[0] === 'oro') t[3] = szTeam ? 0 : 1; });
@@ -4590,7 +4595,12 @@ function planPerks(){
 }
 planPerks();
 addEventListener('synthz-szq', e => {
-  const d = e.detail || {}; if (d.team == null) return;
+  const d = e.detail || {};
+  if (d.alias != null && !!d.alias !== szAlias){
+    szAlias = !!d.alias; try{ szAlias ? localStorage.setItem('synthz:alias', '1') : localStorage.removeItem('synthz:alias'); }catch(er){}
+    try{ dispatchEvent(new CustomEvent('synthz-alias', { detail:{ on:szAlias } })); }catch(er){}
+  }
+  if (d.team == null) return;
   const t = !!d.team; if (t === szTeam) return;
   szTeam = t; try{ t ? localStorage.setItem('synthz:team', '1') : localStorage.removeItem('synthz:team'); }catch(er){}
   planPerks();
@@ -4703,7 +4713,7 @@ function portadaKnown(){
 window.SZ = { I18N, LANGS, t, lang, setLang, onLang, i18nApply, root, $, $$, clamp, fmt, reduce, today, sleepRaw, esc, est, Z_PATH, ICONS, ico, zWord, API, MANUAL, ALL, byId,
   get state(){ return state; }, set state(v){ state = v; normalize(); },
   normalize, cleanUsage, cleanChats, cleanStrMap, save, total, addUsage, resetUsage, estAll, todayEst, todayReq, providerBalance, balanceHtml, splitHtml, syncNote, helpGuide, smoothDetails, szPrompt, swapDir, swapDir, get face(){ return face; }, get FACE_GOOD(){ return FACE_GOOD; }, get randomGoodFace(){ return randomGoodFace; }, get welcomeBack(){ return welcomeBack; }, get wasAway(){ return wasAway; }, accSignOutAll, accClaim, ROLE_NAME, trialGet, trialSet, trialStart, legacyRow, cleanLedger, mergeLedger, DEV, hooks, toast, hydrateIcons, md, countTo,
-  BRAND, SPACE, AURORA, isFlow, flowWord, flowOrb, LOGO_Z, fileIco, gIcon, giFill, giFile, zMark, get synBody(){ return synBody; }, get synSet(){ return synSet; }, get SPOSE(){ return SPOSE; }, charify, typeIn, showAll, getJSON, parseModels, loadCatalog, fetchCatalog, vendorLabel, vendorColor, burst, friendly, netMsg, fetchModels, refreshModels, verify, ask, metaOf, history, S, mirrorType, thud, portalOut, portalBack, portalArrive, portalFill, portalReveal, waterIn, ctxMenu, SXC, coins, ACC, accHooks, accStart, accPush, accSignOut, accName, accHandle, securityModal, recoveryPanel, MARK_HTML, expertOf, EXP_LABEL, surveyModal, surveyPicks, surveyScore, orGuide, profileModal, puterLogo, PUTER_LOGO, api, accConfig, accDelete, saveProfile, avatarHtml, myAvatar, grad, tint, TINTS, loadGsi, SESS_get:() => SESS, CFG, PERF, saveCfg, cfgModal, cfgChooser, applyCfg, smoothWheel, orbitBg, authBox, isBlocked, lowEnd, askStream, mkReveal, reveals, chatsReady, IDB, provOf, totalAll, todayAll, BRANDS, brandOf, glassIcon, PIXART, pixelRun, pixelGrid, workView, workSaved, mdLoad, MDLIB, SZ_P, SZQ, SZ_AUTO, szqSet, msgsLeft, msgsTotal, coinsOf, coinsLeft, coinsTotal, coinsFmt, coinsShort, coinNote, limTxt, limShort, limLvl, limPct, limRing, battPct, limBar, szCatalog, szHeaders, guestGate, guestFull, guestLeft, isGuestQ, setTurn, puterOut, puterOutNote, TEL, telEv, telBeat, DEVH, szConfirm, cfgPreset, CFG_KEYS, cfgClasses, get SND(){ return SND; }, get HAND(){ return HAND; }, get feedbackModal(){ return feedbackModal; }, get guideChooser(){ return guideChooser; }, DRIVE, isBad, markBad, markSick, markGood, modelGone, badReady, GROQ_P, get BOT(){ return BOTAPI; }, get EV(){ return EV; }, get lipSync(){ return lipSync; }, get ballFace(){ return ballFace; }, get guideAsk(){ return guideAsk; }, get GTOPICS(){ return GTOPICS; }, get whatsNew(){ return whatsNew; }, signedish, cfgLinks, memAddCore, memList, memPanel, menuOpen, menuClose, MICO, appInstall, appPromo, appStandalone, appWin, appPhone, plansModal, planOf };
+  BRAND, SPACE, AURORA, isFlow, flowWord, flowOrb, LOGO_Z, fileIco, gIcon, giFill, giFile, zMark, get synBody(){ return synBody; }, get synSet(){ return synSet; }, get SPOSE(){ return SPOSE; }, charify, typeIn, showAll, getJSON, parseModels, loadCatalog, fetchCatalog, vendorLabel, vendorColor, burst, friendly, netMsg, fetchModels, refreshModels, verify, ask, metaOf, history, S, mirrorType, thud, portalOut, portalBack, portalArrive, portalFill, portalReveal, waterIn, ctxMenu, SXC, coins, ACC, accHooks, accStart, accPush, accSignOut, accName, accHandle, securityModal, recoveryPanel, MARK_HTML, expertOf, EXP_LABEL, surveyModal, surveyPicks, surveyScore, orGuide, profileModal, puterLogo, PUTER_LOGO, api, accConfig, accDelete, saveProfile, avatarHtml, myAvatar, grad, tint, TINTS, loadGsi, SESS_get:() => SESS, CFG, PERF, saveCfg, cfgModal, cfgChooser, applyCfg, smoothWheel, orbitBg, authBox, isBlocked, lowEnd, askStream, mkReveal, reveals, chatsReady, IDB, provOf, totalAll, todayAll, BRANDS, brandOf, glassIcon, PIXART, pixelRun, pixelGrid, workView, workSaved, mdLoad, MDLIB, SZ_P, SZQ, SZ_AUTO, szqSet, msgsLeft, msgsTotal, coinsOf, coinsLeft, coinsTotal, coinsFmt, coinsShort, coinNote, limTxt, limShort, limLvl, limPct, limRing, battPct, limBar, szCatalog, szHeaders, guestGate, guestFull, guestLeft, isGuestQ, setTurn, puterOut, puterOutNote, TEL, telEv, telBeat, DEVH, szConfirm, cfgPreset, CFG_KEYS, cfgClasses, get SND(){ return SND; }, get HAND(){ return HAND; }, get feedbackModal(){ return feedbackModal; }, get guideChooser(){ return guideChooser; }, DRIVE, isBad, markBad, markSick, markGood, modelGone, badReady, GROQ_P, get BOT(){ return BOTAPI; }, get EV(){ return EV; }, get lipSync(){ return lipSync; }, get ballFace(){ return ballFace; }, get guideAsk(){ return guideAsk; }, get GTOPICS(){ return GTOPICS; }, get whatsNew(){ return whatsNew; }, signedish, cfgLinks, memAddCore, memList, memPanel, menuOpen, menuClose, MICO, appInstall, appPromo, appStandalone, appWin, appPhone, plansModal, planOf, aliasOk };
 /* v3.4 · el «turno» del mensaje actual: la revisión de calidad viaja en el mismo turno (no cuenta como otro mensaje sin cuenta) */
 /* v3.4 · SynthonIA (synthonia.js): lo que necesita de core, y cuándo se carga */
 window.SZ.synReady = synReady;

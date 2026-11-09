@@ -40,7 +40,7 @@ export const TEXTOS = {
       ['EnerX', ' es tu energía del día: empieza en 100 % y baja según lo que de verdad gastas.'],
     ],
     abrirFlow: 'Abrir SynthFlow',
-    instT: 'Tres instrumentos, una orquesta.',
+    instT: 'Tres instrumentos, una orquesta.', instT2: 'Dos instrumentos, una orquesta.',
     instS: 'Mismo aspecto, misma cuenta, misma SynthonIA. Pasas de uno a otro sin aprender nada nuevo.',
     inst: [
       { n: 'SynthFlow', href: '/chat.html', k: 'var(--c)', p: 'El chat. Pregunta a una o a varias IAs y compara.', m: 'CHAT', b: 'Abrir' },
@@ -68,7 +68,7 @@ export const TEXTOS = {
     planesS: 'Sin tarjeta. Los planes de pago aún no existen: «Me interesa» solo nos dice si los querrías.',
     hoy: 'LO QUE TIENES HOY', gratis: 'Gratis', aunNo: 'AÚN NO', meInteresa: '✦ Me interesa', empezar: 'Empezar ya',
     planes: [
-      { id: 'alfa', n: 'Alfa', L: ['Todas las IAs gratis', 'Auto, Comparar y A.L.I.A.S.', 'Tu EnerX del día, al 100 % cada medianoche'] },
+      { id: 'alfa', n: 'Alfa', L: ['Todas las IAs gratis', 'Auto, Una IA y Comparar', 'Tu EnerX del día, al 100 % cada medianoche'] },
       { id: 'syntonia', n: 'Syntonia', L: ['Más EnerX cada día', 'IAs pro (GPT, Claude, Gemini Pro)'] },
       { id: 'timeless', n: 'Timeless', L: ['Mucha más EnerX', 'Lo más potente', 'SynthFlow en WhatsApp y Telegram'] },
       { id: 'orquesta', n: 'Orquesta', L: ['Para equipos', 'Chats y panel de equipo'] },
@@ -124,7 +124,7 @@ export const TEXTOS = {
       ['EnerX', ' is your energy for the day: it starts at 100 % and drops with what you really use.'],
     ],
     abrirFlow: 'Open SynthFlow',
-    instT: 'Three instruments, one orchestra.',
+    instT: 'Three instruments, one orchestra.', instT2: 'Two instruments, one orchestra.',
     instS: 'Same look, same account, same SynthonIA. Move between them without learning anything new.',
     inst: [
       { n: 'SynthFlow', href: '/chat.html', k: 'var(--c)', p: 'The chat. Ask one or several AIs and compare.', m: 'CHAT', b: 'Open' },
@@ -152,7 +152,7 @@ export const TEXTOS = {
     planesS: 'No card. Paid plans do not exist yet: “I’m interested” only tells us you would want them.',
     hoy: 'WHAT YOU HAVE TODAY', gratis: 'Free', aunNo: 'NOT YET', meInteresa: '✦ I’m interested', empezar: 'Start now',
     planes: [
-      { id: 'alfa', n: 'Alpha', L: ['All the free AIs', 'Auto, Compare and A.L.I.A.S.', 'Your EnerX for the day, back to 100 % every midnight'] },
+      { id: 'alfa', n: 'Alpha', L: ['All the free AIs', 'Auto, One AI and Compare', 'Your EnerX for the day, back to 100 % every midnight'] },
       { id: 'syntonia', n: 'Syntonia', L: ['More EnerX every day', 'Pro AIs (GPT, Claude, Gemini Pro)'] },
       { id: 'timeless', n: 'Timeless', L: ['Much more EnerX', 'The most powerful AIs', 'SynthFlow on WhatsApp and Telegram'] },
       { id: 'orquesta', n: 'Orquesta', L: ['For teams', 'Team chats and dashboard'] },

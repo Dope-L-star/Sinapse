@@ -81,6 +81,7 @@
 .pt-lista svg{flex:none;width:20px;height:20px;color:var(--ok);margin-top:2px}
 
 .pt-inst{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.pt-inst.dos{grid-template-columns:repeat(2,minmax(0,1fr))}   /* v4.5: sin A.L.I.A.S. (solo el equipo) quedan dos */
 .pt-ins{padding:26px;display:flex;flex-direction:column;gap:14px;min-height:300px;text-decoration:none;color:inherit;transition:transform .3s,border-color .3s,box-shadow .3s}
 .pt-ins:hover{transform:translateY(-6px);border-color:color-mix(in srgb,var(--k) 50%,transparent);box-shadow:0 20px 50px color-mix(in srgb,var(--k) 14%,transparent)}
 .pt-raya{height:3px;width:56px;border-radius:3px;background:var(--k);transition:width .4s}
@@ -160,7 +161,7 @@
   .pt .seg{flex-wrap:wrap;justify-content:center;border-radius:18px;flex:1 1 100%;order:0}
   .pt .seg button{padding:6px 9px;font-size:12.5px}
   .pt-sec{padding:64px 0}
-  .pt-pasos,.pt-inst,.pt-dos,.pt-planes,.pt-obe{grid-template-columns:1fr}
+  .pt-pasos,.pt-inst,.pt-inst.dos,.pt-dos,.pt-planes,.pt-obe{grid-template-columns:1fr}
   .pt-pasos{margin-bottom:48px}
   .pt-pistas{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -16px;padding:0 16px 6px}
   .pt-pista{min-width:84%;scroll-snap-align:center}

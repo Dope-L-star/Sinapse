@@ -82,5 +82,5 @@ export async function start({ root = path.join(REPO, 'cloudflare/public'), reply
   });
   await new Promise(r => server.listen(0, '127.0.0.1', r));
   const base = 'http://127.0.0.1:' + server.address().port;
-  return { base, setReply:t => { RESP = t; }, close:() => { globalThis.fetch = realFetch; server.close(); } };
+  return { base, kv, setReply:t => { RESP = t; }, close:() => { globalThis.fetch = realFetch; server.close(); } };
 }

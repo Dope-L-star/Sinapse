@@ -82,7 +82,6 @@ document.addEventListener('click', e => {
 const WHATSNEW = { v:'3.0', items:[
   ['portada', 'La página ahora se llama SymphorIA, «el portador de la armonía», y estrena icono.'],
   ['chat', ENERX + ': tu batería del día para usar las IAs conectadas. Baja con cada mensaje y se carga a medianoche.'],
-  ['chat', 'A.L.I.A.S. con Síntesis: 4 IAs hacen el último paso y se combinan en una sola respuesta, la mejor (se queda con lo correcto de cada una, comprueba lo que choca y quita el relleno).'],
   ['chat', 'Sintéticos como en Claude: cuando la IA te crea una página, un juego o un dibujo, se abre solo al lado del chat. Y en la barrita, «Sintéticos» los junta todos.'],
   ['ajustes', 'Toda la página en español o en inglés: botón ES/EN en la portada, y en SynthFlow, Ajustes › «Idioma · Language» o el menú «⋯».'],
   ['synthonia', 'Ahora me sé toda la página: pregúntame dónde está cualquier cosa (también en inglés) y te la señalo con mi manita.'],

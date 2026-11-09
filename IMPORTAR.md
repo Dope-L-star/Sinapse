@@ -1,7 +1,7 @@
 # Importar chats y memoria (SynthFlow)
 
-**Estado: APAGADO para todos.** Se enciende en un navegador abriendo `chat.html?importar=1` (queda recordado; `?importar=0` lo apaga).
-Para encenderlo para todos: cambiar `IMP_ON` en `src/chat/16i-importar.js` a `true` (o poner `window.SZ_IMPORTAR = true` antes de `chat.js`) y correr `node build.mjs`.
+**Estado: ENCENDIDO para todos desde el 9 de noviembre de 2026 (v4.5, pedido de Sammuel).** `chat.html?importar=0` lo esconde solo en ese navegador; `?importar=1` lo vuelve a mostrar.
+Para apagarlo para todos otra vez: hacer que `IMP_ON` en `src/chat/16i-importar.js` devuelva `false` y correr `node build.mjs`.
 
 ## Qué lee
 | De dónde | Qué subir | Qué trae |

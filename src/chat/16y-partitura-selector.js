@@ -4,6 +4,7 @@
      Una IA    tú eliges de la lista con buscador; abajo se ve cuál tienes.          → applyMode('chat') + abre la lista
      Comparar  2 a 3 IAs lado a lado; te quedas con la mejor.                         → cmpOpen()
      Agente    A.L.I.A.S.: arma un plan, lo apruebas una vez y trabaja solo.          → abre alias.html con lo escrito
+               v4.5: solo para el equipo (SZ.aliasOk()); los demás ven 3 modos. Se repinta si cambia (evento synthz-alias).
    Y el esfuerzo, al lado: Auto · Veloz · Profundo · Creativo (los niveles de v4.3, Profundo pide cuenta) · SuperiorSynth (el agente de SynthFlow elige la IA y mejora tu pedido).
    Reemplaza a los botones «Modo», «Esfuerzo» y «Comparar con otra IA», que se esconden con CSS (siguen en el DOM para el motor). */
 (function partituraSelector(){
@@ -14,7 +15,8 @@
         ayuda:{ auto:'SymphorIA picks the AI for each request and tells you which one.', una:'You pick the AI from the list.', cmp:'Several AIs answer side by side. Keep the best one.', agente:'A.L.I.A.S. makes a plan, you approve it once and it works on its own.' } }
     : { modos:{ auto:'Auto', una:'Una IA', cmp:'Comparar', agente:'Agente' }, esf:['Auto', 'Veloz', 'Profundo', 'Creativo', 'SuperiorSynth'], modo:'Modo', esfuerzo:'Esfuerzo',
         ayuda:{ auto:'SymphorIA elige la IA para cada pedido y te dice cuál usó.', una:'Tú eliges la IA de la lista.', cmp:'Varias IAs responden lado a lado. Te quedas con la mejor.', agente:'A.L.I.A.S. arma un plan, lo apruebas una vez y trabaja solo.' } };
-  const MODOS = ['auto', 'una', 'cmp', 'agente'];
+  const MODOS_TODOS = ['auto', 'una', 'cmp', 'agente'];
+  const modos = () => MODOS_TODOS.filter(k => k !== 'agente' || (SZ.aliasOk && SZ.aliasOk()));
   const actual = () => mode === 'cmp' ? 'cmp' : selId() === 'sz:auto' && !agentOn() ? 'auto' : 'una';
   const NIV = ['auto', 'fast', 'deep', 'creative'], SS = NIV.length;
   const esfActual = () => agentOn() ? SS : Math.max(0, NIV.indexOf(effKey()));
@@ -28,7 +30,7 @@
   function pinta(){
     const t = T(), m = actual(), e = esfActual();
     bar.innerHTML =
-      '<div class="pt-m" role="radiogroup" aria-label="' + t.modo + '">' + MODOS.map(k => '<button type="button" role="radio" data-pm="' + k + '" aria-checked="' + (k === m) + '" title="' + esc(t.ayuda[k]) + '">' + t.modos[k] + '</button>').join('') + '</div>' +
+      '<div class="pt-m" role="radiogroup" aria-label="' + t.modo + '">' + modos().map(k => '<button type="button" role="radio" data-pm="' + k + '" aria-checked="' + (k === m) + '" title="' + esc(t.ayuda[k]) + '">' + t.modos[k] + '</button>').join('') + '</div>' +
       '<div class="pt-e" role="radiogroup" aria-label="' + t.esfuerzo + '">' + t.esf.map((n, i) => '<button type="button" role="radio" data-pe="' + i + '" aria-checked="' + (i === e) + '"' + (i === SS ? ' data-ss="1"' : '') + (bloqueado(i) ? ' class="lk" title="' + (en() ? 'Needs an account' : 'Con cuenta') + '"' : '') + '>' + n + '</button>').join('') + '</div>';
     document.body.dataset.ptModo = m;
   }
@@ -38,6 +40,7 @@
     if (b.dataset.pm){
       const k = b.dataset.pm;
       if (k === 'agente'){
+        if (!(SZ.aliasOk && SZ.aliasOk())){ pinta(); return; }
         const q = (inp.value || '').trim();
         location.href = 'alias.html?' + new URLSearchParams(q ? { from:'flow', meta:q } : { from:'flow' }).toString();
         return;
@@ -60,7 +63,8 @@
   const obs = new MutationObserver(() => { const m = actual(), e = esfActual(); if (m !== document.body.dataset.ptModo || !bar.querySelector('[data-pe="' + e + '"][aria-checked="true"]')) pinta(); });
   obs.observe(document.body, { attributes:true, attributeFilter:['class', 'data-cmode'] });
   new MutationObserver(pinta).observe(document.documentElement, { attributes:true, attributeFilter:['lang'] });
-  addEventListener('storage', e => { if (e.key === 'synthz:lang') setTimeout(pinta, 0); });
+  addEventListener('storage', e => { if (e.key === 'synthz:lang' || e.key === 'synthz:alias') setTimeout(pinta, 0); });
+  addEventListener('synthz-alias', () => setTimeout(pinta, 0));
 
   /* lo que pidió la portada: ?esfuerzo=auto|veloz|profundo|creativo|superiorsynth y ?elegir=1 (Una IA).
      Se aceptan también los nombres de antes (rapido, normal) por si alguien tiene el enlace guardado. */
