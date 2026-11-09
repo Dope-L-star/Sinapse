@@ -1,10 +1,12 @@
-/* ---------- v3.0 · Planes (Chispa, Syntonia, Timeless y Orquesta) ----------
+/* ---------- v3.0 · Planes (Chispa, Chispa+, Syntonia, Timeless y Orquesta) ----------
+   v4.3 (Sammuel, 8 nov) · Chispa+: todas las IAs gratis + los modelos de pago de OpenRouter con un crédito del mes (api/_premium.js, APAGADO).
    Los pagos están APAGADOS (PENDIENTES.md › Plan de pagos): nadie puede pagar todavía y nada se cobra.
    Esta ventana solo muestra qué traerá cada plan y en cuál estás. Hoy todos están en Chispa (gratis, con las IAs gratis de siempre)
    y el equipo (Prime, ZFlow y Symmetrix) en Orquesta: sin límite de EnerX, búsquedas ni imágenes, y con los colores Aurora y Oro negro.
    El servidor es quien decide el límite (api/_pool.js › free); aquí solo se muestra. */
 const PLANS = [
   { id:'chispa', n:'Chispa', p:'Gratis', c:'#e6b65f', L:['Las IAs gratis de hoy: Groq, Gemini Flash, Mistral y más', 'Tu EnerX diaria, que se carga a medianoche', 'Imágenes con límite, internet y memoria', 'Proyectos, Sintéticos y A.L.I.A.S.'] },
+  { id:'chispaplus', n:'Chispa+', p:'US$4,99 al mes', c:'#ffb36b', L:['Todo lo de Chispa con 5 veces más EnerX', 'Cientos de IAs premium: Claude, ChatGPT, Gemini Pro y más', 'Un crédito premium cada mes; las premium gastan más EnerX', 'Si se acaba el crédito, sigues con las gratis'] },
   { id:'syntonia', n:'Syntonia', p:'US$7,99 al mes', c:'#9fffd6', L:['Todo lo de Chispa con un límite mucho más amplio', '400 mensajes al mes con IAs pro (GPT, Claude, Grok, Gemini Pro)', '30 imágenes pro', 'Los colores Aurora y Oro negro'] },
   { id:'timeless', n:'Timeless', p:'US$17,99 al mes', c:'#a98bff', L:['Todo lo de Syntonia', '900 mensajes pro y 50 con lo más potente', '80 imágenes y 2 videos cortos', 'SynthFlow en WhatsApp y Telegram'] },
   { id:'orquesta', n:'Orquesta', p:'US$8,99 por persona', c:'#ffd27a', L:['Para equipos (desde 3 personas)', 'Lo de Syntonia para cada persona', 'Chats y panel de equipo', 'A.L.I.A.S. con 100 veces más pasos y búsquedas', 'Hoy lo usan Prime, ZFlow y Symmetrix, sin límites, para probar todo'] }

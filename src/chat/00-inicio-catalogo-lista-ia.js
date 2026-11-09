@@ -379,7 +379,9 @@ function cmpWhyNot(id, base){
 
   return '';
 }
-function pickModel(id, node){
+function pickModel(id, node, avisado){
+  /* v4.3 · Chispa+: un modelo premium de alto consumo pide confirmación con un aviso grande, cada vez que se elige (hoy apagado: no hay modelos premium en la lista) */
+  { const pm = info(id); if (pm && pm.premium && pm.heavy && node !== null && !avisado && id !== selId()){ premiumAviso(pm).then(ok => { if (ok) pickModel(id, node, true); }); return; } }
   { const mm = info(id); if (mm && mm.spend === 3 && node !== null){ try{ if (!sessionStorage.getItem('synthz:spendw')){ sessionStorage.setItem('synthz:spendw', '1'); setTimeout(() => toast('Ojo: ' + mm.name + ' gasta mucho de tu Puter. Para cosas sencillas usa una con rayitas verdes y tu saldo te dura más.'), 600); } }catch(e){} } }
   if (mode === 'cmp' || pickMode === 'add'){
     const base = mode === 'cmp' ? st().cmp : [selId()].filter(x => x !== TRIAL_ID), why = cmpWhyNot(id, base);
