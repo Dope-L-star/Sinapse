@@ -1,6 +1,6 @@
 /* Pruebas del plan premium (apagado). Sin internet ni Redis. Uso: node t/premium/premium.mjs */
 import assert from 'node:assert/strict';
-import { config, isPremium, energy, decide, usd, worst, effortKey, step, WHY, price, modelOk, catalog, mult } from '../../api/_premium.js';
+import { heavy, perMsg, listItem, config, isPremium, energy, decide, usd, worst, effortKey, step, WHY, price, modelOk, catalog, mult } from '../../api/_premium.js';
 let n = 0; const ok = (name, fn) => { fn(); n++; console.log('✓', name); };
 const KEY = 'sk-or-v1-' + 'x'.repeat(40), NOW = Date.UTC(2026, 10, 8);
 const ON = { SYNTHZ_PREMIUM:'1', SYNTHZ_PREMIUM_KEY:KEY, SYNTHZ_PLANS_ON:'1' };
@@ -54,4 +54,10 @@ ok('tope del día de Sammuel → pasa a gratis', () => assert.deepEqual(decide({
 ok('si elige una gratis, va gratis', () => assert.equal(decide({ me:payer }, c, NOW).tier, 'free'));
 ok('cada aviso existe en ES y EN', () => { for (const w of Object.keys(WHY)) assert.equal(WHY[w].length, 2); });
 ok('el paso premium va a OpenRouter con el modelo elegido', () => assert.deepEqual(step(mid), { id:'premium:anthropic/claude-sonnet', prov:'openrouter', mid:'anthropic/claude-sonnet', name:'anthropic/claude-sonnet', premium:true }));
+ok('alto consumo: Claude Sonnet sí, DeepSeek no', () => { assert.equal(heavy(mid, c), true); assert.equal(heavy(cheap, c), false); });
+ok('el umbral de alto consumo se puede ajustar', () => assert.equal(heavy(cheap, config({ ...ON, SYNTHZ_PREMIUM_HEAVY:'3' })), true));
+ok('la lista del chat lleva ×N, alto consumo y costo por respuesta', () => {
+  const li = listItem(mid, c); assert.equal(li.heavy, true); assert.equal(li.mult, 40); assert.equal(li.usdMsg, 0.018); assert.equal(li.premium, true);
+  assert.equal(perMsg(cheap), 0.00125);
+});
 console.log('\n' + n + ' pruebas OK');

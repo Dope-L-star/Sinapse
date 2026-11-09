@@ -31,6 +31,7 @@ export function config(env = (typeof process !== 'undefined' && process.env) || 
     maxOut:   num(env.SYNTHZ_PREMIUM_MAX_OUT, 20, 0.1, 1000),      /* modelos con salida más cara que esto (US$/millón) no se ofrecen */
     ref:      num(env.SYNTHZ_PREMIUM_REF, 0.25, 0.01, 100),        /* US$/millón que «vale» 1 token de EnerX: más caro → baja más la pila */
     maxMult:  num(env.SYNTHZ_PREMIUM_MAX_MULT, 40, 2, 500),
+    heavyAt:  num(env.SYNTHZ_PREMIUM_HEAVY, 20, 2, 500),           /* desde este ×N un modelo es «de alto consumo» y sale el aviso grande */
     block:    list(env.SYNTHZ_PREMIUM_BLOCK),                      /* modelos que Sammuel no quiere ofrecer (trozos del id) */
     only:     list(env.SYNTHZ_PREMIUM_ONLY)                        /* si se llena, SOLO esos (vacío = todos) */
   };
@@ -63,6 +64,11 @@ export function mult(m, cfg){
   const p = price(m); if (!p) return cfg.maxMult;
   return Math.min(cfg.maxMult, Math.max(2, Math.ceil(((p.in + p.out * 3) / 4) / cfg.ref)));
 }
+
+/* «alto consumo» (Claude Fable/Opus, GPT pro, Gemini Pro…): al elegirlo sale un aviso GRANDE que hay que aceptar (src/chat/16h-premium-aviso.js) */
+export const heavy = (m, cfg) => mult(m, cfg) >= cfg.heavyAt;
+/* lo que cuesta más o menos una respuesta normal (1.000 tokens que entran + 1.000 que salen), para el aviso */
+export const perMsg = m => worst({ inTok:1000, maxOut:1000 }, m);
 
 /* lo que costó de verdad una respuesta, en US$. OpenRouter lo dice en usage.cost; si no, se calcula con el precio */
 export function usd(usage, m){
@@ -112,4 +118,9 @@ export const WHY = {
 /* el paso que se le daría a _pool.js chat() (con la llave aparte, nunca mezclada con las gratis) */
 export function step(m){
   return { id:'premium:' + m.id, prov:'openrouter', mid:m.id, name:String(m.name || m.id).slice(0, 60), premium:true };
+}
+
+/* lo que la lista de IAs del chat recibe de cada modelo premium: con esto el chat sabe cuándo mostrar el aviso grande */
+export function listItem(m, cfg){
+  return Object.assign(step(m), { mult:mult(m, cfg), heavy:heavy(m, cfg), usdMsg:+perMsg(m).toFixed(4) });
 }

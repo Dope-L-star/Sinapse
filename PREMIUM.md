@@ -26,4 +26,7 @@ Además, en OpenRouter ponerle a la llave un **límite de crédito**: es la red 
 2. En `api/ai.js`: `decide()` antes de cada mensaje; si es premium, `chat()` con `step(m)` y la llave aparte, `usage:{include:true}`.
 3. En `_pool.js chat()`: parámetro opcional `weight` para que `account()` sume `energy()` (avisar a los demás hilos: archivo compartido).
 4. Redis: `prem:usd:<día>` y `prem:cr:<sub>:<mes>` (crédito usado).
-5. En el chat: sección «Premium» en el selector de IA, sello «gastó ×N» y lo que queda de crédito.
+5. En el chat: sección «Premium» en el selector de IA (cada modelo con `listItem()`), sello «gastó ×N» y lo que queda de crédito (`SZ.SZQ.credit`).
+
+## Aviso grande de alto consumo (hecho, dormido)
+Al elegir un modelo premium con `heavy` (×20 o más, `SYNTHZ_PREMIUM_HEAVY`; p. ej. Claude Fable/Opus, GPT pro, Gemini Pro) sale una tarjeta grande ES/EN que dice ×N, cuánto del crédito usa cada respuesta y cuántas le quedan. Hay que aceptar «Usarla igual»; lo marcado por defecto es «Elegir una más liviana». Sale cada vez. Código: `src/chat/16h-premium-aviso.js` + `pickModel()`. Hoy no sale porque la lista no trae modelos premium.
