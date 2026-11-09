@@ -97,3 +97,13 @@ html.ap-on.ap-far .ap-top{opacity:1;transform:none;pointer-events:auto}
 .ap-top:active{transform:scale(.94)!important}
 html.noanim .ap-top,html.noanim .ap-top *,html.noanim .ap-top::before{transition:none!important}
 @media print{.ap-top{display:none!important}}
+/* ===== 2026-11-09 · rediseño «Partitura» en Ayuda, Privacidad, Términos y Sin conexión =====
+   El mismo fondo tinta de la portada y SynthFlow, titulares en Bricolage y la firma de las cinco líneas bajo la cabecera. */
+html.ap-on,html.ap-on body{background-color:#0B0A12}
+html.ap-on body{background:radial-gradient(1100px 600px at 15% -15%,rgba(123,63,242,.14),transparent 60%),radial-gradient(900px 560px at 100% 0,rgba(255,61,154,.09),transparent 60%),#0B0A12}
+html.ap-on h1,html.ap-on h2{font-family:'Bricolage Grotesque',system-ui,sans-serif;letter-spacing:-.02em}
+html.ap-on .top{position:sticky}
+html.ap-on .top::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:5px;pointer-events:none;opacity:.7;
+  background:linear-gradient(#3DE0FF,#3DE0FF) 0 0/100% 1px no-repeat,linear-gradient(#7B3FF2,#7B3FF2) 0 1px/100% 1px no-repeat,linear-gradient(#FF3D9A,#FF3D9A) 0 2px/100% 1px no-repeat,linear-gradient(#FF7A45,#FF7A45) 0 3px/100% 1px no-repeat,linear-gradient(#FFC857,#FFC857) 0 4px/100% 1px no-repeat;
+  -webkit-mask:linear-gradient(90deg,transparent,#000 20%,#000 80%,transparent);mask:linear-gradient(90deg,transparent,#000 20%,#000 80%,transparent)}
+html.ap-on .card{background:rgba(255,255,255,.045);border-color:rgba(255,255,255,.09)}

@@ -28,7 +28,7 @@ p{margin:0}
 .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
 
 /* ---------- Barra superior única (todas las páginas) ---------- */
-.top{position:sticky;top:0;z-index:20;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);background:rgba(11,10,18,.72);border-bottom:1px solid var(--line)}
+.top{position:sticky;top:0;z-index:20;backdrop-filter:blur(18px);background:rgba(11,10,18,.72);border-bottom:1px solid var(--line)}
 .top .wrap{display:flex;align-items:center;gap:20px;height:68px}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:-.01em}
 .brand img{width:30px;height:30px}
