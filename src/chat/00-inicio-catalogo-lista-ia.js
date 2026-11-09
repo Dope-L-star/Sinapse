@@ -380,7 +380,7 @@ function cmpWhyNot(id, base){
   return '';
 }
 function pickModel(id, node){
-  { const mm = info(id); if (mm && mm.spend === 3 && node !== null){ try{ if (!sessionStorage.getItem('synthz:spendw')){ sessionStorage.setItem('synthz:spendw', '1'); setTimeout(() => toast('Ojo: ' + mm.name + ' gasta mucho de tu Puter. Para cosas sencillas usa una con rayitas verdes y tu saldo te dura más.'), 600); } }catch(e){} } }
+  { const mm = info(id); if (node !== null && ptEsCara(mm)) setTimeout(() => ptAvisoConsumo(mm, () => { try{ openSide('set'); }catch(e){} }), 350); }   /* 2026-11-09 · aviso grande de alto consumo (src/chat/16x) */
   if (mode === 'cmp' || pickMode === 'add'){
     const base = mode === 'cmp' ? st().cmp : [selId()].filter(x => x !== TRIAL_ID), why = cmpWhyNot(id, base);
     if (why === 'ya'){ toast('Esa IA ya está en la comparación.'); return; }

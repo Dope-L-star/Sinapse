@@ -3272,3 +3272,65 @@ body.pt-flow .lockc,body.pt-flow .trialbar{background:rgba(255,255,255,.045);bor
   .pt-m button,.pt-e button{padding:7px 10px;font-size:12.5px}
 }
 @media (prefers-reduced-motion:reduce){.pt-m button,.pt-e button{transition:none}}
+
+/* ===== 2026-11-09 (2.ª vuelta, Sammuel: «aplica todo tu rediseño») · SynthFlow entero con la piel Partitura ===== */
+/* fondo: tinta lisa con un brillo violeta arriba (fuera la aurora diagonal, las estrellas y el grano) */
+body.pt-flow .aurora,body.pt-flow .grain,body.pt-flow .glow,body.pt-flow #glow{display:none !important}
+body.pt-flow{background:radial-gradient(900px 520px at 60% -12%,rgba(123,63,242,.16),transparent 62%),radial-gradient(700px 420px at 100% 100%,rgba(61,224,255,.05),transparent 60%),#0B0A12 !important;font-family:'Figtree',system-ui,sans-serif}
+body.pt-flow .shell{background:transparent}
+
+/* la firma: las cinco líneas finas bajo la cabecera */
+body.pt-flow .top{background:rgba(11,10,18,.7) !important;backdrop-filter:blur(18px) saturate(150%);border-bottom:1px solid rgba(255,255,255,.07) !important}
+body.pt-flow .top::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:5px;pointer-events:none;opacity:.55;
+  background:linear-gradient(#3DE0FF,#3DE0FF) 0 0/100% 1px no-repeat,linear-gradient(#7B3FF2,#7B3FF2) 0 1px/100% 1px no-repeat,linear-gradient(#FF3D9A,#FF3D9A) 0 2px/100% 1px no-repeat,linear-gradient(#FF7A45,#FF7A45) 0 3px/100% 1px no-repeat,linear-gradient(#FFC857,#FFC857) 0 4px/100% 1px no-repeat;
+  -webkit-mask:linear-gradient(90deg,transparent,#000 25%,#000 75%,transparent);mask:linear-gradient(90deg,transparent,#000 25%,#000 75%,transparent)}
+
+/* barra lateral: vidrio tinta, ítems redondeados, el chat abierto con filo cian */
+body.pt-flow #chats{background:linear-gradient(180deg,rgba(23,22,36,.86),rgba(16,15,25,.9)) !important;backdrop-filter:blur(20px);border-right:1px solid rgba(255,255,255,.08) !important}
+body.pt-flow #chats .fw-t,body.pt-flow .mlogo .fw-t,body.pt-flow .tb-head .fw-t{font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;letter-spacing:-.01em}
+body.pt-flow #chats button,body.pt-flow #chats a{border-radius:12px}
+body.pt-flow #chats .on,body.pt-flow #chats [aria-current="true"],body.pt-flow #chats .cur{background:rgba(255,255,255,.07) !important;border-color:rgba(61,224,255,.35) !important;box-shadow:inset 2px 0 0 #3DE0FF}
+
+/* cabecera del chat: la IA elegida y la batería en píldoras de vidrio */
+body.pt-flow .top .cpk,body.pt-flow .top button[aria-haspopup]{border-radius:999px}
+
+/* mensajes: lo tuyo en una burbuja de vidrio a la derecha, la IA sin caja y con su icono en círculo oscuro */
+body.pt-flow .m.user .bub{background:linear-gradient(180deg,rgba(255,255,255,.085),rgba(255,255,255,.05)) !important;border:1px solid rgba(255,255,255,.12) !important;border-radius:20px 20px 6px 20px !important;color:#F4F2FA;box-shadow:0 10px 30px -18px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.06)}
+body.pt-flow .m.bot .who b{font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;letter-spacing:-.01em}
+body.pt-flow .m.bot .who .av,body.pt-flow .m.bot .who .gico{border-radius:50% !important;background:radial-gradient(circle at 30% 25%,#24222F,#121119 70%) !important;border:1px solid rgba(255,255,255,.16);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+body.pt-flow .m.bot .who .md{font-family:'IBM Plex Mono',monospace;border-radius:999px;border-color:rgba(255,255,255,.12)}
+body.pt-flow .m.bot .body blockquote{border-left:2px solid transparent;border-image:linear-gradient(#3DE0FF,#7B3FF2) 1;background:rgba(255,255,255,.04);border-radius:0 14px 14px 0}
+body.pt-flow .m.bot .body pre{background:#100F19 !important;border:1px solid rgba(255,255,255,.09);border-radius:14px}
+body.pt-flow .m.bot .body h1,body.pt-flow .m.bot .body h2,body.pt-flow .m.bot .body h3{font-family:'Bricolage Grotesque',system-ui,sans-serif;letter-spacing:-.015em}
+body.pt-flow .m.bot .acts .act{border-radius:10px}
+body.pt-flow .m.bot .acts .act:hover{background:rgba(255,255,255,.07);color:#F4F2FA}
+body.pt-flow .m.err{background:rgba(255,107,127,.07);border:1px solid rgba(255,107,127,.3);border-radius:16px}
+
+/* inicio del chat vacío: titular grande de la marca */
+body.pt-flow .empty h1,body.pt-flow .empty h2,body.pt-flow .hero h1{font-family:'Bricolage Grotesque',system-ui,sans-serif;letter-spacing:-.03em}
+
+/* barra de abajo del celular: isla de vidrio flotante */
+@media (max-width:760px){
+  body.pt-flow .tabbar{background:rgba(20,19,30,.82) !important;backdrop-filter:blur(20px) saturate(150%);border:1px solid rgba(255,255,255,.12) !important;border-radius:22px !important;margin:0 10px 10px !important}
+  body.pt-flow .tabbar button[aria-selected="true"],body.pt-flow .tabbar button.on{color:#F4F2FA}
+}
+
+/* aviso grande al elegir una IA de alto consumo (src/chat/16x-aviso-alto-consumo.js) */
+.pt-aviso{position:fixed;inset:0;z-index:12000;display:grid;place-items:center;padding:16px;background:rgba(6,5,10,.66);backdrop-filter:blur(10px);animation:ptAvIn .25s ease both}
+.pt-aviso.fuera{animation:ptAvOut .2s ease both}
+.pt-av-card{width:min(560px,100%);padding:34px 30px 26px;border-radius:28px;text-align:center;background:linear-gradient(#14131E,#14131E) padding-box,linear-gradient(120deg,#FFC857,#FF7A45,#FF3D9A) border-box;border:1.5px solid transparent;box-shadow:0 40px 100px rgba(0,0,0,.6),0 0 80px rgba(255,122,69,.18);animation:ptAvPop .45s cubic-bezier(.2,1.3,.4,1) both}
+.pt-av-bat{width:76px;height:36px;margin:0 auto 18px;border:2.5px solid #FFC857;border-radius:9px;padding:4px;position:relative}
+.pt-av-bat::after{content:"";position:absolute;right:-8px;top:10px;width:4px;height:12px;border-radius:2px;background:#FFC857}
+.pt-av-bat i{display:block;height:100%;width:30%;border-radius:4px;background:linear-gradient(90deg,#FF3D9A,#FF7A45);animation:ptAvBat 1.6s ease-in-out infinite alternate}
+.pt-av-k{font:500 12px/1.4 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#FFC857;margin:0 0 8px}
+.pt-av-card h2{font:700 clamp(26px,5vw,36px)/1.08 'Bricolage Grotesque',system-ui,sans-serif;letter-spacing:-.02em;color:#F4F2FA;margin:0 0 12px}
+.pt-av-p{color:#B3AFC4;font-size:16px;line-height:1.55;margin:0 auto 24px;max-width:440px}
+.pt-av-b{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.pt-av-b button{min-height:46px;padding:0 22px;border-radius:999px;font:600 15px 'Figtree',system-ui,sans-serif;cursor:pointer}
+.pt-av-no{background:#F4F2FA;color:#0B0A12;border:0}
+.pt-av-si{background:rgba(255,255,255,.06);color:#F4F2FA;border:1px solid rgba(255,255,255,.18)}
+.pt-av-b button:focus-visible{outline:2px solid #3DE0FF;outline-offset:3px}
+@keyframes ptAvIn{from{opacity:0}}@keyframes ptAvOut{to{opacity:0}}
+@keyframes ptAvPop{from{opacity:0;transform:translateY(16px) scale(.94)}}
+@keyframes ptAvBat{to{width:12%}}
+@media (prefers-reduced-motion:reduce){.pt-aviso,.pt-av-card,.pt-av-bat i{animation:none}}

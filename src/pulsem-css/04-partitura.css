@@ -1,0 +1,11 @@
+/* ===== 2026-11-09 · rediseño «Partitura» en Pulsem: tinta, vidrio y su color propio (rosa) ===== */
+:root{--bg:#0B0A12;--card:rgba(255,255,255,.045);--line:rgba(255,255,255,.09);--text:#F4F2FA;--soft:#B3AFC4;--mute:#8E8AA2;--accent:#FF3D9A}
+html,body{background:radial-gradient(900px 520px at 70% -12%,rgba(255,61,154,.12),transparent 62%),radial-gradient(700px 420px at 0 100%,rgba(123,63,242,.08),transparent 60%),#0B0A12 !important}
+.aurora,.grain{display:none !important}
+h1,h2,h3,.ptitle{font-family:'Bricolage Grotesque',system-ui,sans-serif;letter-spacing:-.02em}
+.ptop{position:sticky;top:0;z-index:20;background:rgba(11,10,18,.72);backdrop-filter:blur(18px) saturate(150%);border-bottom:1px solid rgba(255,255,255,.07)}
+.ptop::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:5px;pointer-events:none;opacity:.55;
+  background:linear-gradient(#3DE0FF,#3DE0FF) 0 0/100% 1px no-repeat,linear-gradient(#7B3FF2,#7B3FF2) 0 1px/100% 1px no-repeat,linear-gradient(#FF3D9A,#FF3D9A) 0 2px/100% 1px no-repeat,linear-gradient(#FF7A45,#FF7A45) 0 3px/100% 1px no-repeat,linear-gradient(#FFC857,#FFC857) 0 4px/100% 1px no-repeat;
+  -webkit-mask:linear-gradient(90deg,transparent,#000 25%,#000 75%,transparent);mask:linear-gradient(90deg,transparent,#000 25%,#000 75%,transparent)}
+.card,.tcard,.gate{background:rgba(255,255,255,.045) !important;border:1px solid rgba(255,255,255,.09) !important;border-radius:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+.btn,.tbtn,.ibtn{border-radius:999px}
