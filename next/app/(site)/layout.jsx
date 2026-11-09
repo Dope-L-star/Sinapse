@@ -41,7 +41,7 @@ export default function SiteLayout({ children }) {
         <link rel="preconnect" href="https://js.puter.com" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Chakra+Petch:wght@500;600;700&family=Figtree:wght@300..800&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" />
         <link rel="manifest" href="/synthflow.webmanifest" />
-        <link rel="apple-touch-icon" href="/media/app/sf-apple-180.png?v=29" />
+        <link rel="apple-touch-icon" href="/media/app/sf-apple-180.png?v=44" />
         <meta name="theme-color" content="#0b0820" />
         <link rel="stylesheet" href="/clarity-consent.css" />
         <link rel="stylesheet" href="/analytics-consent.css" />
