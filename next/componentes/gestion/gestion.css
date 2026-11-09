@@ -72,19 +72,12 @@ html,body{margin:0;background:var(--gx-bg);color:var(--gx-text);font-family:'Fig
 }
 html.noanim .gx *{animation:none!important;transition:none!important}
 @media (prefers-reduced-motion:reduce){.gx *{animation:none!important;transition:none!important}}
-/* v3.8 · esqueleto con brillo mientras carga (Uiverse · Vosoone) */
-.gx-skel .gx-card{min-height:170px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
-.gx-skel .gx-norte{min-height:360px}
-.gx-skel i,.gx-skel b{display:block;height:12px;width:60%;border-radius:8px;background:rgba(255,255,255,.07)}
-.gx-skel b{height:46px;width:45%;border-radius:12px}
-.gx-skel i:last-child{width:85%}
-.gx-skel .gx-card::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(157,108,255,.12) 45%,rgba(61,224,255,.1) 55%,transparent 70%);
-  transform:translateX(-100%);animation:gxShim 1.6s cubic-bezier(.4,0,.2,1) infinite;animation-delay:calc(var(--i,0) * 90ms)}
-@keyframes gxShim{to{transform:translateX(100%)}}
+/* v4.4 · el esqueleto con brillo pasó a ser la pieza común «Entrada» (next/componentes/entrada/entrada.css) */
+.gx-esq{margin-top:32px}
 /* v3.8 · tarjetas: al pasar el mouse el borde se vuelve degradado del tema y suelta un brillo suave (Uiverse · Tiagoadag) */
 @media (hover:hover){
-  .gx-grid:not(.gx-skel) .gx-card{transition:transform .35s var(--gx-ease),box-shadow .35s,border-color .35s}
-  .gx-grid:not(.gx-skel) .gx-card:hover{border-color:transparent;transform:scale(.99);
+  .gx-grid .gx-card{transition:transform .35s var(--gx-ease),box-shadow .35s,border-color .35s}
+  .gx-grid .gx-card:hover{border-color:transparent;transform:scale(.99);
     background:linear-gradient(180deg,#13101d,#0d0b14) padding-box,linear-gradient(163deg,var(--gx-l),var(--gx-a) 55%,var(--gx-b)) border-box;
     box-shadow:0 0 30px 1px rgba(123,63,242,.22)}
 }

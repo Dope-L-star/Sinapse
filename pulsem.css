@@ -347,3 +347,6 @@ h1,h2,h3,.ptitle{font-family:'Bricolage Grotesque',system-ui,sans-serif;letter-s
   -webkit-mask:linear-gradient(90deg,transparent,#000 25%,#000 75%,transparent);mask:linear-gradient(90deg,transparent,#000 25%,#000 75%,transparent)}
 .card,.tcard,.gate{background:rgba(255,255,255,.045) !important;border:1px solid rgba(255,255,255,.09) !important;border-radius:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
 .btn,.tbtn,.ibtn{border-radius:999px}
+/* v4.4 · puerta abriendo: filas del esqueleto «Entrada» (next/componentes/entrada) dentro de la tarjeta */
+.tcard .pu-esq{margin-top:18px;gap:10px}
+.tcard .pu-esq .sy-b{border-radius:14px}

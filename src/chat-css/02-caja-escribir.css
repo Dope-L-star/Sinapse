@@ -39,7 +39,7 @@
 @keyframes nw{0%{opacity:0;color:var(--accent);text-shadow:0 0 18px var(--accent),0 0 4px var(--accent)}40%{opacity:1;color:var(--accent);text-shadow:0 0 12px rgba(184,196,255,.8)}100%{color:var(--text);text-shadow:0 0 0 transparent}}
 .mir .nw{animation:nw .9s var(--ease) both}
 
-html.enter #veil{background:#b39eff}
+html.enter #veil{background:#0B0A12}   /* v4.4 · antes lila (#b39eff, del portal viejo): ahora la tinta de «Partitura» */
 html.enter.po #veil{background:#0b0c10}
 .attach{flex:none;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;color:var(--soft);background:rgba(0,0,0,.25);transition:background .3s,color .3s,transform .2s}
 .attach:hover{background:rgba(255,255,255,.08);color:var(--text)}.attach:active{transform:scale(.92)}.attach svg{width:20px;height:20px}

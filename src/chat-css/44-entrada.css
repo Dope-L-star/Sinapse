@@ -1,0 +1,7 @@
+/* v4.4 · «Entrada» en SynthFlow: mientras arranca, el velo muestra el esqueleto de SynthFlow (lateral, saludo y caja de escribir)
+   con el brillo de Gestión. Si arranca en menos de 0,2 s no se alcanza a ver. Al añadirse html.go el velo se funde (00-inicio.css)
+   y el lateral, la cabecera, los mensajes y la caja llegan en cascada (como siempre). La pieza es next/componentes/entrada. */
+#veil > .sy-esq{opacity:0;transition:opacity .5s ease}
+html.enter:not(.go) #veil > .sy-esq{animation:syAparece .45s ease .2s forwards}
+html.go #veil > .sy-esq{transform:scale(1.01);transition:opacity .6s ease,transform .8s cubic-bezier(.22,1,.36,1)}
+html.enter.po #veil > .sy-esq{display:none}

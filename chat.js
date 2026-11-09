@@ -5931,10 +5931,11 @@ refresh(true);
 
 /* la entrada continúa la expansión de la página anterior */
 const enter = root.classList.contains('enter');
-let pz = null, po = ''; try{ po = sessionStorage.getItem('synthz:portal') || ''; sessionStorage.removeItem('synthz:portal'); }catch(e){}
-if (enter && !po){ pz = SZ.portalFill($('#veil')); SZ.S.busy(true); }
+let po = ''; try{ po = sessionStorage.getItem('synthz:portal') || ''; sessionStorage.removeItem('synthz:portal'); }catch(e){}
+/* v4.4 · «Entrada»: al abrir SynthFlow directo ya no se llena la pantalla con el velo lila y la Z vieja que se agranda (del diseño
+   anterior). El velo es tinta con el esqueleto de SynthFlow brillando (Fondo.jsx); al estar listo se funde y todo llega en cascada. */
 /* desde la portada: el hueco de la «o» se abre (o un fundido en modo rendimiento) */
-requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => { root.classList.add('go'); if (enter){ if (po === 'o') SZ.portalArrive($('#veil')); else if (!po) SZ.portalReveal(pz); if (po !== 'fade') SZ.waterIn($('.shell')); setTimeout(renderNow, 1500); } }, enter ? 120 : 0)));
+requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => { root.classList.add('go'); if (enter){ if (po === 'o'){ SZ.portalArrive($('#veil')); SZ.waterIn($('.shell')); } setTimeout(renderNow, 1500); } }, enter ? 120 : 0)));
 let pendingQ = null; try{ const s0 = JSON.parse(sessionStorage.getItem('synthz:q') || 'null'); sessionStorage.removeItem('synthz:q'); if (s0 && typeof s0.q === 'string' && Date.now() - s0.t < 120000) pendingQ = s0.q; }catch(e){}
 const q = pendingQ || params.get('q'), fromHome = !!pendingQ;
 const draftK = params.get('draft');

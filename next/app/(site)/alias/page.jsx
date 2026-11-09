@@ -1,5 +1,6 @@
 import LegacyRuntime from '../../../componentes/LegacyRuntime';
 import AliasApp from '../../../componentes/alias/AliasApp';
+import Telon from '../../../componentes/entrada/Telon';
 
 export const metadata = {
   title: 'A.L.I.A.S. · SymphorIA',
@@ -12,6 +13,7 @@ export const metadata = {
 export default function AliasPage() {
   return (
     <>
+      <Telon centro />
       <AliasApp />
       <LegacyRuntime page="alias" scripts={['alias-tools.js']} />
     </>

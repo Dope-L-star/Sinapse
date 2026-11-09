@@ -20,7 +20,10 @@ export const viewport = { width: 'device-width', initialScale: 1, colorScheme: '
    cabecera del celular, el BETA junto a ella) y el CSS. Va en línea para que esté puesto antes de pintar y antes de core.js.
    verificar-migracion.mjs revisa que coincida con el <html> de cada .html. */
 export const BRAND = { chat: 'flow', alias: 'alias' };
-const brandJs = `(function(){var m=${JSON.stringify(BRAND)},p=location.pathname.replace(/^\\/+|(\\.html)?\\/?$/g,'');if(m[p])document.documentElement.dataset.brand=m[p];})();`;
+const brandJs = `(function(){var m=${JSON.stringify(BRAND)},p=location.pathname.replace(/^\\/+|(\\.html)?\\/?$/g,'');if(m[p])document.documentElement.dataset.brand=m[p];if(p==='chat'){var h=document.documentElement;h.classList.add('enter');setTimeout(function(){h.classList.add('go')},15000);}})();`;
+
+/* v4.4 · «Entrada»: en SynthFlow el velo (tinta + esqueleto) se pone ANTES de pintar, así no se ve la página armándose.
+   Si el motor no arrancara, a los 15 s se quita igual (html.go). */
 
 /* v4.1 · la portada solo para gente nueva: el guardián (portada-guardian.js, en la raíz del repo) va en línea en el <head>
    para que quien ya entró antes salte a SynthFlow antes de pintar nada. Él mismo revisa que la ruta sea la portada.
@@ -35,6 +38,7 @@ export default function SiteLayout({ children }) {
         <script dangerouslySetInnerHTML={{ __html: brandJs }} />
         <Umami />
         {portadaJs ? <script dangerouslySetInnerHTML={{ __html: portadaJs }} /> : <script src="/portada-guardian.js" />}
+        <style dangerouslySetInnerHTML={{ __html: 'html{background:#0B0A12}' }} />
         <link rel="icon" id="favi" href="/media/v30/fav-s.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

@@ -18,6 +18,7 @@ import Resultado, { compilar } from './Resultado';
 import { Icono } from './iconos';
 import BarraSuperior from '../partitura/BarraSuperior';
 import './agente.css';
+import Esqueleto from '../entrada/Esqueleto';
 
 const LANGS = ['es', 'en'], MAX_STEPS = 7, MAX_TOTAL = 9, SEG_PASO = 25;
 const K_LANG = 'synthz:alias:lang', K_HIST = 'alias:misiones', K_CADA = 'alias:cada', HIST_MAX = 20;
@@ -451,7 +452,7 @@ export default function AliasApp() {
               </section>
               <details className="card pa-rutas" data-alias="routes" onToggle={(e) => loadRutas(e.currentTarget.open)}>
                 <summary><h2>{t('ag_rutas_t')}</h2><p className="pa-small">{t('rt_intro')}</p></summary>
-                {!rutas || rutas.loading ? <p className="pa-empty">{t(motor ? 'rt_cargando' : 'ag_motor_carga')}</p>
+                {!rutas || rutas.loading ? <><p className="pa-empty" role="status">{t(motor ? 'rt_cargando' : 'ag_motor_carga')}</p><Esqueleto forma="lista" n={3} /></>
                   : !rutas.ok ? <p className="pa-empty">{t('rt_error')}</p> : (
                     <div className="pa-lgrid">
                       {['code', 'write', 'reason', 'summary', 'translate', 'data', 'plan'].map((c) => {

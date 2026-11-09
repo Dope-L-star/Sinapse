@@ -1,4 +1,5 @@
 import '../app/(legal)/legal.css';
+import Telon from './entrada/Telon';
 
 /* Términos y Privacidad comparten la misma cabecera, el mismo ancho y el mismo pie.
    v3.7 · cada página trae su versión en español y en inglés: se ve la de tu idioma de SymphorIA (o el de tu navegador)
@@ -7,6 +8,7 @@ export default function Legal({ actual, titulo, bajada, tituloEn, bajadaEn, en, 
   const link = (href, es, eng) => <a href={href} aria-current={actual === href ? 'page' : undefined}><span lang="es">{es}</span><span lang="en" hidden>{eng}</span></a>;
   return (
     <div className="legal" data-title-es={titulo + ' · SymphorIA'} data-title-en={(tituloEn || titulo) + ' · SymphorIA'}>
+      <Telon />
       <header className="top">
         <a className="logo" href="index.html"><img src="media/v30/symphoria.svg" alt="" />Symphor<span className="gS">IA</span></a>
         <nav>

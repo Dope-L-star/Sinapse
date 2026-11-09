@@ -118,9 +118,9 @@ function recoveryPanel(box, code, user, onOk, again){
 function authBox(box, done, onBlocked, start){
   let mode = start === 'signup' ? 'signup' : 'login';
   const say = h => { box.innerHTML = '<p class="gmsg">' + h + '</p>'; };
-  box.innerHTML = '<div class="gbox"><span class="gload">Preparando…</span></div>';
+  box.innerHTML = '<div class="gbox"><span class="gload">' + (LANG === 'en' ? 'Getting ready…' : 'Preparando…') + '</span></div>';
   accConfig().then(ok => {
-    if (!ok){ say(location.protocol === 'file:' ? 'Las cuentas funcionan cuando la página está publicada (por ejemplo en Vercel).' : 'Las cuentas de ' + BRAND() + ' abren muy pronto. Mientras tanto, tus chats se guardan en este equipo y puedes usar todo sin cuenta.'); return; }
+    if (!ok){ say(location.protocol === 'file:' ? 'Las cuentas funcionan cuando la página está publicada (por ejemplo en Vercel).' : (LANG === 'en' ? BRAND() + ' accounts open very soon. Meanwhile, your chats are saved on this device and you can use everything without an account.' : 'Las cuentas de ' + BRAND() + ' abren muy pronto. Mientras tanto, tus chats se guardan en este equipo y puedes usar todo sin cuenta.')); return; }   /* v4.4 · salía en español con la página en inglés */
     paint();
   });
   function paint(){

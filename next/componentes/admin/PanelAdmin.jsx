@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { textos } from './textos.mjs';
-import { I, ICO, Saldo, Radar, Brutal, Contactar, Paleta } from './partes';
+import { I, ICO, Saldo, Brutal, Contactar, Paleta } from './partes';
+import Esqueleto from '../entrada/Esqueleto';
 import './admin.css';
 
 /* ===== Panel de administración nuevo (Pulsem en React)
@@ -165,7 +166,7 @@ export default function PanelAdmin({ api, lang: langProp, onAuth, onLang, toast:
         <a className="pa-ib" href="chat.html" aria-label={t.toChat} data-tip={t.toChat}><I d={ICO.chat} /></a>
       </header>
 
-      {!P ? (err ? <div className="pa-card pa-err"><p>{err}</p><button type="button" className="pa-btn" onClick={() => load(true)}>{t.refresh}</button></div> : <Radar texto={t.loading} />) : (
+      {!P ? (err ? <div className="pa-card pa-err"><p>{err}</p><button type="button" className="pa-btn" onClick={() => load(true)}>{t.refresh}</button></div> : <div className="pa-cargando"><p className="pa-load" role="status">{t.loading}</p><Esqueleto forma="panel" /></div>) : (
         <div className="pa-shell">
           <nav className="pa-nav" aria-label="Pulsem">
             <p className="pa-nav-l">{t.team}</p>
