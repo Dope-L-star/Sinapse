@@ -873,6 +873,31 @@ html.noanim .ap-hero *{animation:none !important}
 .ap-tv video{display:block;width:100%;height:100%;object-fit:cover}
 .ap-hero.vid .ap-ico{z-index:2;scale:.7;right:8px;bottom:6px;top:auto;left:auto;animation:none;transform-origin:100% 100%}
 .ap-hero.vid .ap-sp{display:none}
+/* v4.1 · Obertura: bajar el instalador de Windows desde la misma ventana */
+.ap-win{margin:14px 0 4px}
+.ap-win-go{position:relative;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:18px;text-decoration:none;color:#fff;overflow:hidden;
+  background:linear-gradient(115deg,color-mix(in srgb,var(--sb-light,#3de0ff) 30%,transparent),color-mix(in srgb,var(--sb-primary,#7b3ff2) 34%,transparent) 50%,color-mix(in srgb,var(--sb-secondary,#ff3d9a) 28%,transparent));
+  border:1px solid rgba(255,255,255,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 10px 30px -12px color-mix(in srgb,var(--sb-primary,#7b3ff2) 70%,transparent);transition:transform .2s,box-shadow .25s}
+.ap-win-go::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.28) 50%,transparent 70%);transform:translateX(-120%);animation:apwinb 4s ease-in-out infinite 1s;pointer-events:none}
+@keyframes apwinb{30%,100%{transform:translateX(120%)}}
+.ap-win-go:hover{transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 14px 36px -12px color-mix(in srgb,var(--sb-secondary,#ff3d9a) 70%,transparent)}
+.ap-win-go:active{transform:scale(.98)}
+.ap-win-go:focus-visible{outline:2px solid var(--sb-light,#3de0ff);outline-offset:3px}
+.ap-win-ico{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);color:#7fd3ff}
+.ap-win-t{display:grid;gap:1px;min-width:0;text-align:left}
+.ap-win-t b{font-size:15.5px;font-weight:650;letter-spacing:-.01em}
+.ap-win-t small{font-size:12px;color:rgba(255,255,255,.72);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-win-ar{margin-left:auto;flex:none;opacity:.9}
+.ap-win.bajando .ap-win-ar{animation:apwind .9s ease-in-out 3}
+@keyframes apwind{50%{transform:translateY(4px)}}
+.ap-win.pronto .ap-win-go{cursor:default;filter:saturate(.4);opacity:.75}
+.ap-win.pronto .ap-win-go::after,.ap-win.pronto .ap-win-ar{display:none}
+.ap-win-pasos{margin:10px 0 0;padding:0 0 0 20px;display:grid;gap:4px;font-size:13px;line-height:1.4;color:rgba(255,255,255,.8);animation:apin .4s both}
+.ap-win-pasos b{color:#fff}
+.ap-go-alt{background:rgba(255,255,255,.08) !important;color:#fff !important;border:1px solid rgba(255,255,255,.22) !important;box-shadow:none !important}
+@media (prefers-reduced-motion:reduce){.ap-win-go::after{animation:none}}
+.ap-go-alt{white-space:nowrap}
+.ap-win-pasos[hidden]{display:none}
 /* ===== v2.2 · menús, etiquetas, ajustes con pestañas y el «!» de novedades ===== */
 .ctxm{min-width:236px;max-width:min(320px,calc(100vw - 20px));padding:6px;gap:1px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(22,22,28,.86);backdrop-filter:blur(24px) saturate(1.4);-webkit-backdrop-filter:blur(24px) saturate(1.4);box-shadow:0 24px 60px -18px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.06)}
 .ctxm button{display:flex;align-items:center;gap:10px;width:100%;min-height:34px;padding:7px 10px;border-radius:9px;font-size:14px;color:var(--soft,#c3c5ce);text-align:left}

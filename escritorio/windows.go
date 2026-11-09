@@ -17,6 +17,8 @@ var (
 	pUILang      = kernel32.NewProc("GetUserDefaultUILanguage")
 	pShellExec   = shell32.NewProc("ShellExecuteW")
 	pSHChangeNot = shell32.NewProc("SHChangeNotify")
+	pMetricas    = user32.NewProc("GetSystemMetrics")
+	pDpi         = user32.NewProc("GetDpiForSystem")
 )
 
 const (

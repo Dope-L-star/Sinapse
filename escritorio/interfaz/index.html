@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>SymphorIA · Obertura</title>
+<link rel="icon" href="icono.svg">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<div class="aurora" aria-hidden="true"><i class="a1"></i><i class="a2"></i><i class="a3"></i></div>
+<div class="grano" aria-hidden="true"></div>
+
+<header class="top">
+  <span class="marca"><img src="icono.svg" alt="" width="22" height="22"><span>Symphor<b>IA</b></span></span>
+  <button type="button" class="idioma" id="idioma" aria-label="English">EN</button>
+</header>
+
+<main id="app" aria-live="polite">
+  <!-- 1 · bienvenida -->
+  <section class="vista" data-vista="hola">
+    <div class="logo" aria-hidden="true">
+      <span class="orbita"></span><span class="halo"></span>
+      <img src="icono.svg" alt="" width="112" height="112">
+      <i class="chispa c1"></i><i class="chispa c2"></i><i class="chispa c3"></i>
+    </div>
+    <p class="kick" data-t="kick"></p>
+    <h1 data-t="titulo"></h1>
+    <p class="sub" data-t="sub"></p>
+    <ul class="porque">
+      <li><i><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18"/></svg></i><span data-t="p1"></span></li>
+      <li><i><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></i><span data-t="p2"></span></li>
+      <li><i><svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></i><span data-t="p3"></span></li>
+    </ul>
+    <label class="opcion" data-solo="instalar">
+      <input type="checkbox" id="escritorio" checked>
+      <span class="sw" aria-hidden="true"></span>
+      <span data-t="opEscritorio"></span>
+    </label>
+    <p class="donde" data-solo="instalar"><span data-t="donde"></span> <code id="carpeta"></code></p>
+    <div class="acciones">
+      <button type="button" class="btn sec" data-accion="cerrar" data-t="ahoraNo"></button>
+      <button type="button" class="btn pri" data-accion="empezar"><span data-t="instalar"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></button>
+    </div>
+    <button type="button" class="enlace" data-accion="soloAbrir" data-t="soloAbrir" hidden></button>
+  </section>
+
+  <!-- 2 · trabajando -->
+  <section class="vista" data-vista="trabajando" hidden>
+    <div class="logo anillo" aria-hidden="true">
+      <svg class="progreso" viewBox="0 0 120 120"><circle cx="60" cy="60" r="54"/><circle class="lleno" cx="60" cy="60" r="54" id="anillo"/></svg>
+      <img src="icono.svg" alt="" width="84" height="84">
+    </div>
+    <h1 data-t="trabajando"></h1>
+    <p class="sub" data-t="trabajandoSub"></p>
+    <ol class="pasos" id="pasos"></ol>
+  </section>
+
+  <!-- 3 · listo -->
+  <section class="vista" data-vista="listo" hidden>
+    <div class="logo listo" aria-hidden="true">
+      <span class="halo"></span>
+      <span class="check"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+    </div>
+    <h1 data-t="listoTitulo"></h1>
+    <p class="sub" data-t="listoSub"></p>
+    <div class="acciones">
+      <button type="button" class="btn sec" data-accion="cerrar" data-t="cerrar"></button>
+      <button type="button" class="btn pri" data-accion="abrir" data-solo="instalar"><span data-t="abrir"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></button>
+    </div>
+  </section>
+
+  <!-- 4 · algo falló -->
+  <section class="vista" data-vista="error" hidden>
+    <div class="logo mal" aria-hidden="true"><span class="check"><svg viewBox="0 0 24 24"><path d="M12 7v6M12 17h.01"/></svg></span></div>
+    <h1 data-t="errorTitulo"></h1>
+    <p class="sub" data-t="errorSub"></p>
+    <details class="detalle"><summary data-t="verDetalle"></summary><code id="errorTxt"></code></details>
+    <div class="acciones">
+      <button type="button" class="btn sec" data-accion="cerrar" data-t="cerrar"></button>
+      <button type="button" class="btn pri" data-accion="empezar" data-t="reintentar"></button>
+    </div>
+  </section>
+</main>
+
+<footer class="pie"><span id="version"></span> · <span data-t="pie"></span></footer>
+<canvas id="confeti" aria-hidden="true"></canvas>
+<script src="app.js"></script>
+</body>
+</html>

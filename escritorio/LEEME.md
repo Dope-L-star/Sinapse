@@ -14,6 +14,31 @@ Un solo archivo, `SymphorIA-Obertura.exe` (unos 6 MB), hace todo:
 | **Se desinstala limpio** | Aparece en *Configuración › Aplicaciones › Aplicaciones instaladas* como «SymphorIA». Al quitarla se borran los accesos directos, la entrada del registro, la carpeta del programa y la de datos. Los chats siguen en la cuenta. |
 | **ES / EN** | Todos los textos en español o inglés según el idioma de Windows. |
 
+## La ventana propia (v1.1)
+
+Al abrir `SymphorIA-Obertura.exe` ya no salen las cajitas grises de Windows: se abre **una ventana con el diseño de
+SymphorIA** (aurora, logo animado, pasos con avance, confeti al terminar), en español o inglés según Windows y con botón
+ES/EN. Muestra qué hace la instalación, deja elegir si se crea el acceso directo del escritorio, ve si ya estaba instalada
+(«Actualizar» / «Reinstalar» / «Solo abrirla») y al final abre la app. Quitarla desde *Aplicaciones instaladas* usa la
+misma ventana.
+
+Cómo está hecha (sin nada de pago ni librerías nuevas):
+- `interfaz/` (HTML, CSS y JS) va **dentro del .exe** (`go:embed`).
+- `ventana.go` levanta un servidor diminuto **solo en 127.0.0.1**, puerto al azar y una clave al azar en la dirección;
+  revisa el nombre del host y pide una cabecera propia para todo lo que cambia algo.
+- `ventana_windows.go` la abre en Edge (o Chrome/Brave) en modo app con un **perfil temporal** (ventana limpia de
+  520 × 680, centrada) y lo borra al cerrar. Si no hay navegador o la página no carga en 25 s, vuelven las
+  preguntas de siempre: nadie se queda sin instalar.
+- Verla sin Windows: `cd escritorio && go run . --demo` (con `--en`, `--ya`, `--falla` o `--desinstalar`) y abrir la
+  dirección que imprime.
+
+## Descargarla desde la página
+
+En la ventana «Descarga nuestra app» (botones *Instalar la app* de la portada y *Descargar la app SynthFlow* de los
+ajustes), en un computador con Windows aparece **Descargar para Windows** con la versión y el peso. Lo atiende
+`functions/descargar/windows.js` (Cloudflare Pages, gratis): busca el release más nuevo `obertura-vX.Y.Z` y manda directo
+al .exe. Mientras no haya ningún release publicado, el botón dice **«Muy pronto para Windows»** y no hace nada.
+
 Banderas (para soporte o empresas): `--silencioso` instala o desinstala sin preguntar,
 `--desinstalar` quita la app, `--sitio=URL` abre otra dirección (pruebas).
 Si algo falla queda una línea en `%LOCALAPPDATA%\SymphorIA\obertura.log` (nunca datos personales).
