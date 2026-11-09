@@ -40,7 +40,7 @@ test('se puede apagar al armar con NEXT_PUBLIC_UMAMI=off', () => {
   assert.equal(umamiOn({}), true); assert.equal(umamiOn({ NEXT_PUBLIC_UMAMI: 'off' }), false);
 });
 test('la CSP deja cargar el script y enviar las visitas', () => {
-  const v = JSON.parse(fs.readFileSync(new URL('../../vercel.json', import.meta.url), 'utf8'));
+  const v = JSON.parse(fs.readFileSync(new URL('../../cloudflare/rutas.json', import.meta.url), 'utf8'));
   const csp = v.headers[0].headers.find(h => h.key === 'Content-Security-Policy').value;
   assert.match(csp, /script-src [^;]*https:\/\/cloud\.umami\.is/);
   assert.match(csp, /connect-src [^;]*https:\/\/cloud\.umami\.is/);

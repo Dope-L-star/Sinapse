@@ -1,14 +1,13 @@
 /* Arma los archivos de la página a partir de sus piezas (carpeta src/).
    Uso:  node build.mjs          → vuelve a escribir core.js, chat.js, chat.css…
          node build.mjs --check  → solo revisa que estén al día (falla si alguien editó el archivo armado a mano)
-         node build.mjs --dist   → (lo corre Vercel) copia lo público a dist/ y lo minifica; el repo se queda legible
+         node build.mjs --dist   → (lo corre Cloudflare) copia lo público a dist/ y lo minifica; el repo se queda legible
    Las piezas de cada archivo se unen en orden (00, 01, 02…). No cambian nada del código: solo lo ordenan. */
 import { readFileSync, writeFileSync, readdirSync, existsSync, rmSync, mkdirSync, cpSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
-/* en Vercel no se suben las piezas (.vercelignore): ahí solo se hace dist/ con los archivos armados que ya están en el repo */
 const MAP = join(here, 'src/build.json');
 const map = existsSync(MAP) ? JSON.parse(readFileSync(MAP, 'utf8')) : {};
 const check = process.argv.includes('--check'), dist = process.argv.includes('--dist');
@@ -40,10 +39,10 @@ for (const [target, dir] of Object.entries(map)){
 if (bad) process.exit(1);
 
 /* v2.9.1 · dist/: solo lo que se publica (sin src/, pruebas, notas .md ni la configuración), con JS y CSS minificados.
-   Las funciones de api/ las arma Vercel aparte, por eso tampoco van aquí. */
+   Las funciones de api/ se ejecutan en Pages Functions, por eso tampoco van aquí. */
 if (dist){
   const { transform } = await import('esbuild');
-  const out = join(here, 'dist'), SKIP = new Set(['dist', 'cloudflare', 'functions', 'vercel-portal', 'next', 'escritorio', 'rust', 'node_modules', 'src', 't', 'api', 'build.mjs', 'package.json', 'package-lock.json', 'vercel.json', '.git', '.github', '.vercelignore', '.gitignore']);
+  const out = join(here, 'dist'), SKIP = new Set(['dist', 'cloudflare', 'functions', 'next', 'escritorio', 'rust', 'node_modules', 'src', 't', 'api', 'build.mjs', 'package.json', 'package-lock.json', '.git', '.github', '.gitignore']);
   rmSync(out, { recursive:true, force:true }); mkdirSync(out);
   for (const f of readdirSync(here)) if (!SKIP.has(f) && !f.endsWith('.md')) cpSync(join(here, f), join(out, f), { recursive:true });
   let before = 0, after = 0;

@@ -10,7 +10,7 @@ export default function Chats(){
       <aside className="chats" id="chats" aria-label="Tus chats">
         <div className="cin">
           <div className="chead">
-            <a className="back sfb" href="index.html" id="backLink" aria-label="Volver a SymphorIA">
+            <a className="back sfb" href="index.html" id="backLink" aria-label="Volver a Sinapse">
               <svg className="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
               <span className="sfx">
                 <span className="sf-a word" id="sideWord" />
@@ -32,7 +32,7 @@ export default function Chats(){
           </div>
           <button type="button" className="cnew" id="cNew">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
-            Nuevo chat
+            Nueva conversación
           </button>
           <div className="cfavh" id="cFavH" hidden><b>★ Favoritos</b><button type="button" className="lnk" id="cFavBack">← Mis chats</button></div>
           <label className="field csearch" id="cSearch">

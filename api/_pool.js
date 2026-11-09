@@ -483,7 +483,7 @@ export async function searchWith(k, q, n = 6){
 /* Wikipedia en español: siempre gratis y sin llave (respaldo) */
 export async function searchWiki(q, n = 4, lang = 'es'){
   const base = process.env.POOL_WIKI_URL || 'https://' + (lang === 'en' ? 'en' : 'es') + '.wikipedia.org';
-  const r = await fetch(base + '/w/api.php?action=query&list=search&format=json&utf8=1&srlimit=' + n + '&srsearch=' + encodeURIComponent(q), { headers:{ 'user-agent':'SymphorIA/2.1 (https://synthz-style.vercel.app)' }, signal:AbortSignal.timeout(10000) });
+  const r = await fetch(base + '/w/api.php?action=query&list=search&format=json&utf8=1&srlimit=' + n + '&srsearch=' + encodeURIComponent(q), { headers:{ 'user-agent':'SymphorIA/2.1 (https://symphoria.pages.dev)' }, signal:AbortSignal.timeout(10000) });
   if (!r.ok) return [];
   const d = await r.json().catch(() => ({}));
   return ((d.query && d.query.search) || []).map(x => ({ t:String(x.title), u:base + '/wiki/' + encodeURIComponent(String(x.title).replace(/ /g, '_')), s:String(x.snippet || '').replace(/<[^>]+>/g, '').replace(/&quot;/g, '"').replace(/&amp;/g, '&').slice(0, 500) }));

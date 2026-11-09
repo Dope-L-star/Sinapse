@@ -1541,9 +1541,11 @@ function emptyEl(){
       + '<p class="hsub2">Cuéntame qué necesitas. SuperiorSynth entiende tu pedido, lo mejora, elige la IA que más sabe de eso y te muestra cada paso.</p><div class="hcomp"></div>';
     return e;
   }
-  let h = hiName() + '<h1 class="greet">' + greetHtml(GREET[greetI] || GREET[0]) + '</h1>' + flowWhatHtml()
-    + (ex ? '<div class="hexs hexr" id="hexR" aria-label="Ideas para empezar">' + exRowHtml() + '</div>' : '')
-    + '<p class="hsub2">Escribe lo que necesitas y da detalles: qué quieres, para qué es y cómo te sirve la respuesta. Ya hay una IA lista para empezar; si prefieres otra, la cambias abajo.</p>';
+  e.classList.add('luma-start');
+  let h = hiName() + '<h1 class="greet">Las buenas ideas empiezan con una buena pregunta.</h1>'
+    + (ex ? '<div class="luma-ideas" aria-label="Ideas para empezar">' +
+      [['ideas', 'Dar forma a una idea'], ['estudiar', 'Entender algo nuevo'], ['escribir', 'Crear algo desde cero']]
+        .map(([key, label]) => '<button type="button" class="hex" data-hex="' + key + '"><b>' + label + '</b><small>' + esc(TOPIC[key].ex[0][0]) + '</small></button>').join('') + '</div>' : '');
   h += '<div class="hcomp"></div>' + topicsHtml() + '<div class="tpanel" id="tPanel">' + (curTopic ? topicPanelHtml(curTopic) : '') + '</div>'
     + (ex ? '<p class="hfoot">Tocar una idea solo la escribe; tú decides cuándo enviarla.</p>' : '');
   e.innerHTML = h;

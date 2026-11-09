@@ -1,5 +1,5 @@
 /* Servidor local para probar SynthFlow (export de Next en cloudflare/public) sin salir a internet.
-   · Sirve los archivos con las mismas CSP de vercel.json (la de la página y la de /sintetico.html).
+   · Sirve los archivos con las mismas CSP de cloudflare/rutas.json (la de la página y la de /sintetico.html).
    · /api/* lo atienden los archivos reales de api/ con un Redis de mentira; el proveedor de IA es de mentira
      y responde lo que diga RESPUESTA (por defecto, t/web/respuesta-sitio.md: una página web de varios archivos).
    Uso: import { start } from './servidor.mjs'; const s = await start(); … s.close() */
@@ -12,7 +12,7 @@ const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const TYPES = { '.html':'text/html; charset=utf-8', '.js':'text/javascript', '.css':'text/css', '.json':'application/json', '.svg':'image/svg+xml', '.png':'image/png', '.jpg':'image/jpeg', '.webp':'image/webp', '.woff2':'font/woff2', '.txt':'text/plain', '.xml':'application/xml', '.webmanifest':'application/manifest+json', '.mp4':'video/mp4' };
 
 export async function start({ root = path.join(REPO, 'cloudflare/public'), reply } = {}){
-  const VJ = JSON.parse(fs.readFileSync(path.join(REPO, 'vercel.json'), 'utf8'));
+  const VJ = JSON.parse(fs.readFileSync(path.join(REPO, 'cloudflare/rutas.json'), 'utf8'));
   const cspOf = src => ((VJ.headers.find(h => h.source === src) || { headers:[] }).headers.find(h => h.key === 'Content-Security-Policy') || {}).value || '';
   const CSP_PAGE = cspOf('/((?!sintetico\\.html$).*)').replace(/;\s*upgrade-insecure-requests/, ''), CSP_SYN = cspOf('/sintetico.html');
   let RESP = reply || fs.readFileSync(path.join(REPO, 't/web/respuesta-sitio.md'), 'utf8');

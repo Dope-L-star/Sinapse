@@ -2,8 +2,8 @@ import LegacyRuntime from '../../../componentes/LegacyRuntime';
 import PulsemApp from '../../../componentes/pulsem/PulsemApp';
 
 export const metadata = {
-  title: 'Pulsem · SymphorIA',
-  description: 'Pulsem: el panel privado del equipo de SymphorIA (salud del sitio y avisos). Solo para el equipo.',
+  title: 'Pulsem · Sinapse',
+  description: 'Pulsem: el panel privado del equipo de Sinapse (salud del sitio y avisos). Solo para el equipo.',
   robots: { index: false, follow: false },
 };
 

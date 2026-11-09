@@ -18,12 +18,12 @@ Pulsem → Ajustes → **Supabase** → «Copiar todo lo de antes a Supabase» (
 
 ## 3. «Entrar con Google» (opcional)
 1. **Google Cloud** → APIs y servicios → Credenciales → **Crear credenciales** → ID de cliente de OAuth → Aplicación web.
-   - Orígenes autorizados: `https://synthz-style.vercel.app`
+   - Orígenes autorizados: `https://symphoria.pages.dev`
    - URI de redireccionamiento autorizado: `https://luvvlfoyatdmrxvhdxay.supabase.co/auth/v1/callback`
 2. **Supabase** → Authentication → **Sign In / Providers** → **Google** → activar → pega el *Client ID* y el *Client Secret* de Google → Guardar.
 3. **Supabase** → Authentication → **URL Configuration**:
-   - Site URL: `https://synthz-style.vercel.app`
-   - Redirect URLs: `https://synthz-style.vercel.app/**`
+   - Site URL: `https://symphoria.pages.dev`
+   - Redirect URLs: `https://symphoria.pages.dev/**`
 
 En cuanto esté activo, el botón «Continuar con Google» aparece solo en «Entrar».
 

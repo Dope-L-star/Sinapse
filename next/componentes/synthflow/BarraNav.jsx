@@ -19,8 +19,8 @@ const I = {
   side: <svg viewBox="0 0 24 24" {...P}><rect x="3.5" y="4.5" width="17" height="15" rx="3" /><path d="M9.5 4.5v15" /></svg>,
   chev: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10l5 5 5-5" /></svg>,
 };
-const TOP = [['new', 'Crear'], ['cmp', 'Comparar IAs'], ['proj', 'Proyectos'], ['syn', 'Sintéticos'], ['cfg', 'Personalización']];
-const SUB = [['favs', 'star', 'Mensajes favoritos'], ['energy', 'batt', 'Tu EnerX de hoy'], ['guide', 'guide', 'Guía de SynthFlow'], ['help', 'help', 'Centro de ayuda']];
+const TOP = [['new', 'Nueva conversación'], ['cmp', 'Comparar IAs'], ['proj', 'Spaces'], ['syn', 'Works'], ['cfg', 'Personalización']];
+const SUB = [['favs', 'star', 'Mensajes favoritos'], ['energy', 'batt', 'Tu EnerX de hoy'], ['guide', 'guide', 'Guía de Sonyx'], ['help', 'help', 'Centro de ayuda']];
 const ACT = { new: 'newChat', cmp: 'compare', proj: 'projects', syn: 'synthetics', cfg: 'settings', favs: 'favorites', energy: 'energy', guide: 'guide', help: 'help' };
 
 /* lo que está abierto se marca, como en Claude (Comparar, Proyectos o Sintéticos) */

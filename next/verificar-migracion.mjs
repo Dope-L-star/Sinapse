@@ -190,7 +190,7 @@ assert.ok(!panelLayout.includes('ClarityConsent'), 'Pulsem es un panel privado y
 const publicLayout = fs.readFileSync(path.join(nextDir, 'app/(site)/layout.jsx'), 'utf8');
 const legalLayout = fs.readFileSync(path.join(nextDir, 'app/(legal)/layout.jsx'), 'utf8');
 assert.ok(publicLayout.includes('ClarityConsent') && legalLayout.includes('ClarityConsent'), 'Clarity opcional debe montarse solo en la web pública/legal');
-const csp = JSON.parse(fs.readFileSync(path.join(root, 'vercel.json'), 'utf8'));
+const csp = JSON.parse(fs.readFileSync(path.join(root, 'cloudflare', 'rutas.json'), 'utf8'));
 const cspValue = (csp.headers || []).flatMap(h => h.headers || []).find(h => h.key.toLowerCase() === 'content-security-policy')?.value || '';
 assert.ok(cspValue.includes('https://www.clarity.ms') && cspValue.includes('https://*.clarity.ms') && cspValue.includes('https://c.bing.com'), 'CSP debe permitir los hosts oficiales de Clarity solo cuando se habilite en el build');
 const clarityEnv = fs.readFileSync(path.join(nextDir, '.env.example'), 'utf8');
