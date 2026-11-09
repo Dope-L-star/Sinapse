@@ -1,24 +1,26 @@
 'use client';
-/* ===== A.L.I.A.S. en React (v3.9 · diseño «Mission workspace» de Sammuel) =====
-   Antes (v3.8): la misma pantalla de alias.html pasada a React. Ahora: el diseño que mandó Sammuel
-   (ALIAS_VISUAL_CONCEPT): barra lateral, misión central, rutas rápidas, misiones recientes, agentes y la
-   orquesta del plan. Solo oscuro (Sammuel: «sin el tema claro»).
-   · AliasApp (este archivo): idioma, vistas, barra lateral, plan, controles y el recorrido paso a paso.
-   · Pasos.jsx (lista editable) · Resultado.jsx (texto final, Síntesis, archivos, fuentes) · iconos.jsx.
-   · Estilos: alias.css (base de siempre) + alias-mision.css (el diseño nuevo, todo bajo .am).
-   El motor no cambia: window.ALIAS (alias-tools.js) pide el plan y corre cada paso en el servidor.
-   Lo del prototipo que era de mentira (porcentajes, misiones inventadas, «Fuentes»/«Archivos» vacíos) no se copió:
-   las misiones recientes son las tuyas (solo en este navegador) y los agentes son las herramientas reales del motor.
-   Los textos siguen en alias-textos.json (ES/EN) y siguen el idioma de todo SymphorIA al instante.
-   Se conservan los IDs y los data-alias: las pruebas (t/alias/ui.mjs) manejan la página por ellos. */
+/* ===== A.L.I.A.S. en React (v4.3 · agente que trabaja solo, diseño «Partitura») =====
+   Antes (v3.9): había que tocar «Sí, continúa» después de cada paso. Sammuel (9 nov): «¿no es mejor que arme un plan,
+   tú lo apruebes una vez y él diga "voy a continuar con tal cosa" y siga solo, y que lo puedas cancelar o agregarle algo
+   como en los proyectos de Claude?». Así queda:
+   1) El plan: escribes la meta, A.L.I.A.S. propone el plan (editable) y lo apruebas UNA vez.
+   2) Trabaja solo: el paso en marcha dice «Voy a continuar con: …». La caja de abajo sigue abierta: lo que escribas se suma
+      encima sin pararlo (action 'ajustar' rehace solo los pasos que faltan). Pausar y Detener a mano. Si un paso falla,
+      lo reintenta solo con otra IA; solo pregunta si falla dos veces.
+   3) Listo: el resultado con archivos y fuentes; la caja pasa a «Pide un cambio al resultado» (se hace encima, sin empezar de cero).
+   «Pedirme permiso en cada paso» queda como ajuste, apagado.
+   · Pasos.jsx (línea de trabajo) · Resultado.jsx (texto, Síntesis, archivos, fuentes) · iconos.jsx · agente.css (estilos).
+   · Barra superior común: ../partitura/BarraSuperior (hilo del rediseño).
+   El motor sigue en window.ALIAS (alias-tools.js). Textos en alias-textos.json (ES/EN). Se conservan los data-alias de las pruebas. */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Pasos, { porQue } from './Pasos';
+import Pasos from './Pasos';
 import Resultado, { compilar } from './Resultado';
 import { Icono } from './iconos';
-import BotonInicio from '../efectos/BotonInicio';   /* botón «Start» de Uiverse (dexter-st), hecho por el hilo del panel: arranca la misión */
+import BarraSuperior from '../partitura/BarraSuperior';
+import './agente.css';
 
-const LANGS = ['es', 'en'], MAX_STEPS = 7;
-const K_LANG = 'synthz:alias:lang', K_HIST = 'alias:misiones', HIST_MAX = 20;
+const LANGS = ['es', 'en'], MAX_STEPS = 7, MAX_TOTAL = 9, SEG_PASO = 25;
+const K_LANG = 'synthz:alias:lang', K_HIST = 'alias:misiones', K_CADA = 'alias:cada', HIST_MAX = 20;
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
   set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* sin guardado */ } },
@@ -33,37 +35,29 @@ function detectLang() {
 }
 const fresh = () => ({
   phase: 'edit', goal: '', plan: null, status: {}, results: {}, errors: {}, skipped: {}, open: {},
-  mode: 'manual', pausing: false, cancelled: false, running: false, gateFn: null, cur: null, editing: null, busy: false, reqId: 0, histId: 0,
+  mode: 'auto', pausing: false, running: false, gateFn: null, cur: null, editing: null, busy: false, reqId: 0, histId: 0,
+  log: [], fresh: {}, t0: {}, ms: {}, retried: {}, retrying: null, adjusting: null, startedAt: 0, endedAt: 0, stopped: false, showSteps: false,
 });
 const still = () => document.documentElement.classList.contains('noanim');
 const isFinished = (S, id) => (S.status[id] || 'pending') === 'done' || !!S.skipped[id];
-
-/* ---- misiones recientes: solo en este navegador (objetivo, pasos hechos, estado) ---- */
 const readHist = () => { try { const a = JSON.parse(store.get(K_HIST)); return Array.isArray(a) ? a.filter((m) => m && m.goal) : []; } catch (e) { return []; } };
+const cleanStep = (s) => ({ id: s.id, title: String(s.title || ''), tool: s.tool, input: s.input });
 
-/* ---- fondo del diseño: halos dorado, vino y violeta con anillos (quietos si las animaciones están apagadas) ---- */
-function Fondo() {
-  return <div className="am-ambient" aria-hidden="true"><i /><b /><span /></div>;
-}
-
-const LOOP = 'M22 15C18 9 13 6 8 6a9 9 0 0 0 0 18c5 0 10-3 14-9s9-9 14-9a9 9 0 0 1 0 18c-5 0-10-3-14-9z';
-function Marca({ cls, vb, sw, nodes, trav }) {
+/* el infinito de A.L.I.A.S.: se va llenando con el avance */
+const LOOP = 'M150 60 C120 12 30 12 30 60 S120 108 150 60 S270 12 270 60 S180 108 150 60z';
+function Infinito({ pct }) {
   return (
-    <svg className={cls} viewBox={vb} aria-hidden="true" focusable="false">
-      <path className="lp" d={LOOP} fill="none" stroke="url(#alG)" strokeWidth={sw} />
-      <g className="nd">{nodes.map(([x, y, r], i) => <circle key={i} cx={x} cy={y} r={r} />)}</g>
-      {trav.map(([r, dur, begin, c, fill], i) => <circle key={i} className={c} r={r} fill={fill}><animateMotion dur={dur} begin={begin} repeatCount="indefinite" path={LOOP} /></circle>)}
+    <svg className="pa-inf" viewBox="0 0 300 120" aria-hidden="true" focusable="false">
+      <defs><linearGradient id="paG" x1="0" x2="1"><stop offset="0" stopColor="#3DE0FF" /><stop offset=".5" stopColor="#7B3FF2" /><stop offset="1" stopColor="#FF3D9A" /></linearGradient></defs>
+      <path d={LOOP} fill="none" stroke="rgba(255,255,255,.09)" strokeWidth="8" />
+      <path d={LOOP} fill="none" stroke="url(#paG)" strokeWidth="8" strokeLinecap="round" pathLength="100" strokeDasharray={pct + ' 100'} className="pa-infv" />
     </svg>
   );
 }
-const NODES = (a, b) => [[8, 6, a], [-1, 15, a], [8, 24, a], [22, 15, b], [36, 6, a], [45, 15, a], [36, 24, a]];
-/* rutas rápidas: las 4 plantillas de siempre, con el color del diseño */
-const TPLS = [['inv', 'search', 'gold'], ['pres', 'file', 'pink'], ['est', 'think', 'violet'], ['cod', 'arrow', 'cyan']];
-/* agentes = herramientas reales del motor, en el orden en que suelen trabajar */
-const AGENTS = [['search', 'gold'], ['memory', 'cyan'], ['think', 'violet'], ['image', 'pink'], ['file', 'green']];
-const AG_COLOR = Object.fromEntries(AGENTS);
-
-function Pill({ kind, children }) { return <span className={'am-pill ' + kind}><i />{children}</span>; }
+const Avatar = ({ ok }) => (
+  <span className={'pa-av' + (ok ? ' ok' : '')} aria-hidden="true"><svg viewBox="0 0 40 20"><path d="M20 10C17 5 13 3 9 3a7 7 0 000 14c4 0 8-2 11-7s7-7 11-7a7 7 0 010 14c-4 0-8-2-11-7z" fill="none" stroke="currentColor" strokeWidth="2.4" /></svg></span>
+);
+const TPLS = [['inv', 'search'], ['pres', 'file'], ['est', 'think'], ['cod', 'arrow']];
 
 export default function AliasApp() {
   const [dict, setDict] = useState(null);
@@ -72,20 +66,19 @@ export default function AliasApp() {
   const [live, setLive] = useState('');
   const [homeMsg, setHomeMsg] = useState('');
   const [goal, setGoal] = useState('');
+  const [note, setNote] = useState('');
   const [synthOn, setSynthOn] = useState(true);
-  const [view, setView] = useState('main');          /* main = inicio o misión actual · missions · agents */
-  const [navOpen, setNavOpen] = useState(false);
+  const [cada, setCada] = useState(false);
   const [hist, setHist] = useState([]);
-  const [q, setQ] = useState('');
   const [motor, setMotor] = useState(false);
-  const [rutas, setRutas] = useState(null);   /* lo que el enrutador ha aprendido (vista Agentes) */
+  const [rutas, setRutas] = useState(null);
   const S = useRef(fresh()).current;
   const synthRef = useRef(true); synthRef.current = synthOn;
   const langRef = useRef('es');
-  const runSeq = useRef(0);
+  const runSeq = useRef(0), logSeq = useRef(0);
   const focusNext = useRef(null);
   const stepEls = useRef({});
-  const goalRef = useRef(null), planTitle = useRef(null), resTitle = useRef(null), mainRef = useRef(null);
+  const goalRef = useRef(null), planTitle = useRef(null), resTitle = useRef(null), noteRef = useRef(null), endRef = useRef(null);
 
   const draw = useCallback(() => setTick((x) => x + 1), []);
   const t = useCallback((key, vars) => {
@@ -98,8 +91,6 @@ export default function AliasApp() {
   const tt = (k, v) => tRef.current(k, v);
   const say = useCallback((m) => { setLive(''); setTimeout(() => setLive(m), 40); }, []);
   const focusLater = (fn) => { focusNext.current = fn; };
-  /* el foco va al botón que toca ahora; si quedaría bajo el blurry de arriba o de abajo, se centra en pantalla.
-     A veces el botón llega un cuadro después (el motor responde en medio de otra actualización): se reintenta unos cuadros. */
   useEffect(() => {
     const f = focusNext.current; if (!f) return;
     focusNext.current = null;
@@ -108,12 +99,11 @@ export default function AliasApp() {
       if (!el || !el.focus) { if (n < 12) requestAnimationFrame(() => tryFocus(n + 1)); return; }
       el.focus({ preventScroll: true });
       const r = el.getBoundingClientRect(), H = window.innerHeight;
-      if (r.top < 90 || r.bottom > H * 0.8) el.scrollIntoView({ block: 'center', behavior: still() ? 'auto' : 'smooth' });
+      if (r.top < 90 || r.bottom > H * 0.75) el.scrollIntoView({ block: 'center', behavior: still() ? 'auto' : 'smooth' });
     };
     tryFocus(0);
   });
 
-  /* guarda o actualiza la misión actual en el historial de este navegador */
   const saveHist = (patch) => {
     if (!S.histId) return;
     const list = readHist(), i = list.findIndex((m) => m.id === S.histId);
@@ -124,30 +114,33 @@ export default function AliasApp() {
     const out = list.slice(0, HIST_MAX); store.set(K_HIST, JSON.stringify(out)); setHist(out);
   };
 
-  /* ---- arranque: Ajustes de SymphorIA (animaciones, vidrio), idioma y textos. Solo tema oscuro. ---- */
+  /* ---- arranque: Ajustes de SymphorIA (animaciones, vidrio), idioma, textos y si quiere aprobar cada paso ---- */
   useEffect(() => {
     const H = document.documentElement;
     try { const c = JSON.parse(store.get('synthz:cfg')) || {}; H.classList.toggle('noanim', c.anim === false); H.classList.toggle('noglass', c.glass === false); } catch (e) { /* sin ajustes */ }
     H.dataset.scheme = 'dark';
-    const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = '#0b0c10';
+    const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = '#0B0A12';
     const l = detectLang(); langRef.current = l; setLangS(l);
-    try { setSynthOn(store.get('alias:synth') !== '0'); } catch (e) { /* encendida */ }
+    setSynthOn(store.get('alias:synth') !== '0');
+    const c = store.get(K_CADA) === '1'; setCada(c); S.mode = c ? 'manual' : 'auto';
     setHist(readHist());
+    /* desde SynthFlow (modo Agente) llega el pedido escrito: alias.html?meta=… o #meta=… */
+    try {
+      const q = new URLSearchParams(location.search), h = new URLSearchParams(location.hash.slice(1));
+      const g = (q.get('meta') || h.get('meta') || q.get('goal') || '').slice(0, 500); if (g) setGoal(g);
+    } catch (e) { /* sin pedido */ }
     let alive = true;
     fetch('alias-textos.json', { cache: 'no-cache' }).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
       .catch((e) => { console.error('ALIAS: no se pudo leer alias-textos.json', e); return {}; })
       .then((d) => { if (alive) { setDict(d); H.classList.add('ready'); } });
-    /* el motor (alias-tools.js) llega aparte: el punto verde de arriba dice cuándo está listo */
     const ok = () => { if (window.ALIAS && typeof window.ALIAS.plan === 'function') { setMotor(true); return true; } return false; };
     const iv = ok() ? 0 : setInterval(() => { if (ok()) clearInterval(iv); }, 150);
-    /* si cambias el idioma en otra pestaña de SymphorIA, A.L.I.A.S. cambia al instante */
     const follow = () => { const n = detectLang(); if (n !== langRef.current) { langRef.current = n; setLangS(n); window.dispatchEvent(new CustomEvent('alias:lang', { detail: { lang: n } })); } };
     const onStore = (e) => { if (e.key === 'synthz:lang') follow(); if (e.key === K_HIST) setHist(readHist()); };
     addEventListener('storage', onStore); addEventListener('pageshow', follow);
     return () => { alive = false; clearInterval(iv); removeEventListener('storage', onStore); removeEventListener('pageshow', follow); };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* el motor (alias-tools.js) y el resto de SymphorIA leen el idioma de aquí */
   useEffect(() => {
     const H = document.documentElement; H.lang = lang;
     window.ALIAS_LANG = lang;
@@ -155,6 +148,13 @@ export default function AliasApp() {
     window.t = (k, v) => tRef.current(k, v);
     if (dict) document.title = t('titulo');
   }, [lang, dict, t]);
+
+  /* el segundero del paso en marcha */
+  useEffect(() => {
+    if (S.phase !== 'running') return undefined;
+    const k = setInterval(draw, 1000);
+    return () => clearInterval(k);
+  });
 
   const pickLang = (l) => {
     if (l === langRef.current) return;
@@ -178,55 +178,66 @@ export default function AliasApp() {
     S.busy = false;
     if (!r || !r.ok) { setHomeMsg(r && r.limit ? tt('err_limite') : (r && r.error) || tt('err_generico')); draw(); return; }
     const raw = r.plan && Array.isArray(r.plan.steps) ? r.plan.steps : [];
-    const steps = raw.slice(0, MAX_STEPS).filter((s) => s && s.id != null).map((s) => ({ id: s.id, title: String(s.title || ''), tool: s.tool, input: s.input }));
+    const steps = raw.slice(0, MAX_STEPS).filter((s) => s && s.id != null).map(cleanStep);
     if (!steps.length) { setHomeMsg(tt('err_plan')); draw(); return; }
     const mode = S.mode;
-    Object.assign(S, fresh(), { mode, goal: r.plan.goal || g, plan: Object.assign({}, r.plan, { steps }), reqId: req });
-    S.histId = Date.now(); saveHist({ st: 'open' }); setView('main');
-    say(tt('plan_listo', { n: steps.length })); focusLater(() => planTitle.current); draw();
+    Object.assign(S, fresh(), { mode, goal: r.plan.goal || g, plan: Object.assign({}, r.plan, { steps, notes: [] }), reqId: req });
+    S.histId = Date.now(); saveHist({ st: 'open' }); setNote('');
+    say(tt('plan_listo', { n: steps.length })); focusLater(() => document.getElementById('bRun')); draw();
+    try { window.scrollTo({ top: 0 }); } catch (e) { /* nada */ }
   };
 
-  /* ---- 2) puerta de espera (aprobar / pausa / error) y el recorrido ---- */
+  /* ---- 2) el recorrido: corre solo; se detiene únicamente en pausa, error repetido, límite o «permiso en cada paso» ---- */
   const gate = () => new Promise((r) => { S.gateFn = r; });
   const send = (x) => { const f = S.gateFn; if (f) { S.gateFn = null; f(x); } };
-  const prepRedo = (i) => { S.plan.steps.forEach((s, k) => { if (k >= i) { delete S.status[s.id]; delete S.results[s.id]; delete S.errors[s.id]; delete S.skipped[s.id]; } }); S.pausing = false; };
+  const prepRedo = (i) => { S.plan.steps.forEach((s, k) => { if (k >= i) { delete S.status[s.id]; delete S.results[s.id]; delete S.errors[s.id]; delete S.skipped[s.id]; delete S.retried[s.id]; } }); S.pausing = false; };
   const withHint = (plan, id) => { const p = JSON.parse(JSON.stringify(plan)); p.steps.forEach((s) => { if (String(s.id) === String(id)) s.input = ((s.input || '') + ' ' + tt('reintento_pista')).trim(); }); return p; };
   const stepNum = (id) => S.plan.steps.findIndex((s) => String(s.id) === String(id)) + 1;
+  const planOut = () => ({ id: S.plan.id, goal: S.plan.goal, steps: S.plan.steps.map(cleanStep), notes: S.plan.notes || [] });
   const exec = async (st, hint) => {
     const A = window.ALIAS;
     if (!A || typeof A.runStep !== 'function') return { err: tt('err_sin_motor') };
     const idx = S.plan.steps.findIndex((s) => String(s.id) === String(st.id));
     const prev = S.plan.steps.slice(0, idx).map((s) => S.results[s.id]).filter(Boolean);
     let r;
-    try { r = await A.runStep(hint ? withHint(S.plan, st.id) : S.plan, st.id, prev, { synth: synthRef.current !== false }); } catch (e) { return { err: tt('err_red') }; }
+    try { r = await A.runStep(hint ? withHint(planOut(), st.id) : planOut(), st.id, prev, { synth: synthRef.current !== false }); } catch (e) { return { err: tt('err_red') }; }
     if (!r || !r.ok) return { err: (r && r.error) || tt('err_generico'), limit: !!(r && r.limit) };
     const sp = r.step || {};
     if (sp.status === 'error') return { err: sp.error || tt('err_generico') };
     return { step: sp };
   };
-  const finish = () => { S.phase = 'done'; S.cur = null; S.summary = compilar(S); saveHist({ st: 'done' }); say(tt('listo')); focusLater(() => resTitle.current); draw(); };
+  const finish = () => {
+    S.phase = 'done'; S.cur = null; S.endedAt = Date.now(); S.summary = compilar(S); S.showSteps = false;
+    saveHist({ st: 'done' }); say(tt('listo')); focusLater(() => resTitle.current); draw();
+  };
   const drive = async () => {
     if (S.running) return;
-    const my = ++runSeq.current, dead = () => my !== runSeq.current;   /* cancelar sube runSeq: este ciclo termina solo */
-    S.running = true; S.cancelled = false;
+    const my = ++runSeq.current, dead = () => my !== runSeq.current;
+    S.running = true; S.stopped = false;
+    if (!S.startedAt) S.startedAt = Date.now();
     let hint = false;
     while (!dead()) {
+      if (S.adjusting) { await S.adjusting; if (dead()) return; }
       const i = S.plan.steps.findIndex((s) => !isFinished(S, s.id));
       if (i < 0) { finish(); break; }
       if (S.pausing) {
         S.pausing = false; S.phase = 'paused'; draw(); say(tt('pausado'));
+        focusLater(() => document.getElementById('bResume'));
         const x = await gate(); if (dead()) return;
         if (x.a === 'redo') prepRedo(x.i);
         continue;
       }
       const st = S.plan.steps[i], n = i + 1, total = S.plan.steps.length;
-      S.phase = 'running'; S.cur = st.id; S.status[st.id] = 'running'; delete S.errors[st.id];
-      draw(); say(tt('en_curso', { n, total, title: st.title }));
+      S.phase = 'running'; S.cur = st.id; S.status[st.id] = 'running'; S.t0[st.id] = Date.now(); delete S.errors[st.id];
+      draw(); say(tt(n === 1 ? 'ag_empiezo' : 'ag_continuo') + ' ' + st.title);
       const out = await exec(st, hint); hint = false;
       if (dead()) return;
-      if (out.limit) { S.status[st.id] = 'pending'; S.phase = 'limit'; draw(); say(tt('err_limite')); break; }
+      if (out.limit) { S.status[st.id] = 'pending'; S.phase = 'limit'; S.cur = null; draw(); say(tt('err_limite')); break; }
       if (out.err) {
-        S.status[st.id] = 'error'; S.errors[st.id] = out.err; S.phase = 'error';
+        /* primera vez: lo vuelve a intentar solo (el enrutador cambia de IA); segunda: pregunta */
+        if (!S.retried[st.id]) { S.retried[st.id] = true; S.retrying = st.id; hint = true; say(tt('ag_reintento')); continue; }
+        S.retrying = null;
+        S.status[st.id] = 'error'; S.errors[st.id] = out.err; S.phase = 'error'; S.cur = null;
         focusLater(() => document.getElementById('bErrRetry')); draw();
         say(tt('error_n', { n, title: st.title }));
         let x = await gate(); if (dead()) return;
@@ -236,7 +247,8 @@ export default function AliasApp() {
         else if (x.a === 'redo') prepRedo(x.i);
         continue;
       }
-      S.status[st.id] = 'done'; S.results[st.id] = out.step; S.cur = null;
+      S.retrying = null;
+      S.status[st.id] = 'done'; S.results[st.id] = out.step; S.ms[st.id] = Date.now() - S.t0[st.id]; S.cur = null;
       saveHist();
       say(tt('hecho_n', { n, total, title: st.title }));
       const more = S.plan.steps.some((s) => !isFinished(S, s.id));
@@ -251,17 +263,32 @@ export default function AliasApp() {
   };
 
   /* ---- 3) botones ---- */
-  const cancelAll = (ask) => {
-    if (ask && S.phase !== 'edit' && !window.confirm(tt('confirm_cancel'))) return false;
+  const approve = () => { if (!S.plan || !S.plan.steps.length) return; S.editing = null; S.startedAt = Date.now(); focusLater(() => noteRef.current); drive(); };
+  const pause = () => {
+    if (S.phase === 'paused') { send({ a: 'go' }); return; }
+    if (S.phase === 'running' && !S.pausing) { S.pausing = true; draw(); say(tt('pausando')); }
+  };
+  /* Detener: no borra nada; entrega lo que alcanzó a hacer y la caja sigue abierta para pedir más */
+  const stop = () => {
+    if (!S.plan || S.phase === 'edit' || S.phase === 'done') return;
+    runSeq.current++; S.running = false; S.pausing = false; S.gateFn = null; S.retrying = null;
+    S.plan.steps.forEach((s) => { if (S.status[s.id] === 'running') delete S.status[s.id]; });
+    S.stopped = true; finish();
+  };
+  const newMission = () => {
     runSeq.current++; send({ a: 'cancel' });
     const mode = S.mode;
     Object.assign(S, fresh(), { mode, reqId: S.reqId + 1 });
-    setHomeMsg(''); say(tt('cancelado')); focusLater(() => goalRef.current); draw();
-    return true;
+    setHomeMsg(''); setNote(''); say(tt('cancelado')); focusLater(() => goalRef.current); draw();
+    try { window.scrollTo({ top: 0, behavior: still() ? 'auto' : 'smooth' }); } catch (e) { /* nada */ }
   };
   const act = (a, id, arg) => {
     const steps = S.plan.steps, i = steps.findIndex((s) => String(s.id) === String(id)), key = String(id);
-    if (a === 'move') {
+    if (a === 'add') {
+      if (steps.length >= MAX_TOTAL) return;
+      const nid = Math.max(0, ...steps.map((s) => +s.id || 0)) + 1;
+      steps.push({ id: nid, title: tt('ag_paso_nuevo'), tool: 'think', input: '' }); S.editing = nid;
+    } else if (a === 'move') {
       const j = i + arg; if (i < 0 || j < 0 || j >= steps.length) return;
       [steps[i], steps[j]] = [steps[j], steps[i]];
       say(tt('movido', { title: steps[j].title, pos: j + 1 }));
@@ -276,7 +303,7 @@ export default function AliasApp() {
       S.editing = steps[i].id;
     } else if (a === 'rename') {
       S.editing = null; const v = String(arg.v || '').trim().slice(0, 120);
-      if (arg.save && v && steps[i] && v !== steps[i].title) { steps[i].title = v; say(tt('renombrado', { title: v })); }
+      if (arg.save && v && steps[i] && v !== steps[i].title) { steps[i].title = v; if (!steps[i].input) steps[i].input = v; say(tt('renombrado', { title: v })); }
       focusLater(() => { const li = stepEls.current[key]; return li && li.querySelector('[data-act="ren"]'); });
     } else if (a === 'redo') {
       if (i < 0 || S.phase === 'running') return;
@@ -286,378 +313,301 @@ export default function AliasApp() {
     draw();
   };
 
+  /* ---- 4) escribirle mientras trabaja: se suma encima, sin pararlo (como en los proyectos de Claude) ---- */
+  const steer = async (raw) => {
+    const text = String(raw || '').trim().slice(0, 300);
+    if (!text || !S.plan || S.adjusting) return;
+    const when = S.phase === 'edit' ? 'antes' : S.phase === 'done' ? 'despues' : 'mientras';
+    S.log.push({ k: 'me', text, when, id: ++logSeq.current });
+    S.plan.notes = (S.plan.notes || []).concat(text).slice(-6);
+    setNote('');
+    const fixedIds = S.plan.steps.filter((s) => isFinished(S, s.id) || S.status[s.id] === 'running' || S.status[s.id] === 'error').map((s) => s.id);
+    const A = window.ALIAS; let r = null;
+    S.adjusting = (async () => { try { r = A && typeof A.adjust === 'function' ? await A.adjust(planOut(), fixedIds, text) : null; } catch (e) { r = null; } })();
+    draw(); say(tt('ag_ajustando'));
+    requestAnimationFrame(() => { if (endRef.current) endRef.current.scrollIntoView({ block: 'end', behavior: still() ? 'auto' : 'smooth' }); });
+    await S.adjusting;
+    if (r && r.ok && r.changed && Array.isArray(r.steps) && r.steps.length && S.plan) {
+      const keep = S.plan.steps.filter((s) => fixedIds.includes(s.id));
+      const room = MAX_TOTAL - keep.length;
+      S.plan.steps.filter((s) => !fixedIds.includes(s.id)).forEach((s) => { delete S.status[s.id]; delete S.results[s.id]; delete S.errors[s.id]; delete S.skipped[s.id]; });
+      const add = r.steps.slice(0, Math.max(0, room)).map(cleanStep);
+      /* «NUEVO» solo en lo que de verdad cambió (los pasos que siguen igual cambian de id, no de nombre) */
+      const before = new Set(S.plan.steps.map((s) => s.title.trim().toLowerCase()));
+      if (S.phase !== 'edit') add.forEach((s) => { if (!before.has(s.title.trim().toLowerCase())) S.fresh[s.id] = true; });
+      S.plan.steps = keep.concat(add);
+    }
+    S.adjusting = null;
+    const reply = r && r.ok ? (r.reply || tt('srv.notaAnotada')) : r && r.limit ? tt('err_limite') : tt('ag_nota_err');
+    S.log.push({ k: 'al', text: reply, ok: !!(r && r.ok), id: ++logSeq.current });
+    say(reply);
+    if (S.phase === 'done' && S.plan && S.plan.steps.some((s) => !isFinished(S, s.id))) { S.summary = null; S.endedAt = 0; S.stopped = false; drive(); }
+    saveHist(); draw();
+  };
 
   const pickTpl = (k) => {
     const v = tt('tpl_' + k + '_g'); setGoal(v); setHomeMsg('');
     focusLater(() => { const inp = goalRef.current; if (inp) { const a = v.indexOf('['), z = v.indexOf(']'); setTimeout(() => { if (a >= 0 && z > a) inp.setSelectionRange(a, z + 1); }, 0); } return inp; });
     draw();
   };
-
-  /* ---- 4) vistas de la barra lateral ---- */
-  const toTop = () => { try { window.scrollTo({ top: 0, behavior: still() ? 'auto' : 'smooth' }); } catch (e) { window.scrollTo(0, 0); } };
-  /* salir de la misión actual (si está corriendo, pregunta antes) */
-  const leavePlan = () => !S.plan || cancelAll(S.phase !== 'edit' && S.phase !== 'done' && S.phase !== 'limit');
-  const go = (v) => {
-    setNavOpen(false);
-    if (v === 'new') {
-      if (!leavePlan()) return;
-      setView('main'); focusLater(() => goalRef.current); toTop(); return;
-    }
-    setView(v); toTop();
-    if (v === 'main' && S.plan) focusLater(() => planTitle.current);
-    else focusLater(() => mainRef.current);
-  };
-  const reuse = (m) => {
-    if (!leavePlan()) return;
-    setView('main'); setGoal(m.goal); setHomeMsg(''); setNavOpen(false);
-    focusLater(() => goalRef.current); toTop();
-  };
-  /* v3.9 · al abrir Agentes se pide lo que el enrutador ha aprendido (qué IA va mejor para cada tipo de trabajo) */
-  useEffect(() => {
-    if (view !== 'agents' || !motor) return undefined;
-    let alive = true; setRutas((r) => (r && r.ok ? r : { loading: true }));
+  const loadRutas = (open) => {
+    if (!open || !motor || (rutas && rutas.ok)) return;
+    setRutas({ loading: true });
     Promise.resolve(window.ALIAS && window.ALIAS.routes ? window.ALIAS.routes() : { ok: false })
-      .then((r) => { if (alive) setRutas(r && r.ok ? r : { ok: false }); }, () => { if (alive) setRutas({ ok: false }); });
-    return () => { alive = false; };
-  }, [view, motor]);
+      .then((r) => setRutas(r && r.ok ? r : { ok: false }), () => setRutas({ ok: false }));
+  };
 
-  /* N = nueva misión (fuera de los campos de texto) · Escape cierra el menú del celular */
+  /* Esc pausa (o sigue) mientras trabaja */
   useEffect(() => {
     const key = (e) => {
-      if (e.key === 'Escape' && navOpen) { setNavOpen(false); return; }
-      const a = document.activeElement, typing = a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable);
-      if ((e.key === 'n' || e.key === 'N') && !typing && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); go('new'); }
+      if (e.key !== 'Escape' || !S.plan) return;
+      if (S.phase === 'running' || S.phase === 'paused') { e.preventDefault(); pause(); }
     };
     addEventListener('keydown', key);
     return () => removeEventListener('keydown', key);
   });
 
   const p = S.phase, ready = !!dict;
-  const liveRun = p === 'running' || p === 'await' || p === 'paused' || p === 'error';
-  let ctlMsg = '';
-  if (S.plan) {
-    if (p === 'running' && S.pausing) ctlMsg = t('pausando');
-    else if (p === 'await' && S.awaitNext) ctlMsg = t('aprobar_q', { n: S.awaitDone, m: stepNum(S.awaitNext.id), title: S.awaitNext.title });
-    else if (p === 'paused') ctlMsg = t('pausado');
-  }
-  const errStep = p === 'error' && S.plan ? S.plan.steps.find((s) => S.status[s.id] === 'error') : null;
-  const done = S.plan ? S.plan.steps.filter((s) => isFinished(S, s.id)).length : 0, total = S.plan ? S.plan.steps.length : 0;
+  const steps = S.plan ? S.plan.steps : [];
+  const done = steps.filter((s) => isFinished(S, s.id)).length, total = steps.length;
   const pct = total ? Math.round((done / total) * 100) : 0;
-  const curIdx = S.plan ? S.plan.steps.findIndex((s) => !isFinished(S, s.id)) : -1;
-  const pillKind = { edit: 'gold', running: 'gold live', await: 'gold', paused: 'mute', error: 'bad', limit: 'bad', done: 'ok' }[p] || 'gold';
-  const curTool = p === 'running' && S.cur != null && S.plan ? (S.plan.steps.find((s) => s.id === S.cur) || {}).tool : null;
-  const planTools = S.plan ? AGENTS.map(([k]) => k).filter((k) => S.plan.steps.some((s) => s.tool === k)) : [];
-  const where = view === 'missions' ? t('nav_misiones') : view === 'agents' ? t('nav_agentes') : S.plan ? t('nav_actual') : t('nav_nueva');
+  const left = Math.max(1, Math.ceil(((total - done) * SEG_PASO) / 60));
+  const errStep = p === 'error' ? steps.find((s) => S.status[s.id] === 'error') : null;
+  const curIdx = steps.findIndex((s) => !isFinished(S, s.id));
+  const results = steps.map((s) => S.results[s.id]).filter(Boolean);
+  const sourcesN = new Set(results.flatMap((r) => (Array.isArray(r.sources) ? r.sources.map((x) => x && x.url) : [])).filter(Boolean)).size;
+  const files = results.map((r) => r.file).filter((f) => f && f.name);
+  const team = [...new Set(results.flatMap((r) => (r.route ? (r.route.why === 'synth' && r.route.voices && r.route.voices.length ? r.route.voices : [r.route.name]) : [])).filter(Boolean))];
+  const lastDone = steps.filter((s) => S.status[s.id] === 'done').slice(-3).reverse();
+  const elapsed = S.startedAt && S.endedAt ? Math.round((S.endedAt - S.startedAt) / 1000) : 0;
+  const fmtTime = (sec) => (sec >= 60 ? Math.floor(sec / 60) + ' min ' + (sec % 60) + ' s' : sec + ' s');
+  const sayKey = { edit: 'ag_say_edit', running: 'ag_say_run', await: 'ag_say_await', paused: 'ag_say_paused', error: 'ag_say_error', limit: 'ag_say_limit', done: 'ag_say_run' }[p];
+  const ph = p === 'edit' ? 'ag_ph_edit' : p === 'done' ? 'ag_ph_done' : 'ag_ph_run';
+  const hint = p === 'edit' ? 'ag_hint_edit' : p === 'done' ? 'ag_hint_done' : 'ag_hint_run';
+  const canPause = p === 'running' || p === 'paused';
   const rtf = useMemo(() => { try { return new Intl.RelativeTimeFormat(lang, { numeric: 'auto' }); } catch (e) { return null; } }, [lang]);
   const ago = (ms) => {
     const s = Math.round((ms - Date.now()) / 1000), A = Math.abs(s);
     if (!rtf) return new Date(ms).toLocaleString(lang);
     return A < 60 ? rtf.format(0, 'second') : A < 3600 ? rtf.format(Math.round(s / 60), 'minute') : A < 86400 ? rtf.format(Math.round(s / 3600), 'hour') : rtf.format(Math.round(s / 86400), 'day');
   };
-  const shown = q.trim() ? hist.filter((m) => m.goal.toLocaleLowerCase(lang).includes(q.trim().toLocaleLowerCase(lang))) : hist;
-
-  const Mision = ({ m, row }) => {
-    const total2 = m.total || 0, d2 = Math.min(m.done || 0, total2), fin = m.st === 'done';
-    const tool = (m.tools && m.tools[0]) || 'think';
-    return (
-      <button type="button" className={row ? 'am-hrow' : 'am-recent'} onClick={() => reuse(m)} aria-label={t('h_retomar', { goal: m.goal })}>
-        <span className={'am-ico ' + (AG_COLOR[tool] || 'gold')} aria-hidden="true"><Icono n={tool} /></span>
-        <span className="am-rcopy">
-          <b>{m.goal}</b>
-          <small>{t('h_pasos', { done: d2, total: total2 })} · {ago(m.at)}</small>
-          {!row ? <span className="am-mini"><i style={{ width: (total2 ? Math.round((d2 / total2) * 100) : 0) + '%' }} /></span> : null}
-        </span>
-        {row ? <span className={'am-hst ' + (fin ? 'ok' : 'gold')}>{t(fin ? 'h_done' : 'h_open')}</span> : <span className="am-pct">{total2 ? Math.round((d2 / total2) * 100) : 0}%</span>}
-        <span className="am-rarrow" aria-hidden="true"><Icono n="right" /></span>
-      </button>
-    );
-  };
+  const langBtns = (
+    <div className="lang pa-lang" role="group" aria-label={t('idioma')}>
+      {LANGS.map((l) => <button key={l} type="button" className={lang === l ? 'on' : undefined} data-alias={'lang-' + l} lang={l} aria-pressed={lang === l} aria-label={t('idioma_' + l)} onClick={() => pickLang(l)}>{l.toUpperCase()}</button>)}
+    </div>
+  );
 
   return (
-    <div className={'am alias-react notr' + (navOpen ? ' nav-open' : '')} data-react="alias">
+    <div className={'pa alias-react' + (S.plan ? ' has-plan' : ' is-home')} data-react="alias">
       <a className="skip" href="#main">{t('saltar')}</a>
-      <svg className="defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="alG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#f0cb7f" /><stop offset=".55" stopColor="#d58a78" /><stop offset="1" stopColor="#c9566c" /></linearGradient></defs></svg>
-      <Fondo />
       <div id="aliasLive" className="sr-only" role="status" aria-live="polite" aria-atomic="true">{live}</div>
+      <BarraSuperior producto="alias" idioma={lang} onIdioma={pickLang} />
 
-      {/* ---------- barra lateral ---------- */}
-      <aside className="am-side" id="amSide" aria-label={t('nav_aria')}>
-        <a className="am-brand" href="alias.html" aria-label="A.L.I.A.S.">
-          <span className="am-mark"><Marca cls="brand-mark" vb="-3 0 50 30" sw="2.2" nodes={NODES(2.2, 2.6)} trav={[[2.4, '4.5s', undefined, 'trav', '#f0cb7f']]} /></span>
-          <span className="am-bname">A.L.I.A.S.<small>{t('marca_sub')}</small></span>
-        </a>
-        <div className="am-slabel">{t('ws_label')}</div>
-        <nav className="am-nav">
-          <button type="button" className={'am-nav-i' + (view === 'main' && !S.plan ? ' on' : '')} onClick={() => go('new')} aria-current={view === 'main' && !S.plan ? 'page' : undefined}>
-            <Icono n="plus" /> {t('nav_nueva')} <kbd title={t('atajo_n')}>N</kbd>
-          </button>
-          {S.plan ? (
-            <button type="button" className={'am-nav-i' + (view === 'main' ? ' on' : '')} onClick={() => go('main')} aria-current={view === 'main' ? 'page' : undefined}>
-              <Icono n="target" /> {t('nav_actual')} <span className={'am-ndot ' + pillKind} aria-hidden="true" />
-            </button>
-          ) : null}
-          <button type="button" className={'am-nav-i' + (view === 'missions' ? ' on' : '')} onClick={() => go('missions')} aria-current={view === 'missions' ? 'page' : undefined}>
-            <Icono n="hist" /> {t('nav_misiones')} {hist.length ? <span className="am-count">{hist.length}</span> : null}
-          </button>
-          <button type="button" className={'am-nav-i' + (view === 'agents' ? ' on' : '')} onClick={() => go('agents')} aria-current={view === 'agents' ? 'page' : undefined}>
-            <Icono n="team" /> {t('nav_agentes')} <span className={'am-live' + (motor ? '' : ' wait')} aria-hidden="true" />
-          </button>
-        </nav>
-        <div className="am-sbottom">
-          <div className="am-scard">
-            <p>{t('side_nota')}</p>
-            <a className="am-btn-o sm" href="chat.html">{t('ir_flow')} <Icono n="arrow" /></a>
-          </div>
-          <a className="am-profile" href="index.html"><span className="am-avatar" aria-hidden="true"><Icono n="back" /></span><span><b>{t('volver_sym')}</b><small>symphoria.pages.dev</small></span></a>
+      {S.plan ? (
+        <div className="pa-strip" aria-hidden={p === 'edit' ? 'true' : undefined}>
+          <span>{p === 'done' ? t('ag_listo_de', { n: done, total }) : p === 'edit' ? t('ag_espera') : t('ag_paso_de', { n: Math.min(curIdx < 0 ? total : curIdx + 1, total), total })}</span>
+          <span className="pa-bar"><i style={{ width: pct + '%' }} /></span>
+          {canPause ? <button type="button" className="icon-btn" onClick={pause} aria-label={t(p === 'paused' ? 'ag_seguir' : 'ag_pausar')}><Icono n={p === 'paused' ? 'right' : 'pause'} /></button> : null}
         </div>
-      </aside>
-      {navOpen ? <button type="button" className="am-scrim" aria-hidden="true" tabIndex={-1} onClick={() => setNavOpen(false)} /> : null}
+      ) : null}
 
-      <div className="am-main">
-        <header className="am-top">
-          <button type="button" className="am-ib am-menu" aria-label={t('abrir_menu')} aria-expanded={navOpen} aria-controls="amSide" onClick={() => setNavOpen((o) => !o)}><Icono n="menu" /></button>
-          <div className="am-crumb">A.L.I.A.S. <span>/</span> <b>{where}</b></div>
-          <div className="am-actions">
-            <span className={'am-status' + (motor ? '' : ' wait')}><i />{t(motor ? 'motor_listo' : 'motor_carga')}</span>
-            <div className="am-langs" role="group" aria-label={t('idioma')}>
-              {LANGS.map((l) => <button key={l} type="button" data-lang={l} data-alias={'lang-' + l} lang={l} aria-pressed={lang === l} aria-label={t('idioma_' + l)} onClick={() => pickLang(l)}>{l.toUpperCase()}</button>)}
+      <main id="main" tabIndex={-1} className="pa-room">
+        {!S.plan ? (
+          /* ---------------- inicio ---------------- */
+          <section id="vHome" className="pa-home" aria-labelledby="homeTitle">
+            <svg className="pa-loop" viewBox="0 0 200 90" aria-hidden="true"><defs><linearGradient id="paL" x1="0" x2="1"><stop offset="0" stopColor="#3DE0FF" /><stop offset=".45" stopColor="#7B3FF2" /><stop offset=".75" stopColor="#FF3D9A" /><stop offset="1" stopColor="#FF7A45" /></linearGradient></defs><path d="M100 45 C80 10 20 10 20 45 S80 80 100 45 S180 10 180 45 S120 80 100 45z" fill="none" stroke="url(#paL)" strokeWidth="7" strokeLinecap="round" /><circle r="6" fill="#fff"><animateMotion dur="5s" repeatCount="indefinite" path="M100 45 C80 10 20 10 20 45 S80 80 100 45 S180 10 180 45 S120 80 100 45z" /></circle></svg>
+            <p className="mono">{t('ag_eyebrow')}</p>
+            <h1 id="homeTitle">{t('ag_t1')} <span className="grad-text">{t('ag_t2')}</span></h1>
+            <p className="pa-lead">{t('ag_sub')}</p>
+
+            <form id="goalForm" className="pa-goal" noValidate aria-busy={S.busy} onSubmit={(e) => { e.preventDefault(); requestPlan(goal); }}>
+              <label htmlFor="goalInput" className="sr-only">{t('goal_label')}</label>
+              <textarea id="goalInput" ref={goalRef} data-alias="goal" rows={2} maxLength={500} autoComplete="off" placeholder={ready ? t('goal_ph') : ''} value={goal}
+                onChange={(e) => { setGoal(e.target.value); setHomeMsg(''); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); requestPlan(e.currentTarget.value); } }} />
+              <button className="btn btn-v" id="goBtn" data-alias="plan-submit" type="submit" disabled={S.busy}>{t(S.busy ? 'planeando' : 'goal_btn')} <Icono n="right" /></button>
+            </form>
+            {homeMsg ? <p id="homeMsg" className="msg" role="alert">{homeMsg}</p> : null}
+            {S.busy ? <div className="pa-tuning" aria-hidden="true"><i /><i /><i /><i /><i /></div> : null}
+
+            <div className="pa-ideas" id="tplList" aria-label={t('ag_ideas')}>
+              {TPLS.map(([k, ic]) => (
+                <button key={k} type="button" className="chip" data-tpl={k} onClick={() => pickTpl(k)}><Icono n={ic} /> {t('tpl_' + k + '_t')}</button>
+              ))}
             </div>
-          </div>
-        </header>
 
-        <main id="main" tabIndex={-1} ref={mainRef}>
-          {view === 'missions' ? (
-            <section className="am-view" id="vMisiones" aria-labelledby="misTitle">
-              <div className="am-vhead"><div>
-                <p className="am-eyebrow"><span />{t('hist_eyebrow')}</p>
-                <h1 id="misTitle">{t('hist_t')}</h1>
-                <p className="am-intro">{t('hist_intro')}</p>
-              </div><button type="button" className="am-btn-p" onClick={() => go('new')}><Icono n="plus" /> {t('nav_nueva')}</button></div>
-              <div className="am-panel am-list" data-clarity-mask="true">
-                <div className="am-ltool">
-                  <span className="am-mono">{shown.length === 1 ? t('hist_1') : t('hist_n', { n: shown.length })}</span>
-                  <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('hist_buscar')} aria-label={t('hist_buscar')} />
-                </div>
-                <div data-blur="">{shown.map((m) => <Mision key={m.id} m={m} row />)}</div>
-                {!shown.length ? <p className="am-empty">{hist.length ? t('hist_sin') : t('rec_vacio')}</p> : null}
-                {hist.length ? <div className="am-lfoot"><button type="button" className="am-btn-t" onClick={() => { if (window.confirm(t('hist_borrar_q'))) { store.set(K_HIST, '[]'); setHist([]); } }}>{t('hist_borrar')}</button></div> : null}
-              </div>
-            </section>
-          ) : view === 'agents' ? (
-            <section className="am-view" id="vAgentes" aria-labelledby="agTitle">
-              <div className="am-vhead"><div>
-                <p className="am-eyebrow"><span />{t('agp_eyebrow')}</p>
-                <h1 id="agTitle">{t('agp_t')}</h1>
-                <p className="am-intro">{t('agp_intro')}</p>
-              </div></div>
-              <div className="am-agrid">
-                {AGENTS.map(([k, c]) => (
-                  <article className="am-panel am-acard" key={k}>
-                    <span className={'am-av lg ' + c} aria-hidden="true"><Icono n={k} /></span>
-                    <Pill kind="ok">{t('disponible')}</Pill>
-                    <h2>{t('ag_' + k + '_n')}</h2>
-                    <p>{t('ag_' + k + '_d')}</p>
-                    <span className="am-tag">{t('ag_' + k + '_tag')}</span>
-                  </article>
-                ))}
-              </div>
-
-              <section className="am-panel am-learn" aria-labelledby="rtTitle" data-alias="routes">
-                <div className="am-sechead"><div><h2 id="rtTitle"><Icono n="route" /> {t('rt_titulo')}</h2><p>{t('rt_intro')}</p></div></div>
-                {!rutas || rutas.loading ? <p className="am-empty sm">{t('rt_cargando')}</p>
-                  : !rutas.ok ? <p className="am-empty sm">{t('rt_error')}</p> : <>
-                    <p className="am-ltoday"><span className="am-live" aria-hidden="true" /> {t('rt_hoy', { ok: rutas.today ? rutas.today.ok : 0, fail: rutas.today ? rutas.today.fail : 0 })}</p>
-                    <div className="am-lgrid">
+            <div className="pa-homegrid">
+              <section className="card pa-recent" aria-labelledby="recTitle" data-clarity-mask="true">
+                <h2 id="recTitle">{t('ag_recientes')}</h2>
+                <p className="pa-small">{t('ag_recientes_d')}</p>
+                {hist.length ? (
+                  <ul>{hist.slice(0, 5).map((m) => (
+                    <li key={m.id}><button type="button" onClick={() => { setGoal(m.goal); focusLater(() => goalRef.current); draw(); }} aria-label={t('h_retomar', { goal: m.goal })}>
+                      <b>{m.goal}</b><small>{t('h_pasos', { done: Math.min(m.done || 0, m.total || 0), total: m.total || 0 })} · {ago(m.at)}</small>
+                    </button></li>
+                  ))}</ul>
+                ) : <p className="pa-empty">{t('rec_vacio')}</p>}
+                {hist.length ? <button type="button" className="pa-link" onClick={() => { if (window.confirm(t('hist_borrar_q'))) { store.set(K_HIST, '[]'); setHist([]); } }}>{t('ag_borrar_hist')}</button> : null}
+              </section>
+              <details className="card pa-rutas" data-alias="routes" onToggle={(e) => loadRutas(e.currentTarget.open)}>
+                <summary><h2>{t('ag_rutas_t')}</h2><p className="pa-small">{t('rt_intro')}</p></summary>
+                {!rutas || rutas.loading ? <p className="pa-empty">{t(motor ? 'rt_cargando' : 'ag_motor_carga')}</p>
+                  : !rutas.ok ? <p className="pa-empty">{t('rt_error')}</p> : (
+                    <div className="pa-lgrid">
                       {['code', 'write', 'reason', 'summary', 'translate', 'data', 'plan'].map((c) => {
                         const rows = (rutas.cats && rutas.cats[c]) || [];
-                        return (
-                          <div className="am-lcat" key={c}>
-                            <b>{t('rt_cat_' + c)}</b>
-                            {rows.length ? <ol>{rows.map((x, i) => (
-                              <li key={x.id} className={i === 0 ? 'first' : ''}>
-                                <span className="nm">{x.name}<small>{x.prov}</small></span>
-                                <span className="st">{t('rt_fila', { rate: Math.round(x.rate * 100), s: (x.ms / 1000).toFixed(1), n: x.n })}{x.up || x.down ? ' · 👍 ' + x.up + ' · 👎 ' + x.down : ''}</span>
-                                <span className="bar" aria-hidden="true"><i style={{ width: Math.round(x.rate * 100) + '%' }} /></span>
-                              </li>
-                            ))}</ol> : <p className="am-lnone">{t('rt_sin_tipo')}</p>}
-                          </div>
-                        );
+                        return (<div key={c}><b>{t('rt_cat_' + c)}</b>{rows.length ? <ol>{rows.slice(0, 3).map((x) => <li key={x.id}>{x.name} <small>{Math.round(x.rate * 100)}%</small></li>)}</ol> : <small className="pa-empty">{t('rt_sin_tipo')}</small>}</div>);
                       })}
                     </div>
-                    {!Object.values(rutas.cats || {}).some((r) => r && r.length) ? <p className="am-empty sm">{t('rt_vacio')}</p> : null}
-                  </>}
-              </section>
-            </section>
-          ) : !S.plan ? (
-            <section id="vHome" className="am-view" aria-labelledby="homeTitle">
-              <div className="am-welcome">
-                <div>
-                  <p className="am-eyebrow"><span />{t('hm_eyebrow')}</p>
-                  <h1 id="homeTitle">{t('hm_t1')}<br /><em>{t('hm_t2')}</em></h1>
-                  <p className="am-intro">{t('home_sub')}</p>
-                </div>
-                <div className="am-orb" aria-hidden="true">
-                  <div className="r1" /><div className="r2" /><div className="o"><span /></div>
-                  <div className="cap">{t('orb_1')}<br /><b>{t('orb_2')}</b></div>
-                </div>
-              </div>
+                  )}
+              </details>
+            </div>
+            <p className="pa-note">{t('home_nota')}</p>
+          </section>
+        ) : (
+          /* ---------------- la misión: conversación con el agente ---------------- */
+          <div className="pa-mission">
+            <section className="pa-feed" aria-labelledby="planTitle" data-clarity-mask="true">
+              <div className="pa-me"><small>{t('ag_tu')}</small><span id="planGoal">{S.goal}</span></div>
 
-              <form id="goalForm" className="am-panel am-composer" noValidate aria-busy={S.busy} onSubmit={(e) => { e.preventDefault(); requestPlan(goal); }}>
-                <div className="am-kicker"><span className="am-idx">01</span><span>{t('k_define')}</span><span className="am-opt">{t('k_opt')}</span></div>
-                <label htmlFor="goalInput" className="sr-only">{t('goal_label')}</label>
-                <textarea id="goalInput" ref={goalRef} data-alias="goal" rows={4} maxLength={500} autoComplete="off" placeholder={ready ? t('goal_ph') : ''} value={goal}
-                  onChange={(e) => { setGoal(e.target.value); setHomeMsg(''); }}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); requestPlan(e.currentTarget.value); } }} />
-                {homeMsg ? <p id="homeMsg" className="msg" role="alert">{homeMsg}</p> : null}
-                <div className="am-cbottom">
-                  <small className="am-hint"><span className="am-spark" aria-hidden="true">✳</span> {t('goal_hint')}</small>
-                  <button className="am-btn-p" id="goBtn" data-alias="plan-submit" type="submit" disabled={S.busy}>{t(S.busy ? 'planeando' : 'goal_btn')} <Icono n="arrow" /></button>
-                </div>
-              </form>
-
-              <div className="am-shead">
-                <div><h2>{t('rutas_t')}</h2><p>{t('rutas_d')}</p></div>
-                <span className="am-mono">{t('rutas_lbl', { n: '0' + TPLS.length })}</span>
-              </div>
-              <div id="tplList" className="am-tpls">
-                {TPLS.map(([k, ic, c]) => (
-                  <button key={k} type="button" className="am-tpl" data-tpl={k} onClick={() => pickTpl(k)}>
-                    <span className={'am-ico ' + c} aria-hidden="true"><Icono n={ic} /></span>
-                    <span className="am-tcopy"><b>{t('tpl_' + k + '_t')}</b><small>{t('tpl_' + k + '_d')}</small></span>
-                    <span className="am-tarrow" aria-hidden="true"><Icono n="arrow" /></span>
-                  </button>
-                ))}
-              </div>
-
-              <div className="am-lower">
-                <section className="am-panel am-rec" aria-labelledby="recTitle" data-clarity-mask="true">
-                  <div className="am-sechead">
-                    <div><h2 id="recTitle">{t('rec_t')}</h2><p>{t('rec_d')}</p></div>
-                    {hist.length ? <button type="button" className="am-btn-t" onClick={() => go('missions')}>{t('ver_todas')} <Icono n="right" /></button> : null}
-                  </div>
-                  {hist.length ? hist.slice(0, 3).map((m) => <Mision key={m.id} m={m} />) : <p className="am-empty sm">{t('rec_vacio')}</p>}
-                </section>
-                <section className="am-panel am-agmini" aria-labelledby="agMiniTitle">
-                  <div className="am-sechead">
-                    <div><h2 id="agMiniTitle">{t('ag_t')}</h2><p>{t('ag_d')}</p></div>
-                    <Pill kind="ok">{t('listos')}</Pill>
-                  </div>
-                  <div className="am-stack">
-                    {AGENTS.map(([k, c]) => <span key={k} className={'am-av ' + c} title={t('ag_' + k + '_n')}><Icono n={k} /></span>)}
-                    <div className="am-stackc"><b>{t('ag_n', { n: AGENTS.length })}</b><small>{AGENTS.map(([k]) => t('ag_' + k + '_n')).join(' · ')}</small></div>
-                  </div>
-                  <button type="button" className="am-btn-o wide" onClick={() => go('agents')}>{t('ag_explorar')} <Icono n="right" /></button>
-                </section>
-              </div>
-              <p className="am-note">{t('home_nota')}</p>
-            </section>
-          ) : (
-            <section id="vPlan" data-clarity-mask="true" className="am-view" data-alias="plan" data-state={p} aria-labelledby="planTitle">
-              <div className="am-vhead">
-                <div>
-                  <p className="am-eyebrow"><span />{t('mi_eyebrow')}</p>
-                  <h1 id="planTitle" className="h-plan" tabIndex={-1} ref={planTitle}>{t('plan_titulo')}</h1>
-                  <p className="am-intro">{t('mi_intro')}</p>
-                </div>
-                <button type="button" className="am-btn-o" onClick={() => go('new')}><Icono n="back" /> {t('nav_nueva')}</button>
-              </div>
-
-              <div className="am-panel am-summary">
-                <div className="am-sumL">
-                  <Pill kind={pillKind}>{t('pill_' + p)}</Pill>
-                  <p className="goal"><b>{t('plan_obj')}</b> <span id="planGoal">{S.goal}</span></p>
-                  {S.plan.route && S.plan.route.name ? <p className="am-proute" title={porQue(S.plan.route, t)}><Icono n="route" /> {t('rt_plan', { name: S.plan.route.name })}</p> : null}
-                </div>
-                <div className="am-sprog">
-                  <strong>{pct}%</strong><span>{t('progreso')}</span>
-                  <div className="prog"><progress id="progress" max={total} value={done} aria-label={t('progreso_n', { n: done, total })} /></div>
-                  <span id="progTxt" className="am-ptxt">{t('progreso_n', { n: done, total })}</span>
-                </div>
-              </div>
-
-              <div className="am-layout">
-                <div className="am-panel am-route">
-                  <div className="am-sechead">
-                    <div><h2>{t('ruta_t')}</h2><p>{t('ruta_d', { n: total })}</p></div>
-                    <span className="am-mono">{t('paso_de', { n: String(Math.min((curIdx < 0 ? total : curIdx + 1), total)).padStart(2, '0'), total: String(total).padStart(2, '0') })}</span>
-                  </div>
-                  {p === 'edit' ? <p id="editHint" className="hint">{t('plan_edit_hint')}</p> : null}
-                  <Pasos S={S} t={t} act={act} focusRef={stepEls} />
-
-                  {p !== 'done' ? (
-                    <div id="ctl" className="ctl">
-                      <fieldset id="modeBox" className="mode">
-                        <legend>{t('modo_titulo')}</legend>
-                        {['manual', 'auto'].map((m) => (
-                          <label className="opt" key={m}><input type="radio" name="mode" value={m} checked={S.mode === m} onChange={() => { S.mode = m; if (m === 'auto' && S.phase === 'await') send({ a: 'go' }); draw(); }} /><span><b>{t('modo_' + m)}</b><small>{t('modo_' + m + '_d')}</small></span></label>
-                        ))}
-                      </fieldset>
-                      {ctlMsg ? <p id="ctlMsg" className="ctl-msg">{ctlMsg}</p> : null}
-                      <div className="btns">
-                        {p === 'edit' ? <BotonInicio lang={lang} texto={t('btn_ejecutar')} id="bRun" data-alias="run" disabled={!total} onClick={() => { S.editing = null; drive(); }} /> : null}
-                        {p === 'await' ? <button type="button" className="am-btn-p" id="bApprove" data-alias="run" onClick={() => send({ a: 'go' })}>{t('btn_aprobar')} <Icono n="right" /></button> : null}
-                        {p === 'paused' ? <button type="button" className="am-btn-p" id="bResume" data-alias="run" onClick={() => send({ a: 'go' })}>{t('btn_continuar')} <Icono n="right" /></button> : null}
-                        {p === 'running' && !S.pausing ? <button type="button" className="am-btn-o" id="bPause" data-alias="pause" onClick={() => { S.pausing = true; draw(); say(tt('pausando')); }}>{t('btn_pausar')}</button> : null}
-                        <button type="button" className="am-btn-o ghost" id="bCancel" onClick={() => cancelAll(true)}>{t('btn_cancelar')}</button>
-                      </div>
-                      {liveRun && S.plan.steps.some((s) => S.status[s.id] === 'done') ? <p id="redoNote" className="hint">{t('rehacer_nota')}</p> : null}
+              <div className="pa-al">
+                <Avatar ok={p === 'done'} />
+                <div className="pa-alb">
+                  <p className="pa-say">{t(sayKey)}{p === 'edit' ? ' ' : ''}{p === 'edit' ? <span className="pa-mut">{t('ag_estimado', { n: Math.max(1, Math.ceil((total * SEG_PASO) / 60)) })}</span> : null}</p>
+                  <div id="vPlan" data-clarity-mask="true" className="card pa-plan" data-alias="plan" data-state={p}>
+                    <div className="pa-phd">
+                      <h1 id="planTitle" className="h-plan" tabIndex={-1} ref={planTitle}>{t('ag_plan_n', { n: total })}</h1>
+                      <span className="grow" />
+                      <span className={'tag' + (p === 'edit' ? '' : ' ok')}>{t(p === 'edit' ? 'ag_tag_edit' : 'ag_tag_ok')}</span>
                     </div>
-                  ) : null}
-
-                  {/* siempre montado (oculto) para que el aviso aparezca en el mismo lugar apenas falla un paso */}
-                  {p !== 'done' ? (
-                    <div id="errBox" className="errbox" role={p === 'error' ? 'alert' : undefined} tabIndex={-1} hidden={p !== 'error'}>
-                      <h3>{t('err_titulo')}</h3>
-                      <p id="errStep" className="errstep">{errStep ? t('paso_n', { n: stepNum(errStep.id) }) + ' · ' + errStep.title : ''}</p>
-                      <p id="errMsg" className="errmsg" data-alias="error">{errStep ? S.errors[errStep.id] || '' : ''}</p>
-                      <div className="btns" data-alias="decisions">
-                        <button type="button" className="am-btn-p" id="bErrRetry" onClick={() => send({ a: 'retry' })}>{t('err_otra')}</button>
-                        <button type="button" className="am-btn-o" id="bErrSkip" onClick={() => send({ a: 'skip' })}>{t('err_seguir')}</button>
-                        <button type="button" className="am-btn-o ghost" id="bErrStop" onClick={() => send({ a: 'stop' })}>{t('err_parar')}</button>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {p === 'limit' ? (
-                    <div id="limitBox" className="errbox" role="alert">
-                      <h3>{t('err_limite')}</h3><p>{t('err_limite_d')}</p>
-                      <div className="btns"><button type="button" className="am-btn-o" id="bLimitBack" onClick={() => cancelAll(false)}>{t('res_nuevo')}</button></div>
-                    </div>
-                  ) : null}
-                </div>
-
-                <aside className="am-panel am-orq" aria-labelledby="orqTitle">
-                  <div className="am-sechead"><div><h2 id="orqTitle">{t('orq_t')}</h2><p>{t('orq_d')}</p></div></div>
-                  <div className={'am-node main' + (p === 'running' ? ' on' : '')}>
-                    <span className="am-ico gold" aria-hidden="true"><Icono n="think" /></span>
-                    <span className="am-ncopy"><b>A.L.I.A.S.</b><small>{t('coord')}</small></span>
-                    <span className={'am-live' + (motor ? '' : ' wait')} aria-hidden="true" />
-                  </div>
-                  <div className="am-wire" aria-hidden="true" />
-                  <div className="am-nodes">
-                    {planTools.map((k) => {
-                      const mine = S.plan.steps.filter((s) => s.tool === k), work = curTool === k, fin = mine.every((s) => isFinished(S, s.id));
-                      const usedBy = mine.map((s) => S.results[s.id] && S.results[s.id].route && S.results[s.id].route.name).filter(Boolean).pop();
-                      return (
-                        <div key={k} className={'am-node' + (work ? ' on' : '') + (fin ? ' fin' : '')}>
-                          <span className={'am-ico ' + AG_COLOR[k]} aria-hidden="true"><Icono n={k} /></span>
-                          <span className="am-ncopy"><b>{t('ag_' + k + '_n')}</b><small>{work ? t('trabajando') : (mine.length === 1 ? t('pasos_1') : t('pasos_cnt', { n: mine.length }))}{usedBy && !work ? ' · ' + t('rt_usa', { name: usedBy }) : ''}</small></span>
-                          {fin ? <span className="am-nok" aria-hidden="true"><Icono n="check" /></span> : null}
+                    {p === 'done' && !S.showSteps ? (
+                      <div className="pa-sum">
+                        <span className="sdot ok" aria-hidden="true"><Icono n="check" /></span>
+                        <div>
+                          <b>{t('ag_resumen', { n: done, time: fmtTime(elapsed) })}</b>
+                          <small>{team.length ? t('ag_trabajaron', { names: team.join(', ') }) + ' · ' : ''}<button type="button" className="pa-link" onClick={() => { S.showSteps = true; draw(); }}>{t('ag_ver_pasos')}</button></small>
                         </div>
-                      );
-                    })}
+                      </div>
+                    ) : <Pasos S={S} t={t} act={act} focusRef={stepEls} />}
+                    {p === 'done' && S.showSteps ? <button type="button" className="pa-link pa-hide" onClick={() => { S.showSteps = false; draw(); }}>{t('ag_ocultar_pasos')}</button> : null}
+
+                    {p === 'edit' ? (
+                      <div className="pa-go">
+                        <button type="button" className="btn btn-v" id="bRun" data-alias="run" disabled={!total || !!S.adjusting} onClick={approve}>{t('ag_aprobar')} <Icono n="right" /></button>
+                        <span className="pa-small">{t('ag_aprobar_nota')}</span>
+                      </div>
+                    ) : null}
+                    {p === 'await' && S.awaitNext ? (
+                      <div className="pa-go">
+                        <p id="ctlMsg" className="pa-small">{t('aprobar_q', { n: S.awaitDone, m: stepNum(S.awaitNext.id), title: S.awaitNext.title })}</p>
+                        <button type="button" className="btn btn-v" id="bApprove" data-alias="run" onClick={() => send({ a: 'go' })}>{t('btn_aprobar')} <Icono n="right" /></button>
+                      </div>
+                    ) : null}
+                    {p === 'paused' ? (
+                      <div className="pa-go">
+                        <button type="button" className="btn btn-v" id="bResume" data-alias="run" onClick={() => send({ a: 'go' })}>{t('ag_seguir')} <Icono n="right" /></button>
+                        <span className="pa-small">{t('pausado')}</span>
+                      </div>
+                    ) : null}
                   </div>
-                  <label className="syn-tog"><input type="checkbox" id="synthOn" checked={synthOn} onChange={(e) => { setSynthOn(e.target.checked); store.set('alias:synth', e.target.checked ? '1' : '0'); }} /><span><b>{t('syn_tog')}</b><small>{t('syn_tog_d')}</small></span></label>
-                  <div className="am-human"><Icono n="person" /><p><b>{t('humano_t')}</b><small>{t('humano_d')}</small></p></div>
-                </aside>
+                </div>
               </div>
 
-              {p === 'done' && S.summary ? <Resultado S={S} t={t} say={say} onNew={() => cancelAll(false)} titleRef={resTitle} animar={!still()} /> : null}
+              {S.log.map((m) => (m.k === 'me'
+                ? <div className="pa-me" key={m.id}><small>{t(m.when === 'antes' ? 'ag_tu_antes' : m.when === 'despues' ? 'ag_tu_despues' : 'ag_tu_mientras')}</small><span>{m.text}</span></div>
+                : <div className={'pa-ack' + (m.ok ? '' : ' warn')} key={m.id} role="status"><Icono n={m.ok ? 'check' : 'route'} /><span>{m.text}</span></div>))}
+              {S.adjusting ? <div className="pa-ack wait"><span className="pa-spin" aria-hidden="true" /><span>{t('ag_ajustando')}</span></div> : null}
+
+              {/* siempre montado (oculto) para que el aviso aparezca en el mismo lugar apenas falla un paso */}
+              <div id="errBox" className="card pa-err" role={p === 'error' ? 'alert' : undefined} tabIndex={-1} hidden={p !== 'error'}>
+                <h3>{t('err_titulo')}</h3>
+                <p id="errStep" className="pa-small">{errStep ? t('paso_n', { n: stepNum(errStep.id) }) + ' · ' + errStep.title : ''}</p>
+                <p id="errMsg" data-alias="error">{errStep ? S.errors[errStep.id] || '' : ''}</p>
+                <div className="pa-btns" data-alias="decisions">
+                  <button type="button" className="btn btn-w btn-s" id="bErrRetry" onClick={() => send({ a: 'retry' })}>{t('err_otra')}</button>
+                  <button type="button" className="btn btn-s" id="bErrSkip" onClick={() => send({ a: 'skip' })}>{t('err_seguir')}</button>
+                  <button type="button" className="btn btn-s" id="bErrStop" onClick={() => send({ a: 'stop' })}>{t('err_parar')}</button>
+                </div>
+              </div>
+              {p === 'limit' ? (
+                <div id="limitBox" className="card pa-err" role="alert">
+                  <h3>{t('err_limite')}</h3><p>{t('err_limite_d')}</p>
+                  <div className="pa-btns"><button type="button" className="btn btn-s" id="bLimitBack" onClick={newMission}>{t('res_nuevo')}</button></div>
+                </div>
+              ) : null}
+
+              {p === 'done' && S.summary ? (
+                <div className="pa-al">
+                  <Avatar ok />
+                  <div className="pa-alb">
+                    <p className="pa-say">{t(S.stopped ? 'ag_detenido' : 'ag_say_done')}</p>
+                    <Resultado S={S} t={t} say={say} onNew={newMission} titleRef={resTitle} animar={!still()} />
+                  </div>
+                </div>
+              ) : null}
+              <div ref={endRef} />
             </section>
-          )}
-        </main>
-        <footer className="am-foot"><span><b>A.L.I.A.S.</b> <span className="sep">/</span> SymphorIA</span><span>{t('pie')}</span></footer>
-      </div>
+
+            <aside className="pa-side" aria-label={t('ag_avance')}>
+              <div className="card pa-prog">
+                <p className="mono">{t('ag_avance')}</p>
+                <div className="pa-big"><strong>{pct}%</strong><span>{p === 'edit' ? t('ag_espera') : p === 'done' ? t('ag_avance_de', { n: done, total }) : t('ag_avance_de', { n: done, total }) + ' · ' + t('ag_faltan', { n: left })}</span></div>
+                <div className="pa-bar"><i style={{ width: pct + '%' }} /></div>
+                <progress id="progress" className="sr-only" max={total} value={done} aria-label={t('progreso_n', { n: done, total })} />
+                <Infinito pct={pct} />
+              </div>
+              {p !== 'edit' ? (
+                <div className="card pa-outs">
+                  <h2 className="mono">{t('ag_salidas')}</h2>
+                  {!sourcesN && !files.length && !lastDone.length ? <p className="pa-empty">{t('ag_salidas_vacio')}</p> : null}
+                  {sourcesN ? <p><span className="pa-oi"><Icono n="search" /></span>{sourcesN === 1 ? t('ag_fuente_1') : t('ag_fuentes_n', { n: sourcesN })}</p> : null}
+                  {files.map((f, i) => <p key={i}><span className="pa-oi"><Icono n="file" /></span>{f.name}</p>)}
+                  {lastDone.map((s) => <p key={s.id}><span className="pa-oi"><Icono n="check" /></span><span className="pa-ot">{s.title}</span><small>{t('ag_paso_listo', { n: stepNum(s.id) })}</small></p>)}
+                </div>
+              ) : null}
+              {team.length ? (
+                <div className="card pa-team">
+                  <h2 className="mono">{t('ag_equipo')}</h2>
+                  <div className="pa-chips">{team.map((n) => <span className="chip" key={n}>{n}</span>)}</div>
+                  <p className="pa-small">{t('ag_equipo_d')}</p>
+                </div>
+              ) : null}
+              <div className="card pa-set">
+                <h2 className="mono">{t('ag_ajustes')}</h2>
+                <label className="pa-tog"><input type="checkbox" id="cadaOn" checked={cada} onChange={(e) => { const v = e.target.checked; setCada(v); store.set(K_CADA, v ? '1' : '0'); S.mode = v ? 'manual' : 'auto'; if (!v && S.phase === 'await') send({ a: 'go' }); }} /><span><b>{t('ag_cada')}</b><small>{t('ag_cada_d')}</small></span></label>
+                <label className="pa-tog"><input type="checkbox" id="synthOn" checked={synthOn} onChange={(e) => { setSynthOn(e.target.checked); store.set('alias:synth', e.target.checked ? '1' : '0'); }} /><span><b>{t('syn_tog')}</b><small>{t('syn_tog_d')}</small></span></label>
+                {langBtns}
+                <button type="button" className="btn btn-s pa-newbtn" onClick={() => { if (p === 'running' || p === 'paused' || p === 'await' || p === 'error') { if (!window.confirm(t('confirm_cancel'))) return; } newMission(); }}><Icono n="plus" /> {t('ag_nueva')}</button>
+              </div>
+            </aside>
+          </div>
+        )}
+        {!S.plan ? <div className="pa-homelang">{langBtns}</div> : null}
+      </main>
+
+      {S.plan ? (
+        <div className="pa-dock">
+          <div className="pa-dockin" data-clarity-mask="true">
+            <form className="pa-comp" onSubmit={(e) => { e.preventDefault(); steer(note); }}>
+              <label htmlFor="noteInput" className="sr-only">{t('ag_escribe')}</label>
+              <textarea id="noteInput" ref={noteRef} data-alias="steer" rows={1} maxLength={300} value={note} placeholder={ready ? t(ph) : ''}
+                onChange={(e) => setNote(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); steer(e.currentTarget.value); } }} />
+              {canPause ? <button type="button" className="pa-ib" id="bPause" data-alias="pause" aria-pressed={p === 'paused'} data-state={p === 'paused' ? 'paused' : undefined} aria-label={t(p === 'paused' ? 'ag_seguir' : 'ag_pausar')} title={t(p === 'paused' ? 'ag_seguir' : 'ag_pausar')} onClick={pause}><Icono n={p === 'paused' ? 'right' : 'pause'} /></button> : null}
+              {p !== 'edit' && p !== 'done' ? <button type="button" className="pa-ib" id="bCancel" aria-label={t('ag_detener')} title={t('ag_detener')} onClick={stop}><Icono n="stop" /></button> : null}
+              <button type="submit" className="pa-ib send" aria-label={t('ag_enviar')} title={t('ag_enviar')} disabled={!note.trim() || !!S.adjusting}><Icono n="up" /></button>
+            </form>
+            <p className="pa-hint">{t(hint)}</p>
+          </div>
+        </div>
+      ) : null}
+
+      <nav className="tabbar pa-tabbar" aria-label="SymphorIA">
+        <a href="/"><Icono n="home" /><span>{t('ag_tab_inicio')}</span></a>
+        <a href="/chat.html"><Icono n="chat" /><span>SynthFlow</span></a>
+        <a className="on" href="/alias.html" aria-current="page"><Icono n="loop" /><span>A.L.I.A.S.</span></a>
+        <a href="/chat.html#cuenta"><Icono n="person" /><span>{t('ag_tab_yo')}</span></a>
+      </nav>
     </div>
   );
 }
