@@ -66,7 +66,7 @@ function touchThread(){
 function allThreads(){
   return Object.keys(st().chats).filter(k => /^openrouter::./.test(k) && Array.isArray(st().chats[k]) && st().chats[k].length).map(k => {
     const { model, id } = parseKey(k), e = thMeta(model, id, false) || {}, u = st().chats[k].find(x => x.role === 'user');
-    return { k, model, id, title:e.title || (u ? titleLocal(st().chats[k]) : 'Conversación'), t:e.t || 0, n:st().chats[k].length };
+    return { k, model, id, title:e.title || (u ? titleLocal(st().chats[k]) : 'Conversación'), t:e.t || 0, n:st().chats[k].length, imp:e.imp };
   }).sort((a, b) => b.t - a.t);
 }
 /* ---------- tus chats y tus favoritos (panel de la izquierda) ---------- */
@@ -104,7 +104,7 @@ function renderChats(anim){
   L.forEach(x => {
     const g = grp(x.t); if (g !== g0){ h += '<div class="thg">' + g + '</div>'; g0 = g; }
     const cur = mode === 'solo' && x.model === thModel() && x.id === curT(), m = info(x.model);
-    h += '<div class="thi' + (cur ? ' cur' : '') + '" data-k="' + esc(x.k) + '" title="' + esc(m.name + ' · ' + x.n + ' mensajes') + '" style="--i:' + Math.min(n++, 20) + ';--vc:' + vendorColor(m.vendor) + '"><i class="thd" aria-hidden="true"></i><div class="tt"><b>' + hlq(x.title) + '</b>' + (x.sn ? '<span class="snip">' + hlq(x.sn) + '</span>' : '') + '</div>'
+    h += '<div class="thi' + (cur ? ' cur' : '') + '" data-k="' + esc(x.k) + '" title="' + esc(m.name + ' · ' + x.n + ' mensajes') + '" style="--i:' + Math.min(n++, 20) + ';--vc:' + vendorColor(m.vendor) + '"><i class="thd" aria-hidden="true"></i><div class="tt"><b>' + hlq(x.title) + '</b>' + (x.imp ? '<em class="thimp">' + esc({ chatgpt:'ChatGPT', claude:'Claude' }[x.imp] || (SZ.lang() === 'en' ? 'Imported' : 'Importado')) + '</em>' : '') + (x.sn ? '<span class="snip">' + hlq(x.sn) + '</span>' : '') + '</div>'
       + '<button type="button" data-ren aria-label="Renombrar">' + PEN + '</button><button type="button" data-del aria-label="Borrar">' + BIN + '</button></div>';
   });
   box.innerHTML = h;
