@@ -37,11 +37,11 @@ check('imagen para compartir existe', fs.existsSync(path.join(ROOT, 'media/og-sy
 if (process.argv[2]) check('dist/ no publica piezas, pruebas ni notas', !['src', 't', 'api', 'INFORME.md', 'build.mjs', 'package.json'].some(f => fs.existsSync(path.join(ROOT, f))));
 
 /* ---------- páginas en el navegador ---------- */
-/* las mismas reglas de seguridad (CSP) que pone Vercel según vercel.json: la de la página y la de /sintetico.html */
-const VJ = JSON.parse(fs.readFileSync(path.join(REPO, 'vercel.json'), 'utf8'));
+/* las mismas reglas de seguridad (CSP) que aplica Pages según cloudflare/rutas.json: la de la página y la de /sintetico.html */
+const VJ = JSON.parse(fs.readFileSync(path.join(REPO, 'cloudflare/rutas.json'), 'utf8'));
 const cspOf = src => ((VJ.headers.find(h => h.source === src) || { headers:[] }).headers.find(h => h.key === 'Content-Security-Policy') || {}).value || '';
 const CSP_PAGE = cspOf('/((?!sintetico\\.html$).*)').replace(/;\s*upgrade-insecure-requests/, ''), CSP_SYN = cspOf('/sintetico.html');
-check('vercel.json trae la CSP de la página y la de los Sintéticos', /script-src/.test(CSP_PAGE) && /frame-ancestors 'self'/.test(CSP_SYN));
+check('cloudflare/rutas.json trae la CSP de la página y la de los Sintéticos', /script-src/.test(CSP_PAGE) && /frame-ancestors 'self'/.test(CSP_SYN));
 const server = http.createServer((req, res) => {
   const u = decodeURIComponent(req.url.split('?')[0]);
   if (u.startsWith('/api/')){ res.writeHead(200, { 'content-type':'application/json' }); res.end('{}'); return; }

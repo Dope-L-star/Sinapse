@@ -6,6 +6,8 @@
 
 # Pendientes
 
+- **Serein** será la IA propia del proyecto. Sammuel dejó su desarrollo para una etapa posterior.
+
 ## PLAN DE PAGOS — APAGADO (no se activa hasta que Sammuel lo diga)
 
 Nada de esto está encendido. No hay llaves de pago, ni cobros, ni botones de comprar. Es el plan para cuando lleguen los pagos.

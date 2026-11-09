@@ -1,6 +1,4 @@
 {
-  "buildCommand": "node vercel-portal/armar.mjs",
-  "outputDirectory": "dist",
   "headers": [
     {
       "source": "/((?!sintetico\\.html$).*)",
@@ -137,27 +135,8 @@
       "source": "/pulso",
       "destination": "/pulsem.html",
       "permanent": false
-    },
-    {
-      "source": "/:ruta((?!api/|v/|portal\\.css$|portal\\.js$|sw\\.js$|icon\\.svg$|og-synthz\\.jpg$|robots\\.txt$).+)",
-      "destination": "https://symphoria.pages.dev/:ruta",
-      "permanent": false
     }
   ],
-  "functions": {
-    "api/trial.js": {
-      "maxDuration": 60
-    },
-    "api/alias.js": {
-      "maxDuration": 60
-    },
-    "api/ai.js": {
-      "maxDuration": 60
-    },
-    "api/chat.js": {
-      "maxDuration": 60
-    }
-  },
   "rewrites": [
     {
       "source": "/alias",

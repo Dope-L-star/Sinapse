@@ -1,4 +1,4 @@
-/* generado por cloudflare/preparar.mjs desde vercel.json: no se edita */
+/* generado por cloudflare/preparar.mjs desde cloudflare/rutas.json: no se edita */
 export default {
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "no-referrer",
