@@ -5,6 +5,7 @@
      (api/config.js › action:'puerta'). Nunca se cobra nada.
    - Español e inglés (synthz:lang, igual que el resto del sitio). Las líneas y chispas las mueve el motor en Rust. */
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useAliasVisible } from '../../lib/solo-equipo';
 import BarraSuperior from '../partitura/BarraSuperior';
 import Pentagrama from '../partitura/Pentagrama';
 import Chispas from '../partitura/Chispas';
@@ -82,6 +83,9 @@ function CajaCorreo({ t, puerta, nombre, onCerrar, mandar }) {
 }
 
 export default function PortadaApp() {
+  /* v4.5: A.L.I.A.S. (modo Agente, tarjeta y pestaña) solo para el equipo */
+  const conAlias = useAliasVisible();
+  const modos = conAlias ? MODOS : MODOS.filter((m) => m !== 'agente');
   const [idioma, setIdioma] = useState('es');
   const t = TEXTOS[idioma];
   const [modo, setModo] = useState('auto');
@@ -116,7 +120,7 @@ export default function PortadaApp() {
     const texto = q.trim();
     if (!texto) { setEmpuja(false); requestAnimationFrame(() => setEmpuja(true)); area.current?.focus(); return; }
     try { sessionStorage.setItem('synthz:q', JSON.stringify({ q: texto, t: Date.now() })); } catch (er) {}
-    if (modo === 'agente') { location.href = '/alias.html?' + new URLSearchParams({ from: 'home', meta: texto }); return; }
+    if (modo === 'agente' && conAlias) { location.href = '/alias.html?' + new URLSearchParams({ from: 'home', meta: texto }); return; }
     const p = new URLSearchParams({ from: 'home', q: texto, esfuerzo: ['auto', 'veloz', 'profundo', 'creativo', 'superiorsynth'][esfuerzo] });
     if (modo === 'comparar') p.set('mode', 'cmp');
     if (modo === 'una') p.set('elegir', '1');
@@ -144,7 +148,7 @@ export default function PortadaApp() {
 
             <form className={'pt-caja' + (empuja ? ' empuja' : '')} onSubmit={enviar} onAnimationEnd={() => setEmpuja(false)} data-clarity-mask="true">
               <div className="pt-modos" role="radiogroup" aria-label="Modo">
-                {MODOS.map((m) => (
+                {modos.map((m) => (
                   <button key={m} type="button" role="radio" aria-checked={modo === m} className={modo === m ? 'on' : undefined} onClick={() => setModo(m)} data-modo={m}>
                     {t.modos[m]}
                   </button>
@@ -224,9 +228,9 @@ export default function PortadaApp() {
 
         <section className="pt-sec">
           <div className="wrap">
-            <div className="pt-cab"><h2>{t.instT}</h2><p>{t.instS}</p></div>
-            <div className="pt-inst">
-              {t.inst.map((x) => (
+            <div className="pt-cab"><h2>{conAlias ? t.instT : t.instT2}</h2><p>{t.instS}</p></div>
+            <div className={'pt-inst' + (conAlias ? '' : ' dos')}>
+              {t.inst.filter((x) => conAlias || x.href !== '/alias.html').map((x) => (
                 <a key={x.n} className="card pt-ins" href={x.href} style={{ '--k': x.k }}>
                   <span className="pt-raya" /><h3>{x.n}</h3><p>{x.p}</p>
                   <span className="pt-ir"><span className="mono">{x.m}</span><span className="btn btn-s">{x.b}</span></span>
@@ -330,7 +334,7 @@ export default function PortadaApp() {
       <nav className="tabbar" aria-label="Menú">
         <a className="on" href="/" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z" /></svg>{t.tabs.inicio}</a>
         <a href="/chat.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z" /></svg>SynthFlow</a>
-        <a href="/alias.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M7 8c-3 0-4 2-4 4s1 4 4 4c4 0 6-8 10-8 3 0 4 2 4 4s-1 4-4 4c-4 0-6-8-10-8z" /></svg>A.L.I.A.S.</a>
+        {conAlias && <a href="/alias.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M7 8c-3 0-4 2-4 4s1 4 4 4c4 0 6-8 10-8 3 0 4 2 4 4s-1 4-4 4c-4 0-6-8-10-8z" /></svg>A.L.I.A.S.</a>}
         <a href="/chat.html#entrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c1-4 4-6 8-6s7 2 8 6" /></svg>{t.tabs.yo}</a>
       </nav>
     </div>

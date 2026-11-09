@@ -373,7 +373,7 @@ export default route({
       const b = await body(req, 120000); lang = lg(b.lang);
       const me = await auth(req);                                    /* mismo token que api/chat.js */
       await limit('alias:' + me.sub, 30, 60);
-      me.ux = await perksOf(me); if (!me.ux.f.alias && b.action !== 'rutas') throw A('srv.aliasOff', 403);   /* v4.4 · se quita por cuenta en Pulsem › Usuarios */
+      me.ux = await perksOf(me); if (!me.ux.f.alias) throw A('srv.aliasOff', 403);   /* v4.4 · por cuenta en Pulsem › Usuarios · v4.5: apagado para todos menos el equipo (todas las acciones) */
       if (b.action === 'plan') return await doPlan(req, me, b, lang);
       if (b.action === 'step') return await doStep(req, me, b, lang);
       if (b.action === 'ajustar') return await doAdjust(req, me, b, lang);

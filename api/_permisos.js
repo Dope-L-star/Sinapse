@@ -7,7 +7,9 @@ import { redis, setJ, str, roleOf } from './_lib.js';
 
 /* funciones que se dan o se quitan por persona, y cómo vienen si nadie las toca.
    premium: los modelos de pago de OpenRouter como REGALO (sin cobrar). Solo funciona cuando la llave premium esté puesta (PREMIUM.md). */
-export const FEATS = { alias:true, image:true, search:true, review:true, smart:true, premium:false };
+/* v4.5 (Sammuel, 9 nov: «quita a todos el ALIAS excepto los admins»): A.L.I.A.S. viene APAGADO para todos; el equipo lo tiene por ser equipo.
+   Desde Pulsem › Usuarios todavía se le puede prender a una persona a mano. */
+export const FEATS = { alias:false, image:true, search:true, review:true, smart:true, premium:false };
 /* límites propios: null = el de todos. day -1 = EnerX sin tope. day 0 = sin IAs conectadas hoy (bajar a cero también es un límite) */
 export const LIM = { day:[0, 5_000_000], img:[0, 500], search:[0, 2000], smart:[0, 2000], aliasX:[1, 100], credit:[0, 50] };
 

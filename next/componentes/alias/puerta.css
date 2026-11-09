@@ -1,0 +1,20 @@
+/* v4.5 · la puerta de A.L.I.A.S. para quien no es del equipo (PuertaAlias.jsx). Piel «Partitura». */
+.pz-puerta{min-height:100vh;min-height:100dvh;background:radial-gradient(700px 420px at 50% 18%,rgba(123,63,242,.18),transparent 70%),var(--ink);color:var(--text)}
+.pz-rev{background:var(--ink)}
+.pz-puerta .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.pz-centro{display:grid;place-items:center;min-height:calc(100dvh - 80px);padding-top:24px;padding-bottom:48px}
+.pz-tarjeta{position:relative;overflow:hidden;width:100%;max-width:560px;padding:36px 32px 30px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;backdrop-filter:blur(18px);animation:pzSube .7s var(--ease) both}
+.pz-tarjeta h1{font-size:clamp(26px,5vw,36px)}
+.pz-tarjeta p{color:var(--muted);max-width:44ch}
+.pz-tarjeta .pz-pedido{color:var(--v-t);font-size:14px}
+.pz-orbe{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;color:var(--v-t);background:radial-gradient(circle at 35% 30%,rgba(176,140,255,.28),rgba(123,63,242,.08) 70%);border:1px solid var(--line-2);box-shadow:0 0 40px rgba(123,63,242,.35)}
+.pz-orbe svg{width:38px;height:19px;stroke-dasharray:60;animation:pzTraza 2.4s var(--ease) infinite}
+.pz-botones{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:6px}
+.pz-cuenta{font-size:13px;color:var(--faint)!important}
+.pz-barra{position:absolute;left:0;bottom:0;height:3px;width:100%;background:var(--grad);transform-origin:left;animation:pzBarra linear both}
+@keyframes pzSube{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes pzTraza{0%{stroke-dashoffset:60}60%,100%{stroke-dashoffset:0}}
+@keyframes pzBarra{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@media (max-width:640px){.pz-tarjeta{padding:28px 18px 24px}}
+@media (prefers-reduced-motion:reduce){.pz-tarjeta,.pz-orbe svg{animation:none}.pz-barra{display:none}}
+html.noanim .pz-tarjeta,html.noanim .pz-orbe svg{animation:none}

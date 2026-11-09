@@ -95,7 +95,7 @@ async function szCatalog(){
   const d = await r.json().catch(() => ({}));
   if (!r.ok){ szqSet({ on:false, t:Date.now() }); return []; }
   const arr = Array.isArray(d.models) ? d.models : [];
-  szqSet({ on:arr.length > 0, used:+d.used || 0, limit:+d.limit || 20000, guest:d.guest && d.guest.max ? { used:+d.guest.used || 0, max:+d.guest.max, left:d.guest.left != null ? +d.guest.left : null } : null, img:d.img || null, team:!!d.team, alert:!!d.alert, alertN:+d.alertN || 0, n:arr.length, t:Date.now() });
+  szqSet({ on:arr.length > 0, used:+d.used || 0, limit:+d.limit || 20000, guest:d.guest && d.guest.max ? { used:+d.guest.used || 0, max:+d.guest.max, left:d.guest.left != null ? +d.guest.left : null } : null, img:d.img || null, team:!!d.team, alias:!!(d.perks && d.perks.f && d.perks.f.alias), alert:!!d.alert, alertN:+d.alertN || 0, n:arr.length, t:Date.now() });
   if (!arr.length) return [];
   const out = arr.filter(m => m && typeof m.id === 'string' && /^sz:/.test(m.id) && !/allam|infron|openrouter\/(free|auto)|models?[-_ ]router/i.test(m.id) && !/free models router|router/i.test(String(m.name || ''))).map(m => {
     const mid = m.id.split(':').slice(2).join(':'), vendor = szVendor(mid, m.prov);

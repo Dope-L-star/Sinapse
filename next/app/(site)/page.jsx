@@ -5,7 +5,7 @@ import Telon from '../../componentes/entrada/Telon';
 
 /* meta(): título, descripción, enlace canónico y la imagen al compartir (og:image) iguales en todas las páginas */
 export const metadata = {
-  ...meta('SymphorIA · Una pregunta. Varias IAs. Tú eliges.', 'SymphorIA: escribe una vez y elige entre varias IAs gratis. SynthFlow, el agente A.L.I.A.S. y Obertura, en un solo lugar.', '/'),
+  ...meta('SymphorIA · Una pregunta. Varias IAs. Tú eliges.', 'SymphorIA: escribe una vez y elige entre varias IAs gratis. SynthFlow, SynthonIA y Obertura, en un solo lugar.', '/'),
   title: 'SymphorIA · Una pregunta. Varias IAs. Tú eliges.',
 };
 

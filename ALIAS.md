@@ -2,6 +2,11 @@
 
 # A.L.I.A.S.
 
+> **Solo para el equipo desde el 9 de noviembre de 2026 (v4.5).** Sammuel: «quita a todos el ALIAS excepto los admins».
+> Servidor: `FEATS.alias = false` en `api/_permisos.js` (el equipo lo tiene; a una persona se le puede prender en Pulsem › Usuarios), y `api/alias.js` responde 403 en todas las acciones.
+> Pantalla: `perks.f.alias` de `/api/ai` se recuerda en `localStorage` `synthz:alias`; sin eso no hay modo Agente, ni enlaces, ni tarjeta en la portada.
+> `alias.html` monta `PuertaAlias.jsx`: pregunta al servidor y, si no tiene permiso, explica que está en pruebas y lleva a SynthFlow con lo escrito. Prueba: `node t/alias/solo-equipo.mjs`.
+
 Sistema de lógica e inteligencia aumentada. En la interfaz el nombre se queda **A.L.I.A.S.** Agente aparte dentro de SynthFlow (Colombia). No es el chat, no es SuperiorSynth y no es SynthonIA.
 
 ## English summary
