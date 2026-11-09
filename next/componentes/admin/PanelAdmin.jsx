@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { textos } from './textos.mjs';
 import { I, ICO, Saldo, Radar, Brutal, Contactar, Paleta } from './partes';
+import Usuarios from './Usuarios';
 import './admin.css';
 
 /* ===== Panel de administración nuevo (Pulsem en React)
@@ -12,7 +13,7 @@ import './admin.css';
    Se monta así (ver LEEME.md):  <PanelAdmin api={SZ.api} onAuth={status => …} />
    api(path, { method, body, keep }) es la misma de core.js; el panel pide 'health?panel=1' y 'trial' cada minuto. ===== */
 
-const VISTAS = ['res', 'keys', 'set', 'fb', 'help'];
+const VISTAS = ['res', 'keys', 'set', 'fb', 'help', 'users'];   /* v4.4 · Usuarios (permisos y límites por persona) va al final: las teclas 1-5 siguen igual */
 const PROVS = [
   ['groq', 'Groq', 'https://console.groq.com/keys', 'gsk_…'], ['mistral', 'Mistral', 'https://console.mistral.ai/api-keys', ''],
   ['cloudflare', 'Cloudflare', 'https://dash.cloudflare.com/profile/api-tokens', 'Workers AI'], ['openrouter', 'OpenRouter', 'https://openrouter.ai/keys', 'sk-or-…'],
@@ -59,7 +60,7 @@ export default function PanelAdmin({ api, lang: langProp, onAuth, onLang, toast:
   const [P, setP] = useState(null), [T, setT] = useState(null), [err, setErr] = useState(''), [lastOk, setLastOk] = useState(0), [busy, setBusy] = useState(false);
   const [vista, setVista] = useState('res'), [cmd, setCmd] = useState(false), [brutal, setBrutal] = useState(null), [reach, setReach] = useState(null);
   const [toasts, setToasts] = useState([]), [, tick] = useState(0);
-  const brutalRes = useRef(null), helpRef = useRef(null), nowRef = useRef(null);
+  const brutalRes = useRef(null), helpRef = useRef(null), nowRef = useRef(null), userRef = useRef(null);
 
   const toast = useCallback(m => { if (toastProp) return toastProp(m); const id = Math.random(); setToasts(x => [...x.slice(-2), { id, m }]); setTimeout(() => setToasts(x => x.filter(y => y.id !== id)), 3600); }, [toastProp]);
   const confirmar = p => new Promise(res => { brutalRes.current = res; setBrutal(p); });
@@ -119,6 +120,8 @@ export default function PanelAdmin({ api, lang: langProp, onAuth, onLang, toast:
     catch (e) { toast(t.failed + e.message); }
   };
   const abrirReach = (sub, nombre) => setReach({ sub, nombre });
+  /* v4.4 · desde «En línea» o la paleta: abre la ficha de esa persona en Usuarios */
+  const abrirUsuario = sub => { ir('users'); let n = 0; const go = () => { if (userRef.current) userRef.current(sub); else if (n++ < 20) setTimeout(go, 60); }; setTimeout(go, 30); };
   const enviarReach = async txt => {
     if (!txt) { toast(t.reachShort); return false; }
     try { await post('help', { action: 'reach', sub: reach.sub, text: txt }); toast(t.reachSent); setReach(null); load(); return true; }
@@ -130,7 +133,7 @@ export default function PanelAdmin({ api, lang: langProp, onAuth, onLang, toast:
     const k = e => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setCmd(c => !c); return; }
       const a = document.activeElement, typing = a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable);
-      if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey && /^[1-5]$/.test(e.key) && P) { ir(VISTAS[+e.key - 1]); }
+      if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey && /^[1-6]$/.test(e.key) && P) { ir(VISTAS[+e.key - 1]); }
     };
     addEventListener('keydown', k); return () => removeEventListener('keydown', k);
   }, [ir, P]);
@@ -142,6 +145,7 @@ export default function PanelAdmin({ api, lang: langProp, onAuth, onLang, toast:
       L.push({ id: 'tst', label: t.cmdTestAll, ico: ICO.bolt, run: () => { ir('keys'); testKeys(); } });
       L.push({ id: 'now', label: t.cmdNow, ico: ICO.set, run: () => { ir('set'); setTimeout(() => nowRef.current && nowRef.current.focus(), 120); } });
       L.push({ id: 'mnt', label: t.cmdMaint, ico: ICO.warn, run: () => ir('set') });
+      L.push({ id: 'usr', label: t.u.cmd, ico: ICO.users, run: () => ir('users') });
     }
     return L;
   }, [t, P, can, ir, load]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -182,11 +186,12 @@ export default function PanelAdmin({ api, lang: langProp, onAuth, onLang, toast:
               <div className="pa-card pa-alert" role="alert"><b>{t.alertTitle}</b><p>{N.alerts.map(a => t.alertP(a.name, a.t ? ago(a.t) : '')).join(' · ')}</p><small>{t.alertNote}</small></div>
             ) : null}
             <div className="pa-view" key={vista}>
-              {vista === 'res' && <Resumen {...{ P, T, N, t, fmt, ago, ir, maint, can, abrirReach, helpRef }} />}
+              {vista === 'res' && <Resumen {...{ P, T, N, t, fmt, ago, ir, maint, can, abrirReach, abrirUsuario, helpRef }} />}
               {vista === 'keys' && <Llaves {...{ P, T, t, fmt, ago, can, post, reT, toast, testKeys, confirmar }} />}
               {vista === 'set' && <Ajustes {...{ P, T, setT, t, fmt, can, post, reT, toast, maint, confirmar, nowRef, loc }} />}
               {vista === 'fb' && <Comentarios {...{ P, setP, t, ago, post, toast, abrirReach }} />}
               {vista === 'help' && <Ayuda {...{ P, t, ago, api, post, toast, load, helpRef }} />}
+              {vista === 'users' && <Usuarios {...{ t, fmt, ago, post, toast, confirmar, userRef, can, loc }} />}
             </div>
           </main>
         </div>
@@ -201,7 +206,7 @@ export default function PanelAdmin({ api, lang: langProp, onAuth, onLang, toast:
 }
 
 /* ===================== Resumen ===================== */
-function Resumen({ P, T, N, t, fmt, ago, ir, maint, can, abrirReach, helpRef }) {
+function Resumen({ P, T, N, t, fmt, ago, ir, maint, can, abrirReach, abrirUsuario, helpRef }) {
   const h = salud(P, t), d0 = (P.stat || [])[0] || {}, now = P.now;
   const todo = [];
   if (N.maint) todo.push({ k: 'mt', c: 'bad', txt: t.todoMaint, act: can ? [t.turnOff, () => maint(false)] : [t.go, () => ir('set')] });
@@ -243,7 +248,7 @@ function Resumen({ P, T, N, t, fmt, ago, ir, maint, can, abrirReach, helpRef }) 
       </section>
 
       <div className="pa-grid">
-        <EnLinea {...{ P, t, ago, abrirReach }} now={now} />
+        <EnLinea {...{ P, t, ago, abrirReach, abrirUsuario }} now={now} />
         <Dificultades {...{ P, t, ago, abrirReach }} />
       </div>
       <Carga {...{ P, t, fmt }} />
@@ -251,7 +256,7 @@ function Resumen({ P, T, N, t, fmt, ago, ir, maint, can, abrirReach, helpRef }) 
   );
 }
 
-function EnLinea({ P, t, now, abrirReach }) {
+function EnLinea({ P, t, now, abrirReach, abrirUsuario }) {
   const [solo, setSolo] = useState(false), [q, setQ] = useState('');
   const conf = new Set((P.events || []).filter(e => e.kind === 'confused' && now - e.t < 15 * 60e3).map(e => e.who));
   const idle = o => !o.msgs && now - (o.since || now) > 4 * 60e3 && o.page === 'chat';
@@ -279,6 +284,7 @@ function EnLinea({ P, t, now, abrirReach }) {
                 {o.msgs ? <span className="pa-tag ok">{t.tMsgs(o.msgs)}</span> : null}
                 {o.ai ? <span className="pa-tag gold">{o.ai === 'synthz' ? t.tConnected : o.ai === 'puter' ? 'Puter' : o.ai}</span> : null}
                 {sub ? <button type="button" className="pa-mini gold" onClick={() => abrirReach(sub, o.name)}>{t.contact}</button> : null}
+                {sub ? <button type="button" className="pa-mini" onClick={() => abrirUsuario(sub)}><I d={ICO.shield} />{t.u.give}</button> : null}
               </div>
             </div>
           );

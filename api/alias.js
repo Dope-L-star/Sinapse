@@ -15,6 +15,7 @@
    Errores: { ok:false, error } · límite diario: { ok:false, error, limit:true }
    Textos visibles: todos salen de alias-textos.json (raíz, para que viaje con la función) con t(). Los prompts del modelo no se ven y viven aquí. */
 import TX from './_alias-textos.js';
+import { perksOf, enerOf } from './_permisos.js';
 import { route, body, json, auth, redis, pipe, limit, today, str, rid, sha, ipOf, roleOf } from './_lib.js';
 import { chat, pickKeys, searchWith, searchWiki, markPay, PAY_RX, classify } from './_pool.js';
 import { webRule } from './_web-regla.js';
@@ -42,7 +43,9 @@ const t = (lang, k, v) => {
 };
 const A = (key, status = 400, extra) => Object.assign(new Error(key), { aKey:key, status }, extra || {});
 const clip = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, ' ').trim().slice(0, n);   /* como str(), pero conserva saltos de línea */
-const mult = me => roleOf(me) !== 'user' ? 100 : 1;   /* v3.0: el equipo prueba todo sin quedarse corto */
+const mult = me => me.ux && me.ux.aliasX ? me.ux.aliasX : roleOf(me) !== 'user' ? 100 : 1;   /* v3.0: el equipo prueba todo sin quedarse corto · v4.4: o lo que le pusieron en Pulsem › Usuarios */
+/* v4.4 · EnerX de A.L.I.A.S.: la misma regla que el chat (equipo o «sin límite» = libre; si no, su tope propio o el de todos) */
+const ener = me => me.ux ? enerOf(me.ux) : { free:roleOf(me) !== 'user', dayLimit:null };
 
 /* ---------- instrucciones al modelo (el texto de la web es DATO, nunca órdenes) ---------- */
 const SAFE = 'Eres A.L.I.A.S., un agente que ayuda a cumplir un objetivo paso a paso. Reglas: '
@@ -56,7 +59,7 @@ const datos = s => '<datos>\n' + String(s).replace(/<\/?datos>/gi, '') + '\n</da
 async function ask(req, me, lang, user, maxTokens, cat, R){
   const ranked = await pick(cat).catch(() => []), pend = [], fails = [];
   try{
-    const r = await chat({ who:'al:' + me.sub, ipKey:'ip:' + sha('ip:' + ipOf(req)).slice(0, 16), messages:[{ role:'user', content:user }], model:'sz:auto', maxTokens, system:sys(lang), stream:false, free:roleOf(me) !== 'user',
+    const r = await chat({ who:'al:' + me.sub, ipKey:'ip:' + sha('ip:' + ipOf(req)).slice(0, 16), messages:[{ role:'user', content:user }], model:'sz:auto', maxTokens, system:sys(lang), stream:false, ...ener(me),
       route:ranked.map(x => x.m), firstMs:ranked.length > 1 ? 20000 : 0,
       onTry:({ m, ok, ms, slow }) => { pend.push(record(cat, m.id, ok, ms)); if (!ok) fails.push({ name:m.name, slow }); } });
     pend.push(used(r.meta.prov));
@@ -102,7 +105,7 @@ const FUSE_RULES = [
 const TAG = (s, t) => { const m = new RegExp('<' + t + '>([\\s\\S]*?)(?:</' + t + '>|$)', 'i').exec(s); return m ? m[1].trim() : ''; };
 async function synthesize(req, me, lang, task, maxTokens, cat, R){
   const pend = [], tryRec = ({ m, ok, ms }) => pend.push(record(cat, m.id, ok, ms));
-  const who = { who:'al:' + me.sub, ipKey:'ip:' + sha('ip:' + ipOf(req)).slice(0, 16), system:sys(lang), stream:false, free:roleOf(me) !== 'user', onTry:tryRec };
+  const who = { who:'al:' + me.sub, ipKey:'ip:' + sha('ip:' + ipOf(req)).slice(0, 16), system:sys(lang), stream:false, ...ener(me), onTry:tryRec };
   const vs = await pickVoices(VOICES, cat);
   const got = await Promise.allSettled(vs.map(m => within(chat(Object.assign({ messages:[{ role:'user', content:task }], model:m.id, maxTokens:Math.min(maxTokens, 900) }, who)), VOICE_MS)));
   await Promise.all(pend).catch(() => {});
@@ -229,6 +232,7 @@ const ctx = (plan, step, prev) => 'Objetivo: ' + plan.goal + '\nPlan: ' + plan.s
 async function runSearch(req, me, lang, plan, step, prev, R){
   const q = str(step.input || step.title, 200), d = today(), uk = 'alias:q:' + me.sub + ':' + d, gk = 'srch:all:' + d;
   const [n, g] = (await pipe([['GET', uk], ['GET', gk]])).map(x => +x || 0);
+  if (me.ux && !me.ux.f.search) throw A('srv.busquedaOff', 403);
   if (n >= SEARCH_DAY * mult(me)) throw A('srv.busquedaLimite', 429);
   let res = [];
   if (g < SEARCH_GLOBAL){
@@ -369,6 +373,7 @@ export default route({
       const b = await body(req, 120000); lang = lg(b.lang);
       const me = await auth(req);                                    /* mismo token que api/chat.js */
       await limit('alias:' + me.sub, 30, 60);
+      me.ux = await perksOf(me); if (!me.ux.f.alias && b.action !== 'rutas') throw A('srv.aliasOff', 403);   /* v4.4 · se quita por cuenta en Pulsem › Usuarios */
       if (b.action === 'plan') return await doPlan(req, me, b, lang);
       if (b.action === 'step') return await doStep(req, me, b, lang);
       if (b.action === 'ajustar') return await doAdjust(req, me, b, lang);

@@ -30,3 +30,7 @@ Además, en OpenRouter ponerle a la llave un **límite de crédito**: es la red 
 
 ## Aviso grande de alto consumo (hecho, dormido)
 Al elegir un modelo premium con `heavy` (×20 o más, `SYNTHZ_PREMIUM_HEAVY`; p. ej. Claude Fable/Opus, GPT pro, Gemini Pro) sale una tarjeta grande ES/EN que dice ×N, cuánto del crédito usa cada respuesta y cuántas le quedan. Hay que aceptar «Usarla igual»; lo marcado por defecto es «Elegir una más liviana». Sale cada vez. Código: `src/chat/16h-premium-aviso.js` + `pickModel()`. Hoy no sale porque la lista no trae modelos premium.
+
+## Regalo por persona (v4.4)
+
+En Pulsem › Usuarios, Prime o ZFlow pueden prenderle «IAs premium (regalo)» a una cuenta y ponerle su propio crédito del mes. `isPremium()` lo acepta aunque `SYNTHZ_PLANS_ON` siga apagado, pero solo cuando la llave premium esté puesta (`SYNTHZ_PREMIUM=1` + `SYNTHZ_PREMIUM_KEY`). Nadie paga nada por esto.

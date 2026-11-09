@@ -280,11 +280,13 @@ export async function pingModel(id){
    las instrucciones del tipo de trabajo, si piensa con <think> o con su propio razonamiento, y los parámetros que ese proveedor entiende.
    Además, en streaming: si una IA contesta vacío (o con un error antes de escribir nada), responde la siguiente sin que la persona lo note. */
 const NOEX = new Set();   /* modelos que respondieron 400 a los parámetros de razonamiento (en este servidor) */
-export async function chat({ who, ipKey, messages, model, maxTokens, system, stream = true, onDone, free = false, temperature = .6, route = null, onTry = null, firstMs = 0, brain = null }){
-  const { dayLimit } = await settings();
+/* v4.4 · dayLimit (opcional): el tope propio de esa persona (Pulsem › Usuarios, api/_permisos.js). null = el de todos; 0 = sin IAs conectadas hoy.
+   El tope de la conexión nunca queda por debajo del de todos (así subirle el límite a alguien no frena a los demás de su red, ni al revés) */
+export async function chat({ who, ipKey, messages, model, maxTokens, system, stream = true, onDone, free = false, temperature = .6, route = null, onTry = null, firstMs = 0, brain = null, dayLimit:own = null }){
+  const base = (await settings()).dayLimit, dayLimit = own != null && Number.isFinite(+own) && +own >= 0 ? Math.round(+own) : base;
   const [used, usedIp] = free ? [0, 0] : (await pipe([['GET', quotaKey(who)], ['GET', quotaKey(ipKey)]])).map(x => +x || 0);
   if (used >= dayLimit) throw err(429, 'Llegaste al límite de hoy. Se renueva a medianoche. Si quieres seguir ya, conecta Puter (gratis, opcional).', 'sz_limit');
-  if (usedIp >= dayLimit * 3) throw err(429, 'Desde esta conexión ya se usó mucho hoy. Se renueva a medianoche, o conecta Puter (gratis, opcional).', 'sz_limit_ip');
+  if (usedIp >= Math.max(dayLimit, base) * 3) throw err(429, 'Desde esta conexión ya se usó mucho hoy. Se renueva a medianoche, o conecta Puter (gratis, opcional).', 'sz_limit_ip');
   let { msgs, nImg } = normMsgs(messages);
   /* v4.0 · si la charla es muy larga se quitan los mensajes más viejos, PERO se conserva el primero que escribió la persona
      (casi siempre dice de qué va todo) y se avisa a la IA que hubo un salto, para que no pierda el hilo */

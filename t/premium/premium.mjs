@@ -60,4 +60,11 @@ ok('la lista del chat lleva ×N, alto consumo y costo por respuesta', () => {
   const li = listItem(mid, c); assert.equal(li.heavy, true); assert.equal(li.mult, 40); assert.equal(li.usdMsg, 0.018); assert.equal(li.premium, true);
   assert.equal(perMsg(cheap), 0.00125);
 });
+/* v4.4 · regalo del equipo (Pulsem › Usuarios) */
+const gift = { ux:{ f:{ premium:true } } };
+ok('regalo: es premium aunque los planes estén apagados', () => assert.equal(isPremium(gift, config({ ...ON, SYNTHZ_PLANS_ON:'0' }), NOW), true));
+ok('regalo sin la llave premium puesta → no es premium', () => assert.equal(isPremium(gift, config({}), NOW), false));
+ok('sin regalo y planes apagados → no es premium', () => assert.equal(isPremium({ ux:{ f:{ premium:false } } }, config({ ...ON, SYNTHZ_PLANS_ON:'0' }), NOW), false));
+ok('crédito propio: con 0,5 US$ y 0,4 usados quedan 0,1', () => { const d = decide({ me:{ ux:{ f:{ premium:true }, credit:0.5 } }, model:cheap, creditUsed:0.4 }, c, NOW); assert.equal(d.tier, 'premium'); assert.ok(Math.abs(d.left - 0.1) < 1e-9); });
+ok('crédito propio en 0 → se corta', () => assert.equal(decide({ me:{ ux:{ f:{ premium:true }, credit:0 } }, model:cheap }, c, NOW).why, 'sin_credito'));
 console.log('\n' + n + ' pruebas OK');

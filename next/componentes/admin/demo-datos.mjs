@@ -41,6 +41,23 @@ export function apiDemo({ rank = 'Prime' } = {}) {
   };
   const T = { keys: P.keys.map(k => Object.assign({}, k, { mine: k.owner.name === 'Sammuel' })), mine: { groq: true, google: true }, models: { n: 37 }, imgDay: 3,
     google: { clientId: '123456-abc.apps.googleusercontent.com', source: 'panel' }, drive: {}, maint: { on: false, text: '' }, now: null, cfAccount: '' };
+  const U = [
+    { sub: 'ana', name: 'Ana', handle: '@ana', email: 'ana@correo.co', rank: 'Synther', used: { day: 14200, img: 2, search: 11, smart: 6 }, sessions: 2, perm: { day: 60000, img: 10, f: { premium: true }, note: 'Probadora de la beta', by: 'Prime @sammuersynth', t: m(180) } },
+    { sub: 'leo', name: 'Leo', handle: '@leo', email: 'leo@correo.co', rank: 'Synther', used: { day: 19800, img: 0, search: 3, smart: 1 }, sessions: 1, perm: null },
+    { sub: 'mia', name: 'Mía', handle: '@mia', email: 'mia@correo.co', rank: 'Synther', used: { day: 2100, img: 1, search: 0, smart: 0 }, sessions: 1, perm: { f: { alias: false }, by: 'ZFlow @sammueladmin', t: m(900) } },
+    { sub: 'tomas', name: 'Tomás', handle: '@tomas', email: '', rank: 'Synther', used: { day: 0, img: 0, search: 0, smart: 0 }, sessions: 0, perm: null, blocked: true },
+    { sub: 'sammueladmin', name: 'ZFlow', handle: '@sammueladmin', email: '', rank: 'ZFlow', used: { day: 52000, img: 4, search: 20, smart: 9 }, sessions: 3, perm: null },
+  ];
+  const LOG = [{ t: m(180), by: 'Prime @sammuersynth', who: '@ana', what: 'set' }, { t: m(900), by: 'ZFlow @sammueladmin', who: '@mia', what: 'set' }, { t: m(2000), by: 'ZFlow @sammueladmin', who: '@tomas', what: 'block' }];
+  const fila = u => ({ sub: u.sub, name: u.name, handle: u.handle, email: u.email, rank: u.rank, blocked: !!u.blocked, own: !!u.perm });
+  const ficha = sub => {
+    const u = U.find(x => x.sub === sub) || U[0], p = u.perm || {}, team = u.rank !== 'Synther', f0 = { alias: true, image: true, search: true, review: true, smart: true, premium: false };
+    const base = { day: P.dayLimit, img: T.imgDay, search: 60, smart: 40, aliasX: 1, credit: 2, f: f0 }, f = {};
+    Object.keys(f0).forEach(k => { f[k] = p.f && k in p.f ? p.f[k] : team ? true : f0[k]; });
+    const own = { f: p.f || {}, note: p.note || '', by: p.by || '', t: p.t || 0 }; ['day', 'img', 'search', 'smart', 'aliasX', 'credit'].forEach(k => { own[k] = p[k] ?? null; });
+    return { user: fila(u), sessions: u.sessions, used: u.used, own, base, team, premiumOn: false, canEdit: rank !== 'Symmetrix', canBlock: rank !== 'Symmetrix' && !team,
+      now: { f, day: p.day ?? (team ? -1 : base.day), img: p.img ?? (team ? 5000 : base.img), search: p.search ?? (team ? 5000 : 60), smart: p.smart ?? (team ? 1000 : 40), aliasX: p.aliasX ?? (team ? 100 : 1), credit: p.credit ?? 2 } };
+  };
   const conv = { h1: [{ from: 'user', name: 'Leo', t: m(22), text: 'No me responde ninguna IA desde hace rato' }], h2: [{ from: 'user', name: 'Mía', t: m(5), text: '¿Cómo cambio el color del chat?' }],
     h3: [{ from: 'user', name: 'Ana', t: m(70), text: 'Las fotos tardan en subir' }, { from: 'team', name: 'ZFlow', rank: 'ZFlow', t: m(60), text: '¡Hola Ana! Ya lo estamos revisando.' }] };
   const item = id => { const h = P.help.find(x => x.id === id) || P.help[0]; return Object.assign({}, h, { page: 'chat', msgs: conv[h.id] }); };
@@ -61,6 +78,11 @@ export function apiDemo({ rank = 'Prime' } = {}) {
       if (b.action === 'maint') { T.maint = { on: !!b.on, text: b.text }; return wait({ maint: T.maint }); }
       if (b.action === 'limit') { if (b.dayLimit) P.dayLimit = b.dayLimit; if (b.imgDay != null) T.imgDay = b.imgDay; return wait({ dayLimit: P.dayLimit, imgDay: T.imgDay }); }
       if (b.action === 'check') return wait({ keys: [{ ok: true }, { ok: false }, { ok: true }] });
+      /* v4.4 · Usuarios: cuentas inventadas con permisos y límites propios */
+      if (b.action === 'users') { const q = String(b.q || '').toLowerCase().replace(/^@/, ''); return wait({ users: U.filter(u => !q || (u.name + u.handle + u.email).toLowerCase().includes(q)).map(fila), cursor: '0', done: true, canEdit: rank !== 'Symmetrix', log: LOG }); }
+      if (b.action === 'user') return wait(ficha(b.sub));
+      if (b.action === 'uset') { const u = U.find(x => x.sub === b.sub); u.perm = Object.keys(b.perm || {}).length ? Object.assign({}, b.perm, { by: rank + ' @sammuersynth', t: Date.now() }) : null; LOG.unshift({ t: Date.now(), by: rank + ' @sammuersynth', who: u.handle, what: u.perm ? 'set' : 'reset' }); return wait(Object.assign({ ok: true, log: LOG }, ficha(b.sub))); }
+      if (b.action === 'ublock') { const u = U.find(x => x.sub === b.sub); u.blocked = !!b.on; LOG.unshift({ t: Date.now(), by: rank + ' @sammuersynth', who: u.handle, what: b.on ? 'block' : 'unblock' }); return wait(Object.assign({ ok: true, log: LOG }, ficha(b.sub))); }
       return wait({ ok: true, keys: [] });
     }
     return wait({});
