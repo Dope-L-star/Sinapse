@@ -7,14 +7,13 @@ export const metadata = {
   alternates: { canonical: '/alias' },
 };
 
-/* v3.8 · A.L.I.A.S. ya es React de verdad (next/componentes/alias/*). alias.js ya no se carga aquí:
-   solo el motor (alias-tools.js → window.ALIAS) y la capa de animaciones. */
+/* v4.3 · A.L.I.A.S. como agente que trabaja solo, con la piel «Partitura» (agente.css + partitura.css, importados por el
+   componente). Ya no carga alias.css ni alias-mision.css (eran del diseño anterior). Solo el motor: alias-tools.js → window.ALIAS. */
 export default function AliasPage() {
   return (
     <>
-      {['alias.css', 'alias-mision.css', 'movimiento.css'].map((href) => <link rel="stylesheet" href={`/${href}`} precedence="default" key={href} />)}
       <AliasApp />
-      <LegacyRuntime page="alias" scripts={['alias-tools.js', 'movimiento.js']} />
+      <LegacyRuntime page="alias" scripts={['alias-tools.js']} />
     </>
   );
 }

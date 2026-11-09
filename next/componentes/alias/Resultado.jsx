@@ -97,7 +97,7 @@ function Sintesis({ Y, t }) {
   if (!Y) return null;
   const n = Y.voices.length;
   return (
-    <div id="resSynth" className="syn">
+    <div id="resSynth" className="al-syn">
       <div className="syn-h">
         <span className="syn-dots" aria-hidden="true">{Y.voices.map((v, i) => <i key={i} />)}</span>
         <div><b>{n > 1 ? t(Y.fused ? 'syn_titulo' : 'syn_cons', { n }) : t('syn_una')}</b>{n > 1 ? <small>{Y.voices.map((v) => v.name).join(' · ')}</small> : null}</div>
@@ -139,14 +139,14 @@ export default function Resultado({ S, t, say, onNew, titleRef, animar }) {
   const pasos = S.plan.steps.map((st, i) => [st, i, S.results[st.id]]).filter(([, , r]) => r && String(r.output || '').trim());
 
   return (
-    <section id="vResult" data-clarity-mask="true" className="result glass" aria-labelledby="resTitle">
+    <section id="vResult" data-clarity-mask="true" className="result card" aria-labelledby="resTitle">
       <h2 id="resTitle" tabIndex={-1} ref={titleRef}>{t('res_titulo')}</h2>
       {R.skipped ? <p id="resNote" className="hint">{t('res_saltados', { n: R.skipped })}</p> : null}
       {R.text ? <Texto id="resText" text={R.text} /> : <div id="resText" className="rtext"><p className="hint">{t('res_vacio')}</p></div>}
       <Sintesis Y={R.synth} t={t} />
       {R.files.length ? (
         <div id="resFiles" className="btns">
-          {R.files.map((f, i) => <button key={i} type="button" className="btn primary" data-alias="download" onClick={() => download(f, t, say)}><Icono n="dl" /><span>{t('res_archivo', { name: f.name })}</span></button>)}
+          {R.files.map((f, i) => <button key={i} type="button" className="btn btn-w" data-alias="download" onClick={() => download(f, t, say)}><Icono n="dl" /><span>{t('res_archivo', { name: f.name })}</span></button>)}
         </div>
       ) : null}
       {R.sources.length ? (
