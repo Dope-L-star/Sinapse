@@ -4,7 +4,7 @@ import { inlineStyle } from '../../../contenido/legado/ayuda';
 import reactTree from '../../../contenido/arboles-react/ayuda.json';
 import Telon from '../../../componentes/entrada/Telon';
 
-export const metadata = meta('Ayuda · SymphorIA', 'Respuestas rápidas sobre SymphorIA y cómo hablar con el equipo.', '/ayuda');
+export const metadata = meta('Ayuda · Sinapse', 'Respuestas rápidas sobre Sinapse y cómo hablar con el equipo.', '/ayuda');
 
 export default function AyudaPage() {
   /* el telón espera a ayuda.js: él pone el idioma, así nadie ve el texto cambiar de español a inglés */

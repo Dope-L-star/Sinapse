@@ -4,7 +4,7 @@ import reactTree from '../../../contenido/arboles-react/offline.json';
 import Telon from '../../../componentes/entrada/Telon';
 
 export const metadata = {
-  title: 'Sin conexión · SynthFlow',
+  title: 'Sin conexión · Sonyx',
   robots: { index: false, follow: false },
 };
 

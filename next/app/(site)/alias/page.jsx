@@ -3,7 +3,7 @@ import PuertaAlias from '../../../componentes/alias/PuertaAlias';
 import Telon from '../../../componentes/entrada/Telon';
 
 export const metadata = {
-  title: 'A.L.I.A.S. · SymphorIA',
+  title: 'Quoryn · Sinapse',
   robots: { index: false, follow: false },
   alternates: { canonical: '/alias' },
 };

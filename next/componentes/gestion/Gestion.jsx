@@ -57,7 +57,7 @@ export default function Gestion({ api, demo = false }) {
     const f = e => { if (e.key === 'synthz:lang') { const x = leerLang(); setLang(x); document.documentElement.lang = x; } };
     addEventListener('storage', f); return () => removeEventListener('storage', f);
   }, []);
-  useEffect(() => { document.title = T.titulo + ' · SymphorIA'; }, [T]);
+  useEffect(() => { document.title = T.titulo + ' · Sinapse'; }, [T]);
   useEffect(() => {
     let vivo = true;
     const call = api || apiReal;

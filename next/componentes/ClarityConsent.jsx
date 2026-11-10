@@ -38,16 +38,16 @@ const HEATMAPS = MODE === 'heatmaps';
 
 const TX = {
   es: {
-    eyebrow: 'PRIVACIDAD Y MEJORA', title: '¿Nos ayudas a mejorar SymphorIA?',
+    eyebrow: 'PRIVACIDAD Y MEJORA', title: '¿Nos ayudas a mejorar Sinapse?',
     cookieTitle: 'Cookies', cookieBody: 'Usamos cookies de Microsoft Clarity para ver dónde haces clic y hasta dónde bajas, y así mejorar la página. Todo el texto de la pantalla queda tapado.', cookieOk: 'Aceptar cookies', cookieNo: 'Rechazar',
-    body: 'Si aceptas, Microsoft Clarity medirá interacciones como clics y desplazamientos y podrá generar reproducciones visuales de la interfaz para detectar problemas de usabilidad. La analítica no es necesaria para usar SymphorIA. La publicidad permanece desactivada. Los mensajes, títulos de chats, datos de cuenta, resultados de A.L.I.A.S. y paneles con información personal están marcados para ocultarse; aun así, el enmascaramiento no es una garantía absoluta: no escribas datos sensibles en una interfaz que pueda grabarse. Puedes retirar tu consentimiento desde el botón «Privacidad».',
+    body: 'Si aceptas, Microsoft Clarity medirá interacciones como clics y desplazamientos y podrá generar reproducciones visuales de la interfaz para detectar problemas de usabilidad. La analítica no es necesaria para usar Sinapse. La publicidad permanece desactivada. Los mensajes, títulos de chats, datos de cuenta, resultados de Quoryn y paneles con información personal están marcados para ocultarse; aun así, el enmascaramiento no es una garantía absoluta: no escribas datos sensibles en una interfaz que pueda grabarse. Puedes retirar tu consentimiento desde el botón «Privacidad».',
     accept: 'Permitir analítica', reject: 'No permitir',
     privacy: 'Leer la política de privacidad', prefs: 'Privacidad', prefsLabel: 'Cambiar preferencias de analítica',
   },
   en: {
-    eyebrow: 'PRIVACY AND IMPROVEMENT', title: 'Will you help us improve SymphorIA?',
+    eyebrow: 'PRIVACY AND IMPROVEMENT', title: 'Will you help us improve Sinapse?',
     cookieTitle: 'Cookies', cookieBody: 'We use Microsoft Clarity cookies to see where you click and how far you scroll, so we can improve the page. All text on the screen stays hidden.', cookieOk: 'Accept cookies', cookieNo: 'Decline',
-    body: 'If you accept, Microsoft Clarity will measure interactions such as clicks and scrolling and may create visual replays of the interface to find usability problems. Analytics is not needed to use SymphorIA. Advertising stays off. Messages, chat titles, account data, A.L.I.A.S. results and panels with personal information are marked to be hidden; even so, masking is not an absolute guarantee: do not type sensitive data in an interface that may be recorded. You can withdraw your consent from the «Privacy» button.',
+    body: 'If you accept, Microsoft Clarity will measure interactions such as clicks and scrolling and may create visual replays of the interface to find usability problems. Analytics is not needed to use Sinapse. Advertising stays off. Messages, chat titles, account data, Quoryn results and panels with personal information are marked to be hidden; even so, masking is not an absolute guarantee: do not type sensitive data in an interface that may be recorded. You can withdraw your consent from the «Privacy» button.',
     accept: 'Allow analytics', reject: "Don't allow",
     privacy: 'Read the privacy policy', prefs: 'Privacy', prefsLabel: 'Change analytics preferences',
   },

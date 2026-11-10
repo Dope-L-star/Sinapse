@@ -1,8 +1,8 @@
 /* Textos del tablero de gestión en español e inglés (mismas claves en los dos; lo revisa next/tests/gestion.test.mjs). */
 const es = {
-  titulo: 'Gestión', bajada: 'Cómo va SymphorIA, en una sola página. Sale de los mismos datos de Pulsem y se actualiza cada minuto.',
+  titulo: 'Gestión', bajada: 'Cómo va Sinapse, en una sola página. Sale de los mismos datos de Pulsem y se actualiza cada minuto.',
   volver: 'Volver a Pulsem', idioma: 'English', act: s => 'Actualizado hace ' + s + ' s', cargando: 'Cargando…',
-  sinPermiso: 'Solo el equipo de SymphorIA puede ver esta página. Entra con tu cuenta del equipo en Pulsem.', irPulsem: 'Ir a Pulsem',
+  sinPermiso: 'Solo el equipo de Sinapse puede ver esta página. Entra con tu cuenta del equipo en Pulsem.', irPulsem: 'Ir a Pulsem',
   error: 'No pude traer los datos. Vuelvo a intentar en un minuto.', demo: 'Datos de prueba',
   norte: 'Métrica central', norteQue: 'Respuestas que sí le llegaron a la gente hoy', vsProm: p => (p >= 0 ? '+' : '') + p + ' frente al promedio de los 6 días anteriores',
   calidad: 'Calidad', errores: 'con error', fallos: 'sin respuesta', tiempo: 'tiempo medio de respuesta', pedidos: 'pedidos en 7 días',
@@ -17,17 +17,17 @@ const es = {
   E: [
     ['Cliente ideal', 'Estudiantes y creadores hispanohablantes que quieren usar varias IAs gratis, sin suscripciones ni tarjeta.'],
     ['Trabajo principal', 'Encontrar y usar la mejor IA gratis para cada tarea, en un solo lugar y en su idioma.'],
-    ['Ventaja', 'Varias IAs gratis lado a lado, sin correo para entrar, con SynthonIA guiando y A.L.I.A.S. para crear.'],
+    ['Ventaja', 'Varias IAs gratis lado a lado, sin correo para entrar, con Sona guiando y Quoryn para crear.'],
     ['Modelo comercial', 'Gratis en la alfa. Después, planes opcionales que primero se prueban con «puertas falsas» (solo interés, sin cobrar).'],
-    ['Métrica central', 'Respuestas que sí le llegan a la gente por día. Si sube, SymphorIA está siendo útil.'],
+    ['Métrica central', 'Respuestas que sí le llegan a la gente por día. Si sube, Sinapse está siendo útil.'],
   ],
   plan: 'Plan', P: [['Fase 1 · Pruebas reales', 'casi'], ['Fase 2 · Diseños y React', 'curso'], ['Fase 3 · Seguir el plan', 'curso'], ['Fase 4 · Arquitectura gratis', 'falta'], ['Fase 5 · Después', 'falta']],
   estado: { casi: 'Casi lista', curso: 'En curso', falta: 'Pendiente' },
 };
 const en = {
-  titulo: 'Management', bajada: 'How SymphorIA is doing, on one page. It uses the same data as Pulsem and refreshes every minute.',
+  titulo: 'Management', bajada: 'How Sinapse is doing, on one page. It uses the same data as Pulsem and refreshes every minute.',
   volver: 'Back to Pulsem', idioma: 'Español', act: s => 'Updated ' + s + ' s ago', cargando: 'Loading…',
-  sinPermiso: 'Only the SymphorIA team can see this page. Sign in with your team account in Pulsem.', irPulsem: 'Go to Pulsem',
+  sinPermiso: 'Only the Sinapse team can see this page. Sign in with your team account in Pulsem.', irPulsem: 'Go to Pulsem',
   error: "I couldn't load the data. I'll try again in a minute.", demo: 'Sample data',
   norte: 'North star metric', norteQue: 'Answers that actually reached people today', vsProm: p => (p >= 0 ? '+' : '') + p + ' vs. the average of the previous 6 days',
   calidad: 'Quality', errores: 'with errors', fallos: 'with no answer', tiempo: 'average answer time', pedidos: 'requests in 7 days',
@@ -42,9 +42,9 @@ const en = {
   E: [
     ['Ideal customer', 'Spanish-speaking students and creators who want to use several AIs for free, with no subscriptions or card.'],
     ['Main job', 'Find and use the best free AI for each task, in one place and in their language.'],
-    ['Edge', 'Several free AIs side by side, no email to sign up, with SynthonIA guiding and A.L.I.A.S. to create.'],
+    ['Edge', 'Several free AIs side by side, no email to sign up, with Sona guiding and Quoryn to create.'],
     ['Business model', 'Free during the alpha. Later, optional plans tested first with “fake doors” (interest only, no charge).'],
-    ['North star metric', 'Answers that actually reach people per day. If it grows, SymphorIA is being useful.'],
+    ['North star metric', 'Answers that actually reach people per day. If it grows, Sinapse is being useful.'],
   ],
   plan: 'Plan', P: [['Phase 1 · Real-world testing', 'casi'], ['Phase 2 · Design and React', 'curso'], ['Phase 3 · Follow the plan', 'curso'], ['Phase 4 · Free architecture', 'falta'], ['Phase 5 · Later', 'falta']],
   estado: { casi: 'Almost done', curso: 'In progress', falta: 'Pending' },

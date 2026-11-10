@@ -10,7 +10,7 @@
     document.querySelectorAll('[lang="es"],[lang="en"]').forEach(el => { if (el !== H) el.hidden = el.lang !== l; });
     const b = document.getElementById('ayLang'); if (b) b.textContent = l === 'en' ? 'Español' : 'English';
     const T = H.dataset.titleEs ? H : (document.querySelector('[data-title-es]') || H);   /* en las páginas de React el título va en su contenedor */
-    document.title = (l === 'en' ? T.dataset.titleEn : T.dataset.titleEs) || (l === 'en' ? 'Help · SymphorIA' : 'Ayuda · SymphorIA');
+    document.title = (l === 'en' ? T.dataset.titleEn : T.dataset.titleEs) || (l === 'en' ? 'Help · Sinapse' : 'Ayuda · Sinapse');
   };
   const cfg = () => { let c = {}; try{ c = JSON.parse(localStorage.getItem('synthz:cfg')) || {}; }catch(e){} H.classList.toggle('noanim', c.anim === false); H.classList.toggle('noglass', c.glass === false); };
   cfg();

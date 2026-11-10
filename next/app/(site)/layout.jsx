@@ -7,11 +7,11 @@ import path from 'node:path';
 import Umami from '../../componentes/Umami';   /* v4.3 · visitas con Umami, sin cookies */
 export const metadata = {
   metadataBase: new URL('https://symphoria.pages.dev'),
-  title: 'SymphorIA · Tu IA en una sola mesa',
+  title: 'Sinapse · Tu IA en una sola mesa',
   description: 'Tu espacio para explorar la inteligencia artificial. Pregunta, crea, programa y compara modelos desde un solo lugar.',
   icons: { icon: '/media/v30/fav-s.png' },
   manifest: '/synthflow.webmanifest',
-  appleWebApp: { capable: true, title: 'SynthFlow', statusBarStyle: 'black-translucent' },
+  appleWebApp: { capable: true, title: 'Sonyx', statusBarStyle: 'black-translucent' },
 };
 
 export const viewport = { width: 'device-width', initialScale: 1, colorScheme: 'dark' };
