@@ -1,9 +1,9 @@
 /* v2.8 · el portal nuevo, con los logos de ahora (pedido de Sammuel: «sorpréndeme»):
-   ida:    «SymphorIA» sale de su esquina y llega al centro → la S de vidrio gira y se vuelve el orbe de SynthFlow,
+   ida:    «Sinapse» sale de su esquina y llega al centro → la S de vidrio gira y se vuelve el orbe de Sonyx,
            «mphorIA» se borra y aparece «nthFlow» letra por letra (v3.0: Sy-mphorIA → Sy-nthFlow) → la «o» de «Flow» late y la cámara entra por su hueco
            (y en el chat se abre en círculo)
-   vuelta: sales por la «o», el orbe vuelve a ser la S y «SymphorIA» vuelve a su esquina.
-   v2.9: sin SynthonIA (Sammuel: el portal queda mejor solo con los logos).
+   vuelta: sales por la «o», el orbe vuelve a ser la S y «Sinapse» vuelve a su esquina.
+   v2.9: sin Sona (Sammuel: el portal queda mejor solo con los logos).
    Todo es transform y opacidad (va fluido en celulares); mientras dura, la página no se puede tocar. */
 let lockOff = null;
 function portalLock(on){
@@ -39,7 +39,7 @@ function fitBox(img){
   return { x:r.left + r.width / 2, y:r.top + r.height / 2, w:nw * k, h:nh * k };
 }
 /* dónde está el logo de la esquina y cómo es: tamaño de la Z, de la letra y el espacio entre ambas
-   (el portal copia esas medidas para que el «SymphorIA» que viaja calce justo encima del de la esquina) */
+   (el portal copia esas medidas para que el «Sinapse» que viaja calce justo encima del de la esquina) */
 function logoRect(){
   const n = document.querySelector('#nav .logo');
   if (n && n.getClientRects().length){

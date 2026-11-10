@@ -2,7 +2,7 @@
    Una sola capa de animaciones para todas las páginas. Se carga al final (defer), después de core.js y del código de cada página.
    · Entradas al bajar (tarjetas, títulos, bloques), en cascada.
    · Brillo que sigue al puntero en tarjetas y vidrio; onda al tocar; los íconos saltan al pasar; apretar encoge un poco.
-   · Listas que se arman (chats, Proyectos, Sintéticos, ventanas) entran una tras otra.
+   · Listas que se arman (chats, Espacios, Sintéticos, ventanas) entran una tras otra.
    · Barra de avance en la portada y transición suave entre páginas (en movimiento.css).
    · v3.1: botones, chips y tarjetas se levantan al pasar; interruptores dan un saltito; imágenes aparecen suave; fondos de la portada con profundidad.
    Reglas: solo translate/scale/rotate (sueltos, se suman al transform de cada cosa) y opacity; nada con Animaciones apagadas en Ajustes; no toca el intro, el portal de la «o», el emblema, la batería EnerX ni el botón de idioma. */

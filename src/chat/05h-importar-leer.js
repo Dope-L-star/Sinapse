@@ -1,8 +1,8 @@
 /* ---------- 2026-11-09 · Importar chats y memoria: LECTOR (sin pantalla, se puede probar aparte: t/importar/importar.mjs) ----------
-   Entiende lo que exportan otras IAs y lo convierte en conversaciones y recuerdos de SynthFlow:
+   Entiende lo que exportan otras IAs y lo convierte en conversaciones y recuerdos de Sonyx:
    · ChatGPT: el .zip de «Exportar datos» o su conversations.json (árbol «mapping»: se sigue la rama que estaba abierta).
    · Claude: el .zip de «Exportar datos» o su conversations.json (chat_messages) y memories.json (la memoria en texto).
-   · JSON genérico: [{role, content}], {messages:[…]}, [{title, messages:[…]}] o la copia de SynthFlow ({chats:{…}}).
+   · JSON genérico: [{role, content}], {messages:[…]}, [{title, messages:[…]}] o la copia de Sonyx ({chats:{…}}).
    · Markdown / texto: con marcas «## Tú», «Usuario:», «Assistant:»… es un chat; sin marcas, una lista de recuerdos.
    Nada sale del navegador: todo se lee aquí. Devuelve { chats:[{ src, sid, title, t, msgs:[{role, content}] }], mem:[texto], skipped }. */
 const IMP = (() => {

@@ -3,11 +3,11 @@
    Va antes que todo: la escritura letra por letra parte el texto en letras sueltas y ya no se podría encontrar la palabra. ===== */
 (() => {
 const DEF = {
-  'SynthFlow':     SZ.t('gl.0'),
-  'SuperiorSynth': SZ.t('gl.1'),
-  'SynthonIA':     SZ.t('gl.2'),
+  'Sonyx':     SZ.t('gl.0'),
+  'Apex': SZ.t('gl.1'),
+  'Sona':     SZ.t('gl.2'),
   'EnerX':         SZ.t('gl.3'),
-  'A.L.I.A.S.':    SZ.t('gl.4'),
+  'Quoryn':    SZ.t('gl.4'),
   'Puter':         SZ.t('gl.5'),
   'IAs conectadas':SZ.t('gl.6')
 };
@@ -126,7 +126,7 @@ function renderCards(){
       <div class="actions">
         <button class="btn sm" data-add>Sumar al consumo</button>
         <a class="lnk" href="${p.site}" target="_blank" rel="noopener noreferrer">Abrir ${p.siteName}</a>
-        ${p.id === 'chatgpt' ? '<button class="btn sm ghost" data-oss>Probar gpt-oss en SynthFlow</button>' : ''}
+        ${p.id === 'chatgpt' ? '<button class="btn sm ghost" data-oss>Probar gpt-oss en Sonyx</button>' : ''}
       </div>
     </article>`).join('');
   $$('.card', ext).forEach(card => {
@@ -519,16 +519,16 @@ function authModal(first, next, opts){
   opts = opts || {};
   if ($('#authm')) return $('#authm');
   const o = document.createElement('div'); o.id = 'authm'; o.className = 'szm';
-  o.innerHTML = '<div class="tcard" role="dialog" aria-modal="true" aria-label="Entrar a SymphorIA"><div class="word">' + zWord('Synth') + '</div><div class="tn">' + (first ? 'BIENVENIDO' : 'TU CUENTA') + '</div><div class="tb"><h3>' + (first ? 'Bienvenido a SymphorIA' : 'Entra a SymphorIA') + '</h3><p>Crea tu cuenta gratis con un usuario y una contraseña: tus chats y favoritos te siguen a cualquier dispositivo y personalizas tu perfil.</p><div id="authBox"></div></div><div class="tbtn" style="margin-top:14px"><button class="lnk" type="button" data-close>' + (first ? 'Continuar sin cuenta' : 'Cerrar') + '</button></div></div>';
+  o.innerHTML = '<div class="tcard" role="dialog" aria-modal="true" aria-label="Entrar a Sinapse"><div class="word">' + zWord('Synth') + '</div><div class="tn">' + (first ? 'BIENVENIDO' : 'TU CUENTA') + '</div><div class="tb"><h3>' + (first ? 'Bienvenido a Sinapse' : 'Entra a Sinapse') + '</h3><p>Crea tu cuenta gratis con un usuario y una contraseña: tus chats y favoritos te siguen a cualquier dispositivo y personalizas tu perfil.</p><div id="authBox"></div></div><div class="tbtn" style="margin-top:14px"><button class="lnk" type="button" data-close>' + (first ? 'Continuar sin cuenta' : 'Cerrar') + '</button></div></div>';
   document.body.appendChild(o); requestAnimationFrame(() => o.classList.add('on'));
   if (!opts.hold) $('.tcard', o).animate([{ transform:'scale(.92) translateY(20px)', opacity:0, filter:'blur(8px)' }, { transform:'none', opacity:1, filter:'blur(0)' }], { duration:650, easing:'cubic-bezier(.22,1,.36,1)' });
   let done = false;
   const out = ok => { o.classList.remove('on'); setTimeout(() => o.remove(), 450); if (!done){ done = true; if (next) next(ok); } };
   $('[data-close]', o).addEventListener('click', () => out(false));
-  SZ.authBox($('#authBox', o), m => { toast(m === 'tmp' ? '¡Listo! Estás en una cuenta temporal.' : '¡Bienvenido a tu cuenta de SymphorIA!'); updateTotals(); out(true); }, k => showBlockHelp(k));
+  SZ.authBox($('#authBox', o), m => { toast(m === 'tmp' ? '¡Listo! Estás en una cuenta temporal.' : '¡Bienvenido a tu cuenta de Sinapse!'); updateTotals(); out(true); }, k => showBlockHelp(k));
   return o;
 }
-function openHelp(){ SZ.helpGuide({ extra:[['Recorrido por la página', () => pageTour()], ['Abrir SynthFlow', () => openChat()]] }); }
+function openHelp(){ SZ.helpGuide({ extra:[['Recorrido por la página', () => pageTour()], ['Abrir Sonyx', () => openChat()]] }); }
 /* Guía: Asistida (SynthonIA en SynthFlow, con la cinemática y 5 mensajes de prueba) o Lectura (aquí mismo) */
 function openGuide(){ pageTour(() => setTimeout(() => { if (!SZ.ACC.ready) authModal(false, () => updateTotals()); }, 400)); }
 $('#helpBtn').addEventListener('click', openGuide);
@@ -1034,7 +1034,7 @@ document.addEventListener('click', e => {
 addEventListener('appinstalled', hideAll);
 })();
 /* ===== v2.7 · «SynthonIA es para ti»: las tres escenas, dibujadas en código (antes eran imágenes pegadas).
-   Cada escena es un escenario de 400 × 214 con sus cosas atrás, SynthonIA (la misma de toda la página) y lo que va adelante.
+   Cada escena es un escenario de 400 × 214 con sus cosas atrás, Sona (la misma de toda la página) y lo que va adelante.
    Todo se mueve en vivo: hojas que flotan, la página del libro que pasa, código que se escribe, errores que se arreglan,
    un documento que se arma solo. Cuando la escena no se ve, se queda quieta (cero trabajo de más). ===== */
 (() => {
@@ -1109,7 +1109,7 @@ document.querySelectorAll('.uscene[data-scene]').forEach(el => {
 })();
 /* ===== v2.7 · portada más intuitiva (lo que se investigó y se aplicó):
    1. Nunca empezar en blanco: al tocar el cuadro de la portada aparecen 3 preguntas de ejemplo que funcionan tal cual
-      (como las sugerencias de un buscador). Un toque y SynthFlow abre con esa pregunta. Se cierran con Esc o al escribir.
+      (como las sugerencias de un buscador). Un toque y Sonyx abre con esa pregunta. Se cierran con Esc o al escribir.
    2. La acción principal siempre a mano: cuando «Empezar gratis» sale de la pantalla, aparece en el menú de arriba.
    3. Los botones dicen a dónde llevan: «Ver demo» ahora es «Cómo funciona» (baja a «Así de fácil»).
    4. Más liviana: lo que se mueve en una sección se queda quieto mientras esa sección no se ve. ===== */
@@ -1192,7 +1192,7 @@ else sec.classList.add('on');
 /* v3.8 · el cuadro de la portada, ahora al centro (ver src/index-css/11-v38-caja-centro.css):
    - la luz que lo rodea acelera mientras escribes
    - la tecla «/» te lleva al cuadro (como en los buscadores), salvo si ya estás escribiendo en otro lado
-   - al enviar, la flecha despega como avión de papel mientras el cuadro se abre hacia SynthFlow */
+   - al enviar, la flecha despega como avión de papel mientras el cuadro se abre hacia Sonyx */
 (() => {
 const form = document.getElementById('heroAsk'), inp = document.getElementById('heroInp');
 if (!form || !inp) return;
@@ -1290,7 +1290,7 @@ form.addEventListener('submit', () => { if (send && inp.value.trim()) send.class
 addEventListener('pageshow', () => send && send.classList.remove('vuela'));
 })();
 /* v3.8c · Pedido de Sammuel (2-nov-2026, eligió «B y C juntas»):
-   B · «SynthonIA te lo muestra en vivo»: en «Así de fácil», una ventanita de SynthFlow de mentira que SynthonIA maneja sola con su
+   B · «Sona te lo muestra en vivo»: en «Así de fácil», una ventanita de Sonyx de mentira que Sona maneja sola con su
        manita (escribe, elige 3 IAs, envía, las respuestas llegan y elige la mejor). No llama a ninguna IA ni gasta EnerX.
        Arriba tiene pestañas con candado (Voz, Chats en grupo): son puertas falsas que llevan a votar.
    C · «El laboratorio»: sección nueva con tubos de ensayo, uno por función que todavía no existe. Arrastras tu batería de EnerX
@@ -1305,22 +1305,22 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '
 const dormir = ms => new Promise(r => setTimeout(r, ms));
 
 const T = {
-  es:{ demoT:'Mírala hacerlo', demoS:'SynthonIA usa SynthFlow por ti. Es una demostración: no gasta tu EnerX.', ejemplo:'Ejemplo',
+  es:{ demoT:'Mírala hacerlo', demoS:'Sona usa Sonyx por ti. Es una demostración: no gasta tu EnerX.', ejemplo:'Ejemplo',
     tabs:['Chat', 'Comparar', 'Voz', 'Chats en grupo'], q:'¿Cómo aprendo a programar desde cero?', escribe:'Pregúntale lo que sea…',
     resp:['Empieza con Python: es claro y sirve para todo. 20 minutos al día y un proyecto pequeño cada semana.', 'Elige algo que quieras crear (un juego, una página) y aprende solo lo que ese proyecto te pida.', 'Primero lógica con juegos como Scratch, luego Python. Repite poco cada día, no mucho un solo día.'],
     elige:'Esta', mejor:'La mejor', listo:'lista', pensando:'pensando…', candado:'Aún no existe. ¿La quieres?', quiero:'La quiero', gracias:'¡Anotado! Te escribimos solo cuando esté.', alLab:'Ver el laboratorio',
     votos:n => n === 0 ? 'Aún nadie dejó su correo' : n === 1 ? '1 persona dejó su correo' : n + ' personas dejaron su correo',
     labK:'El laboratorio', labT:'Tú decides qué inventamos después', labS:'Arrastra tu batería al tubo de la función que más quieres (o toca «La quiero») y déjanos tu correo. Cada correo llena el tubo. No cuesta nada.',
     bat:'Tu voto', votar:'La quiero', votado:'Anotado', correoT:'Para que cuente, déjanos tu correo: te avisamos solo cuando esté lista.', correoF:n => 'Para que tu voto por «' + n + '» cuente, déjanos tu correo. Te avisamos solo cuando esté lista.', correo:'Tu correo', avisame:'Avísame', correoOk:'Listo, te escribimos solo cuando esté.', correoMal:'Ese correo no parece válido.', fallo:'No pudimos guardarlo ahora. Intenta más tarde.', gratis:'Nada se cobra: solo queremos saber qué quieres.', soltar:'Suelta aquí',
-    f:{ voz:['Hablar en voz alta', 'Pregunta con tu voz y escucha la respuesta.'], grupo:['Chats en grupo', 'Tú, tus amigos y las IAs en la misma conversación.'], agenda:['Tareas que se hacen solas', 'Un agente que trabaja a la hora que le digas.'], extension:['Extensión del navegador', 'Pregúntale a varias IAs desde cualquier página.'], escritorio:['App de escritorio', 'SymphorIA en tu computador, con un atajo.'] } },
-  en:{ demoT:'Watch her do it', demoS:'SynthonIA uses SynthFlow for you. It is a demo: it does not use your EnerX.', ejemplo:'Example',
+    f:{ voz:['Hablar en voz alta', 'Pregunta con tu voz y escucha la respuesta.'], grupo:['Chats en grupo', 'Tú, tus amigos y las IAs en la misma conversación.'], agenda:['Tareas que se hacen solas', 'Un agente que trabaja a la hora que le digas.'], extension:['Extensión del navegador', 'Pregúntale a varias IAs desde cualquier página.'], escritorio:['App de escritorio', 'Sinapse en tu computador, con un atajo.'] } },
+  en:{ demoT:'Watch her do it', demoS:'Sona uses Sonyx for you. It is a demo: it does not use your EnerX.', ejemplo:'Example',
     tabs:['Chat', 'Compare', 'Voice', 'Group chats'], q:'How do I learn to code from scratch?', escribe:'Ask it anything…',
     resp:['Start with Python: it is clear and works for everything. 20 minutes a day and a small project every week.', 'Pick something you want to build (a game, a page) and learn only what that project needs.', 'First logic with games like Scratch, then Python. A little every day beats a lot in one day.'],
     elige:'This one', mejor:'The best', listo:'done', pensando:'thinking…', candado:'This does not exist yet. Want it?', quiero:'I want it', gracias:'Got it! We will only write when it is ready.', alLab:'See the lab',
     votos:n => n === 0 ? 'Nobody has left their email yet' : n === 1 ? '1 person left their email' : n + ' people left their email',
     labK:'The lab', labT:'You decide what we build next', labS:'Drag your battery to the tube of the feature you want most (or tap «I want it») and leave your email. Every email fills the tube. It costs nothing.',
     bat:'Your vote', votar:'I want it', votado:'Counted', correoT:'For it to count, leave your email: we will only write when it is ready.', correoF:n => 'For your vote for «' + n + '» to count, leave your email. We will only write when it is ready.', correo:'Your email', avisame:'Let me know', correoOk:'Done, we will only write when it is ready.', correoMal:'That email does not look right.', fallo:'We could not save it right now. Try again later.', gratis:'Nothing is charged: we just want to know what you want.', soltar:'Drop it here',
-    f:{ voz:['Talk out loud', 'Ask with your voice and hear the answer.'], grupo:['Group chats', 'You, your friends and the AIs in one conversation.'], agenda:['Tasks that run themselves', 'An agent that works at the time you choose.'], extension:['Browser extension', 'Ask several AIs from any web page.'], escritorio:['Desktop app', 'SymphorIA on your computer, one shortcut away.'] } }
+    f:{ voz:['Talk out loud', 'Ask with your voice and hear the answer.'], grupo:['Group chats', 'You, your friends and the AIs in one conversation.'], agenda:['Tasks that run themselves', 'An agent that works at the time you choose.'], extension:['Browser extension', 'Ask several AIs from any web page.'], escritorio:['Desktop app', 'Sinapse on your computer, one shortcut away.'] } }
 };
 const t = () => T[L()];
 const IAS = [['Llama', '#ff7a45'], ['Mistral', '#3de0ff'], ['Gemini', '#ff3d9a']];

@@ -35,10 +35,10 @@ function accModal(){
         + '<div class="sxstats"><div><b>' + fmt(n) + '</b><span>chats en la nube</span></div><div><b>' + fmt(Object.values(st().usage || {}).reduce((a, u) => a + (u.requests || 0), 0)) + '</b><span>respuestas en total</span></div><div><b>' + fmt(Object.values(st().chats).reduce((a, c) => a + (Array.isArray(c) ? c.filter(m => m && m.star).length : 0), 0)) + '</b><span>mensajes favoritos</span></div></div>'
         + (false ? '<div class="sxsave"><p>Guardar mi llave de OpenRouter (de antes) en mi cuenta, cifrada, para no volver a pegarla en otro dispositivo.</p><button class="sxsw" id="aKey" type="button" aria-pressed="' + !!st().syncKey + '" aria-label="Guardar mi llave en mi cuenta"></button></div>' : '')
         + spaceHtml()
-        + (u.claimable ? '<div class="sxsave"><p>Esta cuenta está reservada para el equipo de SymphorIA. Actívala con tu código de configuración.</p><button class="btn sm" id="aClaim" type="button">Activar mi rango</button></div>' : '')
+        + (u.claimable ? '<div class="sxsave"><p>Esta cuenta está reservada para el equipo de Sinapse. Actívala con tu código de configuración.</p><button class="btn sm" id="aClaim" type="button">Activar mi rango</button></div>' : '')
         + (['owner', 'admin', 'staff'].includes(u.role) ? '<div id="aTrial"><div class="tmload">Cargando las IAs conectadas…</div></div>' : '')
 
-      : '<div class="word" id="aWord"></div><div class="tn">TU CUENTA</div><div class="tb"><h3>Entra a SynthFlow</h3><p>Con tu cuenta tus chats y favoritos te siguen a cualquier dispositivo, personalizas tu perfil y puedes hablar con el equipo de SymphorIA. Solo necesitas un usuario y una contraseña (o tu cuenta de Google). Puter sigue siendo solo para sus IA.</p><div id="aAuth"></div></div>')
+      : '<div class="word" id="aWord"></div><div class="tn">TU CUENTA</div><div class="tb"><h3>Entra a Sonyx</h3><p>Con tu cuenta tus chats y favoritos te siguen a cualquier dispositivo, personalizas tu perfil y puedes hablar con el equipo de Sinapse. Solo necesitas un usuario y una contraseña (o tu cuenta de Google). Puter sigue siendo solo para sus IA.</p><div id="aAuth"></div></div>')
     + '<div class="tbtn" style="margin-top:18px"><button class="lnk" id="aClose" type="button">Cerrar</button>'
     + (signed ? '<button class="lnk" id="aSync" type="button">Guardar ahora</button><button class="lnk" id="aDel" type="button">Borrar cuenta</button><button class="btn sm ghost" id="aOut" type="button">Cerrar sesión</button>' : '') + '</div>'
     + (signed ? '<div class="aout2"><button class="lnk" id="aOutAll" type="button">Cerrar sesión en todos mis dispositivos</button></div>' : '') + '</div>';
@@ -68,7 +68,7 @@ function accModal(){
     toast('Sesión cerrada. Tus chats quedaron en tu cuenta y se borraron de este dispositivo.'); setTimeout(() => location.reload(), 1100);
   });
   $('#aDel').addEventListener('click', async () => {
-    if (!(await SZ.szConfirm('¿Borrar tu cuenta de SynthFlow?', 'Se borran para siempre tu perfil, tus chats guardados en tu cuenta y lo que hay en este dispositivo. No se puede deshacer.', 'Seguir', true))) return;
+    if (!(await SZ.szConfirm('¿Borrar tu cuenta de Sonyx?', 'Se borran para siempre tu perfil, tus chats guardados en tu cuenta y lo que hay en este dispositivo. No se puede deshacer.', 'Seguir', true))) return;
     const isPass = u.kind === 'pass' || !!u.username;
     const v = await SZ.szPrompt('Confirma que eres tú', isPass ? 'Escribe tu contraseña para borrar la cuenta.' : 'Escribe tu correo (' + (u.email || '') + ') para borrar la cuenta.', 'Borrar mi cuenta', { type:isPass ? 'password' : 'email', ac:isPass ? 'current-password' : 'off', danger:true });
     if (!v) return;
@@ -84,7 +84,7 @@ function accModal(){
   });
   const cl = $('#aClaim');
   if (cl) cl.addEventListener('click', async () => {
-    const v = await SZ.szPrompt('Activar tu rango', 'Escribe el código de configuración del equipo de SymphorIA.', 'Activar', { sec:true });
+    const v = await SZ.szPrompt('Activar tu rango', 'Escribe el código de configuración del equipo de Sinapse.', 'Activar', { sec:true });
     if (!v) return;
     try{ const r = await SZ.accClaim(v); toast('¡Listo! Tu rango: ' + (SZ.ROLE_NAME[r] || r) + '.'); reopen(); }catch(er){ toast(er.message); }
   });

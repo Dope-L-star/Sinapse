@@ -18,7 +18,7 @@ imgBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" s
 function setImgMode(on){
   if (on && !SZ.ACC.ready){ toast('Para crear imágenes entra a tu cuenta (es gratis).'); SZ.guestGate({ mode:'signup' }); return; }
   imgMode = !!on; imgBtn.setAttribute('aria-pressed', String(imgMode)); document.body.classList.toggle('imaging', imgMode);
-  inp.placeholder = imgMode ? 'Describe la imagen que quieres crear…' : (agentOn() ? 'SuperiorSynth: cuéntame qué necesitas…' : 'Escribe tu mensaje…');
+  inp.placeholder = imgMode ? 'Describe la imagen que quieres crear…' : (agentOn() ? 'Apex: cuéntame qué necesitas…' : 'Escribe tu mensaje…');
   if (imgMode){ const q = SZ.SZQ.img; toast('Crear imagen: describe lo que quieres ver.' + (q && q.max ? ' Hoy te quedan ' + Math.max(0, q.max - q.used) + '.' : '')); inp.focus(); }
 }
 imgBtn.addEventListener('click', () => setImgMode(!imgMode));

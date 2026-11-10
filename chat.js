@@ -33,7 +33,7 @@ const idx = new Map(), newIds = new Set();
 function setCatalog(list, t, status){ list = (list || []).filter(m => !SZ.isBad(m.id)); cat = { t, list, status }; idx.clear(); list.forEach(m => idx.set(m.id, m)); }
 function stub(id){
   if (id === 'imagen') return { id, name:'Creador de imágenes', vendor:'synthz', vlabel:'Imágenes', ctx:0, free:true, created:0, vision:false, reasoning:false, tools:false, desc:'', stub:true };
-  if (id === 'agente') return { id, name:'SuperiorSynth', vendor:'synthz', vlabel:'Elige la IA por ti', ctx:0, free:true, created:0, vision:false, reasoning:false, tools:false, desc:'', stub:true };
+  if (id === 'agente') return { id, name:'Apex', vendor:'synthz', vlabel:'Elige la IA por ti', ctx:0, free:true, created:0, vision:false, reasoning:false, tools:false, desc:'', stub:true };
   if (id === 'sz:auto') return Object.assign({}, SZ.SZ_AUTO, { stub:true });
   if (/^sz:/.test(id)){ const mid = id.split(':').slice(2).join(':'); return { id, name:mid.replace(/^[^/]+\//, ''), vendor:'synthz', vlabel:'Gratis', ctx:0, free:true, created:0, vision:false, reasoning:false, tools:false, desc:'', stub:true }; }
   const v = id.split('/')[0] || 'otro', nm = (id.split('/').slice(1).join('/') || id).replace(/:free$/, '');
@@ -41,14 +41,14 @@ function stub(id){
 }
 /* prueba guiada (modalidad C): un «modelo» propio que pasa por el servidor de SymphorIA */
 const TRIAL_ID = 'tr:prueba';
-const TRIAL_INFO = { id:TRIAL_ID, name:'Prueba de SymphorIA', vendor:'synthz', vlabel:'Prueba guiada', ctx:0, free:true, created:0, vision:false, reasoning:false, tools:false, desc:'' };
+const TRIAL_INFO = { id:TRIAL_ID, name:'Prueba de Sinapse', vendor:'synthz', vlabel:'Prueba guiada', ctx:0, free:true, created:0, vision:false, reasoning:false, tools:false, desc:'' };
 let trialOn = false;
 const info = id => id === TRIAL_ID ? TRIAL_INFO : idx.get(id) || stub(id);
 function fallbackList(){ return [...new Set(['sz:auto', ...(st().models.openrouter || []).filter(x => !orOn() ? /^(sz|pu):/.test(x) : true)])].map(stub); }
 const cached = SZ.loadCatalog();
 if (cached) setCatalog(cached.list, cached.t, 'cached'); else setCatalog([], 0, 'loading');
 
-const APODEX = 'sz:auto';   /* «SymphorIA Auto»: las IAs conectadas elige sola el mejor modelo gratis que esté libre (beta 2) */
+const APODEX = 'sz:auto';   /* «Sinapse Auto»: las IAs conectadas elige sola el mejor modelo gratis que esté libre (beta 2) */
 const selId = () => trialOn ? TRIAL_ID : (st().model.openrouter || APODEX);
 const kfmt = n => !n ? '' : n >= 1e6 ? (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M' : n >= 1000 ? Math.round(n / 1000) + 'k' : String(n);
 const isNew = m => newIds.has(m.id) || (m.created && Date.now() / 1000 - m.created < 14 * 86400);
@@ -184,7 +184,7 @@ function vPaint(force){
 listEl.addEventListener('scroll', () => { if (!vQ) vQ = requestAnimationFrame(() => { vQ = 0; vPaint(false); }); }, { passive:true });
 addEventListener('resize', () => { const h = V.hM; V.hM = 0; renderList({ keep:true }); if (!V.hM) V.hM = h; });
 function paintSel(){
-  try{ paintMode(); }catch(e){}   /* v2.3.1 · el modo (Automática · Chat · SuperiorSynth) sigue a la IA elegida */
+  try{ paintMode(); }catch(e){}   /* v2.3.1 · el modo (Automática · Chat · Apex) sigue a la IA elegida */
   const cmpIds = st().cmp, id = selId();
   $$('.mi', listEl).forEach(el => {
     const sel = mode === 'solo' && el.dataset.id === id, i = cmpIds.indexOf(el.dataset.id), on = mode === 'cmp' && i > -1;
@@ -408,7 +408,7 @@ const PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
 const CARET = '<svg class="cv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
 const XS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 /* v2.3 · con SuperiorSynth encendido, arriba a la izquierda va su sello (en el celular, solo su logo) */
-const ssTopHtml = () => '<button type="button" class="sstop" id="ssTop" aria-haspopup="menu" data-menu-owner aria-label="SuperiorSynth elige la IA por ti. Toca para opciones">' + ssIco('lg') + '<span class="sst-t"><b>SuperiorSynth</b><small>elige la IA por ti</small></span>' + CARET + '</button>';
+const ssTopHtml = () => '<button type="button" class="sstop" id="ssTop" aria-haspopup="menu" data-menu-owner aria-label="Apex elige la IA por ti. Toca para opciones">' + ssIco('lg') + '<span class="sst-t"><b>Apex</b><small>elige la IA por ti</small></span>' + CARET + '</button>';
 function renderTop(animate){
   const row = $('#pickRow');
   try{ renderCPick(); }catch(e){}
@@ -420,7 +420,7 @@ function renderTop(animate){
   if (mode === 'solo' && document.body.classList.contains('fresh')){
     row.classList.remove('n3', 'n4');
     const ok0 = connected(selId()), [k1, long1] = payOf(selId()), k = ok0 ? k1 : 'off', long = ok0 ? long1 : /^pu:/.test(selId()) ? 'Puter · sin conectar (toca para conectarlo)' : long1, left = trialOn ? trialLeft() : 0;
-    row.innerHTML = '<button type="button" class="paypill ' + k + '" id="payPill" title="Quién paga lo que escribes">' + '<i aria-hidden="true"></i>' + (trialOn ? 'Prueba guiada · te quedan <b>' + left + ' de ' + ((SZ.trialGet() || {}).max || 5) + '</b> · la paga SymphorIA' : esc(long)) + CARET + '</button>';
+    row.innerHTML = '<button type="button" class="paypill ' + k + '" id="payPill" title="Quién paga lo que escribes">' + '<i aria-hidden="true"></i>' + (trialOn ? 'Prueba guiada · te quedan <b>' + left + ' de ' + ((SZ.trialGet() || {}).max || 5) + '</b> · la paga Sinapse' : esc(long)) + CARET + '</button>';
     return;
   }
   if (mode === 'solo'){
@@ -445,7 +445,7 @@ $('#cPick').addEventListener('click', e => { if (side.classList.contains('open')
 $('#cCmp').addEventListener('click', e => openSide('add', e.currentTarget));
 $('#pickRow').addEventListener('click', e => {
   if (e.target.closest('#payPill')){ if (needsConn()) openConnect(); else coinModal('panel'); return; }
-  const ss = e.target.closest('#ssTop'); if (ss){ const r = ss.getBoundingClientRect(); SZ.menuOpen([{ head:'SuperiorSynth' }, { label:'Elegir yo la IA', ico:'chats', fn:() => applyMode('chat') }, { label:'¿Qué hace SuperiorSynth?', ico:'help', fn:() => toast('Tú escribes; SuperiorSynth entiende tu pedido, lo mejora y elige la IA que más sabe de eso. Al final decides si te quedas con esa IA.') }], r.left, r.bottom + 6, 'sstm'); return; }
+  const ss = e.target.closest('#ssTop'); if (ss){ const r = ss.getBoundingClientRect(); SZ.menuOpen([{ head:'Apex' }, { label:'Elegir yo la IA', ico:'chats', fn:() => applyMode('chat') }, { label:'¿Qué hace Apex?', ico:'help', fn:() => toast('Tú escribes; Apex entiende tu pedido, lo mejora y elige la IA que más sabe de eso. Al final decides si te quedas con esa IA.') }], r.left, r.bottom + 6, 'sstm'); return; }
   const rm = e.target.closest('[data-rm]'); if (rm){ removeCmp(rm.dataset.rm, rm.closest('.mchip')); return; }
   const ad = e.target.closest('[data-add]'); if (ad){ if ($('#side').classList.contains('open') && pickMode === 'add') closeSide(); else openSide('add', ad); return; }
   const bt = e.target.closest('#btTog'); if (bt){ st().battle = !st().battle; save(); bt.setAttribute('aria-pressed', String(!!st().battle)); toast(st().battle ? 'A ciegas: no verás qué IA es hasta que votes (desde la próxima pregunta).' : 'Modo sorpresa apagado: ya ves el nombre de cada IA.'); return; }
@@ -453,7 +453,7 @@ $('#pickRow').addEventListener('click', e => {
 });
 /* quién paga lo que escribes: siempre a la vista (regla 5) */
 function payOf(id){
-  if (id === TRIAL_ID) return ['tr', 'Prueba guiada · la paga SymphorIA', 'Prueba · paga SymphorIA'];
+  if (id === TRIAL_ID) return ['tr', 'Prueba guiada · la paga Sinapse', 'Prueba · paga Sinapse'];
   if (/^sz:/.test(id)) return ['sz', 'Gratis · ' + SZ.limTxt().replace(/^./, c => c.toLowerCase()), 'Gratis · ' + SZ.limShort().replace(/^[A-ZÁÉÍÓÚ]/, c => c.toLowerCase())];
   if (/^pu:/.test(id)) return ['pu', 'Con tu Puter · tu cuenta gratis', 'Con tu Puter'];
   return ['or off', 'Esta IA ya no está disponible: elige otra', 'Elige otra IA'];
@@ -461,7 +461,7 @@ function payOf(id){
 function paintPay(){
   let c, l, s, ex = false;
   if (mode === 'cmp'){ c = ''; l = 'Comparando · cada IA cuenta como un mensaje'; s = 'Cada IA cuenta como un mensaje'; }
-  else if (trialOn){ const left = trialLeft(), mx = (SZ.trialGet() || {}).max || 5; c = 'tr'; ex = true; l = left > 0 ? 'Prueba guiada · te quedan ' + left + ' de ' + mx + ' · la paga SymphorIA' : 'Prueba guiada terminada'; s = left > 0 ? 'Prueba · ' + left + ' de ' + mx + ' · paga SymphorIA' : 'Prueba terminada'; }
+  else if (trialOn){ const left = trialLeft(), mx = (SZ.trialGet() || {}).max || 5; c = 'tr'; ex = true; l = left > 0 ? 'Prueba guiada · te quedan ' + left + ' de ' + mx + ' · la paga Sinapse' : 'Prueba guiada terminada'; s = left > 0 ? 'Prueba · ' + left + ' de ' + mx + ' · paga Sinapse' : 'Prueba terminada'; }
   else { const id = selId(), p = payOf(id); c = p[0]; l = p[1]; s = p[2]; if (!connected(id)){ c = 'off'; l = /^pu:/.test(id) ? 'Puter · sin conectar' : l; s = /^pu:/.test(id) ? 'Puter sin conectar' : s; } }
   const P = $('#payL');
   /* v4.3 (8 nov) · Sammuel: bajo la caja ya no va «Gratis · te queda 100 % de EnerX» (eso ya se ve arriba y en la barra),
@@ -509,7 +509,7 @@ addEventListener('online', refreshIdle); addEventListener('offline', refreshIdle
 setInterval(refreshIdle, 2500);
 $('#now').addEventListener('click', e => { const b = e.target.closest('[data-now]'); if (!b) return; if (b.dataset.now === 'conn') openConnect(); else openSide(); });
 function renderNow(){
-  const ids = Object.keys(busy), box = $('#now'); SZ.S.busy(ids.some(id => busy[id] === 'think')); document.title = ids.some(id => busy[id] === 'think') ? 'Pensando… · SynthFlow' : 'SynthFlow · SymphorIA';
+  const ids = Object.keys(busy), box = $('#now'); SZ.S.busy(ids.some(id => busy[id] === 'think')); document.title = ids.some(id => busy[id] === 'think') ? 'Pensando… · Sonyx' : 'Sonyx · Sinapse';
   box.innerHTML = ''; box.classList.toggle('many', ids.length > 2);
   /* el letrero «conectado / sin conectar» ya no existe: si falta una IA, la caja de texto se bloquea y lo explica */
   if (!ids.length){ { const [k0, t0] = readyState(); idleK = k0 + t0; } box.classList.add('idle'); }
@@ -669,7 +669,7 @@ function openCanvas(M, sibs, tab){
   closeCanvas(true);
   const pv = canPreview(M);
   const o = document.createElement('div'); o.className = 'cvp'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-label', M.name);
-  o.innerHTML = '<div class="cvp-in"><div class="cvp-h">' + fcIc(M.ext) + '<span class="cnv-t"><b>' + esc(M.name) + '</b><small>' + (pv ? '<span class="cvp-syn" title="Sintético (en inglés, Synthetic): corre aparte y aislado, como en Claude">Sintético</span> · ' : '') + esc(M.label) + ' · ' + M.lines + ' líneas</small></span>'
+  o.innerHTML = '<div class="cvp-in"><div class="cvp-h">' + fcIc(M.ext) + '<span class="cnv-t"><b>' + esc(M.name) + '</b><small>' + (pv ? '<span class="cvp-syn" title="Obra (en inglés, Work): corre aparte y aislada, como en Claude">Sintético</span> · ' : '') + esc(M.label) + ' · ' + M.lines + ' líneas</small></span>'
     + '<button type="button" class="cnv-b" data-cv="copy">' + CNV_ICO.copy + '<span>Copiar</span></button><button type="button" class="cnv-b" data-cv="down">' + CNV_ICO.down + '<span>Descargar</span></button><button type="button" class="cnv-b ic" data-cx aria-label="Cerrar">✕</button></div>'
     + (pv ? '<div class="cvp-tabs" role="tablist"><button type="button" role="tab" data-tab="code">Código</button><button type="button" role="tab" data-tab="prev">Vista previa</button></div>' : '')
     + '<div class="cvp-b"><pre class="cvp-code"><code></code></pre>' + (pv ? '<div class="cvp-prev" hidden></div>' : '') + '</div></div>';
@@ -684,7 +684,7 @@ function openCanvas(M, sibs, tab){
       if (M.ext === 'md'){ const d = document.createElement('div'); d.className = 'cvp-md'; d.innerHTML = md(M.text); box.appendChild(d); }
       else {
         /* la vista previa corre aislada: sin acceso a tu cuenta, tus chats ni esta página */
-        const f = document.createElement('iframe'); f.title = 'Sintético: vista previa de ' + M.name; f.setAttribute('sandbox', 'allow-scripts allow-modals allow-forms allow-pointer-lock'); f.setAttribute('referrerpolicy', 'no-referrer');
+        const f = document.createElement('iframe'); f.title = 'Obra: vista previa de ' + M.name; f.setAttribute('sandbox', 'allow-scripts allow-modals allow-forms allow-pointer-lock'); f.setAttribute('referrerpolicy', 'no-referrer');
         box.appendChild(f);
         if (M.ext === 'svg') synLoad(f, previewDoc(M, sibs)); else cvTools(o, box, M, sibs).load();   /* v2.4 · consola, tamaños de pantalla y volver a cargar */
       }
@@ -928,7 +928,7 @@ const CODE_SYS = [
 ].join('\n');
 const CODE_SYS_SHORT = 'MODO SYNTHCODE (ahorro). Eres un ingeniero senior perfeccionista. Entrega código COMPLETO y funcional (nunca «...», TODO ni partes omitidas), con el nombre del archivo antes de cada bloque y el lenguaje en la cerca. Para webs: un solo index.html con <style> y <script>, responsive, accesible y bonito. Revisa sintaxis, nombres y casos borde antes de terminar. Explica en 1 a 3 líneas cómo usarlo.';
 /* ¿esta conversación es de programar? (el último pedido, un archivo de código adjunto o seguir hablando de un código anterior) */
-const FIX_TAG = '[Revisión automática de SynthFlow]';
+const FIX_TAG = '[Revisión automática de Sonyx]';
 const isFix = m => !!m && m.role === 'user' && (!!m.fix || String(m.content || '').startsWith(FIX_TAG));
 function codeMode(chat){
   const u = [...chat].reverse().find(m => m.role === 'user'); if (!u) return false;
@@ -1584,9 +1584,9 @@ function emptyEl(){
   if (agentOn()){
     const ex = showEx();
     e.classList.add('aghello');
-    e.innerHTML = '<p class="agbadge">' + AG_ICO + 'Modo SuperiorSynth activado</p>' + hiName() + '<h1 class="greet">' + greetHtml(['¿Qué quieres ', 'FlowIA’r', '?']) + '</h1>' + flowWhatHtml()
+    e.innerHTML = '<p class="agbadge">' + AG_ICO + 'Modo Apex activado</p>' + hiName() + '<h1 class="greet">' + greetHtml(['¿Qué quieres ', 'FlowIA’r', '?']) + '</h1>' + flowWhatHtml()
       + (ex ? '<div class="hexs hexr" id="hexR" aria-label="Ideas para empezar">' + exRowHtml() + '</div>' : '')
-      + '<p class="hsub2">Cuéntame qué necesitas. SuperiorSynth entiende tu pedido, lo mejora, elige la IA que más sabe de eso y te muestra cada paso.</p><div class="hcomp"></div>';
+      + '<p class="hsub2">Cuéntame qué necesitas. Apex entiende tu pedido, lo mejora, elige la IA que más sabe de eso y te muestra cada paso.</p><div class="hcomp"></div>';
     return e;
   }
   e.classList.add('luma-welcome');
@@ -2426,7 +2426,7 @@ imgBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" s
 function setImgMode(on){
   if (on && !SZ.ACC.ready){ toast('Para crear imágenes entra a tu cuenta (es gratis).'); SZ.guestGate({ mode:'signup' }); return; }
   imgMode = !!on; imgBtn.setAttribute('aria-pressed', String(imgMode)); document.body.classList.toggle('imaging', imgMode);
-  inp.placeholder = imgMode ? 'Describe la imagen que quieres crear…' : (agentOn() ? 'SuperiorSynth: cuéntame qué necesitas…' : 'Escribe tu mensaje…');
+  inp.placeholder = imgMode ? 'Describe la imagen que quieres crear…' : (agentOn() ? 'Apex: cuéntame qué necesitas…' : 'Escribe tu mensaje…');
   if (imgMode){ const q = SZ.SZQ.img; toast('Crear imagen: describe lo que quieres ver.' + (q && q.max ? ' Hoy te quedan ' + Math.max(0, q.max - q.used) + '.' : '')); inp.focus(); }
 }
 imgBtn.addEventListener('click', () => setImgMode(!imgMode));
@@ -2520,12 +2520,12 @@ addEventListener('pagehide', vozParar);
 /* ---------- v2.1 · «Buscar en internet»: la IA responde con información de hoy y te muestra sus fuentes ----------
    Se activa con el botón del globo, sola cuando la pregunta lo pide (hoy, precio, noticias…) o cuando el agente lo decide. */
 /* v4.2 · REGLA FIJA (pedido de Sammuel, 3 nov: «las IAs buscan porque sí y porque no, ESO NO PUEDE PASAR»).
-   Ya no decide la IA ni el azar: la misma pregunta da SIEMPRE la misma decisión, con cualquier IA, en Comparar y en A.L.I.A.S.
+   Ya no decide la IA ni el azar: la misma pregunta da SIEMPRE la misma decisión, con cualquier IA, en Comparar y en Quoryn
    · Se busca: si lo pides («busca en internet», «con fuentes», «investiga»), o si preguntas algo que cambia con el tiempo
      (noticias, precios, cotizaciones, clima, resultados, horarios, «hoy», «esta semana», lo más reciente…).
    · No se busca: charla, opinión, código, tareas, explicaciones generales, escribir o crear algo.
    · Tú mandas: en «+» puedes forzar «Buscar en internet» o «No buscar» para el próximo mensaje, y en Ajustes apagar la búsqueda sola.
-   La misma regla está en api/_web-regla.js (servidor, A.L.I.A.S.); t/web/regla.test.mjs revisa que las dos digan lo mismo. */
+   La misma regla está en api/_web-regla.js (servidor, Quoryn); t/web/regla.test.mjs revisa que las dos digan lo mismo. */
 function webRule(text){
   let s = String(text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   if (/```/.test(s) || (s.split('\n').filter(l => /[;{}]\s*$|^\s*(def|function|const|let|var|import|class|return|if|for|while|<\w+)/.test(l)).length >= 3)) return { go:false, why:'codigo' };
@@ -2639,7 +2639,7 @@ function citeLinks(body, sources){
   });
 }
 /* ---------- v2.1 · presentaciones: pides «hazme una presentación de…», la IA arma las diapositivas,
-   las ves en vista previa y las descargas como PowerPoint (.pptx) con el estilo de SymphorIA ---------- */
+   las ves en vista previa y las descargas como PowerPoint (.pptx) con el estilo de Sinapse ---------- */
 const PPT_RX = /\b(?:hazme|haz|cr[eé]a(?:me)?|arma(?:me)?|genera(?:me)?|prepara(?:me)?|dise[ñn]a(?:me)?|elabora(?:me)?|redacta(?:me)?|necesito|quiero|dame|p[oó]n(?:me)?|make|create|build|generate|prepare|need|want)\b[^.\n?!]{0,40}\b(?:presentaci[oó]n(?:es)?|presentations?|diapositivas?|power ?point|pptx|slides?|slide ?deck)\b|\b(?:en|como|formato|archivo)\s+(?:un\s+)?(?:power ?point|pptx)\b|\.pptx\b/i;
 const PPT_NO = /\b(consejos|tips|c[oó]mo (?:hacer|dar|hablar|mejorar|preparar|presentar)|nervios|exposici[oó]n oral|practicar|mejorar mi presentaci|presentaci[oó]n personal|presentarme)\b/i;
 /* solo arma diapositivas si de verdad las pides (no porque la palabra aparezca en otra frase) */
@@ -2663,7 +2663,7 @@ function deckCard(pre, D){
 }
 /* vista previa: las diapositivas en el lienzo, tal como quedan en PowerPoint */
 function slideHtml(D, i){
-  if (i < 0) return '<div class="sl sl-t"><h2></h2><i class="sl-bar"></i><p></p><small>Hecho con SymphorIA</small></div>';
+  if (i < 0) return '<div class="sl sl-t"><h2></h2><i class="sl-bar"></i><p></p><small>Hecho con Sinapse</small></div>';
   return '<div class="sl"><h3></h3><i class="sl-bar"></i><ul></ul><span class="sl-n">' + (i + 2) + '</span></div>';
 }
 function openDeck(D){
@@ -2685,14 +2685,14 @@ let pptxLib = null;
 const loadPptx = () => pptxLib || (pptxLib = new Promise((ok, no) => { if (window.PptxGenJS) return ok(window.PptxGenJS); const s = document.createElement('script'); s.src = 'lib/pptxgen.bundle.js'; s.onload = () => window.PptxGenJS ? ok(window.PptxGenJS) : no(new Error('sin librería')); s.onerror = () => { pptxLib = null; no(new Error('no cargó')); }; document.head.appendChild(s); }));
 async function deckBuild(D){
   const P = await loadPptx(), pres = new P();
-  pres.layout = 'LAYOUT_WIDE'; pres.author = 'SymphorIA'; pres.company = 'SymphorIA'; pres.title = D.titulo;
+  pres.layout = 'LAYOUT_WIDE'; pres.author = 'Sinapse'; pres.company = 'Sinapse'; pres.title = D.titulo;
   const BG = '0B0C10', TX = 'ECEBE7', SOFT = 'C9C8C3', GOLD = 'E6B65F', ROSE = 'C9566C', MUTE = '8D8C88';
   const t = pres.addSlide(); t.background = { color:BG };
   t.addShape(pres.ShapeType.rect, { x:0, y:0, w:13.33, h:.12, fill:{ color:ROSE } });
   t.addShape(pres.ShapeType.rect, { x:.9, y:3.05, w:1.6, h:.08, fill:{ color:GOLD } });
   t.addText(D.titulo, { x:.9, y:1.4, w:11.5, h:1.6, fontFace:'Georgia', fontSize:44, color:TX, bold:false, valign:'bottom', fit:'shrink' });
   if (D.subtitulo) t.addText(D.subtitulo, { x:.9, y:3.3, w:11.5, h:1.2, fontFace:'Calibri', fontSize:22, color:SOFT, valign:'top', fit:'shrink' });
-  t.addText('Hecho con SymphorIA', { x:.9, y:6.7, w:6, h:.4, fontFace:'Calibri', fontSize:12, color:MUTE });
+  t.addText('Hecho con Sinapse', { x:.9, y:6.7, w:6, h:.4, fontFace:'Calibri', fontSize:12, color:MUTE });
   D.slides.forEach((S, i) => {
     const s = pres.addSlide(); s.background = { color:BG };
     s.addShape(pres.ShapeType.rect, { x:0, y:0, w:.12, h:7.5, fill:{ color:GOLD } });
@@ -2815,10 +2815,10 @@ function memLimpia(fact){
 }
 let memNext = null;   /* el dato que redactó la IA en la última respuesta (lo usa memOffer) */
 /* ---------- 2026-11-09 · Importar chats y memoria: LECTOR (sin pantalla, se puede probar aparte: t/importar/importar.mjs) ----------
-   Entiende lo que exportan otras IAs y lo convierte en conversaciones y recuerdos de SynthFlow:
+   Entiende lo que exportan otras IAs y lo convierte en conversaciones y recuerdos de Sonyx:
    · ChatGPT: el .zip de «Exportar datos» o su conversations.json (árbol «mapping»: se sigue la rama que estaba abierta).
    · Claude: el .zip de «Exportar datos» o su conversations.json (chat_messages) y memories.json (la memoria en texto).
-   · JSON genérico: [{role, content}], {messages:[…]}, [{title, messages:[…]}] o la copia de SynthFlow ({chats:{…}}).
+   · JSON genérico: [{role, content}], {messages:[…]}, [{title, messages:[…]}] o la copia de Sonyx ({chats:{…}}).
    · Markdown / texto: con marcas «## Tú», «Usuario:», «Assistant:»… es un chat; sin marcas, una lista de recuerdos.
    Nada sale del navegador: todo se lee aquí. Devuelve { chats:[{ src, sid, title, t, msgs:[{role, content}] }], mem:[texto], skipped }. */
 const IMP = (() => {
@@ -3023,13 +3023,13 @@ const IMP = (() => {
 let agentBusy = false;
 const agentOn = () => !!st().agent && !trialOn;
 $('#agPill').addEventListener('click', () => { if (isMobile()) closeChatsSheet && closeChatsSheet(); setAgent(false); });
-function paintAgent(){ try{ paintMode(); }catch(e){} $$('.agentb, #railAgent').forEach(b => { b.setAttribute('aria-pressed', String(agentOn())); b.classList.toggle('on', agentOn()); }); document.body.classList.toggle('agenting', agentOn()); inp.placeholder = agentOn() ? 'SuperiorSynth: cuéntame qué necesitas…' : (isLocked() ? inp.placeholder : 'Escribe tu mensaje...'); }
+function paintAgent(){ try{ paintMode(); }catch(e){} $$('.agentb, #railAgent').forEach(b => { b.setAttribute('aria-pressed', String(agentOn())); b.classList.toggle('on', agentOn()); }); document.body.classList.toggle('agenting', agentOn()); inp.placeholder = agentOn() ? 'Apex: cuéntame qué necesitas…' : (isLocked() ? inp.placeholder : 'Escribe tu mensaje...'); }
 function setAgent(on){
   if (!!st().agent === !!on){ paintAgent(); return; }
   if (mode !== 'solo'){ stopNow(); cmpRun++; cmpLast = null; mode = 'solo'; }
   st().agent = !!on; save(); paintAgent(); gen++;
   try{ renderMsgs(); updateHint(); renderTop(true); renderNow(); renderChats(false); }catch(e){}
-  toast(on ? 'Modo SuperiorSynth activado: tú escribes y SuperiorSynth elige la IA que más sabe de eso.' : 'Modo SuperiorSynth apagado: ahora eliges tú la IA.');
+  toast(on ? 'Modo Apex activado: tú escribes y Apex elige la IA que más sabe de eso.' : 'Modo Apex apagado: ahora eliges tú la IA.');
 }
 const AG_STEPS = ['Entendiendo tu pedido', 'Mejorando tu pedido para que la IA lo entienda mejor', 'Eligiendo la IA que más sabe de esto', 'Pasándole tu pedido a la IA'];
 /* v2.3 · SuperiorSynth: su ícono propio, animado (una estrella que late con un satélite que la orbita) */
@@ -3050,7 +3050,7 @@ const AG_ICO = ssIco();
 /* lo que hace el agente, en vivo: su loguito de píxeles y los pasos que se van marcando */
 function agentCard(){
   const el = document.createElement('div'); el.className = 'agrun';
-  el.innerHTML = '<div class="ag-h"><span class="pxw">' + SZ.pixelGrid() + '</span><span class="ag-t"><b>SuperiorSynth</b><small>Trabajando en tu pedido…</small></span></div><ol class="ag-s">' + AG_STEPS.map((t, i) => '<li data-i="' + i + '"><i aria-hidden="true"></i><span>' + t + '</span></li>').join('') + '</ol>';
+  el.innerHTML = '<div class="ag-h"><span class="pxw">' + SZ.pixelGrid() + '</span><span class="ag-t"><b>Apex</b><small>Trabajando en tu pedido…</small></span></div><ol class="ag-s">' + AG_STEPS.map((t, i) => '<li data-i="' + i + '"><i aria-hidden="true"></i><span>' + t + '</span></li>').join('') + '</ol>';
   const px = SZ.pixelRun($('.pxw', el));
   /* v4.5 · la línea de abajo es una frase al azar (con tu nombre a veces) que cambia sola mientras trabaja */
   const sm = $('.ag-t small', el); let seen = false;
@@ -3065,7 +3065,7 @@ function agentCard(){
 /* lo que queda guardado debajo de tu mensaje: «El agente eligió …» con el pedido mejorado para ver */
 function agentSumEl(a){
   const el = document.createElement('div'); el.className = 'agsum';
-  el.innerHTML = '<button type="button" class="ag-row" aria-expanded="false"><span class="ag-ic">' + AG_ICO + '</span><span class="ag-tx">SuperiorSynth eligió <b></b><em></em></span>' + (a.ask ? '<svg class="ag-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>' : '') + '</button>' + (a.ask ? '<div class="ag-d" hidden><small>Tu pedido mejorado (esto le llegó a la IA)</small><p></p></div>' : '');
+  el.innerHTML = '<button type="button" class="ag-row" aria-expanded="false"><span class="ag-ic">' + AG_ICO + '</span><span class="ag-tx">Apex eligió <b></b><em></em></span>' + (a.ask ? '<svg class="ag-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>' : '') + '</button>' + (a.ask ? '<div class="ag-d" hidden><small>Tu pedido mejorado (esto le llegó a la IA)</small><p></p></div>' : '');
   $('.ag-tx b', el).textContent = a.name || 'una IA'; $('.ag-tx em', el).textContent = a.tl ? ', que sabe de ' + a.tl : '';
   if (a.ask){ $('.ag-d p', el).textContent = a.ask; const row = $('.ag-row', el), d = $('.ag-d', el); row.addEventListener('click', () => { const on = d.hidden; d.hidden = !on; row.setAttribute('aria-expanded', String(on)); el.classList.toggle('open', on); }); }
   return el;
@@ -3118,24 +3118,24 @@ function agentPick(tema){
 function agentChoice(pick){
   $$('.agkeep', lane).forEach(x => x.remove());
   const nm = info(pick).name, d = document.createElement('div'); d.className = 'agkeep';
-  d.innerHTML = '<span>¿Te quedas con <b></b> o sigues con SuperiorSynth?</span><div class="agk-b"><button type="button" class="btn sm" data-ak="keep"></button><button type="button" class="btn sm ghost" data-ak="go">Seguir con SuperiorSynth</button></div><small>Si sigues con SuperiorSynth, en tu próximo mensaje vuelvo a elegir la IA que más sepa de eso.</small>';
+  d.innerHTML = '<span>¿Te quedas con <b></b> o sigues con Apex?</span><div class="agk-b"><button type="button" class="btn sm" data-ak="keep"></button><button type="button" class="btn sm ghost" data-ak="go">Seguir con Apex</button></div><small>Si sigues con Apex, en tu próximo mensaje vuelvo a elegir la IA que más sepa de eso.</small>';
   $('span b', d).textContent = nm; $('[data-ak="keep"]', d).textContent = 'Quedarme con ' + nm;
   lane.appendChild(d); follow();
   d.addEventListener('click', e => {
     const b = e.target.closest('[data-ak]'); if (!b) return; d.remove();
-    if (b.dataset.ak === 'go'){ toast('Sigues con SuperiorSynth: en tu próximo mensaje vuelvo a elegir la IA.'); return; }
+    if (b.dataset.ak === 'go'){ toast('Sigues con Apex: en tu próximo mensaje vuelvo a elegir la IA.'); return; }
     /* la conversación sigue igual, ahora con esa IA y sin el agente */
     const k0 = ckey(), msgs = (st().chats[k0] || []).slice(), tid = 't' + Date.now().toString(36), k1 = 'openrouter::' + pick + '::' + tid;
     st().chats[k1] = msgs; delete st().chats[k0]; st().del = [...(st().del || []), k0].slice(-300);
     const L = (st().threads || {})[AGK]; if (L){ const id0 = curT(), e0 = L.find(x => x.id === id0); st().threads[AGK] = L.filter(x => x.id !== id0); if (e0){ const e1 = thMeta(pick, tid, true); e1.title = e0.title; e1.t = Date.now(); } }
     (st().thread || (st().thread = {}))[pick] = tid; st().model.openrouter = pick; st().pinned = pick; st().agent = false;
     save(); paintAgent(); gen++; applyRail(); paintSel(); renderTop(true); paintAccent(); renderMsgs(); updateHint(); renderChats(false);
-    toast('Listo: sigues con ' + nm + '. SuperiorSynth quedó apagado; lo vuelves a activar en el botón de modo, junto a la caja de escribir.');
+    toast('Listo: sigues con ' + nm + '. Apex quedó apagado; lo vuelves a activar en el botón de modo, junto a la caja de escribir.');
   });
 }
 async function agentPlan(text){
   const keys = TOPICS.map(t => t[0]).join(', ');
-  const sys = 'Eres el planificador de SynthFlow. Lees el pedido de una persona y lo mejoras para que otra IA lo entienda mejor. Responde SOLO con JSON válido y nada más: {"tema":"<una de: ' + keys + '>","internet":<true si para responder bien hacen falta datos actuales de internet (noticias, precios, fechas recientes, resultados, algo de hoy); si no, false>,"dificultad":"<muy_simple si es un saludo, una pregunta de una línea con respuesta corta, traducir o corregir una frase corta; si no, normal>","pedido":"<el pedido mejorado, en el mismo idioma de la persona, claro, con el contexto que dio y el formato de respuesta que le sirve; no inventes datos; máximo 120 palabras>"}';
+  const sys = 'Eres el planificador de Sonyx. Lees el pedido de una persona y lo mejoras para que otra IA lo entienda mejor. Responde SOLO con JSON válido y nada más: {"tema":"<una de: ' + keys + '>","internet":<true si para responder bien hacen falta datos actuales de internet (noticias, precios, fechas recientes, resultados, algo de hoy); si no, false>,"dificultad":"<muy_simple si es un saludo, una pregunta de una línea con respuesta corta, traducir o corregir una frase corta; si no, normal>","pedido":"<el pedido mejorado, en el mismo idioma de la persona, claro, con el contexto que dio y el formato de respuesta que le sirve; no inventes datos; máximo 120 palabras>"}';
   /* v3.3 · el plan nunca deja a SuperiorSynth colgado: si tarda más de 12 s (una IA que piensa mucho), sigue con tu pedido tal cual */
   const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 12000);
   let r; try{ r = await SZ.askStream(SZ.SZ_P, [{ role:'system', content:sys }, { role:'user', content:text.slice(0, 4000) }], { model:'sz:auto', _noFall:true, maxTokens:600, signal:ctl.signal }); }finally{ clearTimeout(tm); }
@@ -3160,7 +3160,7 @@ async function send(){
   if (agentOn() && mode === 'solo' && text && !files.length){
     if (agentBusy) return;
     /* el agente ve que pides una imagen: la crea el creador de imágenes */
-    if (IMG_RX.test(text) && SZ.ACC.ready){ toast('SuperiorSynth vio que quieres una imagen: la crea el creador de imágenes.'); return createImage(text); }
+    if (IMG_RX.test(text) && SZ.ACC.ready){ toast('Apex vio que quieres una imagen: la crea el creador de imágenes.'); return createImage(text); }
     agentBusy = true; inp.readOnly = true; sendBtn.disabled = true;
     /* v3.3 · pase lo que pase (error, cambio de chat), la caja vuelve a quedar libre: antes un fallo a mitad dejaba SuperiorSynth mudo */
     const unlock = () => { agentBusy = false; inp.readOnly = false; sendBtn.disabled = false; };
@@ -3204,7 +3204,7 @@ async function send(){
     const pickF = cur;
     if (ok && g0 === gen) agentChoice(pickF);
     if (ok && g0 === gen && MEM_RX.test(text)) memOffer(text);
-    }catch(e){ console.error('[superiorsynth]', e); $$('.agrun', lane).forEach(x => x.remove()); renderMsgs(); toast('SuperiorSynth tuvo un problema. Tu mensaje quedó guardado: vuelve a intentarlo.'); }
+    }catch(e){ console.error('[superiorsynth]', e); $$('.agrun', lane).forEach(x => x.remove()); renderMsgs(); toast('Apex tuvo un problema. Tu mensaje quedó guardado: vuelve a intentarlo.'); }
     finally{ unlock(); }
     return;
   }
@@ -3316,7 +3316,7 @@ async function runSolo(onFail, o = {}){
   const mid = o.model || selId(), chat = chatArr(), g = gen, vis = info(mid).vision, saver = st().sx.saver;
   const slowT = setTimeout(() => { if (busy[mid] === 'think' && SZ.BOT.react) SZ.BOT.react('slow', { auto:mid === 'sz:auto' }); }, 14000);
   /* v4.2 · la IA ya NO decide sola si busca (eso la hacía buscar «porque sí y porque no»): decide la regla fija al enviar.
-     Si igual responde que no sabe datos de hoy, SynthonIA te OFRECE buscar; nunca se busca a escondidas. */
+     Si igual responde que no sabe datos de hoy, Sona te OFRECE buscar; nunca se busca a escondidas. */
   const lastU = [...chat].reverse().find(x => x.role === 'user'), webAuto = false, webOffer = !o.noWeb && mode === 'solo' && !!lastU && !lastU.sources && !lastU.webTried && !lastU.imgId && !lastU.webNo;
   const sent = apiMsgs(chat, vis, { webAsk:webAuto, srv:/^sz:/.test(mid), mid }), naive = apiMsgs(chat, vis, { naive:true }), ck = hashStr(mid + '|' + saver + '|' + effKey() + '|' + JSON.stringify(sent));
   let hold = webAuto ? null : false, webQ = null;
@@ -3389,7 +3389,7 @@ async function runSolo(onFail, o = {}){
     const who = r.swapped ? ' · se acabó tu saldo de Puter este mes; respondió ' + (r.real || 'otra IA') : '';
     W.write(r.text); W.finish({ ms:r.ms, real:r.real || '' });
     const work = { ms:Math.round(r.ms || 0), words:W.state.words, real:r.real || '', steps:W.state.steps.map(([a, b]) => [Math.round(a), b]), reason:(r.reasoning || '').slice(0, 4000) || undefined };
-    const msg = { role:'assistant', content:r.text, work, meta:metaOf(r) + SZ.coinNote(mid, r) + tail + who + (r.via ? ' · vía ' + r.via + ' (prueba de SymphorIA)' : ''), model:mid, cont: !!(r.cut || r.finish === 'length') || undefined };
+    const msg = { role:'assistant', content:r.text, work, meta:metaOf(r) + SZ.coinNote(mid, r) + tail + who + (r.via ? ' · vía ' + r.via + ' (prueba de Sinapse)' : ''), model:mid, cont: !!(r.cut || r.finish === 'length') || undefined };
     chat.push(msg); touchThread(); save();
     if (here()){
       if (el && !el.isConnected){ lane.appendChild(el); }   /* algo repintó la conversación mientras escribía: la respuesta vuelve a su sitio */
@@ -3573,7 +3573,7 @@ document.addEventListener('click', e => {
    · vuelves a la IA que tenías, y una ventana te pregunta para qué la querías:
      «Solo quería probar» → sigues navegando, sin las IAs caídas;  «La quiero para…» → te recomienda la que sí funciona y mejor sirve para eso.
    Para no gastar: el resultado se guarda (bien 10 min, llena 2 min, caída 30 min) y en el servidor se comparte entre todos.
-   Las de SymphorIA se prueban en /api/ai (no gasta tu batería); Puter y tus llaves, con una respuesta de 4 palabras como mucho. */
+   Las de Sinapse se prueban en /api/ai (no gasta tu batería); Puter y tus llaves, con una respuesta de 4 palabras como mucho. */
 const HEALTH = new Map(), H_TTL = { ok:10 * 60e3, busy:2 * 60e3, down:30 * 60e3 };
 function iaCached(id){ const h = HEALTH.get(id); return h && h.v && Date.now() - h.t < H_TTL[h.v] ? h.v : null; }
 const iaSkip = id => !id || id === 'sz:auto' || /^tr:/.test(id) || !connected(id);
@@ -3604,7 +3604,7 @@ function iaProbe(id){
   const p = (async () => {
     if (/^sz:/.test(id)){
       try{ const v = (await szPing([id]))[id]; return v === 'down' || v === 'busy' ? v : 'ok'; }
-      catch(e){ return 'ok'; }   /* sin conexión con SymphorIA: no es culpa de la IA, no se esconde */
+      catch(e){ return 'ok'; }   /* sin conexión con Sinapse: no es culpa de la IA, no se esconde */
     }
     const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 15000);
     try{ const r = await SZ.askStream(OR, [{ role:'user', content:'Responde solo: ok' }], { model:id, maxTokens:4, signal:ctl.signal }, () => {}); return r && r.aborted ? 'busy' : 'ok'; }
@@ -3909,7 +3909,7 @@ function placeSide(){}
 let sideOpener = null; side.inert = !side.classList.contains('open');
 function openSide(kind, anchor){
   if (isLocked()){ lockNudge(); toast('Primero conecta Puter: es gratis y con un clic.'); return; }
-  if (agentOn() && mode === 'solo' && kind !== 'add' && kind !== 'cmp'){ toast('Con SuperiorSynth la IA la elige él. Si quieres elegirla tú, vuelve a «Chats».'); return; }
+  if (agentOn() && mode === 'solo' && kind !== 'add' && kind !== 'cmp'){ toast('Con Apex la IA la elige él. Si quieres elegirla tú, vuelve a «Chats».'); return; }
   pickMode = kind === 'add' || mode === 'cmp' ? 'add' : 'set';
   pickCmp = kind === 'cmp' && mode !== 'cmp'; if (!pickCmp) pickSel.clear();
   side.classList.toggle('pcmp', pickCmp);
@@ -4050,7 +4050,7 @@ SZ.onLang(() => { try{ renderList({ keep:true }); }catch(e){} });   /* v3.7 · l
 /* ---------- tutorial, mejor IA gratis y menú contextual ---------- */
 const APODEX_NAME = 'Automática';
 const TOUR = [
-  { t:'Bienvenido a SynthFlow', p:'Aquí chateas gratis con muchas IA. No tienes que configurar nada: escribe y listo.' },
+  { t:'Bienvenido a Sonyx', p:'Aquí chateas gratis con muchas IA. No tienes que configurar nada: escribe y listo.' },
   { t:'Tu Puter', p:'Cada día tienes un límite gratis para usar las IAs conectadas. A medianoche se vuelve a llenar. Si se te acaban, puedes seguir con Puter, que te da la versión pro de las IAs más usadas, como ChatGPT, Claude o Gemini. Es gratis, tiene un límite que se renueva cada mes y se conecta con un clic.', x:'conn' },
   { t:'¿Dónde quieres empezar?', p:'Elige y te dejo en su pestaña con su mejor IA. Si no eliges, empiezas con ' + APODEX_NAME + '.', x:'pick' },
   { t:'Tu límite de hoy', p:'Cada día tienes un límite gratis. El anillo de la barrita se va vaciando mientras chateas y se llena otra vez a medianoche. «Respuestas cortas» te ayuda a que te alcancen más.' },
@@ -4075,7 +4075,7 @@ function tourBox(box, kind){
     box.innerHTML = '<div class="tpicks">' + card('sz', 'IAs conectadas', 'Gratis · listas', bo ? bo.name : 'Automática') + card('pu', 'Puter', 'Tus IAs pro · un clic', bp ? bp.name : 'ChatGPT') + card('none', 'Ninguno', 'Por defecto', 'Automática') + '</div>';
     $$('.tpick', box).forEach(b => b.addEventListener('click', () => { tourPick = b.dataset.k; tourBox(box, 'pick'); }));
   } else if (kind === 'done'){
-    const id = pickTarget(), where = tourPick === 'pu' ? 'Puter' : tourPick === 'sz' ? 'SymphorIA' : 'Todos';
+    const id = pickTarget(), where = tourPick === 'pu' ? 'Puter' : tourPick === 'sz' ? 'Sinapse' : 'Todos';
     box.innerHTML = '<div class="tsum">Empiezas con <b>' + esc(info(id).name) + '</b> en la pestaña <b>' + where + '</b>.' + (connected(id) ? '' : /^pu:/.test(id) ? ' Te pediré entrar a Puter cuando escribas tu primer mensaje.' : '') + '</div>';
   } else box.innerHTML = '';
 }
@@ -4123,10 +4123,10 @@ function closeTour(go){
   burst(innerWidth / 2, innerHeight / 2, ['#8fb0ff', '#c9566c', '#ff8f7a', '#7fd6b8'], 22);
 }
 /* =====================================================================
-   Guía Asistida: SynthonIA enseña SynthFlow con su manita (camino B)
+   Guía Asistida: Sona enseña Sonyx con su manita (camino B)
    1 temas · 2 IA recomendadas · 3 recorrido · 4 comparar 2 · 5 prueba real · 6 conectar
-   v3.0: arranca sola al terminar «Empieza en SynthFlow» (ya elegiste tema e IA, así que salta 1 y 2) y el recorrido
-   muestra también Nuevo chat, los modos, el esfuerzo, Proyectos, Sintéticos y los Ajustes (temas, Simple, tamaño, rápido, idioma)
+   v3.0: arranca sola al terminar «Empieza en Sonyx» (ya elegiste tema e IA, así que salta 1 y 2) y el recorrido
+   muestra también Nuevo chat, los modos, el esfuerzo, Espacios, Sintéticos y los Ajustes (temas, Simple, tamaño, rápido, idioma)
    ===================================================================== */
 const H = SZ.HAND;
 const GUIDE_PROMPTS = {
@@ -4235,9 +4235,9 @@ function gRestore(s){
 async function waitCatalog(ms){ const t0 = Date.now(); while (!cat.list.length && Date.now() - t0 < ms){ await gWait(250); } }
 
 async function runGuide(o = {}){
-  await SZ.synReady;   /* v3.4 · SynthonIA llega en su propio archivo: la guía la espera */
+  await SZ.synReady;   /* v3.4 · Sona llega en su propio archivo: la guía la espera */
   if (G) return;
-  const pre = o.topic && TOPIC[o.topic] ? o.topic : null;   /* v3.0: vienes de «Empieza en SynthFlow»: ya elegiste tema e IA */
+  const pre = o.topic && TOPIC[o.topic] ? o.topic : null;   /* v3.0: vienes de «Empieza en Sonyx»: ya elegiste tema e IA */
   closeSide(); closeChatsSheet(); if (tourEl) closeTour(false);
   if ($('#conn')) { const c = $('#cClose'); if (c) c.click(); }
   const off = pre ? 2 : 0;
@@ -4252,7 +4252,7 @@ async function runGuide(o = {}){
     await H.moveTo({ x:innerWidth / 2, y:innerHeight * .26 }, { shape:'arrow' });
     H.wave(2);
     let r = await H.talk(pre ? '¡Aquí está la guía! Ya elegiste «' + TOPIC[pre].l + '» y tu IA. En unos 2 minutos te muestro cómo seguir: dónde está cada cosa, cómo comparar IAs y tu primer chat de verdad, gratis.'
-      : '¡Hola! Soy SynthonIA. Te enseño SynthFlow en unos 2 minutos: eliges tus temas, te muestro las IA que mejor los hacen, comparamos 2 y chateas de verdad, gratis.', { mood:'feliz', buttons:[{ label:'¡Vamos!' }, { label:'Ahora no', ghost:true }] });
+      : '¡Hola! Soy Sona. Te enseño Sonyx en unos 2 minutos: eliges tus temas, te muestro las IA que mejor los hacen, comparamos 2 y chateas de verdad, gratis.', { mood:'feliz', buttons:[{ label:'¡Vamos!' }, { label:'Ahora no', ghost:true }] });
     if (r === 1){ endGuide(false); return; }
     gNeed();
 
@@ -4310,17 +4310,17 @@ async function runGuide(o = {}){
     await gPoint(gT('.tchip[data-topic]', '.tchip[data-topic]'), 'Toca un tema cuando quieras y te recomiendo IA expertas en eso.');
     /* v3.0: lo nuevo, para que nadie se quede sin saber dónde está */
     await gPoint(gT('#sNav [data-sn="new"]', '#rail [data-r="new"]') || gT('#cNew', '#rail [data-r="new"]') || gT('#rail [data-r="new"]', '#tabbar [data-tab="chats"]'), 'Con «Nuevo chat» empiezas una conversación limpia cuando cambies de tema. La anterior queda guardada.', { side:true });
-    await gPoint(gAny('#cMode'), 'Aquí eliges el modo: «Automática» escoge la mejor IA por ti, «Chat» te deja elegirla, y «SuperiorSynth» trabaja por pasos como un agente.');
-    await gPoint(gAny('#cEffort'), 'Y aquí, cómo piensa: Auto, Veloz (rápido), Profundo (a fondo, el que más gasta) o Creativo (ideas originales).');
-    await gPoint(gT('#sNav [data-sn="proj"]', '#cProj') || gT('#railProj', '#cProj') || gT('#cProj', '#cProj'), '«Proyectos» junta chats, instrucciones y archivos de un mismo tema. La IA los tiene en cuenta en cada chat del proyecto, como en Claude.', { side:true });
-    await gPoint(gT('#sNav [data-sn="syn"]', '#cSyn') || gT('#railSyn', '#cSyn') || gT('#cSyn', '#cSyn'), '«Sintéticos» guarda todo lo que la IA crea: páginas, juegos, dibujos y documentos. Cuando una respuesta trae uno, se abre solo al lado del chat.', { side:true });
+    await gPoint(gAny('#cMode'), 'Aquí eliges el modo: «Automática» escoge la mejor IA por ti, «Chat» te deja elegirla, y «Apex» trabaja por pasos como un agente.');
+    await gPoint(gAny('#cEffort'), 'Y aquí, cómo piensa: Flow (según tu pregunta), Fragment (rápido), Focus (a fondo, el que más gasta) u Horizon (ideas originales).');
+    await gPoint(gT('#sNav [data-sn="proj"]', '#cProj') || gT('#railProj', '#cProj') || gT('#cProj', '#cProj'), '«Espacios» junta chats, instrucciones y archivos de un mismo tema. La IA los tiene en cuenta en cada chat del espacio, como en Claude.', { side:true });
+    await gPoint(gT('#sNav [data-sn="syn"]', '#cSyn') || gT('#railSyn', '#cSyn') || gT('#cSyn', '#cSyn'), '«Obras» guarda todo lo que la IA crea: páginas, juegos, dibujos y documentos. Cuando una respuesta trae una, se abre sola al lado del chat.', { side:true });
     const cfgB = gT('#cfgBtn', '#tabbar [data-tab="cfg"]');
     const rr = await gPoint(cfgB, 'En «Ajustes» cambias cómo se ve todo. ¿Te muestro lo más útil?', { buttons:[{ label:'Muéstrame' }, { label:'Ahora no', ghost:true }], auto:15000, mood:'guino' });
     if (rr === 0 && cfgB){
       SZ.cfgModal(); await gWait(700);
       await gPoint(gAny('#cfgCh'), '«Más bonito» trae todos los efectos. Si tu equipo va lento, «Más rápido» quita efectos y todo responde al instante.');
-      await gPoint(gAny('#cfgTh'), 'Aquí eliges el color: SymphorIA, Océano, Bosque, Lavanda y los que vienen.');
-      await gPoint(gAny('#cfgUi'), 'Y el estilo: «SynthFlow» con vidrio y animaciones, o «Simple», el más limpio y parecido a Claude.');
+      await gPoint(gAny('#cfgTh'), 'Aquí eliges el color: Sinapse, Océano, Bosque, Lavanda y los que vienen.');
+      await gPoint(gAny('#cfgUi'), 'Y el estilo: «Sonyx» con vidrio y animaciones, o «Simple», el más limpio y parecido a Claude.');
       await gPoint(gAny('#cfgSz'), 'Si quieres que todo se vea más pequeño, usa el tamaño compacto.');
       await gPoint(gAny('#cfgLang'), 'Y aquí pones la página en inglés o en español.');
       const x = $('#cfgm [data-close]'); if (x) x.click();
@@ -4385,7 +4385,7 @@ async function runGuide(o = {}){
         } else {
         if (last) await H.moveTo(last, { shape:'arrow', fx:.15, fy:.2 });
         SZ.SND.done();
-        await H.talk(useSz ? '¡Lo lograste! Puedes seguir chateando gratis. Abajo ves cómo va tu límite de hoy.' : '¡Lo lograste! Todavía tienes EnerX de prueba para seguir practicando. Abajo dice quién la paga: SymphorIA.', { near:last || inp, mood:'celebrando', buttons:[{ label:'Siguiente' }], auto:9000 });
+        await H.talk(useSz ? '¡Lo lograste! Puedes seguir chateando gratis. Abajo ves cómo va tu límite de hoy.' : '¡Lo lograste! Todavía tienes EnerX de prueba para seguir practicando. Abajo dice quién la paga: Sinapse.', { near:last || inp, mood:'celebrando', buttons:[{ label:'Siguiente' }], auto:9000 });
         }
       } else await H.talk('Puedes enviarlo después: el mensaje te espera en la caja.', { mood:'guino', buttons:[{ label:'Siguiente' }] });
     }
@@ -4410,7 +4410,7 @@ async function runGuide(o = {}){
     /* 7 · tu Drive (opcional): más espacio y una copia de tus chats */
     if (SZ.ACC.dcid && !(SZ.DRIVE.meta() || {}).linked){
       gHud(7, 'Tu Drive'); SZ.DRIVE.preload(); H.quiet();
-      const r7 = await H.talk('¿Quieres más espacio? Vincula tu Google Drive y guardo una copia de tus chats en una carpeta privada de SynthFlow. No puedo ver tus otros archivos.', { mood:'encantada', buttons:[{ label:'Vincular mi Drive' }, { label:'Ahora no', ghost:true }] });
+      const r7 = await H.talk('¿Quieres más espacio? Vincula tu Google Drive y guardo una copia de tus chats en una carpeta privada de Sonyx. No puedo ver tus otros archivos.', { mood:'encantada', buttons:[{ label:'Vincular mi Drive' }, { label:'Ahora no', ghost:true }] });
       gNeed();
       if (r7 === 0){ H.quiet(); const ok = await driveGo(null); gNeed(); if (ok) await H.talk('¡Hecho! Desde ahora tus chats también viven en tu Drive. Lo encuentras en «⋯ › Google Drive».', { mood:'celebrando', buttons:[{ label:'Terminar' }] }); }
       else { H.talk('Sin problema. Cuando quieras, está en Ajustes › IAs y memoria › Google Drive.', { mood:'guino' }); await gWait(2400); }
@@ -4437,17 +4437,17 @@ const TOPIC_STEPS = {
     const ex = gT('#hexR', '#hexR'); if (ex) await gPoint(ex, 'Si no sabes qué pedir, toca una de estas ideas: se escribe sola y tú decides cuándo enviarla.');
   },
   ia:async () => {
-    if (agentOn()){ await gPoint(gT('#ssTop', '#ssTop'), 'Ahora estás con SuperiorSynth: él elige la IA por ti. Si quieres elegirla tú, toca aquí y «Elegir yo la IA».'); return; }
+    if (agentOn()){ await gPoint(gT('#ssTop', '#ssTop'), 'Ahora estás con Apex: él elige la IA por ti. Si quieres elegirla tú, toca aquí y «Elegir yo la IA».'); return; }
     await gPoint(gAny('#cPick', '#curChip'), 'Aquí eliges con qué IA hablas. Tócalo y se abre su ventana con temas, buscador y filtros.');
     const tc = gT('.tchip[data-topic]', '.tchip[data-topic]'); if (tc) await gPoint(tc, 'Cada tema te recomienda las IA que mejor lo hacen. Por ejemplo, «Código» te muestra las expertas en programar.');
   },
   comparar:async () => {
-    if (agentOn()){ await gPoint(null, 'Comparar se usa sin SuperiorSynth: vuelve a «Chats» y verás el botón «Comparar con otra IA» abajo.'); return; }
+    if (agentOn()){ await gPoint(null, 'Comparar se usa sin Apex: vuelve a «Chats» y verás el botón «Comparar con otra IA» abajo.'); return; }
     await gPoint(gAny('#sNav [data-sn="cmp"]', '#pickRow [data-add]'), 'Aquí, aparte, comparas IAs: eliges hasta 4. Todas responden la misma pregunta y aparecen lado a lado, en el orden en que llegan. Ojo: cada una gasta lo suyo.');
   },
   agente:async () => {
-    await gPoint(gT('#cMode', '#cMode'), 'SuperiorSynth se elige aquí, en el botón de modo junto a la caja de escribir.');
-    await gPoint(null, 'Con SuperiorSynth no eliges IA: tú escribes, él entiende tu pedido, lo mejora, elige la IA que más sabe de eso y te muestra cada paso. Al final decides si te quedas con esa IA o sigues con SuperiorSynth.', { mood:'guino' });
+    await gPoint(gT('#cMode', '#cMode'), 'Apex se elige aquí, en el botón de modo junto a la caja de escribir.');
+    await gPoint(null, 'Con Apex no eliges IA: tú escribes, él entiende tu pedido, lo mejora, elige la IA que más sabe de eso y te muestra cada paso. Al final decides si te quedas con esa IA o sigues con Apex.', { mood:'guino' });
   },
   archivos:async () => {
     await gPoint(gT('#attachBtn', '#attachBtn'), 'Con el «+» le das a la IA fotos, PDF o archivos de texto. Ahí mismo creas imágenes, buscas en internet o pides respuestas cortas.');
@@ -4500,7 +4500,7 @@ async function runTopics(list){
 }
 window.SynthFlowTopics = runTopics;
 /* =====================================================================
-   Primera vez en SynthFlow (camino B): 1 ¿qué quieres FlowIA'r? · 2 elige tu IA · 3 chatea
+   Primera vez en Sonyx (camino B): 1 ¿qué quieres FlowIA'r? · 2 elige tu IA · 3 chatea
    «Siguiente» sube y «Atrás» baja (la animación al revés)
    ===================================================================== */
 const BICO = {
@@ -4521,7 +4521,7 @@ function bflowOpen(delay){
   if (BF || $('#bflow')) return;
   setTimeout(() => {
     BF = { step:1, topic:null, all:false, sel:new Set() };
-    const o = document.createElement('div'); o.id = 'bflow'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-label', 'Empieza en SynthFlow');
+    const o = document.createElement('div'); o.id = 'bflow'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-label', 'Empieza en Sonyx');
     o.innerHTML = '<header class="bf-top"><span class="bf-logo">' + SZ.flowWord() + '</span><ol class="bf-steps" aria-label="Pasos"></ol><div class="bf-r"><button type="button" class="btn sm ghost bf-guide">Guía</button><button type="button" class="btn sm bf-acc">Entrar</button></div></header><div class="bf-stage"></div>';
     document.body.appendChild(o); root.classList.add('bflowing');
     requestAnimationFrame(() => o.classList.add('on'));
@@ -4692,13 +4692,13 @@ function paintLock(){
     const gm = (SZ.SZQ.guest && SZ.SZQ.guest.max) || 5;
     $('#lockT').textContent = gst ? 'Para seguir FlowIAndo, entra a tu cuenta' : done ? 'Se acabó tu EnerX de prueba' : SZ.SZQ.on === false ? 'Las IAs gratis están descansando' : 'Usaste tu límite gratis de hoy';
     $('#lockS').textContent = gst ? 'Se acabó tu EnerX de prueba de hoy. Crear tu cuenta es gratis, sin correo ni tarjeta, y te da mucho más límite cada día.' : done ? 'Para seguir chateando conecta tu cuenta de Puter (gratis, con un clic).' : 'Vuelve en un momento, o sigue ya con Puter. Conecta tu versión pro de las IAs más usadas.';
-    SZ.telEv('noai', 'sin IA: la de SymphorIA está apagada y no hay Puter');
+    SZ.telEv('noai', 'sin IA: la de Sinapse está apagada y no hay Puter');
     if (side.classList.contains('open')) closeSide();
   } else { wHide(); }
   try{ renderTop(); }catch(e){}
 }
 setInterval(paintLock, 1500);
-{ paintAgent(); $$('.agentb-x').forEach(ab => { ab.addEventListener('click', () => { st().agent = !agentOn(); save(); paintAgent(); toast(agentOn() ? 'SuperiorSynth encendido: antes de enviar, mejora tu pedido y elige la IA que más sabe de eso.' : 'SuperiorSynth apagado: tu mensaje va tal cual.'); }); }); }
+{ paintAgent(); $$('.agentb-x').forEach(ab => { ab.addEventListener('click', () => { st().agent = !agentOn(); save(); paintAgent(); toast(agentOn() ? 'Apex encendido: antes de enviar, mejora tu pedido y elige la IA que más sabe de eso.' : 'Apex apagado: tu mensaje va tal cual.'); }); }); }
 function lockNudge(){
   try{ SZ.BOT.problem && SZ.BOT.problem('lock'); }catch(e){}
   const c = $('#lockCard'); if (!c || c.hidden) return;
@@ -4746,7 +4746,7 @@ document.addEventListener('pointermove', e => {
 const W_FAQ = [
   ['¿Por qué no puedo escribir?', 'Porque ahora no hay ninguna IA libre para ti: usaste tu límite gratis de hoy o las IAs están descansando. Conecta Puter y la caja se abre al instante.'],
   ['¿Qué es Puter?', 'Con Puter usas la versión pro de las IAs más usadas, como ChatGPT, Claude o Gemini. Es gratis, tiene un límite que se renueva cada mes y se conecta con un clic.'],
-  ['¿Me cobran algo?', 'No. SymphorIA es gratis y nunca te cobra. Tienes un límite gratis cada día.'],
+  ['¿Me cobran algo?', 'No. Sinapse es gratis y nunca te cobra. Tienes un límite gratis cada día.'],
   ['¿Qué hay en la Guía?', 'Te muestro todo paso a paso con mi manita: temas, IA recomendadas para ti, cómo comparar dos y tu primer chat de verdad.']
 ];
 let wTok = 0;
@@ -4768,9 +4768,9 @@ async function worry(){
   if (wBusy() || CF.shows >= 3 || Date.now() - CF.last < 45000) return;
   CF.shows++; CF.last = Date.now(); CF.hits = []; CF.pts = [];
   const tok = ++wTok, H2 = SZ.HAND, alive = () => tok === wTok && $('#szWorry');
-  const w = document.createElement('div'); w.id = 'szWorry'; w.setAttribute('role', 'dialog'); w.setAttribute('aria-label', 'SynthonIA');
-  w.innerHTML = '<div class="wb"><button type="button" class="wx" data-w="x" aria-label="Cerrar">×</button><b>SynthonIA</b><p></p><div class="wq" hidden>' + W_FAQ.map((q, i) => '<button type="button" data-wq="' + i + '">' + esc(q[0]) + '</button>').join('') + '</div><div class="wa" hidden><button type="button" class="btn sm flow" data-w="guide">Mostrarme la Guía</button><button type="button" class="btn sm ghost" data-w="conn">Conectar una IA</button></div></div>'
-    + '<button type="button" class="wme" data-w="me" aria-label="SynthonIA">' + SZ.face('preocupada', isMobile() ? 60 : 72) + '</button>';
+  const w = document.createElement('div'); w.id = 'szWorry'; w.setAttribute('role', 'dialog'); w.setAttribute('aria-label', 'Sona');
+  w.innerHTML = '<div class="wb"><button type="button" class="wx" data-w="x" aria-label="Cerrar">×</button><b>Sona</b><p></p><div class="wq" hidden>' + W_FAQ.map((q, i) => '<button type="button" data-wq="' + i + '">' + esc(q[0]) + '</button>').join('') + '</div><div class="wa" hidden><button type="button" class="btn sm flow" data-w="guide">Mostrarme la Guía</button><button type="button" class="btn sm ghost" data-w="conn">Conectar una IA</button></div></div>'
+    + '<button type="button" class="wme" data-w="me" aria-label="Sona">' + SZ.face('preocupada', isMobile() ? 60 : 72) + '</button>';
   document.body.appendChild(w); document.body.classList.add('szworrying');
   /* en celular se para justo encima del aviso de bloqueo, sin taparlo */
   const lk0 = $('#lockCard'); if (isMobile() && lk0 && !lk0.hidden) w.style.bottom = Math.max(150, innerHeight - lk0.getBoundingClientRect().top + 12) + 'px';
@@ -4957,7 +4957,7 @@ function warnBlocked(){
 /* ---------- SynXCoin's: medidor, límite diario, avisos y modo ahorro ---------- */
 function todayUsed(){ return SZ.todayAll(); }
 let sxEl = null;
-function budgetOk(){ return true; }        /* ya no hay límite personal: el límite de hoy lo pone SymphorIA */
+function budgetOk(){ return true; }        /* ya no hay límite personal: el límite de hoy lo pone Sinapse */
 let limWarned = '';
 function coinWatch(){
   const q = SZ.SZQ; if (!q.limit || q.on === false) return;
@@ -5017,7 +5017,7 @@ function teamsHtml(){
     h += '<div class="tmc"><h4>' + esc(x.name) + '<small>' + (x.owner ? 'tuyo' : 'de ' + esc(x.ownerInfo.name)) + '</small></h4>';
     if (x.owner){
       h += x.hasKey ? '<div class="tmkey">🔒 <span>Compartes tu OpenRouter (' + esc(x.keyLabel) + '). Tu equipo lo usa sin ver la llave.</span><button class="lnk" type="button" data-ta="nokey" data-id="' + esc(x.id) + '">Dejar de compartir</button></div>'
-        : '<div class="cfgrow"><p>Compartir mi OpenRouter<small>Pega una llave: se guarda cifrada en SynthFlow y tu equipo nunca la ve. Mejor una llave solo para el equipo, con límite de crédito.</small></p></div><div class="tinv"><input type="text" data-sec="1" data-tk="' + esc(x.id) + '" placeholder="sk-or-…" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other" spellcheck="false"><button class="btn sm" type="button" data-ta="key" data-id="' + esc(x.id) + '">Compartir</button></div>';
+        : '<div class="cfgrow"><p>Compartir mi OpenRouter<small>Pega una llave: se guarda cifrada en Sonyx y tu equipo nunca la ve. Mejor una llave solo para el equipo, con límite de crédito.</small></p></div><div class="tinv"><input type="text" data-sec="1" data-tk="' + esc(x.id) + '" placeholder="sk-or-…" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other" spellcheck="false"><button class="btn sm" type="button" data-ta="key" data-id="' + esc(x.id) + '">Compartir</button></div>';
       h += '<div class="sxlbl">MIEMBROS</div>' + (x.members.length ? x.members.map(m => '<div class="tmrow">' + SZ.avatarHtml(m, m) + '<div class="tx"><b>' + esc(m.name) + '</b><small>' + esc(m.handle || m.email || '') + ' · hoy ' + fmt(m.used) + (x.daily ? ' / ' + fmt(x.daily) : '') + '</small></div>' + (x.daily ? '<span class="tmbar"><i style="transform:scaleX(' + Math.min(1, m.used / x.daily).toFixed(3) + ')"></i></span>' : '') + '<button class="x" type="button" data-ta="remove" data-id="' + esc(x.id) + '" data-sub="' + esc(m.sub) + '" data-nm="' + esc(m.name) + '" aria-label="Quitar a ' + esc(m.name) + '">✕</button></div>').join('') : '<p class="cnote" style="margin:4px 0">Aún sin miembros.</p>')
         + x.invites.map(i => '<div class="tmrow"><span class="av-me" style="background:rgba(255,255,255,.1);color:var(--soft)">' + (/^@/.test(i.to || '') ? '@' : '✉') + '</span><div class="tx"><b>' + esc(i.to || i.email) + '</b><small>invitación pendiente</small></div><button class="x" type="button" data-ta="uninvite" data-id="' + esc(x.id) + '" data-to="' + esc(i.to || i.email) + '" aria-label="Cancelar invitación">✕</button></div>').join('')
         + '<div class="tinv"><input data-te="' + esc(x.id) + '" type="text" placeholder="@usuario de tu amigo" autocomplete="off" autocapitalize="none" spellcheck="false"><button class="btn sm" type="button" data-ta="invite" data-id="' + esc(x.id) + '">Invitar</button></div>'
@@ -5041,7 +5041,7 @@ function teamsBind(box, reopen){
     const a = b.dataset.ta, id = b.dataset.id, run = async (body, ok) => { const l = b.textContent; b.disabled = true; if (b.tagName === 'BUTTON' && !b.classList.contains('cfgsw') && !b.classList.contains('x')) b.textContent = '…'; try{ await SZ.api('teams', { method:'POST', body }); if (ok) toast(ok); await loadTeams(); reopen(); }catch(er){ b.disabled = false; b.textContent = l; toast(er.message); } };
     if (a === 'use'){ const on = st().useTeam === id; if (on) delete st().useTeam; else st().useTeam = id; save(); b.setAttribute('aria-pressed', String(!on)); paintProv(); fixModel(true); renderList({ keep:true }); updateHint(); toast(on ? 'Ya no usas el OpenRouter del equipo.' : 'Listo: usas el OpenRouter del equipo.'); return; }
     if (a === 'create'){ const n = $('#tNewName', box).value.trim(); if (!n){ toast('Ponle un nombre a tu equipo.'); return; } return run({ action:'create', name:n }, 'Equipo creado. Ahora invita a tus amigos.'); }
-    if (a === 'invite'){ const v = $('[data-te="' + id + '"]', box).value.trim(); if (!v){ toast('Escribe el @usuario de tu amigo.'); return; } return run({ action:'invite', id, to:v }, 'Invitación enviada. Le aparecerá cuando entre a su cuenta de SymphorIA.'); }
+    if (a === 'invite'){ const v = $('[data-te="' + id + '"]', box).value.trim(); if (!v){ toast('Escribe el @usuario de tu amigo.'); return; } return run({ action:'invite', id, to:v }, 'Invitación enviada. Le aparecerá cuando entre a su cuenta de Sinapse.'); }
     if (a === 'key'){ const v = $('[data-tk="' + id + '"]', box).value.trim(); if (!v){ toast('Pega la llave de OpenRouter.'); return; } return run({ action:'key', id, key:v }, 'Tu equipo ya puede usar tu OpenRouter (sin ver la llave).'); }
     if (a === 'nokey') return run({ action:'key', id, key:'' }, 'Dejaste de compartir tu OpenRouter.');
     if (a === 'free') return run({ action:'settings', id, freeOnly:b.getAttribute('aria-pressed') !== 'true' }, 'Guardado.');
@@ -5158,8 +5158,8 @@ $('#thList').addEventListener('click', async e => {
 function thOpen(){ showChats('chats', true); }
 
 /* ---------- v2.6 · Proyectos: chats, instrucciones y archivos juntos en un solo lugar ----------
-   · Cada proyecto tiene nombre, descripción, instrucciones y archivos (su «conocimiento»).
-   · Los chats que empiezas dentro de un proyecto quedan guardados en él, y la IA recibe sus
+   · Cada espacio tiene nombre, descripción, instrucciones y archivos (su «conocimiento»).
+   · Los chats que empiezas dentro de un espacio quedan guardados en él, y la IA recibe sus
      instrucciones y lo que más se relaciona de sus archivos en cada mensaje.
    · Se guardan en este equipo y, si entraste a tu cuenta, viajan con ella (core 02). */
 const PJ_MAX = 200000, PJ_SEND = 8000, PJ_SEND_SAVER = 4000, PJ_COLORS = ['var(--sb-primary)', 'var(--sb-secondary)', 'var(--sb-warm)', 'var(--sb-spark)', 'var(--sb-light)', 'color-mix(in srgb,var(--sb-light) 55%,var(--sb-primary))'];   /* v2.9: los colores del tema, no fijos */
@@ -5205,11 +5205,11 @@ function pjPick(files, query, budget){
 function projSystem(chat, saver){
   const k = Object.keys(st().chats).find(x => st().chats[x] === chat);
   const p = pjGet(k && pjOf()[k]); if (!p) return '';
-  let s = 'Esta conversación es parte del proyecto «' + p.name + '»' + (p.desc ? ' (' + p.desc + ')' : '') + '.';
-  if (p.instr) s += '\nInstrucciones del proyecto (síguelas siempre):\n' + p.instr;
+  let s = 'Esta conversación es parte del espacio «' + p.name + '»' + (p.desc ? ' (' + p.desc + ')' : '') + '.';
+  if (p.instr) s += '\nInstrucciones del espacio (síguelas siempre):\n' + p.instr;
   if ((p.files || []).some(f => f.text)){
     const last = [...chat].reverse().find(m => m.role === 'user');
-    s += '\nConocimiento del proyecto: archivos que la persona subió. Úsalos como fuente principal y di de qué archivo sacas cada dato.\n' + pjPick(p.files, last ? (last.ask || last.content) : '', saver ? PJ_SEND_SAVER : PJ_SEND);
+    s += '\nConocimiento del espacio: archivos que la persona subió. Úsalos como fuente principal y di de qué archivo sacas cada dato.\n' + pjPick(p.files, last ? (last.ask || last.content) : '', saver ? PJ_SEND_SAVER : PJ_SEND);
   }
   return s;
 }
@@ -5236,23 +5236,23 @@ PC.addEventListener('click', () => { const p = pjCur(); if (p) pjOpen('page', p.
 function pjCrumb(){
   const p = mode === 'solo' ? pjCur() : null; PC.hidden = !p; if (!p) return;
   PC.style.setProperty('--pc', pjColor(p)); PC.innerHTML = PJ_ICO + '<span></span>'; $('span', PC).textContent = p.name;
-  PC.setAttribute('aria-label', 'Proyecto ' + p.name + ': abrir el proyecto'); PC.title = 'Abrir el proyecto';
+  PC.setAttribute('aria-label', 'Espacio ' + p.name + ': abrir el espacio'); PC.title = 'Abrir el espacio';
 }
 
 /* ---------- entradas: barra de íconos, panel de chats (y la hoja del celular) ---------- */
 {
-  const rb = document.createElement('button'); rb.type = 'button'; rb.className = 'rbtn'; rb.id = 'railProj'; rb.dataset.tip = 'Proyectos'; rb.style.setProperty('--i', '2');
-  rb.innerHTML = PJ_ICO + '<span class="rl">Proyectos</span>'; rb.setAttribute('aria-label', 'Proyectos');
+  const rb = document.createElement('button'); rb.type = 'button'; rb.className = 'rbtn'; rb.id = 'railProj'; rb.dataset.tip = 'Espacios'; rb.style.setProperty('--i', '2');
+  rb.innerHTML = PJ_ICO + '<span class="rl">Espacios</span>'; rb.setAttribute('aria-label', 'Espacios');
   $('#rail [data-r="new"]').after(rb);
   rb.addEventListener('click', () => PV.hidden || pjView.v !== 'list' ? pjOpen('list') : pjClose());
   const cb = document.createElement('button'); cb.type = 'button'; cb.className = 'cnew cproj'; cb.id = 'cProj';
-  cb.innerHTML = PJ_ICO + 'Proyectos';
+  cb.innerHTML = PJ_ICO + 'Espacios';
   $('#cNew').after(cb);
   cb.addEventListener('click', () => pjOpen('list'));
 }
 
 /* ---------- la página de proyectos (cubre la conversación; «Volver al chat» la cierra) ---------- */
-const PV = document.createElement('section'); PV.className = 'pjv'; PV.id = 'pjv'; PV.hidden = true; PV.setAttribute('aria-label', 'Proyectos'); PV.tabIndex = -1;
+const PV = document.createElement('section'); PV.className = 'pjv'; PV.id = 'pjv'; PV.hidden = true; PV.setAttribute('aria-label', 'Espacios'); PV.tabIndex = -1;
 $('#shell .main').appendChild(PV);
 let pjView = { v:'list', id:'' }, pjQ = '', pjSort = 't', pjArch = false, pjFormBack = null;
 function pjOpen(v, id){
@@ -5273,14 +5273,14 @@ function pjRender(){
   if (v === 'list') pjPaintList();
   const it = $('.pj-it', PV); if (it && p) it.textContent = p.instr;   /* las instrucciones van como texto, nunca como HTML */
 }
-const pjBar = (back) => '<div class="pj-bar">' + (back ? '<button type="button" class="pj-back" data-pa="list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Todos los proyectos</button>' : '<span></span>')
+const pjBar = (back) => '<div class="pj-bar">' + (back ? '<button type="button" class="pj-back" data-pa="list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Todos los espacios</button>' : '<span></span>')
   + '<button type="button" class="pj-close" data-pa="close">Volver al chat' + PJ_X + '</button></div>';
 
 function pjListHtml(){
-  return pjBar(false) + '<header class="pj-lh"><div><h1>Proyectos</h1><p>Junta chats, instrucciones y archivos de un mismo tema. La IA los tiene en cuenta en cada chat del proyecto.</p></div>'
-    + '<button type="button" class="btn pj-newb" data-pa="new">' + PJ_PLUS + 'Nuevo proyecto</button></header>'
-    + '<div class="pj-tools"><label class="pj-q"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input type="search" id="pjQ" placeholder="Buscar proyectos" autocomplete="off" aria-label="Buscar proyectos"></label>'
-    + '<label class="pj-sort"><span>Ordenar</span><select id="pjSort" aria-label="Ordenar proyectos"><option value="t">Actividad reciente</option><option value="n">Nombre</option><option value="c">Más nuevos</option></select></label>'
+  return pjBar(false) + '<header class="pj-lh"><div><h1>Espacios</h1><p>Junta chats, instrucciones y archivos de un mismo tema. La IA los tiene en cuenta en cada chat del espacio.</p></div>'
+    + '<button type="button" class="btn pj-newb" data-pa="new">' + PJ_PLUS + 'Nuevo espacio</button></header>'
+    + '<div class="pj-tools"><label class="pj-q"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input type="search" id="pjQ" placeholder="Buscar espacios" autocomplete="off" aria-label="Buscar espacios"></label>'
+    + '<label class="pj-sort"><span>Ordenar</span><select id="pjSort" aria-label="Ordenar espacios"><option value="t">Actividad reciente</option><option value="n">Nombre</option><option value="c">Más nuevos</option></select></label>'
     + '<button type="button" class="pj-arch" id="pjArchB" aria-pressed="false">Archivados</button></div>'
     + '<div class="pj-list" id="pjList"></div>';
 }
@@ -5293,8 +5293,8 @@ function pjPaintList(){
     .sort((a, b) => (!!b.star - !!a.star) || (pjSort === 'n' ? a.name.localeCompare(b.name, 'es') : pjSort === 'c' ? (b.c0 || 0) - (a.c0 || 0) : (b.t || 0) - (a.t || 0)));
   const box = $('#pjList', PV);
   if (!L.length){
-    box.innerHTML = qq || pjArch ? '<div class="pj-none"><b>' + (qq ? 'Ningún proyecto coincide.' : 'No tienes proyectos archivados.') + '</b></div>'
-      : '<div class="pj-empty"><span class="pj-big">' + PJ_ICO + '</span><b>Tu primer proyecto</b><p>Por ejemplo, tu tesis o tu negocio: le das instrucciones y archivos una sola vez y cada chat del proyecto ya los conoce.</p>'
+    box.innerHTML = qq || pjArch ? '<div class="pj-none"><b>' + (qq ? 'Ningún espacio coincide.' : 'No tienes espacios archivados.') + '</b></div>'
+      : '<div class="pj-empty"><span class="pj-big">' + PJ_ICO + '</span><b>Tu primer espacio</b><p>Por ejemplo, tu tesis o tu negocio: le das instrucciones y archivos una sola vez y cada chat del espacio ya los conoce.</p>'
         + '<div class="pj-exs">' + PJ_EX.map((x, i) => '<button type="button" class="pj-ex" data-ex="' + i + '">' + esc(x[0]) + '</button>').join('') + '</div></div>';
     return;
   }
@@ -5308,28 +5308,28 @@ function pjPaintList(){
 }
 
 function pjFormHtml(p){
-  return pjBar(true) + '<form class="pj-form" id="pjForm" novalidate><h1>' + (p ? 'Editar el proyecto' : 'Nuevo proyecto') + '</h1>'
-    + '<label class="pj-f"><span>¿En qué estás trabajando?</span><input id="pjName" maxlength="60" required placeholder="Ponle un nombre al proyecto" autocomplete="off" data-autofocus value="' + esc(p ? p.name : '') + '"></label>'
+  return pjBar(true) + '<form class="pj-form" id="pjForm" novalidate><h1>' + (p ? 'Editar el espacio' : 'Nuevo espacio') + '</h1>'
+    + '<label class="pj-f"><span>¿En qué estás trabajando?</span><input id="pjName" maxlength="60" required placeholder="Ponle un nombre al espacio" autocomplete="off" data-autofocus value="' + esc(p ? p.name : '') + '"></label>'
     + '<label class="pj-f"><span>¿Qué quieres lograr? <small>(opcional)</small></span><textarea id="pjDesc" maxlength="300" rows="3" placeholder="Cuéntale a la IA de qué se trata: tu objetivo, para quién es, el tono que prefieres…">' + esc(p ? p.desc || '' : '') + '</textarea></label>'
     + (p ? '' : '<div class="pj-exs sm"><span>Ideas:</span>' + PJ_EX.map((x, i) => '<button type="button" class="pj-ex" data-ex="' + i + '">' + esc(x[0]) + '</button>').join('') + '</div>')
-    + '<div class="pj-acts"><button type="button" class="lnk" data-pa="' + (p ? 'page' : 'list') + '">Cancelar</button><button type="submit" class="btn">' + (p ? 'Guardar' : 'Crear proyecto') + '</button></div></form>';
+    + '<div class="pj-acts"><button type="button" class="lnk" data-pa="' + (p ? 'page' : 'list') + '">Cancelar</button><button type="submit" class="btn">' + (p ? 'Guardar' : 'Crear espacio') + '</button></div></form>';
 }
 
 function pjPageHtml(p){
   const L = pjChats(p.id), size = pjSize(p), pct = Math.min(100, Math.round(size / PJ_MAX * 100));
   return pjBar(true) + '<header class="pj-h" style="--pc:' + pjColor(p) + '"><span class="pj-ic">' + PJ_ICO + '</span><div class="pj-ht"><h1>' + esc(p.name) + '</h1>' + (p.desc ? '<p>' + esc(p.desc) + '</p>' : '') + (p.arch ? '<em class="pj-tag">Archivado</em>' : '') + '</div>'
     + '<button type="button" class="pjc-star" data-star="' + esc(p.id) + '" aria-pressed="' + !!p.star + '" aria-label="' + (p.star ? 'Quitar de destacados' : 'Destacar') + '">' + PJ_STAR + '</button>'
-    + '<button type="button" class="pj-more" data-pa="menu" aria-haspopup="menu" aria-expanded="false" aria-label="Más opciones del proyecto">' + PJ_DOTS + '</button></header>'
+    + '<button type="button" class="pj-more" data-pa="menu" aria-haspopup="menu" aria-expanded="false" aria-label="Más opciones del espacio">' + PJ_DOTS + '</button></header>'
     + '<div class="pj-grid"><div class="pj-main">'
-    + '<form class="pj-ask" id="pjAsk"><label class="sr" for="pjAskIn">Empieza un chat en este proyecto</label><textarea id="pjAskIn" rows="2" maxlength="20000" placeholder="¿Qué quieres hacer en este proyecto?" data-autofocus></textarea><button type="submit" class="send" aria-label="Empezar el chat">' + PJ_SEND_ICO + '</button></form>'
-    + '<h2 class="pj-sh">Chats del proyecto</h2>'
+    + '<form class="pj-ask" id="pjAsk"><label class="sr" for="pjAskIn">Empieza un chat en este espacio</label><textarea id="pjAskIn" rows="2" maxlength="20000" placeholder="¿Qué quieres hacer en este espacio?" data-autofocus></textarea><button type="submit" class="send" aria-label="Empezar el chat">' + PJ_SEND_ICO + '</button></form>'
+    + '<h2 class="pj-sh">Chats del espacio</h2>'
     + (L.length ? '<div class="pj-chats">' + L.map(x => '<button type="button" class="pj-chat" data-k="' + esc(x.k) + '"><b>' + esc(x.title) + '</b><small>' + esc(info(x.model).name || 'Automático') + ' · ' + pjAgo(x.t) + '</small></button>').join('') + '</div>'
-      : '<p class="pj-none sm">Los chats que empieces aquí se guardan en este proyecto. También puedes mover un chat desde tu lista con el ícono de carpeta.</p>')
-    + '</div><aside class="pj-side" aria-label="Conocimiento del proyecto"><div class="pj-kh"><h2>Conocimiento del proyecto</h2><small>Lo que la IA sabe en cada chat de «' + esc(p.name) + '»</small></div>'
+      : '<p class="pj-none sm">Los chats que empieces aquí se guardan en este espacio. También puedes mover un chat desde tu lista con el ícono de carpeta.</p>')
+    + '</div><aside class="pj-side" aria-label="Conocimiento del espacio"><div class="pj-kh"><h2>Conocimiento del espacio</h2><small>Lo que la IA sabe en cada chat de «' + esc(p.name) + '»</small></div>'
     + '<section class="pj-card" id="pjInstr"><div class="pj-ch"><h3>Instrucciones</h3><button type="button" class="lnk" data-pa="instr">' + (p.instr ? 'Editar' : 'Agregar') + '</button></div>'
-    + (p.instr ? '<p class="pj-it"></p>' : '<p class="pj-muted">Dile a la IA cómo responder en este proyecto: el tono, el formato, lo que debe saber de ti.</p>') + '</section>'
+    + (p.instr ? '<p class="pj-it"></p>' : '<p class="pj-muted">Dile a la IA cómo responder en este espacio: el tono, el formato, lo que debe saber de ti.</p>') + '</section>'
     + '<section class="pj-card" id="pjFiles"><div class="pj-ch"><h3>Archivos</h3><span class="pj-fb"><button type="button" class="lnk" data-pa="paste">Pegar texto</button><button type="button" class="btn sm ghost" data-pa="upload">' + PJ_PLUS + 'Subir</button></span></div>'
-    + '<div class="pj-cap" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '" aria-label="Capacidad usada"><i style="width:' + Math.max(pct, size ? 2 : 0) + '%"></i></div><small class="pj-muted">' + (size ? 'Usas ' + (pct < 1 ? 'menos del 1 %' : 'el ' + pct + ' %') + ' del espacio · ' + pjNum(size) + ' de ' + pjNum(PJ_MAX) + ' caracteres. En cada mensaje la IA lee lo que más se relaciona con tu pregunta (hasta unas 1.300 palabras, que cuentan en tu límite).' : 'PDF, Word en texto, código, notas… La IA los usa como fuente en cada chat del proyecto.') + '</small>'
+    + '<div class="pj-cap" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '" aria-label="Capacidad usada"><i style="width:' + Math.max(pct, size ? 2 : 0) + '%"></i></div><small class="pj-muted">' + (size ? 'Usas ' + (pct < 1 ? 'menos del 1 %' : 'el ' + pct + ' %') + ' del espacio · ' + pjNum(size) + ' de ' + pjNum(PJ_MAX) + ' caracteres. En cada mensaje la IA lee lo que más se relaciona con tu pregunta (hasta unas 1.300 palabras, que cuentan en tu límite).' : 'PDF, Word en texto, código, notas… La IA los usa como fuente en cada chat del espacio.') + '</small>'
     + ((p.files || []).length ? '<ul class="pj-fl">' + p.files.map(f => '<li><span class="pj-fi">' + esc((f.name.split('.').pop() || 'txt').slice(0, 4).toUpperCase()) + '</span><span class="pj-fn"><b>' + esc(f.name) + '</b><small>' + (f.text ? pjNum(f.text.length) + ' caracteres' : 'Guardado en otro equipo') + '</small></span><button type="button" class="pj-fx" data-fdel="' + esc(f.id) + '" aria-label="Quitar ' + esc(f.name) + '">' + PJ_X + '</button></li>').join('') + '</ul>' : '')
     + '<input type="file" id="pjFileIn" multiple hidden></section>'
     + '</aside></div>';
@@ -5345,10 +5345,10 @@ PV.addEventListener('submit', e => {
   e.preventDefault();
   if (e.target.id === 'pjForm'){
     const n = $('#pjName', PV).value.trim(), d = $('#pjDesc', PV).value.trim();
-    if (!n){ $('#pjName', PV).focus(); toast('Ponle un nombre al proyecto.'); return; }
-    if (pjView.v === 'edit'){ const p = pjGet(pjView.id); p.name = n; p.desc = d; pjEdit(p); toast('Proyecto guardado.'); pjOpen('page', p.id); return; }
+    if (!n){ $('#pjName', PV).focus(); toast('Ponle un nombre al espacio.'); return; }
+    if (pjView.v === 'edit'){ const p = pjGet(pjView.id); p.name = n; p.desc = d; pjEdit(p); toast('Espacio guardado.'); pjOpen('page', p.id); return; }
     const p = { id:'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name:n, desc:d, instr:'', files:[], c0:Date.now(), t:Date.now(), u:Date.now(), c:pjs().length };
-    pjs().push(p); save(); toast('Proyecto creado. Agrega instrucciones o archivos, o empieza un chat.'); pjOpen('page', p.id); return;
+    pjs().push(p); save(); toast('Espacio creado. Agrega instrucciones o archivos, o empieza un chat.'); pjOpen('page', p.id); return;
   }
   if (e.target.id === 'pjAsk'){
     const t = $('#pjAskIn', PV).value.trim(), p = pjGet(pjView.id);
@@ -5364,7 +5364,7 @@ PV.addEventListener('click', async e => {
   if (t.dataset.star){ const q = pjGet(t.dataset.star); q.star = !q.star; pjEdit(q); if (pjView.v === 'list') pjPaintList(); else pjRender(); return; }
   if (t.dataset.ex){ const x = PJ_EX[+t.dataset.ex]; if (pjView.v !== 'new') pjOpen('new'); $('#pjName', PV).value = x[0]; $('#pjDesc', PV).value = x[1]; $('#pjName', PV).focus(); return; }
   if (t.dataset.k){ const { model, id } = parseKey(t.dataset.k); openThread(model, id); return; }
-  if (t.dataset.fdel){ const f = p.files.find(x => x.id === t.dataset.fdel); if (!f || !(await SZ.szConfirm('¿Quitar «' + f.name + '»?', 'La IA ya no lo usará en los chats de este proyecto.', 'Quitar', true))) return; p.files = p.files.filter(x => x !== f); pjEdit(p); pjRender(); return; }
+  if (t.dataset.fdel){ const f = p.files.find(x => x.id === t.dataset.fdel); if (!f || !(await SZ.szConfirm('¿Quitar «' + f.name + '»?', 'La IA ya no lo usará en los chats de este espacio.', 'Quitar', true))) return; p.files = p.files.filter(x => x !== f); pjEdit(p); pjRender(); return; }
   if (a === 'close'){ pjClose(); return; }
   if (a === 'list'){ pjOpen('list'); return; }
   if (a === 'new'){ pjOpen('new'); return; }
@@ -5383,10 +5383,10 @@ function pjInline(card, title, val, max, ph, done, named){
 }
 function pjRoom(p){ return PJ_MAX - pjSize(p); }
 function pjAddText(p, name, text){
-  const room = pjRoom(p); if (room <= 0){ toast('Este proyecto ya está lleno. Quita un archivo para hacer espacio.'); return false; }
+  const room = pjRoom(p); if (room <= 0){ toast('Este espacio ya está lleno. Quita un archivo para hacer espacio.'); return false; }
   const cut = text.length > room;
   (p.files || (p.files = [])).push({ id:'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name:String(name).slice(0, 120), text:cut ? text.slice(0, room) : text });
-  pjEdit(p); if (cut) toast('«' + name + '» era muy largo: guardé lo que cabe en el proyecto.');
+  pjEdit(p); if (cut) toast('«' + name + '» era muy largo: guardé lo que cabe en el espacio.');
   return true;
 }
 async function pjAddFiles(p, list){
@@ -5430,14 +5430,14 @@ document.addEventListener('pointerdown', e => { if (pjMenu && !pjMenu.el.contain
 function pjMenuOpen(anchor, p){
   pjMenuAt(anchor, [
     { label:'Editar nombre y descripción', go:() => pjOpen('edit', p.id) },
-    { label:p.arch ? 'Sacar de archivados' : 'Archivar', go:() => { p.arch = !p.arch; pjEdit(p); toast(p.arch ? 'Proyecto archivado. Lo encuentras en «Archivados».' : 'El proyecto volvió a tu lista.'); pjRender(); } },
+    { label:p.arch ? 'Sacar de archivados' : 'Archivar', go:() => { p.arch = !p.arch; pjEdit(p); toast(p.arch ? 'Espacio archivado. Lo encuentras en «Archivados».' : 'El espacio volvió a tu lista.'); pjRender(); } },
     null,
-    { label:'Borrar el proyecto', danger:true, go:async () => {
-      if (!(await SZ.szConfirm('¿Borrar «' + p.name + '»?', 'Se borran sus instrucciones y archivos. Sus chats no se borran: quedan en tu lista de chats.', 'Borrar proyecto', true))) return;
+    { label:'Borrar el espacio', danger:true, go:async () => {
+      if (!(await SZ.szConfirm('¿Borrar «' + p.name + '»?', 'Se borran sus instrucciones y archivos. Sus chats no se borran: quedan en tu lista de chats.', 'Borrar espacio', true))) return;
       st().projects = pjs().filter(x => x !== p); st().pjDel = [...(st().pjDel || []), p.id].slice(-200);
       Object.keys(pjOf()).forEach(k => { if (pjOf()[k] === p.id) delete pjOf()[k]; });
       if (st().curProj === p.id) st().curProj = '';
-      save(); toast('Proyecto borrado.'); pjOpen('list'); renderChats(false); pjCrumb();
+      save(); toast('Espacio borrado.'); pjOpen('list'); renderChats(false); pjCrumb();
     } }
   ]);
 }
@@ -5449,7 +5449,7 @@ renderChats = function(){
     if ($('.thpj-m', it)) return;
     const p = pjGet(pjOf()[it.dataset.k]);
     if (p){ const tg = document.createElement('span'); tg.className = 'thpj'; tg.style.setProperty('--pc', pjColor(p)); tg.innerHTML = PJ_ICO + '<span></span>'; $('span', tg).textContent = p.name; const tt = $('.tt', it); if (tt) tt.appendChild(tg); }
-    const b = document.createElement('button'); b.type = 'button'; b.className = 'thpj-m'; b.setAttribute('aria-label', 'Mover a un proyecto'); b.setAttribute('aria-haspopup', 'menu'); b.innerHTML = PJ_ICO;
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'thpj-m'; b.setAttribute('aria-label', 'Mover a un espacio'); b.setAttribute('aria-haspopup', 'menu'); b.innerHTML = PJ_ICO;
     const ren = $('[data-ren]', it); if (ren) ren.before(b); else it.appendChild(b);
   });
 };
@@ -5458,12 +5458,12 @@ $('#thList').addEventListener('click', e => {
   e.stopPropagation(); e.preventDefault();
   const k = b.closest('.thi').dataset.k, cur = pjOf()[k];
   const items = pjs().filter(p => !p.arch).sort((a, c) => (c.t || 0) - (a.t || 0)).slice(0, 8).map(p => ({ label:p.name, on:p.id === cur, ic:'<i class="pjdot" style="--pc:' + pjColor(p) + '"></i>', go:() => { pjOf()[k] = p.id; p.t = Date.now(); save(); renderChats(false); pjCrumb(); toast('Chat movido a «' + p.name + '».'); } }));
-  if (cur) items.push(null, { label:'Sacar del proyecto', go:() => { delete pjOf()[k]; save(); renderChats(false); pjCrumb(); toast('El chat ya no está en un proyecto.'); } });
-  items.push(null, { label:'Nuevo proyecto…', ic:PJ_PLUS, go:() => pjOpen('new') });
+  if (cur) items.push(null, { label:'Sacar del espacio', go:() => { delete pjOf()[k]; save(); renderChats(false); pjCrumb(); toast('El chat ya no está en un espacio.'); } });
+  items.push(null, { label:'Nuevo espacio…', ic:PJ_PLUS, go:() => pjOpen('new') });
   pjMenuAt(b, items);
 }, true);
 pjCrumb();
-if (params.get('proyectos') != null) pjOpen('list');
+if (params.get('espacios') != null) pjOpen('list');
 /* ---------- v3.0 · Sintéticos en la barra lateral (como los artefactos de Claude) ----------
    Junta todo lo que la IA creó en tus chats (páginas, juegos, SVG, código, documentos) en una sola lista.
    Tocar uno lo abre al lado; «Ir al chat» te lleva a la conversación donde nació. Se arma al abrir la lista, nada se guarda aparte. */
@@ -5530,7 +5530,7 @@ function mmOpen(){
   const L = [{ label:'Nuevo chat', ico:'new', fn:() => newChat() }];
   if (mode === 'solo') L.push({ label:'Copiar la conversación', ico:'copy', fn:() => { copyText(chatMd()); toast('Conversación copiada.'); } }, { label:'Descargar como texto', ico:'down', fn:exportMd });
   else L.push({ label:'Empezar otra comparación', ico:'cmp', fn:() => clearChat() }, { label:'Volver a una sola IA', ico:'exit', fn:() => removeCmp(st().cmp[st().cmp.length - 1]) });
-  L.push('—', { label:'Lo que recuerdo de ti', ico:'brain', fn:() => SZ.cfgModal('mem') }, ...(SZ.importOpen ? [{ label:'Importar chats y memoria', ico:'up', fn:() => SZ.importOpen() }] : []), { label:'Ajustes', ico:'cog', fn:() => SZ.cfgModal() }, { label:'Planes', ico:'trophy', fn:() => SZ.plansModal() }, ...(SZ.aliasOk() ? [{ label:'A.L.I.A.S. · equipo', ico:'ai', fn:() => { location.href = 'alias.html'; } }] : []), { label:SZ.lang() === 'en' ? 'Español' : 'English', ico:'globe', fn:() => SZ.setLang(SZ.lang() === 'en' ? 'es' : 'en') }, { label:'Ayuda: algo no carga', ico:'help', fn:helpLoad });
+  L.push('—', { label:'Lo que recuerdo de ti', ico:'brain', fn:() => SZ.cfgModal('mem') }, ...(SZ.importOpen ? [{ label:'Importar chats y memoria', ico:'up', fn:() => SZ.importOpen() }] : []), { label:'Ajustes', ico:'cog', fn:() => SZ.cfgModal() }, { label:'Planes', ico:'trophy', fn:() => SZ.plansModal() }, ...(SZ.aliasOk() ? [{ label:'Quoryn · equipo', ico:'ai', fn:() => { location.href = 'alias.html'; } }] : []), { label:SZ.lang() === 'en' ? 'Español' : 'English', ico:'globe', fn:() => SZ.setLang(SZ.lang() === 'en' ? 'es' : 'en') }, { label:'Ayuda: algo no carga', ico:'help', fn:helpLoad });
   if (trialOn) L.push({ label:'Salir de la prueba guiada', ico:'exit', fn:() => exitTrial() });
   if (mode === 'solo') L.push('—', { label:'Borrar este chat', ico:'trash', danger:true, fn:() => clearChat(true) });
   const r = mb.getBoundingClientRect(), m = SZ.menuOpen(L, 0, r.bottom + 8, 'mm');
@@ -5542,7 +5542,7 @@ function mmOpen(){
 function helpLoad(){
   if (window.__puterBlocked || !window.puter) return showBlockHelp('script');
   if (window.__popupBlocked) return showBlockHelp('popup');
-  toast('Todo está cargando bien. Si algo no funciona, pregúntale a SynthonIA o abre la Ayuda.');
+  toast('Todo está cargando bien. Si algo no funciona, pregúntale a Sona o abre la Ayuda.');
 }
 $('#moreBtn').dataset.menuOwner = '1'; $('#moreBtn').setAttribute('aria-expanded', 'false');
 $('#moreBtn').addEventListener('click', mmOpen);
@@ -5606,10 +5606,10 @@ function driveModal(){
   const paint = async () => {
     const cid = await SZ.DRIVE.cid(), m = SZ.DRIVE.meta();
     const body = !cid
-      ? '<p class="cnote">Google Drive todavía no está activado en SymphorIA. Cuando Prime o ZFlow lo activen, aquí podrás vincular tu Drive con un clic. Mientras tanto, tus chats siguen guardados en este dispositivo' + (SZ.ACC.ready ? ' y en tu cuenta.' : '.') + '</p>'
+      ? '<p class="cnote">Google Drive todavía no está activado en Sinapse. Cuando Prime o ZFlow lo activen, aquí podrás vincular tu Drive con un clic. Mientras tanto, tus chats siguen guardados en este dispositivo' + (SZ.ACC.ready ? ' y en tu cuenta.' : '.') + '</p>'
       : m && m.linked
         ? '<div class="drst"><i class="pdot2 ' + (SZ.DRIVE.live() ? 'ok' : 'wait') + '" aria-hidden="true"></i><div><b>Tu Drive está vinculado</b><span>' + (m.last ? 'Última copia ' + agoTxt(m.last) + ' · ' + fmt(m.n || 0) + (m.n === 1 ? ' chat · ' : ' chats · ') + ((m.size || 0) / 1048576).toFixed(2).replace('.', ',') + ' MB' : 'Aún sin copia') + '</span><small>' + (SZ.DRIVE.live() ? 'Mientras esta pestaña esté abierta, cada cambio se guarda solo.' : 'Toca «Guardar ahora» para guardar y traer tus chats.') + '</small></div></div>'
-        : '<ul class="drl"><li><b>Más espacio:</b> tus chats viven también en tu Google Drive, no solo en este dispositivo.</li><li><b>Privado:</b> uso solo una carpeta oculta de SynthFlow. No puedo ver ni tocar tus otros archivos.</li><li><b>Seguro:</b> nunca borro chats al traerlos (se mezclan) y tus llaves no van en la copia.</li></ul>';
+        : '<ul class="drl"><li><b>Más espacio:</b> tus chats viven también en tu Google Drive, no solo en este dispositivo.</li><li><b>Privado:</b> uso solo una carpeta oculta de Sonyx. No puedo ver ni tocar tus otros archivos.</li><li><b>Seguro:</b> nunca borro chats al traerlos (se mezclan) y tus llaves no van en la copia.</li></ul>';
     const cd = $('.tcard', w), h0 = cd.offsetHeight;
     $('.drb', w).innerHTML = body;
     $('.tbtn', w).innerHTML = '<button class="lnk" type="button" data-d="x">Cerrar</button>' + (!cid ? '' : m && m.linked ? '<button class="lnk" type="button" data-d="un">Desvincular</button><button class="btn sm flow" type="button" data-d="go">Guardar ahora</button>' : '<button class="btn sm flow" type="button" data-d="go">Vincular mi Google Drive</button>');
@@ -5665,10 +5665,10 @@ function accModal(){
         + '<div class="sxstats"><div><b>' + fmt(n) + '</b><span>chats en la nube</span></div><div><b>' + fmt(Object.values(st().usage || {}).reduce((a, u) => a + (u.requests || 0), 0)) + '</b><span>respuestas en total</span></div><div><b>' + fmt(Object.values(st().chats).reduce((a, c) => a + (Array.isArray(c) ? c.filter(m => m && m.star).length : 0), 0)) + '</b><span>mensajes favoritos</span></div></div>'
         + (false ? '<div class="sxsave"><p>Guardar mi llave de OpenRouter (de antes) en mi cuenta, cifrada, para no volver a pegarla en otro dispositivo.</p><button class="sxsw" id="aKey" type="button" aria-pressed="' + !!st().syncKey + '" aria-label="Guardar mi llave en mi cuenta"></button></div>' : '')
         + spaceHtml()
-        + (u.claimable ? '<div class="sxsave"><p>Esta cuenta está reservada para el equipo de SymphorIA. Actívala con tu código de configuración.</p><button class="btn sm" id="aClaim" type="button">Activar mi rango</button></div>' : '')
+        + (u.claimable ? '<div class="sxsave"><p>Esta cuenta está reservada para el equipo de Sinapse. Actívala con tu código de configuración.</p><button class="btn sm" id="aClaim" type="button">Activar mi rango</button></div>' : '')
         + (['owner', 'admin', 'staff'].includes(u.role) ? '<div id="aTrial"><div class="tmload">Cargando las IAs conectadas…</div></div>' : '')
 
-      : '<div class="word" id="aWord"></div><div class="tn">TU CUENTA</div><div class="tb"><h3>Entra a SynthFlow</h3><p>Con tu cuenta tus chats y favoritos te siguen a cualquier dispositivo, personalizas tu perfil y puedes hablar con el equipo de SymphorIA. Solo necesitas un usuario y una contraseña (o tu cuenta de Google). Puter sigue siendo solo para sus IA.</p><div id="aAuth"></div></div>')
+      : '<div class="word" id="aWord"></div><div class="tn">TU CUENTA</div><div class="tb"><h3>Entra a Sonyx</h3><p>Con tu cuenta tus chats y favoritos te siguen a cualquier dispositivo, personalizas tu perfil y puedes hablar con el equipo de Sinapse. Solo necesitas un usuario y una contraseña (o tu cuenta de Google). Puter sigue siendo solo para sus IA.</p><div id="aAuth"></div></div>')
     + '<div class="tbtn" style="margin-top:18px"><button class="lnk" id="aClose" type="button">Cerrar</button>'
     + (signed ? '<button class="lnk" id="aSync" type="button">Guardar ahora</button><button class="lnk" id="aDel" type="button">Borrar cuenta</button><button class="btn sm ghost" id="aOut" type="button">Cerrar sesión</button>' : '') + '</div>'
     + (signed ? '<div class="aout2"><button class="lnk" id="aOutAll" type="button">Cerrar sesión en todos mis dispositivos</button></div>' : '') + '</div>';
@@ -5698,7 +5698,7 @@ function accModal(){
     toast('Sesión cerrada. Tus chats quedaron en tu cuenta y se borraron de este dispositivo.'); setTimeout(() => location.reload(), 1100);
   });
   $('#aDel').addEventListener('click', async () => {
-    if (!(await SZ.szConfirm('¿Borrar tu cuenta de SynthFlow?', 'Se borran para siempre tu perfil, tus chats guardados en tu cuenta y lo que hay en este dispositivo. No se puede deshacer.', 'Seguir', true))) return;
+    if (!(await SZ.szConfirm('¿Borrar tu cuenta de Sonyx?', 'Se borran para siempre tu perfil, tus chats guardados en tu cuenta y lo que hay en este dispositivo. No se puede deshacer.', 'Seguir', true))) return;
     const isPass = u.kind === 'pass' || !!u.username;
     const v = await SZ.szPrompt('Confirma que eres tú', isPass ? 'Escribe tu contraseña para borrar la cuenta.' : 'Escribe tu correo (' + (u.email || '') + ') para borrar la cuenta.', 'Borrar mi cuenta', { type:isPass ? 'password' : 'email', ac:isPass ? 'current-password' : 'off', danger:true });
     if (!v) return;
@@ -5714,7 +5714,7 @@ function accModal(){
   });
   const cl = $('#aClaim');
   if (cl) cl.addEventListener('click', async () => {
-    const v = await SZ.szPrompt('Activar tu rango', 'Escribe el código de configuración del equipo de SymphorIA.', 'Activar', { sec:true });
+    const v = await SZ.szPrompt('Activar tu rango', 'Escribe el código de configuración del equipo de Sinapse.', 'Activar', { sec:true });
     if (!v) return;
     try{ const r = await SZ.accClaim(v); toast('¡Listo! Tu rango: ' + (SZ.ROLE_NAME[r] || r) + '.'); reopen(); }catch(er){ toast(er.message); }
   });
@@ -5742,7 +5742,7 @@ SZ.cfgLinks.push(
   ['Conectar Puter u otra IA', () => openConnect(), 'Tu versión pro de las IAs más usadas, gratis'],
   ['Google Drive', () => driveModal(), 'Guarda una copia de tus chats en tu Drive'],
   ['Tu ranking (a ciegas)', () => rankModal(), 'Las IAs que más te gustan según tus votos']);
-if (!SZ.appStandalone()) SZ.cfgLinks.push(['Descargar la app SynthFlow', () => SZ.appPromo(true), 'Se instala desde aquí: pantalla completa y a un toque']);
+if (!SZ.appStandalone()) SZ.cfgLinks.push(['Descargar la app Sonyx', () => SZ.appPromo(true), 'Se instala desde aquí: pantalla completa y a un toque']);
 /* «Respuestas cortas» desde Ajustes también pinta su botón */
 addEventListener('synthz-saver', () => { $$('#sxSw, #saverBtn').forEach(x => x.setAttribute('aria-pressed', String(!!st().sx.saver))); updateHint(); });
 /* el «+» trae todo: archivos, crear imagen, buscar en internet y respuestas cortas */
@@ -5812,10 +5812,10 @@ addEventListener('synthz-saver', () => { $$('#sxSw, #saverBtn').forEach(x => x.s
    Con OpenRouter directo solo se manda reasoning.effort cuando es low/high. Profundo pide cuenta (entrar es gratis).
    Lo guardado con los nombres viejos se lee así: Bajo → Veloz, Alto → Profundo, Medio → Auto. */
 const EFF = {
-  auto:     { n:'Auto',     d:'La IA decide cuánto pensar según tu pregunta.',              api:'',         hint:'',  tok:0, ico:'<path d="M4.5 16a8 8 0 1 1 15 0"/><path d="M12 14l3.5-4"/>' },
-  fast:     { n:'Veloz',    d:'Respuestas rápidas y cortas, para lo del día a día.',          api:'low',      hint:'Responde rápido y directo, en pocas frases y sin rodeos.', tok:700, ico:'<path d="M13 3L5 14h6l-1 7 8-11h-6l1-7z"/>' },
-  deep:     { n:'Profundo', d:'Piensa a fondo y revisa su respuesta. Es el que más EnerX gasta.', api:'high', hint:'Razona con cuidado antes de responder: analiza el problema paso a paso, revisa tu respuesta y entrega una respuesta completa y bien fundamentada.', tok:0, ico:'<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/><path d="M11 8v3l2 1.5"/>' },
-  creative: { n:'Creativo', d:'Ideas originales y textos con chispa, para crear.',            api:'creative', hint:'Sé creativo y original: propone ideas poco obvias, usa imágenes y ejemplos vivos, juega con el tono y evita lo genérico, sin perder la claridad ni inventar datos.', tok:0, ico:'<path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/><circle cx="12" cy="12" r="2.5"/>' }
+  auto:     { n:'Flow',     d:'La IA decide cuánto pensar según tu pregunta.',              api:'',         hint:'',  tok:0, ico:'<path d="M4.5 16a8 8 0 1 1 15 0"/><path d="M12 14l3.5-4"/>' },
+  fast:     { n:'Fragment', d:'Respuestas rápidas y cortas, para lo del día a día.',          api:'low',      hint:'Responde rápido y directo, en pocas frases y sin rodeos.', tok:700, ico:'<path d="M13 3L5 14h6l-1 7 8-11h-6l1-7z"/>' },
+  deep:     { n:'Focus',    d:'Piensa a fondo y revisa su respuesta. Es el que más EnerX gasta.', api:'high', hint:'Razona con cuidado antes de responder: analiza el problema paso a paso, revisa tu respuesta y entrega una respuesta completa y bien fundamentada.', tok:0, ico:'<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/><path d="M11 8v3l2 1.5"/>' },
+  creative: { n:'Horizon',  d:'Ideas originales y textos con chispa, para crear.',            api:'creative', hint:'Sé creativo y original: propone ideas poco obvias, usa imágenes y ejemplos vivos, juega con el tono y evita lo genérico, sin perder la claridad ni inventar datos.', tok:0, ico:'<path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/><circle cx="12" cy="12" r="2.5"/>' }
 };
 const EFF_KEYS = ['auto', 'fast', 'deep', 'creative'];
 const EFF_OLD = { low:'fast', high:'deep', medium:'auto' };
@@ -5836,7 +5836,7 @@ function effortOpts(saver){ const k = effKey(); if (k === 'auto') return {}; con
   btn.addEventListener('click', e => { e.stopPropagation(); open(menu.hidden); });
   menu.addEventListener('click', e => {
     const b = e.target.closest('[data-eff]'); if (!b) return; const k = b.dataset.eff;
-    if (locked(k)){ open(false); toast('El esfuerzo Profundo es para cuentas (entrar es gratis).'); SZ.guestGate({ mode:'signup' }); return; }
+    if (locked(k)){ open(false); toast('El esfuerzo Focus es para cuentas (entrar es gratis).'); SZ.guestGate({ mode:'signup' }); return; }
     st().sx.effort = k; save(); paint(); open(false); btn.focus(); toast('Esfuerzo: ' + EFF[k].n + (k === 'auto' ? '' : ' · ' + EFF[k].d));
   });
   document.addEventListener('pointerdown', e => { if (!menu.hidden && !menu.contains(e.target) && !btn.contains(e.target)) open(false); });
@@ -5845,13 +5845,13 @@ function effortOpts(saver){ const k = effKey(); if (k === 'auto') return {}; con
   paint();
 })();
 /* ---------- v2.3.1 · modo de uso: Automática · Chat · SuperiorSynth ----------
-   Automática: SymphorIA elige sola la IA y no se muestra el selector.  Chat: eliges tú la IA (empieza en Gemini).
-   SuperiorSynth: el agente elige la IA; cuando la persona dice «me quedo con esta» pasa a Chat con esa IA al lado.
+   Automática: Sinapse elige sola la IA y no se muestra el selector.  Chat: eliges tú la IA (empieza en Gemini).
+   Apex: el agente elige la IA; cuando la persona dice «me quedo con esta» pasa a Chat con esa IA al lado.
    El modo se deduce del estado (agente encendido, IA elegida), así que sigue funcionando con todo lo que ya cambia de IA. */
 const MODES = {
   auto:  { n:'Automática',   d:'Elige sola la mejor IA para cada pedido.',          ico:'<path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/><path d="M19 15l.7 1.8 1.8.7-1.8.7L19 20l-.7-1.8-1.8-.7 1.8-.7z"/>' },
   chat:  { n:'Chat',         d:'Tú eliges con qué IA hablas.',                       ico:'<path d="M4 5h16v11H9l-5 4z"/>' },
-  agent: { n:'SuperiorSynth', d:'Tareas largas: elige la IA y mejora tu pedido.',   ico:'<path d="M12 3l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/>' }
+  agent: { n:'Apex', d:'Tareas largas: elige la IA y mejora tu pedido.',   ico:'<path d="M12 3l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/>' }
 };
 const MODE_KEYS = ['auto', 'chat', 'agent'];
 const modeSvg = k => k === 'agent' && typeof ssIco === 'function' ? ssIco() : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + MODES[k].ico + '</svg>';
@@ -5874,7 +5874,7 @@ function applyMode(k){
   if (k === 'auto'){ const cur = selId(); if (cur !== 'sz:auto') sx.lastChat = cur; sx.cmode = 'auto'; st().pinned = ''; st().model.openrouter = 'sz:auto'; }
   else { sx.cmode = 'chat'; const want = (sx.lastChat && connected(sx.lastChat) ? sx.lastChat : '') || geminiDefault(); if (want && want !== selId()) setModel(want); }
   save(); paintMode(); try{ paintSel(); renderTop(true); renderMsgs(); updateHint(); }catch(e){}
-  toast(k === 'auto' ? 'Modo Automática: SymphorIA elige la IA por ti.' : 'Modo Chat: tú eliges la IA (' + info(selId()).name + ').');
+  toast(k === 'auto' ? 'Modo Automática: Sinapse elige la IA por ti.' : 'Modo Chat: tú eliges la IA (' + info(selId()).name + ').');
 }
 function paintMode(){
   const k = modeKey(), b = $('#cMode'); if (!b) return;
@@ -6067,7 +6067,7 @@ const IMP_ON = (() => {
     return localStorage.getItem('synthz:f:importar') !== '0';
   }catch(e){ return true; }
 })();
-const IMP_SRC = { chatgpt:'ChatGPT', claude:'Claude', synthflow:'SynthFlow', json:'JSON', texto:'Texto' };
+const IMP_SRC = { chatgpt:'ChatGPT', claude:'Claude', synthflow:'Sonyx', json:'JSON', texto:'Texto' };
 const IMP_MAX = 200, IMP_PRE = 50, MEM_CAP = 40;
 const impL = (es, en) => SZ.lang() === 'en' ? en : es;
 function impOpen(){
@@ -6234,22 +6234,22 @@ function ptAvisoConsumo(mm, alVolver){
   setTimeout(() => { const b = o.querySelector('.pt-av-si'); if (b) b.focus(); }, 60);
 }
 /* ---------- 2026-11-09 · rediseño «Partitura»: el selector de 4 modos en la caja de escribir ----------
-   Sammuel: «hay muchas IAs, el modo auto, comparar y A.L.I.A.S.: ¿cómo se va a elegir?». Respuesta concreta, siempre a la vista:
-     Auto      SymphorIA elige la IA para cada pedido (y dice cuál usó).            → applyMode('auto')
+   Sammuel: «hay muchas IAs, el modo auto, comparar y Quoryn: ¿cómo se va a elegir?». Respuesta concreta, siempre a la vista:
+     Auto      Sinapse elige la IA para cada pedido (y dice cuál usó).            → applyMode('auto')
      Una IA    tú eliges de la lista con buscador; abajo se ve cuál tienes.          → applyMode('chat') + abre la lista
      Comparar  2 a 3 IAs lado a lado; te quedas con la mejor.                         → cmpOpen()
-     Agente    A.L.I.A.S.: arma un plan, lo apruebas una vez y trabaja solo.          → abre alias.html con lo escrito
+     Agente    Quoryn: arma un plan, lo apruebas una vez y trabaja solo.          → abre alias.html con lo escrito
                v4.5: solo para el equipo (SZ.aliasOk()); los demás ven 3 modos. Se repinta si cambia (evento synthz-alias).
-   Y el esfuerzo, al lado: Auto · Veloz · Profundo · Creativo (los niveles de v4.3, Profundo pide cuenta) · SuperiorSynth (el agente de SynthFlow elige la IA y mejora tu pedido).
+   Y el esfuerzo, al lado: Auto · Veloz · Profundo · Creativo (los niveles de v4.3, Profundo pide cuenta) · Apex (el agente de Sonyx elige la IA y mejora tu pedido).
    Reemplaza a los botones «Modo», «Esfuerzo» y «Comparar con otra IA», que se esconden con CSS (siguen en el DOM para el motor). */
 (function partituraSelector(){
   const row = $('#cPickRow'); if (!row || $('#ptModos')) return;
   const en = () => SZ.lang && SZ.lang() === 'en';
   const T = () => en()
-    ? { modos:{ auto:'Auto', una:'One AI', cmp:'Compare', agente:'Agent' }, esf:['Auto', 'Fast', 'Deep', 'Creative', 'SuperiorSynth'], modo:'Mode', esfuerzo:'Effort',
-        ayuda:{ auto:'SymphorIA picks the AI for each request and tells you which one.', una:'You pick the AI from the list.', cmp:'Several AIs answer side by side. Keep the best one.', agente:'A.L.I.A.S. makes a plan, you approve it once and it works on its own.' } }
-    : { modos:{ auto:'Auto', una:'Una IA', cmp:'Comparar', agente:'Agente' }, esf:['Auto', 'Veloz', 'Profundo', 'Creativo', 'SuperiorSynth'], modo:'Modo', esfuerzo:'Esfuerzo',
-        ayuda:{ auto:'SymphorIA elige la IA para cada pedido y te dice cuál usó.', una:'Tú eliges la IA de la lista.', cmp:'Varias IAs responden lado a lado. Te quedas con la mejor.', agente:'A.L.I.A.S. arma un plan, lo apruebas una vez y trabaja solo.' } };
+    ? { modos:{ auto:'Relay', una:'One AI', cmp:'Compare', agente:'Agent' }, esf:['Flow', 'Fragment', 'Focus', 'Horizon', 'Apex'], modo:'Mode', esfuerzo:'Effort',
+        ayuda:{ auto:'Sinapse picks the AI for each request and tells you which one.', una:'You pick the AI from the list.', cmp:'Several AIs answer side by side. Keep the best one.', agente:'Quoryn makes a plan, you approve it once and it works on its own.' } }
+    : { modos:{ auto:'Relay', una:'Una IA', cmp:'Comparar', agente:'Agente' }, esf:['Flow', 'Fragment', 'Focus', 'Horizon', 'Apex'], modo:'Modo', esfuerzo:'Esfuerzo',
+        ayuda:{ auto:'Sinapse elige la IA para cada pedido y te dice cuál usó.', una:'Tú eliges la IA de la lista.', cmp:'Varias IAs responden lado a lado. Te quedas con la mejor.', agente:'Quoryn arma un plan, lo apruebas una vez y trabaja solo.' } };
   const MODOS_TODOS = ['auto', 'una', 'cmp', 'agente'];
   const modos = () => MODOS_TODOS.filter(k => k !== 'agente' || (SZ.aliasOk && SZ.aliasOk()));
   const actual = () => mode === 'cmp' ? 'cmp' : selId() === 'sz:auto' && !agentOn() ? 'auto' : 'una';
@@ -6294,10 +6294,10 @@ function ptAvisoConsumo(mm, alVolver){
   const TT = () => en()
     ? { raiz:'Personal space', nuevo:'New chat', esf:'Effort', ia:'Choose the AI', mas:'New chat', migas:'You are here',
         desc:['The AI decides how much to think.', 'Quick, short answers for everyday things.', 'Thinks it through and double-checks. Uses the most EnerX.', 'Original ideas and writing with spark.', 'The agent picks the AI and improves your request.'],
-        n:['Auto', 'Fast', 'Deep', 'Creative', 'SuperiorSynth'], cuenta:'Needs an account', cmp:'Comparing', pen:'Deep effort needs an account (signing in is free).' }
+        n:['Flow', 'Fragment', 'Focus', 'Horizon', 'Apex'], cuenta:'Needs an account', cmp:'Comparing', pen:'Focus effort needs an account (signing in is free).' }
     : { raiz:'Espacio personal', nuevo:'Chat nuevo', esf:'Esfuerzo', ia:'Elegir la IA', mas:'Nuevo chat', migas:'Estás aquí',
         desc:['La IA decide cuánto pensar según tu pregunta.', 'Respuestas rápidas y cortas, para lo del día a día.', 'Piensa a fondo y revisa su respuesta. Es el que más EnerX gasta.', 'Ideas originales y textos con chispa, para crear.', 'El agente elige la IA y mejora tu pedido.'],
-        n:['Auto', 'Veloz', 'Profundo', 'Creativo', 'SuperiorSynth'], cuenta:'Con cuenta', cmp:'Comparando', pen:'El esfuerzo Profundo es para cuentas (entrar es gratis).' };
+        n:['Flow', 'Fragment', 'Focus', 'Horizon', 'Apex'], cuenta:'Con cuenta', cmp:'Comparando', pen:'El esfuerzo Focus es para cuentas (entrar es gratis).' };
   const crumbs = document.createElement('nav'); crumbs.className = 'tb-crumbs'; crumbs.id = 'tbCrumbs';
   crumbs.innerHTML = '<span class="tb-root"></span><i aria-hidden="true">/</i><b class="tb-now" aria-current="page"></b>';
   const grp = document.createElement('div'); grp.className = 'tb-sel'; grp.id = 'tbSel';
@@ -6422,7 +6422,7 @@ refresh(true);
 const enter = root.classList.contains('enter');
 let po = ''; try{ po = sessionStorage.getItem('synthz:portal') || ''; sessionStorage.removeItem('synthz:portal'); }catch(e){}
 /* v4.4 · «Entrada»: al abrir SynthFlow directo ya no se llena la pantalla con el velo lila y la Z vieja que se agranda (del diseño
-   anterior). El velo es tinta con el esqueleto de SynthFlow brillando (Fondo.jsx); al estar listo se funde y todo llega en cascada. */
+   anterior). El velo es tinta con el esqueleto de Sonyx brillando (Fondo.jsx); al estar listo se funde y todo llega en cascada. */
 /* desde la portada: el hueco de la «o» se abre (o un fundido en modo rendimiento) */
 requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => { root.classList.add('go'); if (enter){ if (po === 'o'){ SZ.portalArrive($('#veil')); SZ.waterIn($('.shell')); } setTimeout(renderNow, 1500); } }, enter ? 120 : 0)));
 let pendingQ = null; try{ const s0 = JSON.parse(sessionStorage.getItem('synthz:q') || 'null'); sessionStorage.removeItem('synthz:q'); if (s0 && typeof s0.q === 'string' && Date.now() - s0.t < 120000) pendingQ = s0.q; }catch(e){}

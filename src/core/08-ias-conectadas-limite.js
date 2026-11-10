@@ -1,5 +1,5 @@
 /* ---------- IA que no funcionan: se esconden para que nadie choque con ellas ----------
-   Cada navegador recuerda las que fallaron por culpa del modelo (no de tu llave) y las comparte con SymphorIA.
+   Cada navegador recuerda las que fallaron por culpa del modelo (no de tu llave) y las comparte con Sinapse.
    Si varias personas reportan la misma, se esconde para todos unas horas; si vuelve a responder, reaparece. */
 const BAD_KEY = 'synthz:bad', BAD_MS = 12 * 3600e3;
 let BAD = {}; try{ BAD = JSON.parse(localStorage.getItem(BAD_KEY)) || {}; }catch(e){ BAD = {}; }
@@ -99,7 +99,7 @@ async function szCatalog(){
   if (!arr.length) return [];
   const out = arr.filter(m => m && typeof m.id === 'string' && /^sz:/.test(m.id) && !/allam|infron|openrouter\/(free|auto)|models?[-_ ]router/i.test(m.id) && !/free models router|router/i.test(String(m.name || ''))).map(m => {
     const mid = m.id.split(':').slice(2).join(':'), vendor = szVendor(mid, m.prov);
-    return { id:m.id, name:String(m.name || mid).replace(/\s*\(free\)\s*$/i, ''), vendor, vlabel:vendorLabel(vendor) + ' · SymphorIA', ctx:num(m.ctx), free:true, created:0, vision:['google', 'groq', 'mistral', 'openrouter'].includes(m.prov) && SZ_VISION.test(mid),
+    return { id:m.id, name:String(m.name || mid).replace(/\s*\(free\)\s*$/i, ''), vendor, vlabel:vendorLabel(vendor) + ' · Sinapse', ctx:num(m.ctx), free:true, created:0, vision:['google', 'groq', 'mistral', 'openrouter'].includes(m.prov) && SZ_VISION.test(mid),
       reasoning:/gpt-oss|qwen3|qwq|r1|reason|think|magistral|kimi|deepseek/i.test(mid), tools:false, desc:'Gratis: no necesitas cuenta ni nada.' };
   });
   return [SZ_AUTO, ...out];

@@ -12,7 +12,7 @@ const IMP_ON = (() => {
     return localStorage.getItem('synthz:f:importar') !== '0';
   }catch(e){ return true; }
 })();
-const IMP_SRC = { chatgpt:'ChatGPT', claude:'Claude', synthflow:'SynthFlow', json:'JSON', texto:'Texto' };
+const IMP_SRC = { chatgpt:'ChatGPT', claude:'Claude', synthflow:'Sonyx', json:'JSON', texto:'Texto' };
 const IMP_MAX = 200, IMP_PRE = 50, MEM_CAP = 40;
 const impL = (es, en) => SZ.lang() === 'en' ? en : es;
 function impOpen(){

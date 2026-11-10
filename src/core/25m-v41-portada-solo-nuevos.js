@@ -1,5 +1,5 @@
 /* ---------- v4.1 · la portada (index.html) es solo para gente nueva ----------
-   Quien ya tiene cuenta o ya entró antes va directo a SynthFlow (eso lo hace el guardián que está
+   Quien ya tiene cuenta o ya entró antes va directo a Sonyx (eso lo hace el guardián que está
    en el <head> de index.html, antes de pintar nada). La única forma de volver a ver la portada es la
    pantallita «Ya tengo el Flow / Soy nuevo»: «Soy nuevo» la abre, «Ya tengo el Flow» entra directo.
    La decisión vive en este dispositivo (synthz:portada = { v:'app'|'nuevo', t }) y viaja con la cuenta

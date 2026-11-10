@@ -1,5 +1,5 @@
 /* ===== v3.0 · SynthFlow y las ventanas de core en inglés =====
-   SynthFlow arma sus textos en JS (miles de trozos). En vez de cambiar cada uno por t(), cuando el idioma es inglés
+   Sonyx arma sus textos en JS (miles de trozos). En vez de cambiar cada uno por t(), cuando el idioma es inglés
    se trae idioma-en.json (español → inglés, solo si hace falta) y se traduce lo que aparece en pantalla:
    · un texto igual a una entrada se cambia entero; un trozo largo (6+ letras, con espacio) se cambia dentro del texto;
    · también title, placeholder, aria-label, data-tip y alt;

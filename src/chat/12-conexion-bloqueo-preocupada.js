@@ -56,13 +56,13 @@ function paintLock(){
     const gm = (SZ.SZQ.guest && SZ.SZQ.guest.max) || 5;
     $('#lockT').textContent = gst ? 'Para seguir FlowIAndo, entra a tu cuenta' : done ? 'Se acabó tu EnerX de prueba' : SZ.SZQ.on === false ? 'Las IAs gratis están descansando' : 'Usaste tu límite gratis de hoy';
     $('#lockS').textContent = gst ? 'Se acabó tu EnerX de prueba de hoy. Crear tu cuenta es gratis, sin correo ni tarjeta, y te da mucho más límite cada día.' : done ? 'Para seguir chateando conecta tu cuenta de Puter (gratis, con un clic).' : 'Vuelve en un momento, o sigue ya con Puter. Conecta tu versión pro de las IAs más usadas.';
-    SZ.telEv('noai', 'sin IA: la de SymphorIA está apagada y no hay Puter');
+    SZ.telEv('noai', 'sin IA: la de Sinapse está apagada y no hay Puter');
     if (side.classList.contains('open')) closeSide();
   } else { wHide(); }
   try{ renderTop(); }catch(e){}
 }
 setInterval(paintLock, 1500);
-{ paintAgent(); $$('.agentb-x').forEach(ab => { ab.addEventListener('click', () => { st().agent = !agentOn(); save(); paintAgent(); toast(agentOn() ? 'SuperiorSynth encendido: antes de enviar, mejora tu pedido y elige la IA que más sabe de eso.' : 'SuperiorSynth apagado: tu mensaje va tal cual.'); }); }); }
+{ paintAgent(); $$('.agentb-x').forEach(ab => { ab.addEventListener('click', () => { st().agent = !agentOn(); save(); paintAgent(); toast(agentOn() ? 'Apex encendido: antes de enviar, mejora tu pedido y elige la IA que más sabe de eso.' : 'Apex apagado: tu mensaje va tal cual.'); }); }); }
 function lockNudge(){
   try{ SZ.BOT.problem && SZ.BOT.problem('lock'); }catch(e){}
   const c = $('#lockCard'); if (!c || c.hidden) return;
@@ -110,7 +110,7 @@ document.addEventListener('pointermove', e => {
 const W_FAQ = [
   ['¿Por qué no puedo escribir?', 'Porque ahora no hay ninguna IA libre para ti: usaste tu límite gratis de hoy o las IAs están descansando. Conecta Puter y la caja se abre al instante.'],
   ['¿Qué es Puter?', 'Con Puter usas la versión pro de las IAs más usadas, como ChatGPT, Claude o Gemini. Es gratis, tiene un límite que se renueva cada mes y se conecta con un clic.'],
-  ['¿Me cobran algo?', 'No. SymphorIA es gratis y nunca te cobra. Tienes un límite gratis cada día.'],
+  ['¿Me cobran algo?', 'No. Sinapse es gratis y nunca te cobra. Tienes un límite gratis cada día.'],
   ['¿Qué hay en la Guía?', 'Te muestro todo paso a paso con mi manita: temas, IA recomendadas para ti, cómo comparar dos y tu primer chat de verdad.']
 ];
 let wTok = 0;
@@ -132,9 +132,9 @@ async function worry(){
   if (wBusy() || CF.shows >= 3 || Date.now() - CF.last < 45000) return;
   CF.shows++; CF.last = Date.now(); CF.hits = []; CF.pts = [];
   const tok = ++wTok, H2 = SZ.HAND, alive = () => tok === wTok && $('#szWorry');
-  const w = document.createElement('div'); w.id = 'szWorry'; w.setAttribute('role', 'dialog'); w.setAttribute('aria-label', 'SynthonIA');
-  w.innerHTML = '<div class="wb"><button type="button" class="wx" data-w="x" aria-label="Cerrar">×</button><b>SynthonIA</b><p></p><div class="wq" hidden>' + W_FAQ.map((q, i) => '<button type="button" data-wq="' + i + '">' + esc(q[0]) + '</button>').join('') + '</div><div class="wa" hidden><button type="button" class="btn sm flow" data-w="guide">Mostrarme la Guía</button><button type="button" class="btn sm ghost" data-w="conn">Conectar una IA</button></div></div>'
-    + '<button type="button" class="wme" data-w="me" aria-label="SynthonIA">' + SZ.face('preocupada', isMobile() ? 60 : 72) + '</button>';
+  const w = document.createElement('div'); w.id = 'szWorry'; w.setAttribute('role', 'dialog'); w.setAttribute('aria-label', 'Sona');
+  w.innerHTML = '<div class="wb"><button type="button" class="wx" data-w="x" aria-label="Cerrar">×</button><b>Sona</b><p></p><div class="wq" hidden>' + W_FAQ.map((q, i) => '<button type="button" data-wq="' + i + '">' + esc(q[0]) + '</button>').join('') + '</div><div class="wa" hidden><button type="button" class="btn sm flow" data-w="guide">Mostrarme la Guía</button><button type="button" class="btn sm ghost" data-w="conn">Conectar una IA</button></div></div>'
+    + '<button type="button" class="wme" data-w="me" aria-label="Sona">' + SZ.face('preocupada', isMobile() ? 60 : 72) + '</button>';
   document.body.appendChild(w); document.body.classList.add('szworrying');
   /* en celular se para justo encima del aviso de bloqueo, sin taparlo */
   const lk0 = $('#lockCard'); if (isMobile() && lk0 && !lk0.hidden) w.style.bottom = Math.max(150, innerHeight - lk0.getBoundingClientRect().top + 12) + 'px';

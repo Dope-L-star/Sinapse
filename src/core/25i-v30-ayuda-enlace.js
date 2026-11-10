@@ -1,6 +1,6 @@
 /* ---------- v3.0 · enlaces de la página de Ayuda (ayuda.html) ----------
-   ?ayuda=equipo abre «Hablar con el equipo», ?ayuda=mejorar abre «Cuéntanos qué mejorar» y ?ayuda=synthonia abre a SynthonIA.
-   Espera un poco a que la cuenta y SynthonIA estén listas; después borra el parámetro para que no se repita al recargar (window.history: en core, history() es otra función). */
+   ?ayuda=equipo abre «Hablar con el equipo», ?ayuda=mejorar abre «Cuéntanos qué mejorar» y ?ayuda=synthonia abre a Sona.
+   Espera un poco a que la cuenta y Sona estén listas; después borra el parámetro para que no se repita al recargar (window.history: en core, history() es otra función). */
 try{
   const AY = new URLSearchParams(location.search).get('ayuda');
   if (AY && ['equipo', 'mejorar', 'synthonia'].includes(AY)) setTimeout(() => {

@@ -1,5 +1,5 @@
 /* =====================================================================
-   Primera vez en SynthFlow (camino B): 1 ¿qué quieres FlowIA'r? · 2 elige tu IA · 3 chatea
+   Primera vez en Sonyx (camino B): 1 ¿qué quieres FlowIA'r? · 2 elige tu IA · 3 chatea
    «Siguiente» sube y «Atrás» baja (la animación al revés)
    ===================================================================== */
 const BICO = {
@@ -20,7 +20,7 @@ function bflowOpen(delay){
   if (BF || $('#bflow')) return;
   setTimeout(() => {
     BF = { step:1, topic:null, all:false, sel:new Set() };
-    const o = document.createElement('div'); o.id = 'bflow'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-label', 'Empieza en SynthFlow');
+    const o = document.createElement('div'); o.id = 'bflow'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-label', 'Empieza en Sonyx');
     o.innerHTML = '<header class="bf-top"><span class="bf-logo">' + SZ.flowWord() + '</span><ol class="bf-steps" aria-label="Pasos"></ol><div class="bf-r"><button type="button" class="btn sm ghost bf-guide">Guía</button><button type="button" class="btn sm bf-acc">Entrar</button></div></header><div class="bf-stage"></div>';
     document.body.appendChild(o); root.classList.add('bflowing');
     requestAnimationFrame(() => o.classList.add('on'));
