@@ -2926,13 +2926,12 @@ html.noanim .send.stop.fly::after{display:block}
 /* v3.8.1 · Sammuel quiere que el cuadrito de píxeles siga debajo de la lluvia */
 .agrun.fxr{padding:0;border:0;background:none;box-shadow:none}
 .agrun.fxr .fxhost{max-width:520px}
-/* v3.9 · modo dictado (next/componentes/synthflow/Dictado.jsx). Apagado por defecto: solo se ve con html.dicta (Ajustes › Modo dictado).
+/* v3.9 · modo dictado (next/componentes/synthflow/Dictado.jsx). v3.9.2 · siempre disponible (ya no hay interruptor en Ajustes).
    El micrófono va entre los botones de abajo y el avión de enviar; arriba de la caja sale el panel «Te escucho» con las ondas,
    el reloj, Cancelar / Pausa / Listo y lo que vas diciendo. Usa los colores del tema activo (--gold, --wine) y respeta «Animaciones». */
-.dic-mic{display:none}
-html.dicta .dic-mic:not([hidden]){display:grid}
-html.dicta .composer .comp-in{grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-areas:"c c c c" "f f f f" "a p m s"}
-html.dicta .composer.big .comp-in{grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-areas:"f f f f" "a p m s"}
+.dic-mic{display:grid}
+html .composer .comp-in{grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-areas:"c c c c" "f f f f" "a p m s"}
+html .composer.big .comp-in{grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-areas:"f f f f" "a p m s"}
 .composer .comp-in{position:relative}
 .composer .comp-in:has(.dic-card,.dic-pane){z-index:40}
 .composer .dic-mic{grid-area:m;position:relative;width:36px;height:36px;border-radius:12px;overflow:visible}
@@ -3561,3 +3560,78 @@ html.noanim .tb-b,html.noanim .tb-b .cv{transition:none}
   .composer .send{width:44px;height:44px}
   .composer .dic-mic{width:44px;height:44px}
 }
+/* Luma · bienvenida del chat nuevo y caja de escritura */
+body.fresh .hello.luma-welcome {
+  gap: 14px;
+  padding: 24px 0;
+}
+.luma-welcome .luma-mark {
+  width: 32px;
+  height: 32px;
+  color: var(--accent, #3de0ff);
+  fill: currentColor;
+}
+.luma-welcome h1 {
+  max-width: 23ch;
+  margin: 0;
+  font: 600 clamp(27px, 4vw, 44px)/1.12 var(--serif);
+  color: var(--text);
+  text-wrap: balance;
+}
+.luma-welcome > p {
+  max-width: 52ch;
+  margin: 0;
+  color: var(--soft);
+  line-height: 1.45;
+}
+.luma-starters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  width: min(100%, 780px);
+  margin: 6px 0;
+}
+html.simple body:not(.locked) #hexR.luma-starters { display: grid !important; }
+.luma-starter {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 52px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  color: var(--text);
+  text-align: start;
+}
+.luma-starter:hover {
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+.luma-starter:focus-visible {
+  outline: 2px solid var(--accent, #3de0ff);
+  outline-offset: 2px;
+}
+.luma-starter svg {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.luma-starter b, .luma-starter small { display: block; }
+.luma-starter small { margin-top: 2px; color: var(--soft); }
+.composer .comp-in {
+  width: min(100%, 780px);
+  padding: 10px 12px;
+  gap: 6px 8px;
+}
+.composer .comp-in #inp { min-height: 44px; }
+@media (max-width: 760px) {
+  body.fresh .hello.luma-welcome { padding: 12px 0; gap: 8px; }
+  .luma-starters { grid-template-columns: 1fr; gap: 6px; }
+  .luma-starter { min-height: 44px; padding: 6px 10px; }
+}
+.flowq:focus-visible{outline:2px solid var(--accent,#3de0ff);outline-offset:2px;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent,#3de0ff) 35%,transparent)}
