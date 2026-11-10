@@ -69,7 +69,7 @@ function betaBot(){
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(betaTags, 400)); else setTimeout(betaTags, 400);
 addEventListener('synthz-ready-bot', botMount);
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(botMount, 900)); else setTimeout(botMount, 900);
-const BOTAPI = { anchor:fn => { BOT.anchor = fn; }, open:botOpen, close:botClose, mount:botMount, unmount:botReactUnmount, activate:botAvatarClick, say:botSay, sync:botSync, team:botTeam, chatOpen, chatClose, match:q => { const f = botMatch(q); return f ? BOT_FAQ.indexOf(f) : -1; }, get el(){ return BOT.el; } };
+const BOTAPI = { anchor:fn => { BOT.anchor = fn; }, open:botOpen, close:botClose, mount:botMount, unmount:botReactUnmount, activate:botAvatarClick, say:botSay, sync:botSync, team:botTeam, chatOpen, chatClose, match:q => { const f = botMatch(q); return f ? BOT_FAQ.indexOf(f) : -1; }, faq:i => BOT_FAQ[i] && BOT_FAQ[i].k, intent:q => { const s = sonaIntent(q); return s ? s.id : ''; }, task:sonaTask, get el(){ return BOT.el; } };
 /* ---------- Guía: elegir cómo aprender (Asistida con SynthonIA o Lectura) ---------- */
 function guideChooser(o = {}){
   if ($('#szGch')) return;

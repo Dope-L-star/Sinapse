@@ -24,8 +24,8 @@ const err = (s, m, code) => Object.assign(new Error(m), { status:s, code });
 const team = me => roleOf(me) !== 'user', boss = me => ['owner', 'admin'].includes(roleOf(me));
 
 /* para SynthonIA (ayudante): una respuesta corta con la IA de SymphorIA (cuenta en su propio tope) */
-export async function trialComplete(messages, maxTokens = 320, who = 'helper'){
-  const r = await chat({ who:'h:' + who, ipKey:'h:' + who, messages, model:'sz:auto', maxTokens, stream:false });
+export async function trialComplete(messages, maxTokens = 320, who = 'helper', opts = {}){
+  const r = await chat({ who:'h:' + who, ipKey:'h:' + who, messages, model:'sz:auto', maxTokens, stream:false, temperature:Number.isFinite(+opts.temperature) ? +opts.temperature : .6 });
   return { text:r.text, via:r.meta.provName };
 }
 
