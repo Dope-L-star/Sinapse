@@ -62,7 +62,7 @@ function exRowHtml(){
   return ks.map((k, i) => { const T = TOPIC[k], x = T.ex[0]; return '<button type="button" class="hex hxs" data-hex="' + k + '" style="--i:' + i + '"><small>' + esc(T.l) + '</small><span>' + esc(x[0]) + '</span></button>'; }).join('');
 }
 setInterval(() => {
-  const r = document.getElementById('hexR'); if (!r || document.hidden || root.classList.contains('idle-sleep') || r.matches(':hover') || r.contains(document.activeElement)) return;
+  const r = document.getElementById('hexR'); if (!r || !r.classList.contains('hexr') || document.hidden || root.classList.contains('idle-sleep') || r.matches(':hover') || r.contains(document.activeElement)) return;
   exSeed = (exSeed + 1) % EXK.length;
   if (SZ.reduce){ r.innerHTML = exRowHtml(); return; }
   r.animate([{ opacity:1, transform:'none', filter:'blur(0)' }, { opacity:0, transform:'translateY(-6px)', filter:'blur(4px)' }], { duration:320, easing:'ease-in' }).onfinish = () => { r.innerHTML = exRowHtml(); r.animate([{ opacity:0, transform:'translateY(6px)', filter:'blur(4px)' }, { opacity:1, transform:'none', filter:'blur(0)' }], { duration:420, easing:'cubic-bezier(.22,1,.36,1)' }); };
@@ -102,6 +102,37 @@ function paintCmpGo(){
   go.hidden = false;
   go.innerHTML = '<span>Marcaste ' + ids.map(id => '<b>' + esc(info(id).name) + '</b>').join(' y ') + '</span><button type="button" class="btn sm flow" data-cmpgo>Comparar estas ' + ids.length + ' →</button>';
 }
+const LUMA_STARTERS = [
+  {
+    icon: '<path d="M12 3v3m0 12v3M3 12h3m12 0h3"/><circle cx="12" cy="12" r="4"/>',
+    es: ['Dar forma a una idea', 'Del concepto al primer paso', 'Ayúdame a convertir una idea en un proyecto con pasos claros.'],
+    en: ['Shape an idea', 'From concept to first step', 'Help me turn an idea into a project with clear steps.'],
+  },
+  {
+    icon: '<path d="M4 6a2 2 0 0 1 2-2h14v16H6a2 2 0 0 1-2-2V6Zm0 12a2 2 0 0 1 2-2h14M8 8h8m-8 4h6"/>',
+    es: ['Entender algo nuevo', 'Una explicación con ejemplos', 'Explícame un tema complejo de forma sencilla y con ejemplos.'],
+    en: ['Learn something new', 'A clear explanation with examples', 'Explain a complex topic simply, with examples.'],
+  },
+  {
+    icon: '<path d="m4 16 11-11a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Zm9-9 3 3"/>',
+    es: ['Crear algo desde cero', 'Un primer borrador para editar', 'Ayúdame a escribir una primera versión de una propuesta creativa.'],
+    en: ['Create from scratch', 'A first draft you can edit', 'Help me write a first draft of a creative proposal.'],
+  },
+];
+
+function lumaWelcomeHtml(lang){
+  const en = lang === 'en';
+  const cards = LUMA_STARTERS.map(({ icon, [lang]: [title, detail] }, i) =>
+    '<button type="button" class="luma-starter" data-luma-starter="' + i + '">' +
+    '<svg aria-hidden="true" viewBox="0 0 24 24">' + icon + '</svg>' +
+    '<span><b>' + title + '</b><small>' + detail + '</small></span></button>'
+  ).join('');
+  return '<svg class="luma-mark" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 2.8 14.3 9.7 21.2 12 14.3 14.3 12 21.2 9.7 14.3 2.8 12 9.7 9.7Z"/></svg>' +
+    '<h1>' + (en ? 'Good ideas start with a good question.' : 'Las buenas ideas empiezan con una buena pregunta.') + '</h1>' +
+    '<p>' + (en ? 'Explore an idea, learn something new, or start a first draft.' : 'Explora una idea, aprende algo nuevo o empieza un primer borrador.') + '</p>' +
+    '<div class="luma-starters" id="hexR" role="group" aria-label="' + (en ? 'Ideas to get started' : 'Ideas para empezar') + '">' + cards + '</div>';
+}
+
 function emptyEl(){
   const e = document.createElement('div'); e.className = 'hello';
   if (mode === 'cmp'){
@@ -109,20 +140,16 @@ function emptyEl(){
       + (st().cmp.length < 2 ? '<button type="button" class="btn sm flow" data-add-cmp>+ Agregar otra IA</button>' : '');
     return e;
   }
-  const ex = showEx();
   if (agentOn()){
+    const ex = showEx();
     e.classList.add('aghello');
     e.innerHTML = '<p class="agbadge">' + AG_ICO + 'Modo SuperiorSynth activado</p>' + hiName() + '<h1 class="greet">' + greetHtml(['¿Qué quieres ', 'FlowIA’r', '?']) + '</h1>' + flowWhatHtml()
       + (ex ? '<div class="hexs hexr" id="hexR" aria-label="Ideas para empezar">' + exRowHtml() + '</div>' : '')
       + '<p class="hsub2">Cuéntame qué necesitas. SuperiorSynth entiende tu pedido, lo mejora, elige la IA que más sabe de eso y te muestra cada paso.</p><div class="hcomp"></div>';
     return e;
   }
-  let h = hiName() + '<h1 class="greet">' + greetHtml(GREET[greetI] || GREET[0]) + '</h1>' + flowWhatHtml()
-    + (ex ? '<div class="hexs hexr" id="hexR" aria-label="Ideas para empezar">' + exRowHtml() + '</div>' : '')
-    + '<p class="hsub2">Escribe lo que necesitas y da detalles: qué quieres, para qué es y cómo te sirve la respuesta. Ya hay una IA lista para empezar; si prefieres otra, la cambias abajo.</p>';
-  h += '<div class="hcomp"></div>' + topicsHtml() + '<div class="tpanel" id="tPanel">' + (curTopic ? topicPanelHtml(curTopic) : '') + '</div>'
-    + (ex ? '<p class="hfoot">Tocar una idea solo la escribe; tú decides cuándo enviarla.</p>' : '');
-  e.innerHTML = h;
+  e.classList.add('luma-welcome');
+  e.innerHTML = lumaWelcomeHtml(SZ.lang() === 'en' ? 'en' : 'es') + '<div class="hcomp"></div>' + flowWhatHtml();
   return e;
 }
 /* inicio limpio (como «A · Inicio»): la caja de escribir sube al centro y la IA se elige dentro de ella */
@@ -211,6 +238,18 @@ lane.addEventListener('click', async e => {
     const old = new Set($$('[data-topic]', t).map(x => x.dataset.topic));
     smoothSwap(t, () => { t.innerHTML = topicsHtml().replace(/^<div[^>]*>|<\/div>$/g, ''); });
     $$('.tchip', t).forEach(x => { if (old.has(x.dataset.topic)) x.classList.remove('rise'); });
+    return;
+  }
+  const starter = e.target.closest('[data-luma-starter]');
+  if (starter){
+    const lang = SZ.lang() === 'en' ? 'en' : 'es';
+    if (isLocked() || Object.keys(busy).length) return;
+    if (!inp.value.trim()){
+      inp.value = LUMA_STARTERS[+starter.dataset.lumaStarter][lang][2];
+      autoGrow();
+      updateHint();
+    }
+    inp.focus();
     return;
   }
   const hx = e.target.closest('[data-hex]'); if (hx){ const x = TOPIC[hx.dataset.hex].ex[0]; useText(x[1], x[2]); return; }

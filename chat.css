@@ -3560,3 +3560,78 @@ html.noanim .tb-b,html.noanim .tb-b .cv{transition:none}
   .composer .send{width:44px;height:44px}
   .composer .dic-mic{width:44px;height:44px}
 }
+/* Luma · bienvenida del chat nuevo y caja de escritura */
+body.fresh .hello.luma-welcome {
+  gap: 14px;
+  padding: 24px 0;
+}
+.luma-welcome .luma-mark {
+  width: 32px;
+  height: 32px;
+  color: var(--accent, #3de0ff);
+  fill: currentColor;
+}
+.luma-welcome h1 {
+  max-width: 23ch;
+  margin: 0;
+  font: 600 clamp(27px, 4vw, 44px)/1.12 var(--serif);
+  color: var(--text);
+  text-wrap: balance;
+}
+.luma-welcome > p {
+  max-width: 52ch;
+  margin: 0;
+  color: var(--soft);
+  line-height: 1.45;
+}
+.luma-starters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  width: min(100%, 780px);
+  margin: 6px 0;
+}
+html.simple body:not(.locked) #hexR.luma-starters { display: grid !important; }
+.luma-starter {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 52px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  color: var(--text);
+  text-align: start;
+}
+.luma-starter:hover {
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+.luma-starter:focus-visible {
+  outline: 2px solid var(--accent, #3de0ff);
+  outline-offset: 2px;
+}
+.luma-starter svg {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.luma-starter b, .luma-starter small { display: block; }
+.luma-starter small { margin-top: 2px; color: var(--soft); }
+.composer .comp-in {
+  width: min(100%, 780px);
+  padding: 10px 12px;
+  gap: 6px 8px;
+}
+.composer .comp-in #inp { min-height: 44px; }
+@media (max-width: 760px) {
+  body.fresh .hello.luma-welcome { padding: 12px 0; gap: 8px; }
+  .luma-starters { grid-template-columns: 1fr; gap: 6px; }
+  .luma-starter { min-height: 44px; padding: 6px 10px; }
+}
+.flowq:focus-visible{outline:2px solid var(--accent,#3de0ff);outline-offset:2px;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent,#3de0ff) 35%,transparent)}
