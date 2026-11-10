@@ -3867,6 +3867,7 @@ function sideFlip(open){
   return Promise.race([side.animate(open ? [A, B] : [B, A], { duration:D, easing:open ? 'cubic-bezier(.22,1,.36,1)' : 'cubic-bezier(.55,0,.75,.2)' }).finished.catch(() => {}), new Promise(r => setTimeout(r, D + 180))]);
 }
 function placeSide(){}
+let sideOpener = null; side.inert = !side.classList.contains('open');
 function openSide(kind, anchor){
   if (isLocked()){ lockNudge(); toast('Primero conecta Puter: es gratis y con un clic.'); return; }
   if (agentOn() && mode === 'solo' && kind !== 'add' && kind !== 'cmp'){ toast('Con SuperiorSynth la IA la elige él. Si quieres elegirla tú, vuelve a «Chats».'); return; }
@@ -3875,6 +3876,7 @@ function openSide(kind, anchor){
   side.classList.toggle('pcmp', pickCmp);
   $('#pTitle').textContent = pickCmp ? 'Compara IAs lado a lado' : pickMode === 'add' ? 'Suma otra IA a la mesa' : 'Elige tu IA';
   const a = anchor && anchor.isConnected ? anchor : $('#curChip') || $('#cPick') || $('#pickRow');
+  if (!side.classList.contains('open')) sideOpener = document.activeElement && document.activeElement !== document.body && !side.contains(document.activeElement) ? document.activeElement : a;   /* a11y: a quién devolver el foco al cerrar */
   sideFrom = a ? a.getBoundingClientRect() : null;
   if (pickMode === 'set' && !ptopic && curTopic) ptopic = curTopic;
   renderPTopics(); paintPNote(); paintPGo();
@@ -3882,7 +3884,7 @@ function openSide(kind, anchor){
   const wasOpen = side.classList.contains('open');
   if (!wasOpen) custOn(false);
   paintCust();
-  side.classList.add('open'); side.setAttribute('aria-hidden', 'false'); scrim.classList.add('on', 'pick');
+  side.inert = false; side.classList.add('open'); side.setAttribute('aria-hidden', 'false'); scrim.classList.add('on', 'pick');
   $$('#pickRow .mchip').forEach(c => c.setAttribute('aria-expanded', String(pickMode === 'set')));
   setTab(isMobile() ? 'ia' : null);
   renderList({ keep:true });
@@ -3902,11 +3904,13 @@ function closeSide(){
   sideClosing = true;
   const fin = () => {
     sideClosing = false;
-    side.classList.remove('open'); side.setAttribute('aria-hidden', 'true');
+    side.classList.remove('open'); side.setAttribute('aria-hidden', 'true'); side.inert = true;
     if (!$('#chats').classList.contains('msheet')) scrim.classList.remove('on');
     scrim.classList.remove('pick');
     pickMode = 'set'; $$('#pickRow .mchip').forEach(c => c.setAttribute('aria-expanded', 'false'));
     setTab(null); paintSel();
+    const o = sideOpener && sideOpener.isConnected && sideOpener.getClientRects().length ? sideOpener : $('#curChip') || $('#cPick');
+    sideOpener = null; if (o && o.focus && (!document.activeElement || document.activeElement === document.body || side.contains(document.activeElement))) try{ o.focus({ preventScroll:true }); }catch(e){}
   };
   scrim.classList.remove('pick');
   sideFlip(false).then(fin);
@@ -3920,6 +3924,12 @@ document.addEventListener('pointerdown', e => {
   closeSide();
 });
 addEventListener('resize', () => { if (side.classList.contains('open') && !isMobile()) placeSide(); });
+/* a11y: Escape cierra «Elegir IA» desde cualquier control de dentro (también en celular, donde con texto escrito antes solo borraba la búsqueda) */
+side.addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || e.defaultPrevented || !side.classList.contains('open') || document.querySelector('.szm.on,.ctxm,#svm')) return;
+  const q = $('#q'); if (!isMobile() && e.target === q && q.value) return;   /* en el computador, el primer Escape borra el texto (lo hace el manejador de abajo) */
+  e.preventDefault(); e.stopPropagation(); closeSide();
+}, true);
 addEventListener('keydown', e => {
   const tag = e.target.tagName || '', typing = /INPUT|TEXTAREA|SELECT/.test(tag);
   if ((e.key === '/' && !typing) || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k')){ e.preventDefault(); openSide('set'); setTimeout(() => { $('#q').focus(); $('#q').select(); }, 60); }

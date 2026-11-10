@@ -132,9 +132,9 @@ function alertMode(on){
   if (on && !alertEl){
     if (document.querySelector('#vintro, #intro, #portal')){ setTimeout(() => alertMode(!!SZQ.alert), 3000); return; }
     const pu = (() => { try{ return !!(window.puter && puter.auth && puter.auth.isSignedIn()); }catch(e){ return false; } })();
-    const o = document.createElement('div'); o.id = 'szAlert'; o.setAttribute('role', 'alertdialog'); o.setAttribute('aria-live', 'assertive');
-    o.innerHTML = '<div class="al-in"><span class="al-f">' + face('preocupada', 84) + '</span><b class="al-t">Error: no podemos continuar</b>'
-      + '<p>Las IAs gratis dejaron de responder por un cambio de los servicios que usamos. No es tu culpa y nadie te va a cobrar nada.</p>'
+    const o = document.createElement('div'); o.id = 'szAlert'; o.setAttribute('role', 'alertdialog'); o.setAttribute('aria-labelledby', 'szAlertT'); o.setAttribute('aria-describedby', 'szAlertD');   /* a11y: alertdialog ya se anuncia solo; el aria-live extra lo duplicaba */
+    o.innerHTML = '<div class="al-in"><span class="al-f" aria-hidden="true">' + face('preocupada', 84) + '</span><b class="al-t" id="szAlertT">Error: no podemos continuar</b>'
+      + '<p id="szAlertD">Las IAs gratis dejaron de responder por un cambio de los servicios que usamos. No es tu culpa y nadie te va a cobrar nada.</p>'
       + '<p class="al-w"><i></i>En cuanto volvamos a estar en línea, te redirigimos solito. No cierres la página.</p>'
       + (pu ? '<button type="button" class="btn sm flow" data-al="pu">Mientras tanto, seguir con mi Puter</button>' : '') + '</div>';
     document.body.appendChild(o); alertEl = o; requestAnimationFrame(() => o.classList.add('on'));

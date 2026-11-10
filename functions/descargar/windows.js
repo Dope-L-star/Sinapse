@@ -2,7 +2,11 @@
    Busca el release más nuevo con etiqueta obertura-vX.Y.Z (lo publica .github/workflows/obertura.yml) y manda
    directo al .exe. Con ?info=1 devuelve {ok, version, tam} para que la página muestre la versión y el peso.
    La respuesta de GitHub se guarda 15 minutos (su API gratis permite pocas consultas por hora). */
-const REPO = 'Dope-L-star/SynthZ-Style', PREFIJO = 'obertura-v', EXE = 'SymphorIA-Obertura.exe';
+/* El repo se renombró (SynthZ-Style → Sinapse): se prueba el nombre nuevo y, por si acaso, el viejo.
+   FALLBACK: si la API de GitHub no responde (límite de consultas por hora, muy común desde Cloudflare), se manda directo a la última versión
+   publicada que se conoce; github.com no tiene ese límite. Así el botón nunca se queda sin bajar. */
+const REPOS = ['Dope-L-star/Sinapse', 'Dope-L-star/SynthZ-Style'], PREFIJO = 'obertura-v', EXE = 'SymphorIA-Obertura.exe';
+const FALLBACK = { version: '1.1.0', url: 'https://github.com/' + REPOS[0] + '/releases/download/obertura-v1.1.0/' + EXE, tam: 6146048 };
 
 const partes = v => String(v).split('-')[0].split('.').map(n => +n || 0);
 const mayor = (a, b) => { const x = partes(a), y = partes(b); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); return false; };
@@ -23,13 +27,16 @@ async function ultima(ctx){
   const cache = caches.default, clave = new Request('https://cache.symphoria/obertura-ultima');
   const guardada = await cache.match(clave);
   if (guardada) return guardada.json();
-  let dato = null;
-  try{
-    const r = await fetch('https://api.github.com/repos/' + REPO + '/releases?per_page=30', {
-      headers: { 'User-Agent': 'SymphorIA-descargas', Accept: 'application/vnd.github+json' } });
-    if (r.ok) dato = elegir(await r.json());
-    else if (r.status !== 404) return null;   /* GitHub ocupado o límite: no se guarda, se reintenta luego */
-  }catch(e){ return null; }
+  let dato = null, fallo = false;
+  for (const repo of REPOS){
+    try{
+      const r = await fetch('https://api.github.com/repos/' + repo + '/releases?per_page=30', {
+        headers: { 'User-Agent': 'SymphorIA-descargas', Accept: 'application/vnd.github+json' } });
+      if (r.ok){ dato = elegir(await r.json()); if (dato) break; }
+      else if (r.status !== 404) fallo = true;   /* GitHub ocupado o límite: no se guarda, se reintenta luego */
+    }catch(e){ fallo = true; }
+  }
+  if (!dato && fallo) return FALLBACK;
   const resp = new Response(JSON.stringify(dato), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=900' } });
   ctx.waitUntil(cache.put(clave, resp.clone()));
   return dato;

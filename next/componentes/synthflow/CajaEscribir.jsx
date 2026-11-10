@@ -83,7 +83,7 @@ export default function CajaEscribir(){
           <input type="file" id="fileIn" multiple hidden />
           <input type="file" id="imgIn" multiple hidden accept="image/*" />
           <input type="file" id="camIn" hidden accept="image/*" capture="environment" />
-          <label className="field"><textarea id="inp" rows="1" placeholder="Escribe tu mensaje…" /></label>
+          <label className="field"><textarea id="inp" rows="1" placeholder="Escribe tu mensaje…" aria-label="Escribe tu mensaje" /></label>
           <div className="cpick" id="cPickRow">
             <button type="button" className="cpk4" id="cMode" aria-haspopup="menu" aria-expanded="false" aria-controls="modeMenu" title="Modo de uso">
               <span className="cm-ico" id="cModeI" aria-hidden="true" />

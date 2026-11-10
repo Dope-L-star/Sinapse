@@ -978,22 +978,38 @@ function botPlace(){
 function botToggle(force){ const on = force == null ? !BOT.open : force; if (on) botOpen(); else botClose(); }
 function botOpen(){
   if (!BOT.el) botMount(); if (!BOT.el) return;
-  if (BOT.panel){ BOT.open = true; BOT.panel.classList.add('on'); botPlace(); return; }
+  BOT.opener = document.activeElement && document.activeElement !== document.body ? document.activeElement : BOT.el;   /* a11y: a quién devolver el foco al cerrar */
+  if (BOT.panel){ BOT.open = true; botA11y(true); BOT.panel.classList.add('on'); botPlace(); botFocusIn(); return; }
   const P = document.createElement('div'); P.id = 'szBotP'; P.setAttribute('role', 'dialog'); P.setAttribute('aria-label', 'SynthonIA');
   P.innerHTML = '<div class="bh"><span class="bhf">' + face('feliz', 56) + '</span><div><b>SynthonIA</b><small><i></i>Siempre disponible</small></div><button type="button" class="bx" data-b="min" aria-label="Cerrar">×</button></div>'
     + '<div class="btabs" hidden><button type="button" data-bt="chat" aria-selected="true">Pregúntame</button><button type="button" data-bt="inbox" aria-selected="false">Bandeja <em class="bn"></em></button></div>'
     + '<div class="bl" aria-live="polite"></div><div class="bq"></div>'
     + '<form class="bin"><input type="text" maxlength="600" placeholder="Pregúntame lo que quieras…" aria-label="Pregúntale a SynthonIA" autocomplete="off"><button type="submit" class="bs" aria-label="Enviar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form>'
     + '<div class="bfoot"><button type="button" class="lnk" data-b="team">Hablar con el equipo</button><button type="button" class="lnk" data-b="fb">Cuéntanos qué mejorar</button><button type="button" class="lnk" data-b="hide">Esconder</button></div>';
-  document.body.appendChild(P); BOT.panel = P; BOT.open = true; botPlace();
+  document.body.appendChild(P); BOT.panel = P; BOT.open = true; botA11y(true); botPlace();
   requestAnimationFrame(() => P.classList.add('on'));
+  botFocusIn();
   P.addEventListener('click', botClick);
   $('.bin', P).addEventListener('submit', e => { e.preventDefault(); const i = $('.bin input', P), v = i.value.trim(); if (!v) return; i.value = ''; BOT.mode === 'team' || BOT.mode === 'reply' ? botTeamSay(v) : botAsk(v); });
   addEventListener('resize', botPlace);
   botRender();
   if (!BOT.hist.length) botSay('¡Hola! Soy SynthonIA. Estoy aquí para que nunca te pierdas: pregúntame cómo se hace algo o dónde está, y te lo explico fácil o te lo señalo con mi manita.', 'feliz');
 }
-function botClose(){ BOT.open = false; if (BOT.think) BOT.zen = true; if (BOT.panel) BOT.panel.classList.remove('on'); }
+/* a11y: cerrado, el panel sale del árbol accesible y del foco (inert + aria-hidden); al cerrar el foco vuelve a quien lo abrió */
+function botA11y(on){
+  const P = BOT.panel; if (!P) return;
+  if (on){ P.removeAttribute('inert'); P.removeAttribute('aria-hidden'); P.setAttribute('aria-modal', 'false'); }
+  else { P.setAttribute('inert', ''); P.setAttribute('aria-hidden', 'true'); }
+}
+/* a11y: al abrirlo con teclado el foco entra al panel (en celular no, para que no salte el teclado) */
+function botFocusIn(){ try{ if (matchMedia('(pointer:coarse)').matches) return; setTimeout(() => { const i = BOT.panel && $('.bin input', BOT.panel); if (i && BOT.open) i.focus({ preventScroll:true }); }, 60); }catch(e){} }
+function botClose(){
+  const P = BOT.panel, hadFocus = P && P.contains(document.activeElement);
+  BOT.open = false; if (BOT.think) BOT.zen = true; if (P){ P.classList.remove('on'); botA11y(false); }
+  if (hadFocus){ const o = BOT.opener && BOT.opener.isConnected ? BOT.opener : BOT.el; try{ if (o && o.focus) o.focus({ preventScroll:true }); }catch(e){} }
+  BOT.opener = null;
+}
+addEventListener('keydown', e => { if (e.key === 'Escape' && BOT.open && BOT.panel && !e.defaultPrevented && !document.querySelector('.szm.on,.tcard,#side.open')){ e.preventDefault(); botClose(); } });
 function botMsgHtml(m){
   if (m.role === 'user') return '<div class="bm u"><p>' + esc(m.content) + '</p></div>';
   if (m.role === 'team') return '<div class="bm t"><span class="rk r-' + esc(String(m.rank || '').toLowerCase()) + '">' + esc(m.rank || 'Equipo') + '</span><b>' + esc(m.name || '') + '</b><p>' + esc(m.content) + '</p></div>';
@@ -1853,9 +1869,9 @@ function alertMode(on){
   if (on && !alertEl){
     if (document.querySelector('#vintro, #intro, #portal')){ setTimeout(() => alertMode(!!SZQ.alert), 3000); return; }
     const pu = (() => { try{ return !!(window.puter && puter.auth && puter.auth.isSignedIn()); }catch(e){ return false; } })();
-    const o = document.createElement('div'); o.id = 'szAlert'; o.setAttribute('role', 'alertdialog'); o.setAttribute('aria-live', 'assertive');
-    o.innerHTML = '<div class="al-in"><span class="al-f">' + face('preocupada', 84) + '</span><b class="al-t">Error: no podemos continuar</b>'
-      + '<p>Las IAs gratis dejaron de responder por un cambio de los servicios que usamos. No es tu culpa y nadie te va a cobrar nada.</p>'
+    const o = document.createElement('div'); o.id = 'szAlert'; o.setAttribute('role', 'alertdialog'); o.setAttribute('aria-labelledby', 'szAlertT'); o.setAttribute('aria-describedby', 'szAlertD');   /* a11y: alertdialog ya se anuncia solo; el aria-live extra lo duplicaba */
+    o.innerHTML = '<div class="al-in"><span class="al-f" aria-hidden="true">' + face('preocupada', 84) + '</span><b class="al-t" id="szAlertT">Error: no podemos continuar</b>'
+      + '<p id="szAlertD">Las IAs gratis dejaron de responder por un cambio de los servicios que usamos. No es tu culpa y nadie te va a cobrar nada.</p>'
       + '<p class="al-w"><i></i>En cuanto volvamos a estar en línea, te redirigimos solito. No cierres la página.</p>'
       + (pu ? '<button type="button" class="btn sm flow" data-al="pu">Mientras tanto, seguir con mi Puter</button>' : '') + '</div>';
     document.body.appendChild(o); alertEl = o; requestAnimationFrame(() => o.classList.add('on'));

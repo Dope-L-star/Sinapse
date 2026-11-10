@@ -28,6 +28,8 @@ jobs:
         run: node t/humo/humo.mjs
       - name: Prueba de humo (dist, minificado)
         run: node t/humo/humo.mjs dist
+      - name: Descarga de Obertura (repo nuevo y plan B)
+        run: node t/humo/descarga-windows.mjs
       - name: Sesión en cookie
         run: node t/humo/sesion.mjs
       - name: Mensajes de prueba (se cuentan bien)

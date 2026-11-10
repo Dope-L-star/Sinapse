@@ -26,7 +26,7 @@ const (
 	nombreApp  = "SymphorIA"
 	editor     = "SymphorIA (proyecto gratis)"
 	sitioApp   = "https://symphoria.pages.dev/chat.html?app=1&escritorio=1"
-	repoGitHub = "Dope-L-star/SynthZ-Style"
+	repoGitHub = "Dope-L-star/Sinapse"
 	prefijoTag = "obertura-v"
 	nombreExe  = "SymphorIA.exe"
 )
