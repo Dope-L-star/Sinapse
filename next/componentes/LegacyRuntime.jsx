@@ -104,7 +104,15 @@ export default function LegacyRuntime({ page, scripts = [], puter = false }) {
       // Los pequeños preámbulos del HTML antiguo se expresan como código React/JS seguro.
       try {
         if (page === 'inicio' && window.sessionStorage.getItem('synthz:back')) {
-          document.documentElement.classList.add('backin');
+          /* De vuelta desde SynthFlow: el velo oscuro (html.backin) tapa la portada mientras llega y se funde (backout).
+             Desde que la portada es React, index.js ya no corre aquí y nadie lo quitaba: se quedaba un velo gris pegado
+             encima de la portada (y, como la marca seguía en sessionStorage, también al recargar). Quien lo pone lo quita. */
+          const H = document.documentElement;
+          H.classList.add('backin');
+          window.sessionStorage.removeItem('synthz:back');
+          /* con timeouts (no requestAnimationFrame): en una pestaña en segundo plano los cuadros no corren y el velo se quedaría */
+          window.setTimeout(() => H.classList.add('backout'), 60);
+          window.setTimeout(() => H.classList.remove('backin', 'backout'), 1100);
         } else if (page === 'chat') {
           document.documentElement.classList.add('enter');
           if (window.sessionStorage.getItem('synthz:portal')) document.documentElement.classList.add('po');

@@ -11,8 +11,12 @@
 .imp-staff{top:12px}
 .impm .imp-card h3:focus,.impm .imp-card h3:focus-visible{outline:none !important}
 @keyframes impLine{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:.55}}
-.imp-x{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#B3AFC4;font-size:13px;cursor:pointer;z-index:2;transition:background .2s,color .2s}
-.imp-x:hover{background:rgba(255,255,255,.1);color:#F4F2FA}
+.imp-x{position:absolute;top:34px;right:20px;width:38px;height:38px;display:grid;place-items:center;padding:0;border-radius:50%;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.1);color:#F4F2FA;cursor:pointer;z-index:2;transition:background .2s,border-color .2s,transform .2s}
+.imp-x svg{width:16px;height:16px}
+.imp-x:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.4);transform:scale(1.06)}
+.imp-x:focus-visible{outline:2px solid #3DE0FF;outline-offset:2px}
+/* el título no pasa por debajo de la X, y la X queda debajo de las cinco líneas (antes las tapaba y se veía gris) */
+.impm .imp-card section[data-step="1"] > h3,.impm .imp-card section[data-step="2"] > h3{padding-right:46px}
 .impm .imp-k{margin:10px 0 4px;font:600 11px/1 'IBM Plex Mono',ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:#3DE0FF}
 .imp-card h3{margin:0 40px 6px 0;font:700 clamp(22px,4.6vw,27px)/1.15 'Bricolage Grotesque',var(--sans);letter-spacing:-.02em;color:#F4F2FA;outline:none}
 .impm .imp-sub{margin:0 0 16px;color:#B3AFC4;font-size:14.5px;line-height:1.5}
@@ -94,6 +98,7 @@
 @media (max-width:560px){
   .impm .tcard.imp-card{padding:24px 18px 18px;border-radius:22px !important;max-height:calc(100dvh - 24px);width:calc(100vw - 24px)}
   .imp-staff{padding:0 18px}
+  .imp-x{top:30px;right:12px}
   .imp-drop{padding:20px 14px}
   .imp-hows{gap:6px}
   .imp-how{flex-basis:100%}

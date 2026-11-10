@@ -6002,7 +6002,7 @@ function impOpen(){
   const tip = (name, es, en) => '<details class="imp-how"><summary>' + name + '</summary><p>' + impL(es, en) + '</p></details>';
   o.innerHTML = '<div class="tcard imp-card" role="dialog" aria-modal="true" aria-labelledby="impT">'
     + '<i class="imp-staff" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b></i>'
-    + '<button type="button" class="imp-x" data-imp="close" aria-label="' + impL('Cerrar', 'Close') + '">✕</button>'
+    + '<button type="button" class="imp-x" data-imp="close" aria-label="' + impL('Cerrar', 'Close') + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>'
     /* paso 1 */
     + '<section data-step="1"><p class="imp-k">' + impL('Importar', 'Import') + '</p><h3 id="impT">' + impL('Trae tus chats y tu memoria', 'Bring your chats and memory') + '</h3>'
     + '<p class="imp-sub">' + impL('Desde ChatGPT, Claude u otra IA. Primero ves todo y eliges qué traer.', 'From ChatGPT, Claude or another AI. You see everything first and choose what to bring.') + '</p>'
