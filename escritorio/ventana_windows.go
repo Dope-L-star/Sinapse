@@ -47,6 +47,12 @@ func (a *accionesWin) abrirApp() {
 // abrirVentana muestra la ventana propia y espera a que la persona la cierre.
 // Devuelve false si no se pudo mostrar (entonces se usan las cajitas de siempre).
 func abrirVentana(modo string, T textos, acc acciones) bool {
+	// la ventana necesita un navegador con modo app (Chrome, Brave, Vivaldi, Opera; Edge solo si no hay otro).
+	// Si el navegador de la persona es otro (Firefox…), se usan las cajitas de siempre: nunca se le fuerza Edge.
+	nb := elegirNavegador()
+	if nb.exe == "" || !nb.app {
+		return false
+	}
 	v := nuevaVentana(modo, T.codigo, acc)
 	url, err := v.servir()
 	if err != nil {
@@ -69,25 +75,14 @@ func abrirVentana(modo string, T textos, acc acciones) bool {
 	}()
 	const ancho, alto = 520, 680
 	x, y := centro(ancho, alto)
-	var nav *exec.Cmd
-	for _, n := range []string{"msedge.exe", "chrome.exe", "brave.exe"} {
-		exe := buscarNavegador(n)
-		if exe == "" {
-			continue
-		}
-		c := exec.Command(exe, "--app="+url, "--user-data-dir="+perfil,
-			"--window-size="+strconv.Itoa(ancho)+","+strconv.Itoa(alto),
-			"--window-position="+strconv.Itoa(x)+","+strconv.Itoa(y),
-			"--lang="+T.codigo, "--no-first-run", "--no-default-browser-check", "--disable-extensions",
-			"--disable-sync", "--disable-default-apps", "--disable-component-update",
-			"--disable-features=Translate,msEdgeSidebarV2,msUndersideButton,msHubApps,msImplicitSignin,msEdgeShoppingUI")
-		c.Dir = os.TempDir()
-		if c.Start() == nil {
-			nav = c
-			break
-		}
-	}
-	if nav == nil {
+	nav := exec.Command(nb.exe, "--app="+url, "--user-data-dir="+perfil,
+		"--window-size="+strconv.Itoa(ancho)+","+strconv.Itoa(alto),
+		"--window-position="+strconv.Itoa(x)+","+strconv.Itoa(y),
+		"--lang="+T.codigo, "--no-first-run", "--no-default-browser-check", "--disable-extensions",
+		"--disable-sync", "--disable-default-apps", "--disable-component-update",
+		"--disable-features=Translate,msEdgeSidebarV2,msUndersideButton,msHubApps,msImplicitSignin,msEdgeShoppingUI")
+	nav.Dir = os.TempDir()
+	if nav.Start() != nil {
 		v.terminar()
 		return false
 	}

@@ -1,0 +1,16 @@
+/* ===== v4.5 · «Powered by Claude» en la chispa de la esquina (core.js: 25n-v45-powered-claude.js) =====
+   Letrerito de vidrio oscuro que sale a la izquierda de la chispa; «Claude» va en el naranja de la marca.
+   Con Animaciones apagado (html.noanim) o «reducir movimiento» aparece sin deslizarse. */
+.corner{cursor:help}
+.corner::after{content:"";position:absolute;inset:-7px}              /* zona de toque más grande que los 15 px de la chispa */
+.corner:focus-visible{outline:2px solid rgba(217,128,95,.9);outline-offset:4px;border-radius:50%;opacity:1}
+#szPwr{position:fixed;z-index:450;display:block;padding:6px 11px 6px 10px;border-radius:999px;white-space:nowrap;pointer-events:none;
+  font:600 12px/1.2 var(--sans,'Inter',system-ui,-apple-system,"Segoe UI",sans-serif);letter-spacing:.01em;color:#ece9f6;
+  background:rgba(18,16,28,.9);border:1px solid rgba(255,255,255,.14);box-shadow:0 8px 24px -8px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.08);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  opacity:0;transform:translateX(8px) scale(.96);transform-origin:right center;transition:opacity .22s ease,transform .32s cubic-bezier(.2,.9,.3,1)}
+#szPwr.on{opacity:1;transform:none}
+#szPwr::before{content:"";display:inline-block;vertical-align:middle;margin:-2px 8px 0 0;width:7px;height:7px;border-radius:50%;background:#d9805f;box-shadow:0 0 8px 1px rgba(217,128,95,.8)}
+#szPwr b{font-weight:700;color:#f0a687}
+html.noanim #szPwr,html.noanim .corner{transition:none}
+@media (prefers-reduced-motion:reduce){#szPwr{transition:opacity .01s;transform:none}}
