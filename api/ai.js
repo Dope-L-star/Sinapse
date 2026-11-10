@@ -5,7 +5,7 @@
    POST { action:'ping', id | ids } → { status:{ id:'ok'|'busy'|'down' } } (¿esa IA responde ahora? con caché compartida)
    Sin cuenta también funciona: se cuenta por dispositivo y por conexión. */
 import { route, body, json, fail, auth, sha, redis, pipe, today, ipOf, limit, str, roleOf } from './_lib.js';
-import { leer, sistema, reasonParams, temperatura } from './_cerebro.js';
+import { leer, sistema, reasonParams, temperatura, tokensFor } from './_cerebro.js';
 import { pick, pickHard, recordLite, used as usedProv } from './_ruta.js';
 import { perksOf, publicPerks, enerOf, offErr, capOf } from './_permisos.js';
 import { models, chat, reviewerModel, settings, usedToday, quotaKey, PROV, IMG, pickKeys, markPay, clearPay, outage, classify, searchWith, searchWiki, searchRss, readPage, PAY_RX, baseOf, pingModel } from './_pool.js';
@@ -159,6 +159,8 @@ async function review(who, ipKey, b, free, me){
   if (me && me.ux && !me.ux.f.review) return { verdict:'ok', off:true };   /* v4.4 · revisión apagada para esta cuenta: se entrega el borrador tal cual */
   const draft = cut(b.draft, 16000), q = cut(b.q, 8000);
   if (draft.length < 20 || q.length < 1) throw Object.assign(new Error('Nada que revisar.'), { status:400, code:'rv_empty' });
+  /* v4.5 · un borrador más largo de lo que el revisor alcanza a ver NO se revisa: antes «corregía» devolviendo solo lo que veía y el archivo de la persona perdía el final (quedaba al 48 %) */
+  if (String(b.draft || '').length > 15000) return { verdict:'ok', skipped:'largo', by:'', used:0, limit:0 };
   const imgs = (Array.isArray(b.imgs) ? b.imgs : []).filter(u => typeof u === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(u.slice(0, 40))).slice(0, 4);
   const ctx = Array.isArray(b.ctx) ? b.ctx.slice(-6).map(m => (m && m.role === 'assistant' ? 'IA: ' : 'Persona: ') + cut(m && m.content, 900)).join('\n') : '';
   const packet = (ctx ? '## Conversación anterior (resumida)\n' + ctx + '\n\n' : '') + '## Lo que pidió la persona ahora\n' + q + (imgs.length ? '\n(Adjuntó ' + imgs.length + ' imagen(es): están abajo.)' : '')
@@ -174,6 +176,8 @@ async function review(who, ipKey, b, free, me){
   rest = rest.replace(/^\s*<<<\s*\n?|\n?\s*>>>\s*$/g, '').trim();
   /* una corrección mucho más corta que el borrador casi siempre es un corte: mejor quedarse con el borrador */
   if (rest.length < 20 || (draft.length > 500 && rest.length < draft.length * .45)) return Object.assign(base, { verdict:'ok' });
+  /* v4.5 · con código, una «corrección» que deja un bloque sin cerrar o pierde más de la cuarta parte casi siempre es un corte: se queda el borrador */
+  { const fn = x => (String(x).match(/```/g) || []).length; if (fn(draft) && (fn(rest) % 2 !== fn(draft) % 2 || rest.length < draft.length * .75)) return Object.assign(base, { verdict:'ok' }); }
   return Object.assign(base, { verdict:'fix', text:rest, note });
 }
 
@@ -201,18 +205,20 @@ async function brainChat(who, ipKey, me, b, free, dayLimit = null){
   const L = leer(b.messages, { effort:['low', 'medium', 'high'].includes(b.effort) ? b.effort : '' });
   const short = +maxTokens > 0 && +maxTokens <= 900;
   let route = null, firstMs = 0;
-  if (model === 'sz:auto' && !hasImg(b.messages) && !L.cont){
-    const big = L.level === 'hard' && !short && await smartOk(who, me, free);
-    const ranked = await (big ? pickHard(L.cat) : pick(L.cat)).catch(() => []);
+  /* v4.5 · en código (L.code) también se elige con la «Automática» aunque sea un «Continúa», y un encargo grande puede usar un modelo grande (si hay cupo);
+     para respuestas largas cuentan más los proveedores que dejan escribir mucho (long) */
+  if (model === 'sz:auto' && !hasImg(b.messages) && (!L.cont || L.code)){
+    const big = L.big && !short && await smartOk(who, me, free);
+    const ranked = await (big ? pickHard(L.cat, 4, { long:L.code }) : pick(L.cat, 4, { long:L.code })).catch(() => []);
     if (ranked.length){ route = ranked.map(x => x.m); firstMs = ranked.length > 1 ? 20000 : 0; }
   }
   const pend = [];
   const r = await chat({ who, ipKey, messages:b.messages, model, maxTokens, stream:true, free, dayLimit, route, firstMs,
     onTry:({ m, ok, ms }) => { pend.push(recordLite(L.cat, m.id, ok, ms)); },
-    brain:m => ({ system:sistema(L, m.prov, m.mid, { short }), extra:reasonParams(m.prov, m.mid, L.level), temperature:creative ? Math.max(.9, temperatura(L)) : temperatura(L), maxTokens:L.level === 'hard' && !short ? 8000 : undefined }) });
+    brain:m => ({ system:sistema(L, m.prov, m.mid, { short }), extra:reasonParams(m.prov, m.mid, L.level, L.job), temperature:creative && !L.code ? Math.max(.9, temperatura(L)) : temperatura(L), maxTokens:tokensFor(L, short) }) });
   pend.push(usedProv(r.meta.prov));
   await Promise.all(pend).catch(() => {});
-  r.meta.cat = L.cat; r.meta.level = L.level;
+  r.meta.cat = L.cat; r.meta.level = L.level; r.meta.job = L.job || '';
   return r;
 }
 
@@ -286,7 +292,7 @@ export default route({
     }
     if (b.action === 'review') return json(Object.assign(r, { guest:gu }));
     return new Response(r.stream, { status:200, headers:{ 'content-type':'text/event-stream; charset=utf-8', 'cache-control':'no-store',
-      'x-sz-model':r.meta.model, 'x-sz-name':encodeURIComponent(r.meta.name), 'x-sz-prov':r.meta.provName, 'x-sz-fallback':r.meta.fallback ? '1' : '0', 'x-sz-used':String(r.used), 'x-sz-limit':String(r.limit), 'x-sz-guest':gu, 'x-sz-cat':r.meta.cat || '', 'x-sz-level':r.meta.level || '',
-      'access-control-expose-headers':'x-sz-model,x-sz-name,x-sz-prov,x-sz-fallback,x-sz-used,x-sz-limit,x-sz-guest,x-sz-cat,x-sz-level' } });
+      'x-sz-model':r.meta.model, 'x-sz-name':encodeURIComponent(r.meta.name), 'x-sz-prov':r.meta.provName, 'x-sz-fallback':r.meta.fallback ? '1' : '0', 'x-sz-used':String(r.used), 'x-sz-limit':String(r.limit), 'x-sz-guest':gu, 'x-sz-cat':r.meta.cat || '', 'x-sz-level':r.meta.level || '', 'x-sz-job':r.meta.job || '',
+      'access-control-expose-headers':'x-sz-model,x-sz-name,x-sz-prov,x-sz-fallback,x-sz-used,x-sz-limit,x-sz-guest,x-sz-cat,x-sz-level,x-sz-job' } });
   }
 });

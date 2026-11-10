@@ -1548,8 +1548,20 @@ function texHtml(tex, display){
   if (display) h = '<div class="mathd">' + h + '</div>';
   if (MCACHE.size > 400) MCACHE.clear(); MCACHE.set(k, h); return h;
 }
+/* v4.5 · algunas IAs ponen el nombre del archivo DENTRO de la cerca (```html:index.html, ```python app.py, ```js title="app.js", ```index.html) en vez de en la línea de antes:
+   así la página no lo veía como archivo (salía «codigo.html»). Se pasa a su propia línea en negrita, que es lo que sí reconoce. Solo con extensiones de archivo conocidas. */
+/* fenceNames:inicio */
+const FN_EXT = 'html?|css|scss|m?js|jsx|ts|tsx|py|java|c|cpp|h|cs|go|rs|php|rb|swift|kt|dart|lua|sql|sh|bash|json|xml|svg|ya?ml|toml|md|csv|txt|vue|svelte|ino|env|ini|r|pl|scala';
+const FN_A = new RegExp('^([ \\t]*)```[ \\t]*([\\w+#-]*)[ \\t]*(?::|,|[ \\t])[ \\t]*(?:(?:title|file|filename|name|path)[ \\t]*=[ \\t]*)?["\'{]*([\\w.\\/-]+\\.(?:' + FN_EXT + '))["\'}]*[^\\n]*$', 'gim');
+const FN_B = new RegExp('^([ \\t]*)```[ \\t]*([\\w.\\/-]+\\.(?:' + FN_EXT + '))[ \\t]*$', 'gim');
+function fenceNames(src){
+  if (src.indexOf('```') < 0) return src;
+  return src.replace(FN_A, (m, ind, lang, file) => ind + '**' + file + '**\n\n' + ind + '```' + (lang || file.split('.').pop().toLowerCase()))
+            .replace(FN_B, (m, ind, file) => ind + '**' + file + '**\n\n' + ind + '```' + file.split('.').pop().toLowerCase());
+}
+/* fenceNames:fin */
 function md(src){
-  src = String(src || '');
+  src = fenceNames(String(src || ''));
   if (!MDLIB.ok) return mdLite(src);
   /* 1) el código se aparta (ahí no se toca nada) */
   const code = [];

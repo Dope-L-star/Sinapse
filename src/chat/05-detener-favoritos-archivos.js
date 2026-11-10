@@ -225,7 +225,7 @@ function apiMsgs(chat, vision, o = {}){
   }
   if (o.webAsk) sys.push(webAskSys());   /* v3.8 · la IA puede pedir una búsqueda en internet ella sola */   /* v3.4 · calidad: piensa, revisa la lógica y no inventa */
   if (saver) sys.push('Responde en el idioma del usuario, de forma clara y breve, sin relleno.');
-  { const cs = o.naive ? '' : codeSystem(chat, saver); if (cs) sys.push(cs); }   /* v2.4 · SynthCode: manual de programación cuando pides código */
+  { const cs = o.naive || o.srv ? '' : codeSystem(chat, saver); if (cs) sys.push(cs); }   /* v2.4 · SynthCode: manual de programación cuando pides código · v4.5: con las IAs conectadas lo pone el servidor (un solo manual, sin que se repita ni choque) */
   { const ef = effortHint(); if (ef && !o.naive) sys.push(ef); }   /* v2.3.1 · esfuerzo */
   { const mm = memSystem(); if (mm && !o.naive) sys.push(mm); }
   if (!o.naive && !o.noMarks) sys.push(marcasSystem(chat));   /* v4.0 · título con sentido y memoria redactada por la IA */

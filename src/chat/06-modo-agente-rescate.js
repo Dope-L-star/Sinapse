@@ -292,6 +292,27 @@ function limpiaBucles(t){
   r = r.replace(/(^|\n\n)([^\n`][^\n]{60,})(?:\n\n\2)+(?=\n\n|$)/g, '$1$2');
   return r;
 }
+/* v4.5 · pega lo que escribe la IA al «Continúa…» con lo que ya había, sin repetir ni romper el código:
+   · si el archivo seguía abierto (``` sin cerrar) y la IA vuelve a abrir la cerca, esa línea se quita;
+   · si repite las últimas líneas (o la línea que quedó a medias), no se duplican;
+   · dentro de un archivo, si lo anterior terminó en una línea completa, la continuación empieza en línea nueva (sin espacios metidos a la fuerza). */
+/* contJoin:inicio */
+function contJoin(base, next){
+  base = String(base || ''); let n = String(next || '');
+  const open = (base.match(/```/g) || []).length % 2 === 1;
+  if (open) n = n.replace(/^\s*```[\w+#.-]*[ \t]*\r?\n/, '');
+  const bl = base.split('\n'), nl = n.split('\n'), lastB = bl[bl.length - 1].trim();
+  let cutDone = false;
+  if (lastB.length >= 8 && nl[0].trim().startsWith(lastB)){ bl.pop(); base = bl.join('\n') + (bl.length ? '\n' : ''); cutDone = true; }
+  else for (let k = Math.min(8, nl.length, bl.length); k >= 1; k--){ const a = bl.slice(-k).join('\n').trim(), b = nl.slice(0, k).join('\n').trim(); if (a.length >= 12 && a === b){ n = nl.slice(k).join('\n'); break; } }
+  if (open){
+    if (cutDone || /\s$/.test(base) || /^\s/.test(n)) return base + n;
+    return base + (/[;{}>)\],]$/.test(base) && /^[A-Za-z<}.#@\/*$_]/.test(n) ? '\n' : '') + n;
+  }
+  const glue = (!base || /\s$/.test(base) || /^[\s.,;:!?)\]]/.test(n) || !/[.!?:;)\]*_`]$/.test(base)) ? '' : ' ';
+  return base + glue + n;
+}
+/* contJoin:fin */
 async function runSolo(onFail, o = {}){
   const mid = o.model || selId(), chat = chatArr(), g = gen, vis = info(mid).vision, saver = st().sx.saver;
   const slowT = setTimeout(() => { if (busy[mid] === 'think' && SZ.BOT.react) SZ.BOT.react('slow', { auto:mid === 'sz:auto' }); }, 14000);
@@ -334,17 +355,16 @@ async function runSolo(onFail, o = {}){
       /* si la IA se quedó sin espacio (o se cortó la conexión), sigue sola donde quedó: la persona recibe la respuesta completa sin tocar «Continuar» */
       for (let n = 0; n < 3 && !webQ && !r.aborted && !r.swapped && g === gen && (r.finish === 'length' || r.cut); n++){
         const base = r.text, ctl2 = new AbortController(); ctls.add(ctl2);
-        const glue = t => (!base || /\s$/.test(base) || /^[\s.,;:!?)\]]/.test(t) || !/[.!?:;)\]*_`]$/.test(base)) ? '' : ' ';
         let r2 = null;
         try{
           r2 = await SZ.askStream(OR, [...sent, { role:'assistant', content:base }, { role:'user', content:'Continúa exactamente donde te quedaste: sigue desde la última palabra, sin repetir nada de lo anterior, sin saludar y sin decir que continúas. Escribe solo lo que falta.' }],
-            Object.assign({ model:mid, maxTokens:0, signal:ctl2.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { mount(); const full = sinMarcas(base + glue(txt) + txt); W.write(full); if (rv) rv.push(full); });
+            Object.assign({ model:mid, maxTokens:0, signal:ctl2.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { mount(); const full = sinMarcas(contJoin(base, txt)); W.write(full); if (rv) rv.push(full); });
         }catch(e){ r2 = null; }
         finally{ ctls.delete(ctl2); }
         if (!r2 || r2.aborted && !r2.text) break;
         addUsage(r2.prov || SZ.provOf(mid), r2.prompt, r2.completion, true, { est:r2.est, free:/:free$/.test(mid) || r2.prov === 'synthz', rid:r2.rid });
         if (/^\(La IA devolvió una respuesta vacía\.\)$/.test(r2.text)) break;
-        r = Object.assign({}, r, { text:base + glue(r2.text) + r2.text, prompt:r.prompt + r2.prompt, completion:r.completion + r2.completion, ms:r.ms + r2.ms, finish:r2.finish, cut:r2.cut, aborted:r2.aborted, est:r.est || r2.est });
+        r = Object.assign({}, r, { text:contJoin(base, r2.text), prompt:r.prompt + r2.prompt, completion:r.completion + r2.completion, ms:r.ms + r2.ms, finish:r2.finish, cut:r2.cut, aborted:r2.aborted, est:r.est || r2.est });
       }
     }
     if (g !== gen){ if (rv) rv.skip(); return; }
