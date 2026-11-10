@@ -1,0 +1,45 @@
+/* ===== v4.6 · el panelito del perfil (como el de Claude): Ajustes, Idioma, Obtener ayuda, Planes, Más información, Cerrar sesión =====
+   Lo dibuja next/componentes/synthflow/MenuCuenta.jsx. En computador sale sobre tu perfil; en el celular, como una hoja desde abajo. */
+.mc{position:fixed;z-index:9700;color:var(--text,#F4F2FA);font:400 14px/1.3 var(--sans,system-ui,sans-serif)}
+.mc-main,.mc-sub{padding:6px;border-radius:14px;border:1px solid rgba(255,255,255,.16);background:rgba(20,18,32,.94);-webkit-backdrop-filter:blur(24px) saturate(170%);backdrop-filter:blur(24px) saturate(170%);box-shadow:0 22px 60px -12px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.12);transform-origin:bottom left;animation:mcIn .18s cubic-bezier(.22,1,.36,1)}
+.mc-sub{position:absolute;left:calc(100% + 6px);width:max-content;min-width:210px;max-width:300px}
+.mc-who{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px 10px;color:var(--mute,#a6a2ba);font-size:13px}
+.mc-h{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mc-plan{flex:none;padding:3px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.16);font:600 10.5px/1.2 var(--mono,monospace);letter-spacing:.05em;text-transform:uppercase;color:var(--soft,#cfcbe0)}
+.mc-i{display:flex;align-items:center;gap:11px;width:100%;min-height:38px;padding:0 10px;border:0;border-radius:9px;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;transition:background .15s}
+.mc-i:hover,.mc-i:focus-visible,.mc-i.on{background:rgba(255,255,255,.09);outline:none}
+.mc-i:focus-visible{box-shadow:inset 0 0 0 2px rgba(184,196,255,.7)}
+.mc-ic{display:grid;place-items:center;flex:none;width:18px;height:18px;color:var(--soft,#cfcbe0)}
+.mc-ic svg{width:18px;height:18px}
+.mc-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mc-k{flex:none;color:var(--mute,#a6a2ba);font-size:12.5px}
+.mc-ch{display:grid;place-items:center;flex:none;width:14px;height:14px;color:var(--mute,#a6a2ba)}
+.mc-ch svg{width:14px;height:14px}
+.mc-ck{display:grid;place-items:center;flex:none;width:16px;height:16px;color:#3DE0FF}
+.mc-ck svg{width:16px;height:16px}
+.mc-sep{height:1px;margin:6px 4px;background:rgba(255,255,255,.1)}
+.mc-in{min-height:44px;margin-bottom:2px;background:linear-gradient(120deg,rgba(61,224,255,.14),rgba(123,63,242,.16) 55%,rgba(255,61,154,.14));font-weight:600}
+.mc-in:hover,.mc-in:focus-visible{background:linear-gradient(120deg,rgba(61,224,255,.22),rgba(123,63,242,.24) 55%,rgba(255,61,154,.22))}
+@keyframes mcIn{from{opacity:0;transform:translateY(6px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes mcUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@keyframes mcFade{from{opacity:0}to{opacity:1}}
+
+/* Simple: plano y cálido, como Claude */
+html.simple .mc-main,html.simple .mc-sub{background:var(--sside,#1d1c1a);border-color:var(--sline,rgba(255,255,255,.14));-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 18px 50px -14px rgba(0,0,0,.7)}
+html.simple .mc-who,html.simple .mc-k,html.simple .mc-ch{color:var(--smute,#9b978d)}
+html.simple .mc-i:hover,html.simple .mc-i:focus-visible,html.simple .mc-i.on{background:var(--shover,rgba(255,255,255,.07))}
+html.simple .mc-in{background:var(--shover,rgba(255,255,255,.07))}
+html.simple .mc-ck{color:var(--sacc,#d9a066)}
+
+/* celular: hoja desde abajo; «Idioma» y «Más información» reemplazan la lista (con ‹ para volver) */
+.mc-scrim{position:fixed;inset:0;z-index:9699;background:rgba(5,6,10,.55);animation:mcFade .2s ease both}
+.mc.mc-sheet{left:0;right:0;bottom:0;width:auto;padding:0 8px calc(8px + env(safe-area-inset-bottom))}
+.mc-sheet .mc-main,.mc-sheet .mc-sub{position:static;width:auto;max-width:none;min-width:0;padding:8px;border-radius:22px;animation:mcUp .24s cubic-bezier(.22,1,.36,1)}
+.mc-sheet.mc-insub .mc-main{display:none}
+.mc-sheet .mc-i{min-height:50px;font-size:15.5px;border-radius:12px}
+.mc-sheet .mc-k{font-size:13.5px}
+.mc-sheet .mc-sc{display:none}
+.mc-sheet .mc-bk{font-weight:600;border-bottom:1px solid rgba(255,255,255,.1);border-radius:12px 12px 0 0;margin-bottom:4px}
+html.simple .mc-sheet .mc-bk{border-color:var(--sline,rgba(255,255,255,.14))}
+html.noanim .mc-main,html.noanim .mc-sub,html.noanim .mc-scrim{animation:none}
+@media (prefers-reduced-motion:reduce){.mc-main,.mc-sub,.mc-scrim{animation:none}}

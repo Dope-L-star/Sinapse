@@ -3652,3 +3652,131 @@ html.simple body:not(.locked) #hexR.luma-starters { display: grid !important; }
   .luma-starter { min-height: 44px; padding: 6px 10px; }
 }
 .flowq:focus-visible{outline:2px solid var(--accent,#3de0ff);outline-offset:2px;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent,#3de0ff) 35%,transparent)}
+/* ===== v4.6 · el panelito del perfil (como el de Claude): Ajustes, Idioma, Obtener ayuda, Planes, Más información, Cerrar sesión =====
+   Lo dibuja next/componentes/synthflow/MenuCuenta.jsx. En computador sale sobre tu perfil; en el celular, como una hoja desde abajo. */
+.mc{position:fixed;z-index:9700;color:var(--text,#F4F2FA);font:400 14px/1.3 var(--sans,system-ui,sans-serif)}
+.mc-main,.mc-sub{padding:6px;border-radius:14px;border:1px solid rgba(255,255,255,.16);background:rgba(20,18,32,.94);-webkit-backdrop-filter:blur(24px) saturate(170%);backdrop-filter:blur(24px) saturate(170%);box-shadow:0 22px 60px -12px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.12);transform-origin:bottom left;animation:mcIn .18s cubic-bezier(.22,1,.36,1)}
+.mc-sub{position:absolute;left:calc(100% + 6px);width:max-content;min-width:210px;max-width:300px}
+.mc-who{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px 10px;color:var(--mute,#a6a2ba);font-size:13px}
+.mc-h{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mc-plan{flex:none;padding:3px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.16);font:600 10.5px/1.2 var(--mono,monospace);letter-spacing:.05em;text-transform:uppercase;color:var(--soft,#cfcbe0)}
+.mc-i{display:flex;align-items:center;gap:11px;width:100%;min-height:38px;padding:0 10px;border:0;border-radius:9px;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;transition:background .15s}
+.mc-i:hover,.mc-i:focus-visible,.mc-i.on{background:rgba(255,255,255,.09);outline:none}
+.mc-i:focus-visible{box-shadow:inset 0 0 0 2px rgba(184,196,255,.7)}
+.mc-ic{display:grid;place-items:center;flex:none;width:18px;height:18px;color:var(--soft,#cfcbe0)}
+.mc-ic svg{width:18px;height:18px}
+.mc-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mc-k{flex:none;color:var(--mute,#a6a2ba);font-size:12.5px}
+.mc-ch{display:grid;place-items:center;flex:none;width:14px;height:14px;color:var(--mute,#a6a2ba)}
+.mc-ch svg{width:14px;height:14px}
+.mc-ck{display:grid;place-items:center;flex:none;width:16px;height:16px;color:#3DE0FF}
+.mc-ck svg{width:16px;height:16px}
+.mc-sep{height:1px;margin:6px 4px;background:rgba(255,255,255,.1)}
+.mc-in{min-height:44px;margin-bottom:2px;background:linear-gradient(120deg,rgba(61,224,255,.14),rgba(123,63,242,.16) 55%,rgba(255,61,154,.14));font-weight:600}
+.mc-in:hover,.mc-in:focus-visible{background:linear-gradient(120deg,rgba(61,224,255,.22),rgba(123,63,242,.24) 55%,rgba(255,61,154,.22))}
+@keyframes mcIn{from{opacity:0;transform:translateY(6px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes mcUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@keyframes mcFade{from{opacity:0}to{opacity:1}}
+
+/* Simple: plano y cálido, como Claude */
+html.simple .mc-main,html.simple .mc-sub{background:var(--sside,#1d1c1a);border-color:var(--sline,rgba(255,255,255,.14));-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 18px 50px -14px rgba(0,0,0,.7)}
+html.simple .mc-who,html.simple .mc-k,html.simple .mc-ch{color:var(--smute,#9b978d)}
+html.simple .mc-i:hover,html.simple .mc-i:focus-visible,html.simple .mc-i.on{background:var(--shover,rgba(255,255,255,.07))}
+html.simple .mc-in{background:var(--shover,rgba(255,255,255,.07))}
+html.simple .mc-ck{color:var(--sacc,#d9a066)}
+
+/* celular: hoja desde abajo; «Idioma» y «Más información» reemplazan la lista (con ‹ para volver) */
+.mc-scrim{position:fixed;inset:0;z-index:9699;background:rgba(5,6,10,.55);animation:mcFade .2s ease both}
+.mc.mc-sheet{left:0;right:0;bottom:0;width:auto;padding:0 8px calc(8px + env(safe-area-inset-bottom))}
+.mc-sheet .mc-main,.mc-sheet .mc-sub{position:static;width:auto;max-width:none;min-width:0;padding:8px;border-radius:22px;animation:mcUp .24s cubic-bezier(.22,1,.36,1)}
+.mc-sheet.mc-insub .mc-main{display:none}
+.mc-sheet .mc-i{min-height:50px;font-size:15.5px;border-radius:12px}
+.mc-sheet .mc-k{font-size:13.5px}
+.mc-sheet .mc-sc{display:none}
+.mc-sheet .mc-bk{font-weight:600;border-bottom:1px solid rgba(255,255,255,.1);border-radius:12px 12px 0 0;margin-bottom:4px}
+html.simple .mc-sheet .mc-bk{border-color:var(--sline,rgba(255,255,255,.14))}
+html.noanim .mc-main,html.noanim .mc-sub,html.noanim .mc-scrim{animation:none}
+@media (prefers-reduced-motion:reduce){.mc-main,.mc-sub,.mc-scrim{animation:none}}
+/* ===== v4.6 · «Obras» (antes Sintéticos) con el estilo de la página de Artefactos de Claude =====
+   Título grande, «Tus obras» / «Inspiración», buscador, «Crear nueva obra» y una cuadrícula de tarjetas con miniatura
+   (la página, el dibujo o las primeras líneas del código). Marcado: src/chat/14c-v30-sinteticos.js. Sigue los colores del tema y de Simple. */
+.synv .obr-h{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin:4px 0 22px}
+.synv .obr-h h1{margin:0;font:600 clamp(30px,4vw,40px)/1.08 var(--display,var(--sans,inherit));letter-spacing:-.02em;color:var(--text)}
+html.simple .synv .obr-h h1{font-family:var(--serif,Georgia,serif);font-weight:400}
+.synv .obr-h p{margin:8px 0 0;max-width:560px;color:var(--soft);font-size:15px;line-height:1.5}
+.synv .obr-new{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border:0;border-radius:12px;background:#f4f2fa;color:#0b0a12;font:600 14px/1 var(--sans,inherit);cursor:pointer;transition:transform .2s,background .2s}
+.synv .obr-new:hover{background:#fff;transform:translateY(-1px)}
+.synv .obr-new:focus-visible{outline:2px solid #b8c4ff;outline-offset:2px}
+.synv .obr-new svg{width:16px;height:16px;flex:none}
+html.simple .synv .obr-new{background:var(--stext,#f1efe9);color:#1d1c1a}
+.synv .pj-empty .obr-new{margin-top:12px}
+.synv .obr-tools{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:0 0 20px}
+.synv .obr-tabs{display:inline-flex;gap:2px;padding:3px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.04)}
+.synv .obr-tab{padding:8px 16px;border:0;border-radius:9px;background:transparent;color:var(--soft);font:500 13.5px/1 var(--sans,inherit);cursor:pointer;transition:background .18s,color .18s}
+.synv .obr-tab:hover{color:var(--text)}
+.synv .obr-tab[aria-selected="true"]{background:rgba(255,255,255,.12);color:var(--text)}
+.synv .obr-tab:focus-visible{outline:2px solid #b8c4ff;outline-offset:1px}
+.synv .obr-s{display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;min-width:min(100%,300px);border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.04);color:var(--mute)}
+.synv .obr-s:focus-within{border-color:rgba(255,255,255,.34);color:var(--text)}
+.synv .obr-s svg{width:16px;height:16px;flex:none}
+.synv .obr-s input{flex:1;min-width:0;border:0;background:transparent;color:var(--text);font:14px/1 var(--sans,inherit);outline:0}
+.synv .obr-s input::placeholder{color:var(--mute)}
+.synv .obr-none{margin:28px 0;text-align:center;color:var(--mute);font-size:14px}
+html.simple .synv :is(.obr-tabs,.obr-s){border-color:var(--sline);background:transparent}
+html.simple .synv .obr-tab[aria-selected="true"]{background:var(--shover,rgba(255,255,255,.08))}
+
+/* cuadrícula */
+.synv .syn-l{grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.synv .syn-w{position:relative;display:block;min-width:0}
+.synv .syn-w[hidden]{display:none}
+.synv .syn-c{display:flex;flex-direction:column;align-items:stretch;gap:0;width:100%;min-height:0;padding:0;overflow:hidden;border-radius:16px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);text-align:left;transition:transform .22s cubic-bezier(.22,1,.36,1),border-color .2s,background .2s}
+.synv .syn-c:hover{transform:translateY(-3px);border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.07)}
+.synv .syn-c:focus-visible{outline:2px solid #b8c4ff;outline-offset:2px}
+html.simple .synv .syn-c{background:var(--scard,#2b2a27);border-color:var(--sline)}
+html.simple .synv .syn-c:hover{border-color:rgba(255,255,255,.26);background:var(--scard,#2b2a27)}
+.syn-th{position:relative;display:block;aspect-ratio:16/10;overflow:hidden;border-bottom:1px solid rgba(255,255,255,.1);background:linear-gradient(145deg,hsl(var(--h) 52% 26%),hsl(calc(var(--h) + 38) 48% 13%))}
+html.simple .syn-th{background:linear-gradient(145deg,hsl(var(--h) 14% 25%),hsl(calc(var(--h) + 38) 12% 17%))}
+.syn-th .th-k,.obr-idea .th-k{position:absolute;left:10px;top:10px;z-index:2;padding:3px 8px;border-radius:999px;background:rgba(0,0,0,.5);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);font:600 10px/1.3 var(--mono,monospace);font-style:normal;letter-spacing:.06em;text-transform:uppercase;color:#fff}
+.th-code{margin:0;padding:36px 14px 0;font:10px/1.55 var(--mono,monospace);color:rgba(255,255,255,.85);white-space:pre;overflow:hidden;tab-size:2;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent)}
+.th-doc{display:block;position:absolute;inset:30px 16px 0;padding:12px 12px 0;overflow:hidden;border-radius:8px 8px 0 0;background:#f6f3ec;color:#3a3530;font:500 9.5px/1.55 var(--sans,inherit);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.syn-th:has(.th-svg){background:#f3f1ec}
+.th-svg{position:absolute;inset:12% 10%;width:80%;height:76%;object-fit:contain}
+.th-web{position:absolute;inset:30px 14px 0;overflow:hidden;padding:30px 14px 0;border-radius:10px 10px 0 0;background:#fffaf2;color:#2a1c10;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.th-web::before{content:"";position:absolute;left:0;right:0;top:0;height:20px;background:#ece5d8}
+.th-web i{position:absolute;top:7px;width:6px;height:6px;border-radius:50%;background:#e2554f}
+.th-web i:nth-child(1){left:9px}.th-web i:nth-child(2){left:19px;background:#e8b13a}.th-web i:nth-child(3){left:29px;background:#5cb85c}
+.synv .syn-c .th-web b{display:block;max-width:none;overflow:visible;white-space:normal;font:700 15px/1.2 var(--sans,inherit);letter-spacing:-.01em;color:#2a1c10}
+.th-web u{display:block;height:6px;margin-top:9px;border-radius:3px;background:#e7dccb;text-decoration:none}
+.th-web u.s{width:58%}
+.syn-m{display:flex;flex-direction:column;gap:3px;min-width:0;padding:12px 14px 14px}
+.syn-m b{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 14.5px/1.3 var(--sans,inherit);color:var(--text)}
+.syn-m small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--mute)}
+.synv .syn-go{position:absolute;top:10px;right:10px;left:auto;z-index:3;display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border:1px solid rgba(255,255,255,.2);border-radius:999px;background:rgba(10,9,18,.72);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;font:500 12px/1 var(--sans,inherit);opacity:0;transform:translateY(-3px);transition:opacity .18s,transform .18s,background .18s;cursor:pointer}
+.synv .syn-go svg{width:13px;height:13px}
+.synv .syn-w:hover .syn-go,.synv .syn-w:focus-within .syn-go{opacity:1;transform:none}
+.synv .syn-go:hover{background:rgba(10,9,18,.9)}
+@media (hover:none){.synv .syn-go{opacity:1;transform:none}}
+.synv .syn-w.web .wp-ic{display:none}
+
+/* Inspiración */
+.synv .obr-ideas{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.synv .obr-idea{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-height:150px;padding:48px 16px 16px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:linear-gradient(150deg,hsl(var(--h) 50% 24% / .6),rgba(255,255,255,.03));text-align:left;cursor:pointer;transition:transform .22s cubic-bezier(.22,1,.36,1),border-color .2s}
+.synv .obr-idea:hover{transform:translateY(-3px);border-color:rgba(255,255,255,.3)}
+.synv .obr-idea:focus-visible{outline:2px solid #b8c4ff;outline-offset:2px}
+.synv .obr-idea b{font:600 16px/1.25 var(--sans,inherit);color:var(--text)}
+.synv .obr-idea small{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:12.5px;line-height:1.5;color:var(--soft)}
+html.simple .synv .obr-idea{background:var(--scard,#2b2a27);border-color:var(--sline)}
+
+html.noanim .synv :is(.syn-c,.obr-idea,.obr-new,.syn-go){transition:none}
+@media (max-width:620px){
+  .synv .obr-h{margin-bottom:16px}
+  .synv .obr-h .obr-new{width:100%}
+  .synv .obr-tools{flex-direction:column;align-items:stretch}
+  .synv .obr-tabs{display:flex}
+  .synv .obr-tab{flex:1;min-height:44px}
+  .synv .obr-s{min-width:0;height:46px}
+  .synv .syn-l{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .synv .obr-ideas{grid-template-columns:minmax(0,1fr);gap:12px}
+  .synv .syn-m{padding:10px 12px 12px}
+  .synv .syn-go{padding:5px 9px;font-size:11.5px}
+}

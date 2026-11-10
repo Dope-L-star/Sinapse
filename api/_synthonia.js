@@ -70,7 +70,7 @@ export function cleanThoughts(t){
 }
 
 /* v3.7 · memoria de SynthonIA: recuerda solo lo que vale y PREGUNTA antes de guardar.
-   El navegador manda solo lo que la persona ya aprobó (Ajustes › IAs y memoria); si la persona cuenta algo que vale la pena
+   El navegador manda solo lo que la persona ya aprobó (Ajustes › Memoria); si la persona cuenta algo que vale la pena
    recordar, la IA lo propone al final con [recordar: …] y la página le pregunta «¿Lo recuerdo?». Nada se guarda sin su sí. */
 export function memOf(list){
   return (Array.isArray(list) ? list : []).filter(x => typeof x === 'string').map(x => x.replace(/\s+/g, ' ').trim().slice(0, 200)).filter(x => x.length >= 3 && !isRude(x)).slice(0, 12);

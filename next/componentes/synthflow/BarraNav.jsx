@@ -1,5 +1,6 @@
 'use client';
-/* SynthFlow en React · menú de la barra (Crear, Comparar IAs, Proyectos, Sintéticos, Personalización y Más)
+/* SynthFlow en React · menú de la barra, como la de Claude: Crear, Comparar IAs, Espacios, Obras y Favoritos.
+   v4.6 · «Personalización» y «Más» salieron: Ajustes, Idioma, Ayuda, Guía, tu EnerX, Planes y Cerrar sesión están en el panelito del perfil (MenuCuenta.jsx).
    v3.7 · primer pedazo de SynthFlow con lógica en React: el estado («Más» abierto, cuál está activo) vive aquí
    y las acciones van al motor por window.SZFlow (src/chat/16z-puente-react.js). Mismas clases e IDs de antes (.snav, #sNav, data-sn). */
 import { useEffect, useState } from 'react';
@@ -19,9 +20,8 @@ const I = {
   side: <svg viewBox="0 0 24 24" {...P}><rect x="3.5" y="4.5" width="17" height="15" rx="3" /><path d="M9.5 4.5v15" /></svg>,
   chev: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10l5 5 5-5" /></svg>,
 };
-const TOP = [['new', 'Crear'], ['cmp', 'Comparar IAs'], ['proj', 'Proyectos'], ['syn', 'Sintéticos'], ['cfg', 'Personalización']];
-const SUB = [['favs', 'star', 'Mensajes favoritos'], ['energy', 'batt', 'Tu EnerX de hoy'], ['guide', 'guide', 'Guía de SynthFlow'], ['help', 'help', 'Centro de ayuda']];
-const ACT = { new: 'newChat', cmp: 'compare', proj: 'projects', syn: 'synthetics', cfg: 'settings', favs: 'favorites', energy: 'energy', guide: 'guide', help: 'help' };
+const TOP = [['new', 'Crear'], ['cmp', 'Comparar IAs'], ['proj', 'Espacios'], ['syn', 'Obras'], ['favs', 'Favoritos']];
+const ACT = { new: 'newChat', cmp: 'compare', proj: 'projects', syn: 'synthetics', favs: 'favorites' };
 
 /* lo que está abierto se marca, como en Claude (Comparar, Proyectos o Sintéticos) */
 function useActive(){
@@ -50,29 +50,21 @@ function Item({ k, ic, t, d, on, go }){
 }
 
 export default function BarraNav(){
-  const [more, setMore] = useState(false);
   const on = useActive();
   const go = (k, e) => {
     const F = typeof window !== 'undefined' ? window.SZFlow : null;
     try { window.SZ?.SND?.tap?.(); } catch {}
     if (!F) return;   /* el motor todavía no cargó: el clic no hace nada (pasa solo en el primer instante) */
     F[ACT[k]]?.(e.currentTarget);
-    if (k !== 'new' && k !== 'favs') setMore(false);
-    if (k !== 'favs') F.closeSheet();
+    if (k !== 'new' && k !== 'favs') F.closeSheet();
   };
   return (
-    <nav className={'snav' + (more ? ' mopen' : '')} id="sNav" aria-label="Menú de SynthFlow">
+    <nav className="snav" id="sNav" aria-label="Menú de SynthFlow">
       <div className="sn-top">
         <a className="sn-logo" href="index.html" aria-label="Volver a SymphorIA"><span className="snw" /></a>
         <button type="button" className="sn-x" data-sn="hide" aria-label="Cerrar la barra" data-tip="Cerrar la barra" onClick={() => window.SZFlow?.hideBar()}>{I.side}</button>
       </div>
-      {TOP.map(([k, t], i) => <Item key={k} k={k} t={t} d={i} on={!!on[k]} go={go} />)}
-      <button type="button" className="sn-i sn-more" data-sn="more" aria-expanded={more} aria-controls="snMore" style={{ '--d': TOP.length }} onClick={() => setMore(m => !m)}>
-        <span className="sn-ic" aria-hidden="true">{I.more}</span><span className="sn-t">Más</span><span className="sn-chev" aria-hidden="true">{I.chev}</span>
-      </button>
-      <div className="sn-sub" id="snMore" hidden={!more}>
-        {SUB.map(([k, ic, t], i) => <Item key={k} k={k} ic={ic} t={t} d={i} on={false} go={go} />)}
-      </div>
+      {TOP.map(([k, t], i) => <Item key={k} k={k} ic={k === 'favs' ? 'star' : undefined} t={t} d={i} on={!!on[k]} go={go} />)}
     </nav>
   );
 }

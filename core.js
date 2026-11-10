@@ -2877,9 +2877,9 @@ async function askDrive(){
     try{ if (localStorage.getItem('synthz:askdrive')) return; localStorage.setItem('synthz:askdrive', String(Date.now())); }catch(e){}
     await sleepRaw(900);
     const ok = await szConfirm('¿Quieres conectar tu Google Drive?', 'Guardo una copia de tus chats en una carpeta privada dentro de tu Google Drive, para que tengas más espacio. No puedo ver ni tocar tus otros archivos. Puedes cambiarlo cuando quieras.', 'Sí, conectar', false, 'No, gracias');
-    if (!ok){ toast('Listo. Si cambias de idea, está en Ajustes › IAs y memoria › Google Drive.'); return; }
+    if (!ok){ toast('Listo. Si cambias de idea, está en Ajustes › Tus IAs › Google Drive.'); return; }
     const r = await DRIVE.sync(); if (r && !r.busy) toast('¡Listo! Tus chats también quedan en tu Google Drive.');
-  }catch(e){ toast((e && e.message) || 'No pude conectar tu Drive. Inténtalo luego en Ajustes › IAs y memoria › Google Drive.'); }
+  }catch(e){ toast((e && e.message) || 'No pude conectar tu Drive. Inténtalo luego en Ajustes › Tus IAs › Google Drive.'); }
 }
 const EYE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 function passStrength(p, u){
@@ -3087,7 +3087,7 @@ function cfgChooser(box, cur, onPick){
   paint(cur);
 }
 const CFG_ROWS = [['cursor', 'Cursor ' + BRAND(), 'El cursor de vidrio con viento.'], ['smooth', 'Desplazamiento suave', 'La ruedita baja la página sin saltos.'], ['bg', 'Fondo animado', 'Los colores se mueven y giran al bajar.'], ['glass', 'Efecto vidrio', 'Ventanas y paneles que parecen de vidrio.'], ['anim', 'Animaciones', 'Escritura letra por letra, golpe de cristal y agua.'], ['favAnim', 'Icono animado', 'El péndulo (o el destello de Flow) en el icono de la pestaña.'], ['sound', 'Sonidos', 'La voz de Sona, las teclas, las transiciones y los avisos. Apágalos si te molestan.'], ['beginner', 'Modo principiante', 'Las IA te responden con palabras sencillas, paso a paso y con ejemplos.']];
-/* v2.2 · Ajustes con 2 pestañas: «Página» (cómo se ve y se siente) e «IAs y memoria» (cómo te responden y qué recuerdan de ti) */
+/* v2.2 · filas de Ajustes. Desde v4.6 se reparten en las secciones Efectos (cómo se ve y se siente) y Respuestas (cómo te responden) */
 const CFG_PAGE = CFG_ROWS.filter(r => r[0] !== 'beginner');
 const CFG_IA = [['beginner', 'Modo principiante', 'Te responden con palabras sencillas, paso a paso y con ejemplos.'], ['autoWeb', 'Buscar en internet cuando haga falta', 'Si preguntas por algo de hoy (precios, noticias, el clima…), la IA busca sola y te muestra sus fuentes.'], ['saver', 'Respuestas cortas', 'Respuestas más breves: gastas menos de tu límite de hoy.'], ['review', 'Revisión de calidad', 'Otra IA revisa la lógica de cada respuesta y la corrige si encuentra errores. Tarda unos segundos más.']];
 /* v3.9 · modo dictado (solo en SynthFlow). v3.9.1 · viene encendido para todos; aquí se apaga */
@@ -3137,37 +3137,50 @@ function memPanel(host){
 const cfgLinks = [];
 function cfgModal(tab){
   if ($('#cfgm')) return;
-  const draft = Object.assign({ autoWeb:true, review:true, dictado:true }, CFG); draft.saver = !!(state.sx && state.sx.saver);
+  const draft = Object.assign({ autoWeb:true, review:true }, CFG); draft.saver = !!(state.sx && state.sx.saver);
   const o = document.createElement('div'); o.id = 'cfgm'; o.className = 'szm';
+  /* v4.6 · Ajustes como los de Claude: menú a la izquierda, cada entrada es una página; las filas son «nombre + explicación a la izquierda, control a la derecha» */
   const row = ([k, t, s]) => '<div class="cfgrow"><p>' + t + '<small>' + s + '</small></p><button class="cfgsw" type="button" role="switch" data-k="' + k + '" aria-checked="' + !!draft[k] + '" aria-pressed="' + !!draft[k] + '" aria-label="' + t + '"></button></div>';
+  const seg = (t, s, inner) => '<div class="cfgrow cfgrow-c"><p>' + t + (s ? '<small>' + s + '</small>' : '') + '</p>' + inner + '</div>';
+  const wide = (t, s, inner) => '<div class="cfgrow cfgrow-w"><p>' + t + (s ? '<small>' + s + '</small>' : '') + '</p>' + inner + '</div>';
   const IN = [['always', 'Cada vez'], ['session', 'Una vez por visita'], ['never', 'Nunca']];
-  const ia = tab === 'ia' || tab === 'mem';
-  o.innerHTML = '<div class="tcard cfgcard" role="dialog" aria-modal="true" aria-label="Ajustes"><div class="cfghead"><h3>Ajustes</h3>'
-    + '<div class="cfgtabs" role="tablist"><span class="pill"></span><button type="button" role="tab" data-tab="page" aria-selected="' + !ia + '">Página</button><button type="button" role="tab" data-tab="ia" aria-selected="' + ia + '">IAs y memoria</button></div></div>'
+  const chat = !!document.getElementById('composer');
+  const SEC = [['cuenta', 'Cuenta', 'user'], ['general', 'General', 'sliders'], ['efectos', 'Efectos', 'bolt'], ['respuestas', 'Respuestas', 'chat'], ['memoria', 'Memoria', 'brain']].concat(cfgLinks.length ? [['ias', 'Tus IAs', 'link']] : []);
+  const first = ({ ia:'respuestas', mem:'memoria', cuenta:'cuenta', page:'general' })[tab] || (SEC.some(x => x[0] === tab) ? tab : 'general');
+  o.innerHTML = '<div class="tcard cfgcl" role="dialog" aria-modal="true" aria-label="Ajustes">'
+    + '<aside class="cfgside"><h3>Ajustes</h3><nav class="cfgnav" aria-label="Secciones de Ajustes">' + SEC.map(([id, nm, ic]) => '<button type="button" class="cfgnav-i" data-sec="' + id + '">' + cfgNavIco(ic) + '<span>' + nm + '</span></button>').join('') + '</nav></aside>'
+    + '<div class="cfgmain"><header class="cfgmh"><h2 id="cfgTitle"></h2><button type="button" class="cfgx" data-close aria-label="Cerrar" data-tip="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></header>'
     + '<div class="cfgbody">'
-    + '<section class="cfgpane" data-pane="page"' + (ia ? ' hidden' : '') + '>'
-    + '<div class="cfglbl">Cómo se ve</div><div id="cfgCh"></div>'
-    + '<div class="cfglbl">Estilo de Sonyx</div><div class="cfgseg" id="cfgUi"><button type="button" data-ui="full" aria-pressed="' + (draft.ui !== 'simple') + '">Sonyx</button><button type="button" data-ui="simple" aria-pressed="' + (draft.ui === 'simple') + '">Simple</button></div><p class="cnote">Simple: solo tus chats, la caja de escribir y las respuestas, con un diseño tranquilo y sin efectos.</p>'
-    + '<div class="cfglbl">Idioma · Language</div><div class="cfgseg notr" id="cfgLang">' + LANGS.map(([id, nm]) => '<button type="button" data-lang="' + id + '" lang="' + id + '" aria-pressed="' + (lang() === id) + '">' + nm + '</button>').join('') + '</div>'
-    + '<div class="cfglbl">Tamaño de Sonyx</div><div class="cfgseg" id="cfgSz"><button type="button" data-sz="compact" aria-pressed="' + (draft.size !== 'normal') + '">Compacto</button><button type="button" data-sz="normal" aria-pressed="' + (draft.size === 'normal') + '">Normal</button></div><p class="cnote">Compacto: todo un poco más pequeño, para ver más chat en la pantalla. Normal: el tamaño grande de antes.</p>'
-    /* v3.7 · «Atajos en tus chats» salió: la barra nueva siempre muestra Crear, Proyectos y Sintéticos arriba de tus chats */
-    + '<div class="cfglbl">Color de Sonyx</div><div class="cfgth" id="cfgTh">' + THEMES.map(([id, nm, c1, lock, c2]) => '<button type="button" data-th="' + id + '" aria-pressed="' + ((draft.theme || 'synthz') === id) + '"' + (lock ? ' aria-disabled="true" data-lock="1"' : '') + ' style="--t1:' + c1 + ';--t2:' + c2 + '"><i></i><span>' + esc(nm) + '</span>' + (lock ? '<em>Pronto</em>' : '') + '</button>').join('') + '</div><p class="cnote" id="cfgThN"></p>'
-    + (matchMedia('(pointer:coarse), (max-width:820px)').matches ? '<div class="cfglbl">Barra del celular</div><div class="cfgseg" id="cfgNav"><button type="button" data-nav="bottom" aria-pressed="' + (draft.nav !== 'left') + '">Abajo</button><button type="button" data-nav="left" aria-pressed="' + (draft.nav === 'left') + '">A la izquierda</button></div><p class="cnote">A la izquierda: la barra se esconde y la abres con el botón ☰ de arriba.</p>' : '')
-    + '<div class="cfglbl">Detalles</div><div id="cfgRows">' + CFG_PAGE.map(row).join('') + '</div>'
-    + '<div class="cfglbl">Intro de la página</div><div class="cfgseg" id="cfgIn">' + IN.map(([v, l]) => '<button type="button" data-in="' + v + '" aria-pressed="' + (draft.intro === v) + '">' + l + '</button>').join('') + '</div><p class="cnote">La animación al entrar al chat siempre se ve.</p>'
+    + '<section class="cfgpane" data-pane="cuenta" hidden></section>'
+    + '<section class="cfgpane" data-pane="general" hidden>'
+    + '<h4 class="cfgsh">Apariencia</h4>'
+    + seg('Estilo de Sonyx', 'Simple: solo tus chats, la caja de escribir y las respuestas, con un diseño tranquilo y sin efectos.', '<div class="cfgseg" id="cfgUi"><button type="button" data-ui="full" aria-pressed="' + (draft.ui !== 'simple') + '">Sonyx</button><button type="button" data-ui="simple" aria-pressed="' + (draft.ui === 'simple') + '">Simple</button></div>')
+    + seg('Tamaño de Sonyx', 'Compacto: todo un poco más pequeño, para ver más chat en la pantalla. Normal: el tamaño grande de antes.', '<div class="cfgseg" id="cfgSz"><button type="button" data-sz="compact" aria-pressed="' + (draft.size !== 'normal') + '">Compacto</button><button type="button" data-sz="normal" aria-pressed="' + (draft.size === 'normal') + '">Normal</button></div>')
+    + wide('Color de Sonyx', '', '<div class="cfgth" id="cfgTh">' + THEMES.map(([id, nm, c1, lock, c2]) => '<button type="button" data-th="' + id + '" aria-pressed="' + ((draft.theme || 'synthz') === id) + '"' + (lock ? ' aria-disabled="true" data-lock="1"' : '') + ' style="--t1:' + c1 + ';--t2:' + c2 + '"><i></i><span>' + esc(nm) + '</span>' + (lock ? '<em>Pronto</em>' : '') + '</button>').join('') + '</div><p class="cnote" id="cfgThN"></p>')
+    + '<h4 class="cfgsh">Idioma</h4>'
+    + seg('Idioma · Language', '', '<div class="cfgseg notr" id="cfgLang">' + LANGS.map(([id, nm]) => '<button type="button" data-lang="' + id + '" lang="' + id + '" aria-pressed="' + (lang() === id) + '">' + nm + '</button>').join('') + '</div>')
+    + (matchMedia('(pointer:coarse), (max-width:820px)').matches ? '<h4 class="cfgsh">En tu celular</h4>' + seg('Barra del celular', 'A la izquierda: la barra se esconde y la abres con el botón ☰ de arriba.', '<div class="cfgseg" id="cfgNav"><button type="button" data-nav="bottom" aria-pressed="' + (draft.nav !== 'left') + '">Abajo</button><button type="button" data-nav="left" aria-pressed="' + (draft.nav === 'left') + '">A la izquierda</button></div>') : '')
+    + '<h4 class="cfgsh">Al entrar</h4>'
+    + seg('Intro de la página', 'La animación al entrar al chat siempre se ve.', '<div class="cfgseg cfgseg3" id="cfgIn">' + IN.map(([v, l]) => '<button type="button" data-in="' + v + '" aria-pressed="' + (draft.intro === v) + '">' + l + '</button>').join('') + '</div>')
     + '</section>'
-    + '<section class="cfgpane" data-pane="ia"' + (ia ? '' : ' hidden') + '>'
-    + '<div class="cfglbl">Cómo te responden</div>' + CFG_IA.map(row).join('')
-    + (document.getElementById('composer') ? '<div class="cfglbl">Dictado por voz</div><p class="cnote">Siempre disponible: toca el micrófono de la caja (o Ctrl+Mayús+Espacio). Funciona en Chrome, Edge y Safari. El micrófono solo se usa cuando tocas el botón. La voz la pasa a texto tu navegador: Sinapse no la recibe ni la guarda.</p>' : '')
-    + '<div class="cfglbl" id="cfgMemL">Lo que recuerdo de ti</div><div id="szMem" class="cfgmem"></div>'
-    + (cfgLinks.length ? '<div class="cfglbl">Tus IAs</div><div class="cfglinks">' + cfgLinks.map(([l, , d], i) => '<button type="button" class="cfglk" data-lk="' + i + '"><b>' + esc(l) + '</b><small>' + esc(d || '') + '</small><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>').join('') + '</div>' : '')
-    + '</section></div>'
-    + '<div class="tbtn cfgfoot"><button class="lnk" type="button" data-close>Cerrar</button><button class="btn sm" type="button" id="cfgOk">Guardar</button></div></div>';
+    + '<section class="cfgpane" data-pane="efectos" hidden>'
+    + '<h4 class="cfgsh">Cómo se ve</h4><div id="cfgCh"></div>'
+    + '<h4 class="cfgsh">Detalles</h4><div id="cfgRows">' + CFG_PAGE.map(row).join('') + '</div>'
+    + '</section>'
+    + '<section class="cfgpane" data-pane="respuestas" hidden>'
+    + '<h4 class="cfgsh">Cómo te responden</h4>' + CFG_IA.map(row).join('')
+    + (chat ? '<h4 class="cfgsh">Dictado por voz</h4><p class="cnote">Siempre disponible: toca el micrófono de la caja (o Ctrl+Mayús+Espacio). Funciona en Chrome, Edge y Safari. El micrófono solo se usa cuando tocas el botón. La voz la pasa a texto tu navegador: Sinapse no la recibe ni la guarda.</p>' : '')
+    + '</section>'
+    + '<section class="cfgpane" data-pane="memoria" hidden><h4 class="cfgsh" id="cfgMemL">Lo que recuerdo de ti</h4><div id="szMem" class="cfgmem"></div></section>'
+    + (cfgLinks.length ? '<section class="cfgpane" data-pane="ias" hidden><h4 class="cfgsh">Tus IAs</h4><div class="cfglinks">' + cfgLinks.map(([l, , d], i) => '<button type="button" class="cfglk" data-lk="' + i + '"><b>' + esc(l) + '</b><small>' + esc(d || '') + '</small><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>').join('') + '</div></section>' : '')
+    + '</div>'
+    + '<div class="cfgdirty" hidden><span>Tienes cambios sin guardar.</span><div><button class="btn sm ghost" type="button" data-close>Descartar</button><button class="btn sm" type="button" id="cfgOk">Guardar cambios</button></div></div></div></div>';
   document.body.appendChild(o); requestAnimationFrame(() => o.classList.add('on'));
-  $('.tcard', o).animate([{ transform:'scale(.94) translateY(16px)', opacity:0, filter:'blur(8px)' }, { transform:'none', opacity:1, filter:'blur(0)' }], { duration:560, easing:'cubic-bezier(.22,1,.36,1)' });
+  $('.tcard', o).animate([{ transform:'scale(.96) translateY(14px)', opacity:0, filter:'blur(8px)' }, { transform:'none', opacity:1, filter:'blur(0)' }], { duration:520, easing:'cubic-bezier(.22,1,.36,1)' });
   const paintRows = () => $$('.cfgsw[data-k]', o).forEach(b => { b.setAttribute('aria-pressed', String(!!draft[b.dataset.k])); b.setAttribute('aria-checked', String(!!draft[b.dataset.k])); });
   cfgChooser($('#cfgCh', o), draft.perf, v => { draft.perf = v; Object.assign(draft, cfgPreset(v)); paintRows(); });
   memPanel($('#szMem', o));
+  cfgAccPane($('[data-pane="cuenta"]', o));
   $$('.cfgsw[data-k]', o).forEach(b => b.addEventListener('click', () => { draft[b.dataset.k] = !draft[b.dataset.k]; paintRows(); }));
   $$('[data-in]', o).forEach(b => b.addEventListener('click', () => { draft.intro = b.dataset.in; $$('[data-in]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
   const thNote = () => { const n = $('#cfgThN', o); if (n) n.textContent = draft.ui === 'simple' ? 'El estilo Simple usa sus propios colores: el color se ve en el estilo Sonyx.' : (szTeam ? 'Cambia el dorado y el rosado de Sonyx. Aurora y Oro negro ya son tuyos por ser del equipo (plan Orquesta).' : 'Cambia el dorado y el rosado de Sonyx. Aurora y Oro negro llegan con Syntonia.'); };
@@ -3178,20 +3191,36 @@ function cfgModal(tab){
   $$('[data-sz]', o).forEach(b => b.addEventListener('click', () => { draft.size = b.dataset.sz; $$('[data-sz]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
   $$('[data-th]', o).forEach(b => b.addEventListener('click', () => { if (b.dataset.lock) return; draft.theme = b.dataset.th; $$('[data-th]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
   $$('[data-nav]', o).forEach(b => b.addEventListener('click', () => { draft.nav = b.dataset.nav; $$('[data-nav]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
-  const tabs = $('.cfgtabs', o), pill = $('.pill', tabs);
-  const show = k => { $$('[role=tab]', tabs).forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === k))); $$('.cfgpane', o).forEach(p => { p.hidden = p.dataset.pane !== k; }); const b = $('[data-tab="' + k + '"]', tabs); if (b && pill){ pill.style.width = b.offsetWidth + 'px'; pill.style.transform = 'translateX(' + (b.offsetLeft - 4) + 'px)'; } $('.cfgbody', o).scrollTop = 0; };
-  tabs.addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) show(b.dataset.tab); });
-  requestAnimationFrame(() => show(ia ? 'ia' : 'page'));
-  try{ cfgSideMenu(o); }catch(e){}
-  try{ cfgThemePreview(o, draft); }catch(e){}   /* v3.8 · vista previa de temas (core 14c + React VistaTemas) */   /* v3.7 · menú lateral (core 14b) */
-  /* v3.7 · con Animaciones apagadas no hay intro: se dice en vez de dejar que parezca que no funciona */
-  const inNote = () => { const n = $('#cfgIn + .cnote', o); if (n) n.textContent = draft.anim === false ? 'Con «Animaciones» apagadas no hay intro: enciéndelas para verla.' : 'La animación al entrar al chat siempre se ve.'; };
-  inNote(); $$('.cfgsw[data-k="anim"]', o).forEach(b => b.addEventListener('click', inNote));
-  if (tab === 'mem') setTimeout(() => { const l = $('#cfgMemL', o); if (l) l.scrollIntoView({ block:'start', behavior:reduce ? 'auto' : 'smooth' }); }, 350);
-  const close = () => { o.classList.remove('on'); setTimeout(() => o.remove(), 450); };
+  /* el menú de la izquierda: una página a la vez */
+  const body = $('.cfgbody', o), title = $('#cfgTitle', o), btns = $$('.cfgnav-i', o);
+  const show = k => {
+    const nav = $('.cfgnav', o);
+    btns.forEach(b => { const on = b.dataset.sec === k; b.classList.toggle('on', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+    /* en el celular el menú es una fila que se desliza: centra la sección elegida (solo mueve esa fila, nunca la ventana) */
+    const cur0 = btns.find(b => b.dataset.sec === k);
+    if (cur0 && nav.scrollWidth > nav.clientWidth + 4){ const nr = nav.getBoundingClientRect(), br = cur0.getBoundingClientRect(); nav.scrollLeft += (br.left - nr.left) - (nr.width - br.width) / 2; }
+    $$('.cfgpane', o).forEach(p => { p.hidden = p.dataset.pane !== k; });
+    const cur = SEC.find(x => x[0] === k); title.textContent = cur ? cur[1] : ''; title.dataset.sec = k; body.scrollTop = 0;
+  };
+  $('.cfgnav', o).addEventListener('click', e => { const b = e.target.closest('.cfgnav-i'); if (b) show(b.dataset.sec); });
+  show(first);
+  /* abajo aparece «Tienes cambios sin guardar» solo cuando algo cambió (los interruptores y opciones se guardan con «Guardar cambios») */
+  const base = JSON.stringify(draft), bar = $('.cfgdirty', o);
+  o.addEventListener('click', () => setTimeout(() => { bar.hidden = JSON.stringify(draft) === base; }, 0));
+  /* teclado: el foco entra a la ventana (así Esc la cierra), Tab no se escapa por detrás y al cerrar vuelve a donde estaba */
+  const prevFocus = document.activeElement;
+  setTimeout(() => { const f = $('.cfgnav-i.on', o); if (f) f.focus({ preventScroll:true }); }, 60);
+  o.addEventListener('keydown', e => {
+    if (e.key !== 'Tab') return;
+    const f = $$('button, a[href], input, select, textarea', o).filter(x => !x.disabled && x.offsetParent !== null); if (!f.length) return;
+    if (e.shiftKey && document.activeElement === f[0]){ e.preventDefault(); f[f.length - 1].focus(); }
+    else if (!e.shiftKey && document.activeElement === f[f.length - 1]){ e.preventDefault(); f[0].focus(); }
+  });
+  const close = () => { o.classList.remove('on'); setTimeout(() => o.remove(), 450); try{ if (prevFocus && prevFocus.isConnected && prevFocus !== document.body) prevFocus.focus({ preventScroll:true }); }catch(e){} };
   $$('.cfglk', o).forEach(b => b.addEventListener('click', () => { const L = cfgLinks[+b.dataset.lk]; close(); if (L) setTimeout(L[1], 200); }));
-  $('[data-close]', o).addEventListener('click', close);
+  $$('[data-close]', o).forEach(b => b.addEventListener('click', close));
   o.addEventListener('pointerdown', e => { if (e.target === o) close(); });
+  try{ cfgThemePreview(o, draft); }catch(e){}   /* v3.8 · vista previa de temas (core 14c + React VistaTemas) */
   $('#cfgOk', o).addEventListener('click', () => { state.sx = state.sx || {}; if (!!state.sx.saver !== !!draft.saver){ state.sx.saver = !!draft.saver; save(); try{ hooks.usage(); }catch(e){} try{ dispatchEvent(new Event('synthz-saver')); }catch(e){} } const d = Object.assign({}, draft); delete d.saver; applyCfg(d, close); });
 }
 function applyCfg(draft, close){
@@ -3218,59 +3247,18 @@ if (document.getElementById('cm')){
   addEventListener('keydown', midOff); addEventListener('blur', midOff); addEventListener('wheel', e => { if (!e.buttons) midOff(); }, { passive:true });
 }
 
-/* ===== v3.7 · Ajustes con menú lateral (estilo del Uiverse #31 que mandó Sammuel: lista vertical con ícono, texto y barra activa)
-   Cada título de Ajustes («Cómo se ve», «Idioma», «Color», «Lo que recuerdo de ti»…) es una entrada del menú.
-   Tocarla abre su pestaña y baja hasta esa parte; al hacer scroll, la entrada activa sigue lo que estás viendo.
-   Las pestañas viejas siguen en el código (la Guía las usa), pero no se ven. En el celular el menú es una fila de chips arriba. ===== */
+/* ===== Ajustes con menú a la izquierda, como los de Claude (v3.7 el menú; v4.6 cada entrada es una sección con su página) =====
+   Cuenta · General · Efectos · Respuestas · Memoria · Tus IAs. Tocar una abre su página; no hay scroll largo ni dos pestañas.
+   Aquí solo están los íconos; el menú y las páginas los arma cfgModal (14-seguridad-ajustes.js). En el celular el menú pasa a una fila de chips arriba. ===== */
 const CFG_NAV_ICO = {
-  eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
-  brush:'<path d="M14 4l6 6-9 9H5v-6z"/><path d="M12 6l6 6"/>',
-  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/>',
-  size:'<path d="M4 9V4h5M20 15v5h-5M4 4l7 7M20 20l-7-7"/>',
-  bolt:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
-  palette:'<path d="M12 3a9 9 0 100 18c1.2 0 1.8-.9 1.4-1.9-.5-1.2.3-2.1 1.5-2.1H18a3 3 0 003-3c0-6-4-11-9-11z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/>',
-  phone:'<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c1.4-3.8 4.2-5.6 7.5-5.6s6.1 1.8 7.5 5.6"/>',
   sliders:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
-  play:'<circle cx="12" cy="12" r="9"/><path d="M10 8.5l5.5 3.5-5.5 3.5z"/>',
+  bolt:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
   chat:'<path d="M4 5h16v11H9l-5 4z"/>',
   brain:'<path d="M9 4a3 3 0 00-3 3 3 3 0 00-2 5 3 3 0 002 5 3 3 0 006 0V4.5A2.5 2.5 0 009 4zM15 4a3 3 0 013 3 3 3 0 012 5 3 3 0 01-2 5 3 3 0 01-6 0"/>',
-  mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/>',
   link:'<path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/>'
 };
-const cfgNavIco = txt => { const s = String(txt || '').toLowerCase();
-  const k = /c[oó]mo se ve|look/.test(s) ? 'eye' : /estilo|style/.test(s) ? 'brush' : /idioma|language/.test(s) ? 'globe' : /tama|size/.test(s) ? 'size' : /atajo|shortcut/.test(s) ? 'bolt'
-    : /color|colou?r/.test(s) ? 'palette' : /celular|phone/.test(s) ? 'phone' : /intro/.test(s) ? 'play' : /responden|answer/.test(s) ? 'chat' : /recuerdo|remember|memor/.test(s) ? 'brain' : /dictado|dictation/.test(s) ? 'mic' : /tus ias|your ais/.test(s) ? 'link' : 'sliders';
-  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + CFG_NAV_ICO[k] + '</svg>'; };
-function cfgSideMenu(o){
-  const card = o && $('.cfgcard', o), body = card && $('.cfgbody', card), tabs = card && $('.cfgtabs', card); if (!card || !body || !tabs || $('.cfgnav', card)) return;
-  const items = [];
-  $$('.cfgpane', body).forEach(p => $$('.cfglbl', p).forEach(l => items.push({ pane:p.dataset.pane, l })));
-  if (items.length < 2) return;
-  const nav = document.createElement('nav'); nav.className = 'cfgnav'; nav.setAttribute('aria-label', 'Secciones de Ajustes');
-  nav.innerHTML = items.map((it, i) => '<button type="button" class="cfgnav-i" data-ni="' + i + '">' + cfgNavIco(it.l.textContent) + '<span>' + esc(it.l.textContent) + '</span></button>').join('');
-  card.classList.add('cfg-side'); body.before(nav);
-  const btns = $$('.cfgnav-i', nav);
-  const mark = i => btns.forEach((b, k) => { const on = k === i; b.classList.toggle('on', on); if (on) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current'); if (on && nav.scrollWidth > nav.clientWidth + 4) b.scrollIntoView({ block:'nearest', inline:'nearest' }); });
-  const paneOn = () => { const p = $('.cfgpane:not([hidden])', body); return p ? p.dataset.pane : ''; };
-  let lock = 0;
-  const follow = () => {
-    if (Date.now() < lock) return;
-    const top = body.getBoundingClientRect().top + 48, pane = paneOn(); let best = -1;
-    items.forEach((it, i) => { if (it.pane === pane && it.l.getBoundingClientRect().top <= top) best = i; });
-    if (best < 0) best = items.findIndex(it => it.pane === pane);
-    mark(best);
-  };
-  nav.addEventListener('click', e => {
-    const b = e.target.closest('.cfgnav-i'); if (!b) return;
-    const it = items[+b.dataset.ni]; if (!it) return;
-    if (paneOn() !== it.pane){ const tb = $('[data-tab="' + it.pane + '"]', tabs); if (tb) tb.click(); }
-    lock = Date.now() + 700; mark(+b.dataset.ni);
-    requestAnimationFrame(() => { body.scrollTo({ top:Math.max(0, it.l.offsetTop - body.offsetTop - 6), behavior:reduce ? 'auto' : 'smooth' }); });
-  });
-  body.addEventListener('scroll', () => requestAnimationFrame(follow), { passive:true });
-  tabs.addEventListener('click', () => setTimeout(follow, 60));
-  setTimeout(follow, 80);
-}
+const cfgNavIco = k => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (CFG_NAV_ICO[k] || CFG_NAV_ICO.sliders) + '</svg>';
 /* ===== v3.8 · Vista previa de temas en Ajustes
    Antes de tocar «Guardar» ya ves cómo queda: una ventanita de Sonyx (componente React VistaTemas, montado por
    next/componentes/ajustes/PuenteVistaTemas.jsx) pintada con el tema que señalas o eliges, con tu estilo y tamaño.
@@ -3330,6 +3318,92 @@ function cfgThemePreview(o, draft){
   addEventListener('resize', soon, { passive:true });
   /* las secciones de Ajustes se muestran/ocultan: al volverse visibles se recoloca */
   document.addEventListener('click', e => { if (e.target.closest && e.target.closest('#cfgm')) setTimeout(soon, 30); }, true);
+}
+/* ===== v4.6 · «Tu cuenta» vive dentro de Ajustes (como en Claude: Ajustes › Cuenta) =====
+   Antes había una ventana aparte («Tu cuenta») con perfil, seguridad, nube y cerrar sesión. Ahora todo eso es la sección «Cuenta» de Ajustes,
+   y lo que sale al tocar tu perfil en la barra es un panelito corto (next/componentes/synthflow/MenuCuenta.jsx) con Ajustes, Idioma, Ayuda,
+   Planes y Cerrar sesión. Las acciones largas (cerrar sesión, borrar cuenta…) están aquí como funciones sueltas para que las usen los dos. */
+const cfgAcc = { onSurvey:null, onChange:null };
+const accTeam = u => ['owner', 'admin', 'staff'].includes((u || ACC.user || {}).role);
+/* cerrar sesión: primero guarda en la nube; si no pudo, avisa y deja salir igual */
+async function accLogout(){
+  try{ await accSignOut(); }
+  catch(er){
+    if (!er.unsynced || !(await szConfirm('No pude guardar tus últimos cambios', 'Si sales ahora, lo que no alcanzó a guardarse en tu cuenta se borra de este dispositivo. ¿Salir igual?', 'Cerrar igual', true))) return false;
+    await accSignOut(true);
+  }
+  toast('Sesión cerrada. Tus chats quedaron en tu cuenta y se borraron de este dispositivo.'); setTimeout(() => location.reload(), 1100);
+  return true;
+}
+async function accLogoutAll(){
+  if (!(await szConfirm('¿Cerrar sesión en todos lados?', 'Se cierra tu sesión en todos tus dispositivos, incluido este. Útil si entraste en un computador ajeno.', 'Cerrar en todos', true))) return false;
+  try{ await accSignOutAll(); }
+  catch(er){ if (!er.unsynced || !(await szConfirm('No pude guardar tus últimos cambios', 'Si sigues, lo que no alcanzó a guardarse se borra de este dispositivo.', 'Seguir igual', true))) return false; await accSignOutAll(true); }
+  toast('Cerraste sesión en todos tus dispositivos.'); setTimeout(() => location.reload(), 1100);
+  return true;
+}
+async function accDeleteFlow(){
+  const u = ACC.user || {};
+  if (!(await szConfirm('¿Borrar tu cuenta de Sonyx?', 'Se borran para siempre tu perfil, tus chats guardados en tu cuenta y lo que hay en este dispositivo. No se puede deshacer.', 'Seguir', true))) return false;
+  const isPass = u.kind === 'pass' || !!u.username;
+  const v = await szPrompt('Confirma que eres tú', isPass ? 'Escribe tu contraseña para borrar la cuenta.' : 'Escribe tu correo (' + (u.email || '') + ') para borrar la cuenta.', 'Borrar mi cuenta', { type:isPass ? 'password' : 'email', ac:isPass ? 'current-password' : 'off', danger:true });
+  if (!v) return false;
+  try{ await accDelete(isPass ? { pass:v } : { confirm:v }); toast('Tu cuenta se borró.'); setTimeout(() => location.reload(), 900); return true; }catch(er){ toast(er.message); return false; }
+}
+async function accClaimFlow(){
+  const v = await szPrompt('Activar tu rango', 'Escribe el código de configuración del equipo de Sinapse.', 'Activar', { sec:true });
+  if (!v) return false;
+  try{ const r = await accClaim(v); toast('¡Listo! Tu rango: ' + (ROLE_NAME[r] || r) + '.'); return true; }catch(er){ toast(er.message); return false; }
+}
+
+/* la sección «Cuenta» de Ajustes: se repinta sola si cambia la cuenta (entrar, salir, editar perfil) */
+let cfgAccLive = null;
+accHooks.push(() => { if (cfgAccLive && cfgAccLive.host.isConnected) cfgAccLive.paint(); });
+function cfgAccPane(host){
+  const mb = n => (n / 1048576).toFixed(n < 10485760 ? 1 : 0).replace('.', ',');
+  const row = (t, s, ctl) => '<div class="cfgrow cfgrow-c"><p>' + t + (s ? '<small>' + s + '</small>' : '') + '</p>' + ctl + '</div>';
+  const btn = (k, label, cls) => '<button type="button" class="btn sm' + (cls ? ' ' + cls : '') + '" data-ac="' + k + '">' + label + '</button>';
+  const paint = () => {
+    const A = ACC, u = A.user || {}, pf = A.profile || {};
+    if (!A.ready){
+      host.innerHTML = '<div class="cfgcta"><h4>Entra a Sonyx</h4><p>Con tu cuenta tus chats y favoritos te siguen a cualquier dispositivo, personalizas tu perfil y puedes hablar con el equipo de Sinapse. Solo necesitas un usuario y una contraseña (o tu cuenta de Google). Puter sigue siendo solo para sus IA.</p><div id="cfgAuth"></div></div>';
+      authBox($('#cfgAuth', host), () => { paint(); try{ if (cfgAcc.onChange) cfgAcc.onChange(); }catch(e){} }, () => toast('Tu navegador bloqueó la ventana. Permite las ventanas emergentes de este sitio.'));
+      return;
+    }
+    const saved = A.full ? 'Tu cuenta está llena' : A.err ? 'Sin guardar en tu cuenta' : A.t ? 'Guardado en tu cuenta' : 'Guardando…';
+    const sp = A.space;
+    host.innerHTML = '<div class="cfgprof"><div class="cfgpb" style="background:' + grad(pf.banner || pf.color) + '"></div><div class="cfgpm"><span class="cfgpav">' + myAvatar('xl') + '</span>'
+      + '<div class="cfgpt"><b data-clarity-mask="true"></b><span><em class="rolep r-' + esc(u.role || 'user') + '">' + esc(ROLE_NAME[u.role || 'user'] || u.role) + '</em> <i data-clarity-mask="true"></i></span><small>' + saved + '</small></div>'
+      + btn('edit', 'Editar perfil') + '</div>' + (pf.status ? '<p class="cfgps"></p>' : '') + (pf.bio ? '<p class="cfgpbio"></p>' : '') + '</div>'
+      + '<h4 class="cfgsh">Tu perfil</h4>'
+      + row('Mis IA ideales', 'Responde unas preguntas y te muestro las IA que mejor te sirven.', btn('survey', 'Abrir', 'ghost'))
+      + row('Seguridad y acceso', 'Tu contraseña, tu código de recuperación y tus dispositivos.', btn('sec', 'Abrir', 'ghost'))
+      + (accTeam(u) ? row('Pulsem', 'Cómo está la página, quién está conectado y quién necesita ayuda.', '<a class="btn sm ghost" href="pulsem.html">Abrir Pulsem</a>') : '')
+      + (u.claimable ? row('Activar mi rango', 'Esta cuenta está reservada para el equipo de Sinapse. Actívala con tu código de configuración.', btn('claim', 'Activar')) : '')
+      + '<h4 class="cfgsh">Guardado</h4>'
+      + (sp && sp.max ? '<div class="cfgrow cfgrow-w"><p>Tu nube<small>' + mb(sp.used) + ' de ' + mb(sp.max) + ' MB' + (A.full ? ' · Está llena: tus chats nuevos se guardan solo en este dispositivo hasta que borres conversaciones viejas.' : '') + '</small></p><span class="tmbar' + (sp.used / sp.max > .9 ? ' warn' : '') + '"><i style="transform:scaleX(' + Math.min(1, sp.used / sp.max).toFixed(3) + ')"></i></span></div>' : '')
+      + row('Guardar ahora', 'Sube a tu cuenta lo último que hiciste.', btn('sync', 'Guardar ahora', 'ghost'))
+      + '<h4 class="cfgsh">Sesión</h4>'
+      + row('Cerrar sesión', 'Tus chats quedan en tu cuenta y se borran de este dispositivo.', btn('out', 'Cerrar sesión', 'ghost'))
+      + row('Cerrar sesión en todos mis dispositivos', 'Útil si entraste en un computador ajeno.', btn('outall', 'Cerrar en todos', 'ghost'))
+      + row('Borrar mi cuenta', 'Se borran para siempre tu perfil y tus chats guardados. No se puede deshacer.', btn('del', 'Borrar cuenta', 'danger'));
+    $('.cfgpt b', host).textContent = accName(); $('.cfgpt i', host).textContent = accHandle(u);
+    const s = $('.cfgps', host); if (s) s.textContent = pf.status; const b = $('.cfgpbio', host); if (b) b.textContent = pf.bio;
+  };
+  paint();
+  cfgAccLive = { host, paint };
+  host.addEventListener('click', async e => {
+    const b = e.target.closest('[data-ac]'); if (!b) return;
+    const k = b.dataset.ac;
+    if (k === 'edit') profileModal(() => { paint(); try{ if (cfgAcc.onChange) cfgAcc.onChange(); }catch(e){} });
+    else if (k === 'sec') securityModal();
+    else if (k === 'survey') surveyModal(ok => { try{ if (ok && cfgAcc.onSurvey) cfgAcc.onSurvey(ok); }catch(e){} });
+    else if (k === 'sync'){ const t = b.textContent; b.textContent = 'Guardando…'; b.disabled = true; await accPush({ ledger:true }); b.disabled = false; b.textContent = t; toast(ACC.err || 'Todo guardado.'); paint(); }
+    else if (k === 'out'){ b.disabled = true; b.textContent = 'Guardando…'; if (!(await accLogout())){ b.disabled = false; b.textContent = 'Cerrar sesión'; } }
+    else if (k === 'outall'){ b.disabled = true; if (!(await accLogoutAll())) b.disabled = false; }
+    else if (k === 'del') accDeleteFlow();
+    else if (k === 'claim'){ if (await accClaimFlow()) paint(); }
+  });
 }
 /* ---------- respuestas en vivo (streaming) ---------- */
 let ridN = 0;
@@ -3610,7 +3684,7 @@ function helpGuide(opts){
     ['¿Cómo lo uso?', 'Entra a Sonyx, escribe tu pregunta abajo y pulsa Enter. Si no sabes qué pedir, toca un ejemplo. Tus chats quedan en la barrita de la izquierda (en el celular, abajo).'],
     ['¿Qué son las IAs conectadas?', 'Las IAs conectadas son IAs gratis que ya vienen listas en Sinapse. No tienes que configurar nada ni dar tarjeta: solo escribes. Sin cuenta pruebas con una EnerX de prueba cada día; con tu cuenta gratis dura mucho más.'],
     ['¿Qué es el límite de hoy?', 'Cada día tienes un límite gratis para usar las IAs conectadas. A medianoche se vuelve a llenar. El anillo se va vaciando mientras chateas.'],
-    ['¿Qué es Puter y cómo lo conecto?', 'Con Puter usas la versión pro de las IAs más usadas, como ChatGPT, Claude o Gemini. Es gratis y tiene un saldo que se renueva cada mes. Se conecta en Ajustes › IAs y memoria › «Conectar Puter u otra IA» › «Conectar con Puter».'],
+    ['¿Qué es Puter y cómo lo conecto?', 'Con Puter usas la versión pro de las IAs más usadas, como ChatGPT, Claude o Gemini. Es gratis y tiene un saldo que se renueva cada mes. Se conecta en Ajustes › Tus IAs › «Conectar Puter u otra IA» › «Conectar con Puter».'],
     ['Varias IA a la vez', 'Con «+» sumas otra IA (hasta 4). Todas responden lo mismo y tú eliges la que más te gusta con «Esta tiene más Flow».'],
     ['Archivos', 'Con el «+» agregas un archivo, un PDF o una foto (hasta 6 por mensaje). Todas las IA leen textos y PDF; las fotos solo las entienden las IA que «ven fotos». También puedes arrastrarlos o pegarlos.'],
     ['Modo principiante', 'En Ajustes puedes activar el modo principiante: las IA te responden con palabras sencillas, paso a paso y con ejemplos.'],
@@ -4736,7 +4810,7 @@ onLang(() => pwrPrep());
 window.SZ = { I18N, LANGS, t, lang, setLang, onLang, i18nApply, root, $, $$, clamp, fmt, reduce, today, sleepRaw, esc, est, ICONS, ico, zWord, API, MANUAL, ALL, byId,
   get state(){ return state; }, set state(v){ state = v; normalize(); },
   normalize, cleanUsage, cleanChats, cleanStrMap, save, total, addUsage, resetUsage, estAll, todayEst, todayReq, providerBalance, balanceHtml, splitHtml, syncNote, helpGuide, smoothDetails, szPrompt, swapDir, swapDir, get face(){ return face; }, get FACE_GOOD(){ return FACE_GOOD; }, get randomGoodFace(){ return randomGoodFace; }, get welcomeBack(){ return welcomeBack; }, get wasAway(){ return wasAway; }, accSignOutAll, accClaim, ROLE_NAME, trialGet, trialSet, trialStart, legacyRow, cleanLedger, mergeLedger, DEV, hooks, toast, hydrateIcons, md, countTo,
-  BRAND, SPACE, AURORA, isFlow, flowWord, flowOrb, LOGO_Z, fileIco, gIcon, giFill, giFile, zMark, get synBody(){ return synBody; }, get synSet(){ return synSet; }, get SPOSE(){ return SPOSE; }, charify, typeIn, showAll, getJSON, parseModels, loadCatalog, fetchCatalog, vendorLabel, vendorColor, burst, friendly, netMsg, fetchModels, refreshModels, verify, ask, metaOf, history, S, mirrorType, thud, portalOut, portalBack, portalArrive, waterIn, ctxMenu, SXC, coins, ACC, accHooks, accStart, accPush, accSignOut, accName, accHandle, securityModal, recoveryPanel, MARK_HTML, expertOf, EXP_LABEL, surveyModal, surveyPicks, surveyScore, orGuide, profileModal, puterLogo, PUTER_LOGO, api, accConfig, accDelete, saveProfile, avatarHtml, myAvatar, grad, tint, TINTS, loadGsi, SESS_get:() => SESS, CFG, PERF, saveCfg, cfgModal, cfgChooser, applyCfg, smoothWheel, orbitBg, authBox, isBlocked, lowEnd, askStream, mkReveal, reveals, chatsReady, IDB, provOf, totalAll, todayAll, BRANDS, brandOf, glassIcon, PIXART, pixelRun, pixelGrid, workView, workSaved, mdLoad, MDLIB, SZ_P, SZQ, SZ_AUTO, szqSet, msgsLeft, msgsTotal, coinsOf, coinsLeft, coinsTotal, coinsFmt, coinsShort, coinNote, limTxt, limShort, limLvl, limPct, limRing, battPct, limBar, szCatalog, szHeaders, guestGate, guestFull, guestLeft, isGuestQ, setTurn, puterOut, puterOutNote, TEL, telEv, telBeat, DEVH, szConfirm, cfgPreset, CFG_KEYS, cfgClasses, get SND(){ return SND; }, get HAND(){ return HAND; }, get feedbackModal(){ return feedbackModal; }, get guideChooser(){ return guideChooser; }, DRIVE, isBad, markBad, markSick, markGood, modelGone, badReady, GROQ_P, get BOT(){ return BOTAPI; }, get EV(){ return EV; }, get lipSync(){ return lipSync; }, get ballFace(){ return ballFace; }, get guideAsk(){ return guideAsk; }, get GTOPICS(){ return GTOPICS; }, get whatsNew(){ return whatsNew; }, signedish, cfgLinks, memAddCore, memList, memPanel, menuOpen, menuClose, MICO, appInstall, appPromo, appStandalone, appWin, appPhone, plansModal, planOf, aliasOk };
+  BRAND, SPACE, AURORA, isFlow, flowWord, flowOrb, LOGO_Z, fileIco, gIcon, giFill, giFile, zMark, get synBody(){ return synBody; }, get synSet(){ return synSet; }, get SPOSE(){ return SPOSE; }, charify, typeIn, showAll, getJSON, parseModels, loadCatalog, fetchCatalog, vendorLabel, vendorColor, burst, friendly, netMsg, fetchModels, refreshModels, verify, ask, metaOf, history, S, mirrorType, thud, portalOut, portalBack, portalArrive, waterIn, ctxMenu, SXC, coins, ACC, accHooks, accStart, accPush, accSignOut, accName, accHandle, securityModal, recoveryPanel, MARK_HTML, expertOf, EXP_LABEL, surveyModal, surveyPicks, surveyScore, orGuide, profileModal, puterLogo, PUTER_LOGO, api, accConfig, accDelete, accLogout, accLogoutAll, accDeleteFlow, accClaimFlow, accTeam, cfgAcc, saveProfile, avatarHtml, myAvatar, grad, tint, TINTS, loadGsi, SESS_get:() => SESS, CFG, PERF, saveCfg, cfgModal, cfgChooser, applyCfg, smoothWheel, orbitBg, authBox, isBlocked, lowEnd, askStream, mkReveal, reveals, chatsReady, IDB, provOf, totalAll, todayAll, BRANDS, brandOf, glassIcon, PIXART, pixelRun, pixelGrid, workView, workSaved, mdLoad, MDLIB, SZ_P, SZQ, SZ_AUTO, szqSet, msgsLeft, msgsTotal, coinsOf, coinsLeft, coinsTotal, coinsFmt, coinsShort, coinNote, limTxt, limShort, limLvl, limPct, limRing, battPct, limBar, szCatalog, szHeaders, guestGate, guestFull, guestLeft, isGuestQ, setTurn, puterOut, puterOutNote, TEL, telEv, telBeat, DEVH, szConfirm, cfgPreset, CFG_KEYS, cfgClasses, get SND(){ return SND; }, get HAND(){ return HAND; }, get feedbackModal(){ return feedbackModal; }, get guideChooser(){ return guideChooser; }, DRIVE, isBad, markBad, markSick, markGood, modelGone, badReady, GROQ_P, get BOT(){ return BOTAPI; }, get EV(){ return EV; }, get lipSync(){ return lipSync; }, get ballFace(){ return ballFace; }, get guideAsk(){ return guideAsk; }, get GTOPICS(){ return GTOPICS; }, get whatsNew(){ return whatsNew; }, signedish, cfgLinks, memAddCore, memList, memPanel, menuOpen, menuClose, MICO, appInstall, appPromo, appStandalone, appWin, appPhone, plansModal, planOf, aliasOk };
 /* v3.4 · el «turno» del mensaje actual: la revisión de calidad viaja en el mismo turno (no cuenta como otro mensaje sin cuenta) */
 /* v3.4 · SynthonIA (synthonia.js): lo que necesita de core, y cuándo se carga */
 window.SZ.synReady = synReady;

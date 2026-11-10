@@ -190,7 +190,7 @@ async function runGuide(o = {}){
     await gPoint(gAny('#cEffort'), 'Y aquí, cómo piensa: Flow (según tu pregunta), Fragment (rápido), Focus (a fondo, el que más gasta) u Horizon (ideas originales).');
     await gPoint(gT('#sNav [data-sn="proj"]', '#cProj') || gT('#railProj', '#cProj') || gT('#cProj', '#cProj'), '«Espacios» junta chats, instrucciones y archivos de un mismo tema. La IA los tiene en cuenta en cada chat del espacio, como en Claude.', { side:true });
     await gPoint(gT('#sNav [data-sn="syn"]', '#cSyn') || gT('#railSyn', '#cSyn') || gT('#cSyn', '#cSyn'), '«Obras» guarda todo lo que la IA crea: páginas, juegos, dibujos y documentos. Cuando una respuesta trae una, se abre sola al lado del chat.', { side:true });
-    const cfgB = gT('#cfgBtn', '#tabbar [data-tab="cfg"]');
+    const cfgB = gT('#sAcc', '#tabbar [data-tab="cfg"]') || gT('#cfgBtn', '#tabbar [data-tab="cfg"]');
     const rr = await gPoint(cfgB, 'En «Ajustes» cambias cómo se ve todo. ¿Te muestro lo más útil?', { buttons:[{ label:'Muéstrame' }, { label:'Ahora no', ghost:true }], auto:15000, mood:'guino' });
     if (rr === 0 && cfgB){
       SZ.cfgModal(); await gWait(700);
@@ -289,7 +289,7 @@ async function runGuide(o = {}){
       const r7 = await H.talk('¿Quieres más espacio? Vincula tu Google Drive y guardo una copia de tus chats en una carpeta privada de Sonyx. No puedo ver tus otros archivos.', { mood:'encantada', buttons:[{ label:'Vincular mi Drive' }, { label:'Ahora no', ghost:true }] });
       gNeed();
       if (r7 === 0){ H.quiet(); const ok = await driveGo(null); gNeed(); if (ok) await H.talk('¡Hecho! Desde ahora tus chats también viven en tu Drive. Lo encuentras en «⋯ › Google Drive».', { mood:'celebrando', buttons:[{ label:'Terminar' }] }); }
-      else { H.talk('Sin problema. Cuando quieras, está en Ajustes › IAs y memoria › Google Drive.', { mood:'guino' }); await gWait(2400); }
+      else { H.talk('Sin problema. Cuando quieras, está en Ajustes › Tus IAs › Google Drive.', { mood:'guino' }); await gWait(2400); }
       gNeed();
     }
     endGuide(true);

@@ -2,7 +2,7 @@
    v3.9 · hablas y el texto aparece en la caja de escribir (#inp), en vivo, para que lo revises antes de enviar.
    - Usa el reconocimiento de voz que ya trae el navegador (Web Speech API): gratis, sin servicios pagos.
      En Chrome y Edge la voz la convierte en texto Google o Microsoft; en Safari, Apple. SymphorIA no recibe el audio.
-   - v3.9.1 · encendido para todos (Sammuel, 3 nov); se apaga en Ajustes › IAs y memoria › «Modo dictado» (CFG.dictado → html.dicta).
+   - v3.9.1 · encendido para todos (Sammuel, 3 nov); se apaga en Ajustes › Respuestas › «Modo dictado» (CFG.dictado → html.dicta).
    - v3.9.1 · puntuación automática según tus pausas (puntuar()), además de los comandos de voz.
    - El micrófono no se pide hasta que la persona toca el botón; la primera vez sale un aviso que explica qué pasa.
    - Pausa, reanuda, «Listo» (deja el texto para editarlo) y «Cancelar» (devuelve la caja como estaba).

@@ -2735,11 +2735,11 @@ function memOffer(text){
   fact = (ai && ai.length >= 3 ? fact : memLimpia(fact)).slice(0, 300); if (fact.length < 3) return;
   $$('.memoff', lane).forEach(x => x.remove());
   const d = document.createElement('div'); d.className = 'agkeep memoff';
-  d.innerHTML = '<span>¿Quieres que lo recuerde para tus próximos chats? «<b></b>»</span><div class="agk-b"><button type="button" class="btn sm" data-mm="yes">Recordar</button><button type="button" class="btn sm ghost" data-mm="no">No</button></div><small>Lo ves y lo borras cuando quieras en Ajustes › IAs y memoria.</small>';
+  d.innerHTML = '<span>¿Quieres que lo recuerde para tus próximos chats? «<b></b>»</span><div class="agk-b"><button type="button" class="btn sm" data-mm="yes">Recordar</button><button type="button" class="btn sm ghost" data-mm="no">No</button></div><small>Lo ves y lo borras cuando quieras en Ajustes › Memoria.</small>';
   $('span b', d).textContent = fact; lane.appendChild(d); follow();
   d.addEventListener('click', e => { const b = e.target.closest('[data-mm]'); if (!b) return; d.remove(); if (b.dataset.mm === 'yes' && memAdd(fact)) toast('¡Listo! Lo voy a recordar.'); });
 }
-/* v2.2 · «Lo que recuerdo de ti» vive en Ajustes › IAs y memoria */
+/* v2.2 · «Lo que recuerdo de ti» vive en Ajustes › Memoria */
 function memModal(){ SZ.cfgModal('mem'); }
 /* ---------- v4.0 · Títulos con sentido y memoria con lógica (pedido de Sammuel, 3 nov 2026) ----------
    La IA que responde hace dos trabajitos más, en la misma respuesta (sin gastar otra IA):
@@ -3472,7 +3472,7 @@ function offerWeb(lastU, onFail, o){
       la revisa: lógica, cálculos, datos, que responda lo pedido y lo que se ve en las fotos.
       Si está bien → «✓ Revisada». Si tiene errores → la respuesta se cambia por la corregida («✨ Mejorada» · Ver original).
       Tiene 28 s como máximo; si tarda más o falla, se queda la respuesta de antes (nunca se pierde nada).
-   Se apaga en Ajustes › IAs y memoria › «Revisión de calidad». Las instrucciones del revisor viven en el servidor (api/ai.js). */
+   Se apaga en Ajustes › Respuestas › «Revisión de calidad». Las instrucciones del revisor viven en el servidor (api/ai.js). */
 /* v4.0 · las mismas reglas del «cerebro» del servidor (api/_cerebro.js) para CUALQUIER IA que elijas (Puter, OpenRouter, Groq…):
    la fecha de hoy, cómo responde un experto en ese tipo de trabajo y, si es difícil, pensar → resolver → revisar antes de responder. */
 const Q_HARD = /\b(demuestra|resuelve|calcula|deriva|integral|ecuaci[oó]n|probabilidad|optimiza|algoritmo|depura|debug|refactor|por qu[eé] (falla|no funciona)|paso a paso|a fondo|analiza|compara|eval[uú]a|estrategia|dise[nñ]a|arquitectura|acertijo|l[oó]gica|cu[aá]nt[oa]s?|prove|solve|calculate|equation|probability|algorithm|step by step|in depth|analy[sz]e|compare|evaluate|strategy|design|riddle|puzzle|how (many|much))\b/i;
@@ -4030,7 +4030,7 @@ $('#tabbar').addEventListener('click', e => {
   const t = b.dataset.tab;
   if (t === 'chats'){ if ($('#chats').classList.contains('msheet')) closeChatsSheet(); else { closeSide(); openChatsSheet(); } }
   else if (t === 'ia'){ if (side.classList.contains('open')) closeSide(); else { closeChatsSheet(); openSide(mode === 'cmp' ? 'add' : 'set'); } }
-  else { closeSide(); closeChatsSheet(); if (t === 'coins') coinModal('panel'); else if (t === 'cfg') SZ.cfgModal(); else if (t === 'me') accModal(); }
+  else { closeSide(); closeChatsSheet(); if (t === 'coins') coinModal('panel'); else if (t === 'cfg') SZ.cfgModal(); else if (t === 'me') accMenu(b); }
 });
 /* chat nuevo: también cambia la frase de bienvenida */
 function newChat(){
@@ -4328,7 +4328,7 @@ async function runGuide(o = {}){
     await gPoint(gAny('#cEffort'), 'Y aquí, cómo piensa: Flow (según tu pregunta), Fragment (rápido), Focus (a fondo, el que más gasta) u Horizon (ideas originales).');
     await gPoint(gT('#sNav [data-sn="proj"]', '#cProj') || gT('#railProj', '#cProj') || gT('#cProj', '#cProj'), '«Espacios» junta chats, instrucciones y archivos de un mismo tema. La IA los tiene en cuenta en cada chat del espacio, como en Claude.', { side:true });
     await gPoint(gT('#sNav [data-sn="syn"]', '#cSyn') || gT('#railSyn', '#cSyn') || gT('#cSyn', '#cSyn'), '«Obras» guarda todo lo que la IA crea: páginas, juegos, dibujos y documentos. Cuando una respuesta trae una, se abre sola al lado del chat.', { side:true });
-    const cfgB = gT('#cfgBtn', '#tabbar [data-tab="cfg"]');
+    const cfgB = gT('#sAcc', '#tabbar [data-tab="cfg"]') || gT('#cfgBtn', '#tabbar [data-tab="cfg"]');
     const rr = await gPoint(cfgB, 'En «Ajustes» cambias cómo se ve todo. ¿Te muestro lo más útil?', { buttons:[{ label:'Muéstrame' }, { label:'Ahora no', ghost:true }], auto:15000, mood:'guino' });
     if (rr === 0 && cfgB){
       SZ.cfgModal(); await gWait(700);
@@ -4427,7 +4427,7 @@ async function runGuide(o = {}){
       const r7 = await H.talk('¿Quieres más espacio? Vincula tu Google Drive y guardo una copia de tus chats en una carpeta privada de Sonyx. No puedo ver tus otros archivos.', { mood:'encantada', buttons:[{ label:'Vincular mi Drive' }, { label:'Ahora no', ghost:true }] });
       gNeed();
       if (r7 === 0){ H.quiet(); const ok = await driveGo(null); gNeed(); if (ok) await H.talk('¡Hecho! Desde ahora tus chats también viven en tu Drive. Lo encuentras en «⋯ › Google Drive».', { mood:'celebrando', buttons:[{ label:'Terminar' }] }); }
-      else { H.talk('Sin problema. Cuando quieras, está en Ajustes › IAs y memoria › Google Drive.', { mood:'guino' }); await gWait(2400); }
+      else { H.talk('Sin problema. Cuando quieras, está en Ajustes › Tus IAs › Google Drive.', { mood:'guino' }); await gWait(2400); }
       gNeed();
     }
     endGuide(true);
@@ -4471,7 +4471,7 @@ const TOPIC_STEPS = {
   },
   extras:async () => {
     await gPoint(gT('#attachBtn', '#attachBtn'), 'En el «+» está «Buscar en internet»: la IA busca datos de hoy y te muestra de dónde los sacó. Si preguntas por algo de hoy, busca sola.');
-    await gPoint(gT('#cfgBtn', '#tabbar [data-tab="cfg"]'), 'Y en Ajustes › «IAs y memoria» ves lo que recuerdo de ti y lo borras cuando quieras.', { side:true });
+    await gPoint(gT('#sAcc', '#tabbar [data-tab="cfg"]') || gT('#cfgBtn', '#tabbar [data-tab="cfg"]'), 'Y en Ajustes › «Memoria» ves lo que recuerdo de ti y lo borras cuando quieras.', { side:true });
     await gPoint(null, 'Un truco más: escribe «hazme una presentación de…» y te la entrego lista para PowerPoint.', { mood:'guino' });
   },
   chats:async () => {
@@ -4486,7 +4486,7 @@ const TOPIC_STEPS = {
     await gPoint(null, 'Y si quieres más, conecta Puter y usa la versión pro de las IAs más usadas (ChatGPT, Claude, Gemini…), gratis y con un clic.', { mood:'guino' });
   },
   ajustes:async () => {
-    await gPoint(gT('#cfgBtn', '#tabbar [data-tab="cfg"]'), 'Ajustes tiene 2 pestañas: «Página» (más bonito o más rápido, sonidos, animaciones) e «IAs y memoria» (modo principiante, respuestas cortas, lo que recuerdo de ti y tus IAs).', { side:true });
+    await gPoint(gT('#sAcc', '#tabbar [data-tab="cfg"]') || gT('#cfgBtn', '#tabbar [data-tab="cfg"]'), 'Ajustes está en tu perfil y tiene un menú a la izquierda: «Cuenta», «General» (estilo, color e idioma), «Efectos» (más bonito o más rápido, sonidos, animaciones), «Respuestas» (modo principiante, respuestas cortas), «Memoria» (lo que recuerdo de ti) y «Tus IAs».', { side:true });
   },
   synthonia:async () => {
     await gPoint(gT('#szBot', '#szBot'), 'Y yo siempre estoy aquí. Tócame y pregúntame cómo se hace algo: te lo explico o te lo señalo con mi manita.', { mood:'encantada' });
@@ -5478,7 +5478,7 @@ $('#thList').addEventListener('click', e => {
 }, true);
 pjCrumb();
 if (params.get('espacios') != null) pjOpen('list');
-/* ---------- v3.0 · Sintéticos en la barra lateral (como los artefactos de Claude) ----------
+/* ---------- v3.0 · Sintéticos, desde v4.6 «Obras» (como los artefactos de Claude) ----------
    Junta todo lo que la IA creó en tus chats (páginas, juegos, SVG, código, documentos) en una sola lista.
    Tocar uno lo abre al lado; «Ir al chat» te lleva a la conversación donde nació. Se arma al abrir la lista, nada se guarda aparte. */
 const SYN_ICO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.2 5.1L19.5 9l-4 3.7 1.1 5.4L12 15.5 7.4 18.1l1.1-5.4-4-3.7 5.3-.9z" opacity=".35"/><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M9 9l-2.5 3L9 15M15 9l2.5 3L15 15"/></svg>';
@@ -5499,36 +5499,99 @@ function synAll(){
   const seen = new Set();
   return out.reverse().filter(x => { const k = x.th.k + '|' + (x.M.key || x.M.name); if (seen.has(k)) return false; seen.add(k); return true; });
 }
-const SV = document.createElement('section'); SV.className = 'synv'; SV.id = 'synv'; SV.hidden = true; SV.setAttribute('aria-label', 'Sintéticos'); SV.tabIndex = -1;
+const SV = document.createElement('section'); SV.className = 'synv'; SV.id = 'synv'; SV.hidden = true; SV.setAttribute('aria-label', 'Obras'); SV.tabIndex = -1;
 $('#shell .main').appendChild(SV);
-let synList = [];
+let synList = [], synTab = 'mine', synQ = '';
+/* v4.6 · «Obras» (antes Sintéticos) con el estilo de la página de Artefactos de Claude: título grande, «Tus obras» / «Inspiración»,
+   buscador, botón «Crear nueva obra» y una cuadrícula de tarjetas con su vista en miniatura (el código, el dibujo o la página tal cual). */
+const OBR_ICO = {
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  find:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg>',
+  chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>'
+};
+/* ideas para empezar (pestaña «Inspiración»): al tocar una se abre un chat nuevo con el pedido ya escrito, en tu idioma */
+const OBR_IDEAS = [
+  { k:'web', t:['Página de un café', 'A café website'], p:['Hazme una página web de un café con menú, horarios y contacto, bonita y que se vea bien en el celular.', 'Make me a café website with a menu, opening hours and contact details, good-looking and mobile friendly.'], x:['Página web', 'Website'] },
+  { k:'calc', t:['Calculadora bonita', 'A pretty calculator'], p:['Hazme una calculadora bonita con tema oscuro que funcione con el teclado.', 'Make me a pretty dark-theme calculator that also works with the keyboard.'], x:['Herramienta', 'Tool'] },
+  { k:'game', t:['Juego de la serpiente', 'Snake game'], p:['Hazme el juego de la serpiente para jugar con las flechas, con puntaje y reinicio.', 'Make me the snake game, played with the arrow keys, with a score and a restart button.'], x:['Juego', 'Game'] },
+  { k:'svg', t:['Logo en SVG', 'A logo in SVG'], p:['Dibuja un logo sencillo en SVG para una tienda de plantas, con dos colores.', 'Draw a simple SVG logo for a plant shop, using two colors.'], x:['Dibujo', 'Drawing'] },
+  { k:'todo', t:['Lista de tareas', 'To-do list'], p:['Crea una app de lista de tareas que guarde lo que escribo en el navegador.', 'Create a to-do list app that saves what I write in the browser.'], x:['Aplicación', 'App'] },
+  { k:'cv', t:['Mi currículum', 'My résumé'], p:['Redacta mi currículum en un documento limpio; pregúntame lo que necesites saber de mí.', 'Write my résumé as a clean document; ask me whatever you need to know about me.'], x:['Documento', 'Document'] }
+];
+const OBR_HUE = s => { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
+/* la miniatura: lo que de verdad hay dentro (el título de la página, el dibujo, las primeras líneas del código o del texto) */
+function obrThumb(x){
+  const hue = OBR_HUE(x.P ? x.P.entry : x.M.name + x.th.k);
+  let inner;
+  if (x.P){
+    const pg = x.P.files.find(f => f.path === x.P.entry) || x.P.files[0], h1 = ((pg.text.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i) || [])[1] || x.P.title || x.P.entry).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 44);
+    inner = '<span class="th-web"><i></i><i></i><i></i><b>' + esc(h1) + '</b><u></u><u></u><u class="s"></u></span>';
+  } else if (x.M.ext === 'svg' && /<svg/i.test(x.M.text)){
+    inner = '<img class="th-svg" alt="" loading="lazy" decoding="async" src="data:image/svg+xml;charset=utf-8,' + encodeURIComponent(x.M.text.replace(/<svg(?![^>]*xmlns)/i, '<svg xmlns="http://www.w3.org/2000/svg"')) + '">';
+  } else if (/^(md|txt)$/.test(x.M.ext)){
+    inner = '<span class="th-doc">' + esc(x.M.text.replace(/[#*_`>]/g, '').slice(0, 300)) + '</span>';
+  } else {
+    inner = '<pre class="th-code">' + esc(x.M.text.split('\n').filter(l => l.trim()).slice(0, 10).map(l => l.slice(0, 46)).join('\n')) + '</pre>';
+  }
+  return '<span class="syn-th notr" style="--h:' + hue + '" aria-hidden="true">' + inner + '<em class="th-k">' + esc(x.P ? 'WEB' : String(x.M.ext || '').toUpperCase().slice(0, 5)) + '</em></span>';
+}
+function obrCard(x, n){
+  const en = SZ.lang() === 'en';
+  const sub = x.P ? '<span class="notr">' + esc(webTxt(en).kind + ' · ' + webTxt(en).files(x.P.files.length)) + '</span>' : esc(x.M.label) + ' · ' + x.M.lines + (en ? (x.M.lines === 1 ? ' line' : ' lines') : (x.M.lines === 1 ? ' línea' : ' líneas'));
+  const name = x.P ? (x.P.title || x.P.entry) : x.M.name;
+  return '<div class="syn-w' + (x.P ? ' web' : '') + '" data-q="' + esc((name + ' ' + x.th.title + ' ' + x.M.label).toLowerCase()) + '"><button type="button" class="syn-c" data-sn="' + n + '">' + obrThumb(x)
+    + '<span class="syn-m"><b class="notr">' + esc(name) + '</b><small>' + sub + '</small><small><span class="notr">' + esc(x.th.title) + '</span>' + (x.th.t ? ' · ' + pjAgo(x.th.t) : '') + '</small></span></button>'
+    + '<button type="button" class="syn-go" data-sg="' + n + '" title="Ir al chat donde nació">' + OBR_ICO.chat + 'Ir al chat</button></div>';
+}
+function synPaint(){
+  const en = SZ.lang() === 'en', mine = synTab === 'mine';
+  const tab = (id, l) => '<button type="button" role="tab" class="obr-tab" data-ot="' + id + '" aria-selected="' + (synTab === id) + '">' + l + '</button>';
+  const body = mine
+    ? (synList.length
+      ? '<div class="syn-l">' + synList.map(obrCard).join('') + '</div><p class="obr-none" hidden>No encontré obras con eso.</p>'
+      : '<div class="pj-empty"><span class="pj-big">' + SYN_ICO + '</span><b>Aún no hay obras</b><p>Pídele a la IA una página, un juego o un dibujo (por ejemplo «hazme una calculadora bonita») y aparecerá aquí.</p><button type="button" class="obr-new" data-ot="insp">Ver ideas para empezar</button></div>')
+    : '<div class="syn-l obr-ideas">' + OBR_IDEAS.map((d, i) => '<button type="button" class="obr-idea notr" data-ip="' + i + '" style="--h:' + OBR_HUE(d.k) + '"><span class="th-k">' + esc(d.x[en ? 1 : 0]) + '</span><b>' + esc(d.t[en ? 1 : 0]) + '</b><small>' + esc(d.p[en ? 1 : 0]) + '</small></button>').join('') + '</div>';
+  SV.innerHTML = '<div class="pj-in obr"><div class="pj-bar"><span></span><button type="button" class="pj-close" data-sa="close">Volver al chat' + PJ_X + '</button></div>'
+    + '<header class="obr-h"><div><h1>Obras</h1><p>Todo lo que la IA creó en tus chats: páginas, juegos, dibujos, código y documentos. Tócalo y se abre al lado.</p></div><button type="button" class="obr-new" data-sa="new">' + OBR_ICO.plus + 'Crear nueva obra</button></header>'
+    + '<div class="obr-tools"><div class="obr-tabs" role="tablist" aria-label="Obras">' + tab('mine', 'Tus obras') + tab('insp', 'Inspiración') + '</div>'
+    + (mine && synList.length ? '<label class="obr-s">' + OBR_ICO.find + '<input type="search" class="obr-q" placeholder="Buscar obras…" aria-label="Buscar obras" autocomplete="off" spellcheck="false"></label>' : '') + '</div>'
+    + body + '</div>';
+  const q = $('.obr-q', SV); if (q && synQ){ q.value = synQ; obrFilter(); }
+}
+function obrFilter(){
+  const q = ($('.obr-q', SV) || {}).value || ''; synQ = q;
+  const k = q.trim().toLowerCase(); let n = 0;
+  $$('.syn-w', SV).forEach(w => { const on = !k || w.dataset.q.includes(k); w.hidden = !on; if (on) n++; });
+  const none = $('.obr-none', SV); if (none) none.hidden = n > 0;
+}
 function synOpen(){
   try{ pjClose(); }catch(e){}
   try{ closeChatsSheet(); }catch(e){}
   SV.hidden = false; document.body.classList.add('synon'); $('#railSyn').setAttribute('aria-pressed', 'true');
-  synList = synAll();
-  SV.innerHTML = '<div class="pj-in"><div class="pj-bar"><span></span><button type="button" class="pj-close" data-sa="close">Volver al chat' + PJ_X + '</button></div>'
-    + '<header class="pj-lh"><div><h1>Sintéticos</h1><p>Todo lo que la IA creó en tus chats: páginas, juegos, dibujos, código y documentos. Tócalo y se abre al lado.</p></div></header>'
-    + (synList.length ? '<div class="syn-l">' + synList.map((x, n) => '<div class="syn-w' + (x.P ? ' web' : '') + '"><button type="button" class="syn-c" data-sn="' + n + '">' + (x.P ? '<span class="fc-ic wp-ic" aria-hidden="true">' + WEB_ICO.web + '</span>' : fcIc(x.M.ext)) + '<b>' + esc(x.M.name) + '</b><small>' + (x.P ? '<span class="notr">' + esc(webTxt(SZ.lang() === 'en').kind + ' · ' + webTxt(SZ.lang() === 'en').files(x.P.files.length)) + '</span>' : esc(x.M.label) + ' · ' + x.M.lines + (SZ.lang() === 'en' ? (x.M.lines === 1 ? ' line' : ' lines') : (x.M.lines === 1 ? ' línea' : ' líneas'))) + '</small><small>' + esc(x.th.title) + (x.th.t ? ' · ' + pjAgo(x.th.t) : '') + '</small></button><button type="button" class="syn-go" data-sg="' + n + '" title="Ir al chat donde nació">Ir al chat</button></div>').join('') + '</div>'
-      : '<div class="pj-empty"><span class="pj-big">' + SYN_ICO + '</span><b>Aún no hay Sintéticos</b><p>Pídele a la IA una página, un juego o un dibujo (por ejemplo «hazme una calculadora bonita») y aparecerá aquí.</p></div>')
-    + '</div>';
+  synList = synAll(); synTab = 'mine'; synQ = '';
+  synPaint();
   SV.scrollTop = 0; SV.focus({ preventScroll:true });
 }
 function synClose(){ if (SV.hidden) return; SV.hidden = true; document.body.classList.remove('synon'); $('#railSyn').setAttribute('aria-pressed', 'false'); }
+SV.addEventListener('input', e => { if (e.target.classList.contains('obr-q')) obrFilter(); });
 SV.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.sa === 'close'){ synClose(); return; }
+  if (b.dataset.sa === 'new'){ newChat(); setTimeout(() => inp.focus(), 80); return; }
+  if (b.dataset.ot){ synTab = b.dataset.ot; synPaint(); const t = $('.obr-tab[aria-selected="true"]', SV); if (t) t.focus({ preventScroll:true }); return; }
+  if (b.dataset.ip != null){ const d = OBR_IDEAS[+b.dataset.ip]; if (!d) return; newChat(); setTimeout(() => { inp.value = d.p[SZ.lang() === 'en' ? 1 : 0]; inp.dispatchEvent(new Event('input', { bubbles:true })); inp.focus(); }, 90); return; }
   if (b.dataset.sg != null){ const x = synList[+b.dataset.sg]; if (x) openThread(x.th.model, x.th.id); return; }
   if (b.dataset.sn != null){ const x = synList[+b.dataset.sn]; if (x && x.P) webOpen(x.P, { tab:'prev' }); else if (x) openCanvas(x.M, x.sibs(), canPreview(x.M) ? 'prev' : 'code'); }
 });
+SZ.onLang(() => { if (!SV.hidden) synPaint(); });
 addEventListener('keydown', e => { if (e.key === 'Escape' && !SV.hidden && !cvEl && !document.querySelector('.szm.on')) synClose(); });
 {
-  const rb = document.createElement('button'); rb.type = 'button'; rb.className = 'rbtn'; rb.id = 'railSyn'; rb.dataset.tip = 'Sintéticos'; rb.style.setProperty('--i', '2');
-  rb.innerHTML = SYN_ICO + '<span class="rl">Sintéticos</span>'; rb.setAttribute('aria-label', 'Sintéticos'); rb.setAttribute('aria-pressed', 'false');
+  const rb = document.createElement('button'); rb.type = 'button'; rb.className = 'rbtn'; rb.id = 'railSyn'; rb.dataset.tip = 'Obras'; rb.style.setProperty('--i', '2');
+  rb.innerHTML = SYN_ICO + '<span class="rl">Obras</span>'; rb.setAttribute('aria-label', 'Obras'); rb.setAttribute('aria-pressed', 'false');
   ($('#railProj') || $('#rail [data-r="new"]')).after(rb);
   rb.addEventListener('click', () => SV.hidden ? synOpen() : synClose());
   const cb = document.createElement('button'); cb.type = 'button'; cb.className = 'cnew cproj csyn'; cb.id = 'cSyn';
-  cb.innerHTML = SYN_ICO + 'Sintéticos';
+  cb.innerHTML = SYN_ICO + 'Obras';
   ($('#cProj') || $('#cNew')).after(cb);
   cb.addEventListener('click', synOpen);
 }
@@ -5652,96 +5715,38 @@ function renderAccBtn(){
   else { b.className = 'rbtn rme out'; b.dataset.tip = 'Entrar a tu cuenta'; b.setAttribute('aria-label', 'Entrar a tu cuenta'); b.innerHTML = '<span class="av-me" aria-hidden="true"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></span><span class="rl"><b>Entrar</b><small>guarda tus chats</small></span>'; if (tm) tm.innerHTML = '<span class="av-me" style="background:rgba(255,255,255,.1);color:var(--soft)" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></span>'; }
   b.style.setProperty('--i', 6);
 }
-/* tu espacio en la nube */
-function spaceHtml(){
-  const s = SZ.ACC.space; if (!s || !s.max) return '';
-  const k = Math.min(1, s.used / s.max), mb = n => (n / 1048576).toFixed(n < 10485760 ? 1 : 0).replace('.', ',');
-  return '<div class="aspace' + (k > .9 ? ' warn' : '') + '"><div><b>Tu nube</b><span>' + mb(s.used) + ' de ' + mb(s.max) + ' MB</span></div><span class="tmbar"><i style="transform:scaleX(' + k.toFixed(3) + ')"></i></span>'
-    + (SZ.ACC.full ? '<small>Está llena: tus chats nuevos se guardan solo en este dispositivo hasta que borres conversaciones viejas.</small>' : '') + '</div>';
-}
-/* IA de SymphorIA: resumen para el equipo; las llaves, el estado y la ayuda viven en Pulsem (pulsem.html) */
-function trialAdminHtml(d){
-  const ks = d.keys || [], ok = ks.filter(k => !k.down).length, mine = ks.filter(k => k.mine).length;
-  return '<div class="sxlbl">IAS CONECTADAS · PARA TODOS</div><div class="tmc"><div class="trow2"><i class="pdot2 ' + (ok ? 'ok' : ks.length ? 'warn' : 'off') + '" aria-hidden="true"></i><b>' + ok + ' de ' + ks.length + ' llaves activas</b><span>' + ((d.models && d.models.n) || 0) + ' IA gratis · ' + Math.round((d.dayLimit || 25000) / 800) + ' mensajes por persona al día' + (mine ? ' · ' + mine + ' son tuyas' : '') + '</span></div>'
-    + '<p class="cnote" style="margin:8px 0">En Pulsem ves cómo está la página, quién está conectado y quién necesita ayuda.</p><div class="tbtn"><span></span><a class="btn sm flow" href="pulsem.html">Abrir Pulsem →</a></div></div>';
-}
-function loadTrialAdmin(box){
-  SZ.api('trial').then(d => { if (box.isConnected) box.innerHTML = trialAdminHtml(d); }).catch(e => { if (box.isConnected) box.innerHTML = '<p class="cnote">No pude cargar las IAs conectadas: ' + esc(e.message) + '</p>'; });
-}
+/* v4.6 · «Tu cuenta» ya no es una ventana aparte: perfil, seguridad, nube y cerrar sesión están en Ajustes › Cuenta (core 14e),
+   y al tocar tu perfil en la barra sale el panelito corto de React (next/componentes/synthflow/MenuCuenta.jsx).
+   Esta ventana solo queda para entrar o crear una cuenta (sin sesión). */
 function accModal(){
+  if (SZ.ACC.ready){ SZ.cfgModal('cuenta'); return; }
   if (accEl) return;
-  const A = SZ.ACC, signed = A.ready, pf = A.profile || {}, u = A.user || {}, n = Object.keys(st().chats).filter(k => st().chats[k].length).length;
   accEl = document.createElement('div'); accEl.id = 'acc';
   accEl.innerHTML = '<div class="tcard" role="dialog" aria-modal="true" aria-label="Tu cuenta">'
-    + (signed
-      ? '<div class="acard"><div class="pfban" style="background:' + SZ.grad(pf.banner || pf.color) + '"></div><div class="pfme">' + SZ.myAvatar('xl') + '<div><b>' + esc(SZ.accName()) + '</b>' + (pf.pronouns ? '<i>' + esc(pf.pronouns) + '</i>' : '') + '<span>' + '<em class="rolep r-' + esc(u.role || 'user') + '">' + esc(SZ.ROLE_NAME[u.role || 'user'] || u.role) + '</em> ' + esc(SZ.accHandle(u)) + ' · ' + (A.full ? 'tu cuenta está llena' : A.err ? 'sin guardar en tu cuenta' : A.t ? 'guardado ' + ago(A.t) : 'guardando…') + '</span></div></div>' + (pf.status ? '<p class="pfs">' + esc(pf.status) + '</p>' : '') + (pf.bio ? '<p class="pfb">' + esc(pf.bio) + '</p>' : '') + '</div>'
-        + '<div class="aact"><button class="btn sm" type="button" id="aEdit">Editar perfil</button><button class="btn sm ghost" type="button" id="aSurvey">Mis IA ideales</button>' + '<button class="btn sm ghost" type="button" id="aSec">Seguridad y acceso</button>' + '</div>'
-        + '<div class="sxstats"><div><b>' + fmt(n) + '</b><span>chats en la nube</span></div><div><b>' + fmt(Object.values(st().usage || {}).reduce((a, u) => a + (u.requests || 0), 0)) + '</b><span>respuestas en total</span></div><div><b>' + fmt(Object.values(st().chats).reduce((a, c) => a + (Array.isArray(c) ? c.filter(m => m && m.star).length : 0), 0)) + '</b><span>mensajes favoritos</span></div></div>'
-        + (false ? '<div class="sxsave"><p>Guardar mi llave de OpenRouter (de antes) en mi cuenta, cifrada, para no volver a pegarla en otro dispositivo.</p><button class="sxsw" id="aKey" type="button" aria-pressed="' + !!st().syncKey + '" aria-label="Guardar mi llave en mi cuenta"></button></div>' : '')
-        + spaceHtml()
-        + (u.claimable ? '<div class="sxsave"><p>Esta cuenta está reservada para el equipo de Sinapse. Actívala con tu código de configuración.</p><button class="btn sm" id="aClaim" type="button">Activar mi rango</button></div>' : '')
-        + (['owner', 'admin', 'staff'].includes(u.role) ? '<div id="aTrial"><div class="tmload">Cargando las IAs conectadas…</div></div>' : '')
-
-      : '<div class="word" id="aWord"></div><div class="tn">TU CUENTA</div><div class="tb"><h3>Entra a Sonyx</h3><p>Con tu cuenta tus chats y favoritos te siguen a cualquier dispositivo, personalizas tu perfil y puedes hablar con el equipo de Sinapse. Solo necesitas un usuario y una contraseña (o tu cuenta de Google). Puter sigue siendo solo para sus IA.</p><div id="aAuth"></div></div>')
-    + '<div class="tbtn" style="margin-top:18px"><button class="lnk" id="aClose" type="button">Cerrar</button>'
-    + (signed ? '<button class="lnk" id="aSync" type="button">Guardar ahora</button><button class="lnk" id="aDel" type="button">Borrar cuenta</button><button class="btn sm ghost" id="aOut" type="button">Cerrar sesión</button>' : '') + '</div>'
-    + (signed ? '<div class="aout2"><button class="lnk" id="aOutAll" type="button">Cerrar sesión en todos mis dispositivos</button></div>' : '') + '</div>';
+    + '<div class="word" id="aWord"></div><div class="tn">TU CUENTA</div><div class="tb"><h3>Entra a Sonyx</h3><p>Con tu cuenta tus chats y favoritos te siguen a cualquier dispositivo, personalizas tu perfil y puedes hablar con el equipo de Sinapse. Solo necesitas un usuario y una contraseña (o tu cuenta de Google). Puter sigue siendo solo para sus IA.</p><div id="aAuth"></div></div>'
+    + '<div class="tbtn" style="margin-top:18px"><button class="lnk" id="aClose" type="button">Cerrar</button></div></div>';
   document.body.appendChild(accEl); const w = $('#aWord'); if (w) w.innerHTML = zWord('Synth');
   requestAnimationFrame(() => accEl.classList.add('on'));
   $('.tcard', accEl).animate([{ transform:'scale(.9) translateY(24px)', opacity:0, filter:'blur(10px)' }, { transform:'none', opacity:1, filter:'blur(0)' }], { duration:700, easing:'cubic-bezier(.22,1,.36,1)' });
   const close = () => { if (!accEl) return; const el = accEl; accEl = null; el.classList.remove('on'); setTimeout(() => el.remove(), 470); };
-  const reopen = () => { if (accEl){ accEl.remove(); accEl = null; } accModal(); };
   $('#aClose').addEventListener('click', close);
   accEl.addEventListener('pointerdown', e => { if (e.target === accEl) close(); });
-  const ab = $('#aAuth');
-  if (ab) SZ.authBox(ab, () => { reopen(); renderAccBtn(); }, k => { close(); showBlockHelp(k); });
-  if (!signed) return;
-  $('#aEdit').addEventListener('click', () => SZ.profileModal(() => { renderAccBtn(); reopen(); }));
-  const sec = $('#aSec'); if (sec) sec.addEventListener('click', () => SZ.securityModal());
-  $('#aSurvey').addEventListener('click', () => SZ.surveyModal(ok => { if (ok){ forMeK = ''; applySurvey(true); renderList({ keep:true }); } }));
-  const aKey = $('#aKey'); if (aKey) aKey.addEventListener('click', e => { st().syncKey = !st().syncKey; save(); e.currentTarget.setAttribute('aria-pressed', String(!!st().syncKey)); if (!st().syncKey) SZ.api('me', { method:'PUT', body:{ key:'' } }).catch(() => {}); toast(st().syncKey ? 'Tu llave se guardará cifrada en tu cuenta.' : 'Tu llave se borró de tu cuenta.'); });
-  $('#aSync').addEventListener('click', async e => { const b = e.currentTarget; b.textContent = 'Sincronizando…'; await SZ.accPush({ ledger:true }); b.textContent = 'Sincronizar'; toast(SZ.ACC.err || 'Todo sincronizado.'); });
-  $('#aOut').addEventListener('click', async e => {
-    const b = e.currentTarget; b.textContent = 'Guardando…'; b.disabled = true;
-    try{ await SZ.accSignOut(); }
-    catch(er){
-      b.textContent = 'Cerrar sesión'; b.disabled = false;
-      if (!er.unsynced || !(await SZ.szConfirm('No pude guardar tus últimos cambios', 'Si sales ahora, lo que no alcanzó a guardarse en tu cuenta se borra de este dispositivo. ¿Salir igual?', 'Cerrar igual', true))) return;
-      await SZ.accSignOut(true);
-    }
-    toast('Sesión cerrada. Tus chats quedaron en tu cuenta y se borraron de este dispositivo.'); setTimeout(() => location.reload(), 1100);
-  });
-  $('#aDel').addEventListener('click', async () => {
-    if (!(await SZ.szConfirm('¿Borrar tu cuenta de Sonyx?', 'Se borran para siempre tu perfil, tus chats guardados en tu cuenta y lo que hay en este dispositivo. No se puede deshacer.', 'Seguir', true))) return;
-    const isPass = u.kind === 'pass' || !!u.username;
-    const v = await SZ.szPrompt('Confirma que eres tú', isPass ? 'Escribe tu contraseña para borrar la cuenta.' : 'Escribe tu correo (' + (u.email || '') + ') para borrar la cuenta.', 'Borrar mi cuenta', { type:isPass ? 'password' : 'email', ac:isPass ? 'current-password' : 'off', danger:true });
-    if (!v) return;
-    try{ await SZ.accDelete(isPass ? { pass:v } : { confirm:v }); toast('Tu cuenta se borró.'); setTimeout(() => location.reload(), 900); }catch(er){ toast(er.message); }
-  });
-  $('#aOutAll').addEventListener('click', async e => {
-    const b = e.currentTarget;
-    if (!(await SZ.szConfirm('¿Cerrar sesión en todos lados?', 'Se cierra tu sesión en todos tus dispositivos, incluido este. Útil si entraste en un computador ajeno.', 'Cerrar en todos', true))) return;
-    b.textContent = 'Guardando…';
-    try{ await SZ.accSignOutAll(); }
-    catch(er){ if (!er.unsynced || !(await SZ.szConfirm('No pude guardar tus últimos cambios', 'Si sigues, lo que no alcanzó a guardarse se borra de este dispositivo.', 'Seguir igual', true))){ b.textContent = 'Cerrar sesión en todos mis dispositivos'; return; } await SZ.accSignOutAll(true); }
-    toast('Cerraste sesión en todos tus dispositivos.'); setTimeout(() => location.reload(), 1100);
-  });
-  const cl = $('#aClaim');
-  if (cl) cl.addEventListener('click', async () => {
-    const v = await SZ.szPrompt('Activar tu rango', 'Escribe el código de configuración del equipo de Sinapse.', 'Activar', { sec:true });
-    if (!v) return;
-    try{ const r = await SZ.accClaim(v); toast('¡Listo! Tu rango: ' + (SZ.ROLE_NAME[r] || r) + '.'); reopen(); }catch(er){ toast(er.message); }
-  });
-  const tr = $('#aTrial');
-  if (tr) loadTrialAdmin(tr);
-
+  SZ.authBox($('#aAuth'), () => { close(); renderAccBtn(); }, k => { close(); showBlockHelp(k); });
 }
+/* el panelito del perfil (React); si React todavía no cargó, se abre lo de siempre */
+function accMenu(anchor){
+  if (window.__mcListo){ try{ dispatchEvent(new CustomEvent('synthflow-menu-cuenta', { detail:{ anchor:anchor || null } })); return; }catch(e){} }
+  if (SZ.ACC.ready) SZ.cfgModal('cuenta'); else accModal();
+}
+/* lo que cambia en el perfil o en «Mis IA ideales» desde Ajustes se refleja en el chat */
+SZ.cfgAcc.onSurvey = ok => { forMeK = ''; applySurvey(true); renderList({ keep:true }); };
+SZ.cfgAcc.onChange = () => { renderAccBtn(); };
 SZ.accHooks.push(kind => {
   renderAccBtn();
   if (kind === 'pull'){ renderMsgs(); renderFoot(); paintSel(); renderTop(); updateHint(); renderChats(false); loadTeams().then(() => { fixModel(true); renderList({ keep:true }); updateHint(); }); try{ renderList({ keep:true }); }catch(e){} }
   if (kind === 'out'){ delete st().useTeam; paintProv(); renderList({ keep:true }); updateHint(); }
 });
-$('#accBtn').addEventListener('click', accModal);
+$('#accBtn').addEventListener('click', e => accMenu(e.currentTarget));
 SZ.hooks.chats = () => { renderMsgs(); updateHint(); renderFoot(); renderChats(false); };
 $('#cfgBtn').addEventListener('click', () => SZ.cfgModal());
 SZ.smoothWheel(); SZ.orbitBg(msgsEl);
@@ -5750,7 +5755,7 @@ renderAccBtn();
 if (params.get('acc') === '1') setTimeout(accModal, 2600);
 
 /* ===== v2.2 · orden nuevo: todo donde lo buscarías (estilo Claude) ===== */
-/* Ajustes › IAs y memoria: atajos a lo que antes estaba regado en menús */
+/* Ajustes › Tus IAs: atajos a lo que antes estaba regado en menús */
 SZ.cfgLinks.push(
   ['Elegir mis IA ideales', () => SZ.surveyModal(ok => { if (ok){ forMeK = ''; applySurvey(true); renderList({ keep:true }); } }), '3 preguntas y te digo cuáles te sirven más'],
   ['Conectar Puter u otra IA', () => openConnect(), 'Tu versión pro de las IAs más usadas, gratis'],
@@ -5923,7 +5928,7 @@ function paintMode(){
   });
 })();
 /* ===== v3.2 · la barra de chats al estilo Claude en el modo Simple (pedido de Sammuel, 28 oct) =====
-   Arriba Crear, Proyectos, Sintéticos, Personalización y Más; en medio tus chats («Recientes»);
+   Arriba Crear, Comparar IAs, Espacios, Obras y Favoritos (v4.6: sin «Personalización» ni «Más»; Ajustes, Idioma, Ayuda y Planes están en el panelito del perfil); en medio tus chats («Recientes»);
    abajo tu cuenta y una lupa para buscar. La barrita de íconos se esconde mientras la lista está abierta.
    v3.7 · ahora también en el estilo SynthFlow (con los colores del tema): una sola barra, más simple, para todos. */
 let accInfo = { ready:false, name:'Entrar', plan:'Gratis' };
@@ -5949,9 +5954,7 @@ let accInfo = { ready:false, name:'Entrar', plan:'Gratis' };
   const reactNav = !!document.getElementById('sNav');
   const nav = reactNav ? document.getElementById('sNav') : document.createElement('nav'); if (!reactNav){ nav.className = 'snav'; nav.id = 'sNav'; nav.setAttribute('aria-label', 'Menú de SynthFlow');
   nav.innerHTML = '<div class="sn-top"><a class="sn-logo" href="index.html" aria-label="Volver a SymphorIA">' + SZ.flowWord() + '</a><button type="button" class="sn-x" data-sn="hide" aria-label="Cerrar la barra" data-tip="Cerrar la barra">' + I.side + '</button></div>'
-    + item('new', I.new, 'Crear', 0) + item('cmp', I.cmp, 'Comparar IAs', 1) + item('proj', I.proj, 'Proyectos', 2) + item('syn', I.syn, 'Sintéticos', 3) + item('cfg', I.cfg, 'Personalización', 4)
-    + '<button type="button" class="sn-i sn-more" data-sn="more" aria-expanded="false" aria-controls="snMore" style="--d:5"><span class="sn-ic" aria-hidden="true">' + I.more + '</span><span class="sn-t">Más</span><span class="sn-chev" aria-hidden="true">' + I.chev + '</span></button>'
-    + '<div class="sn-sub" id="snMore" hidden>' + item('favs', I.star, 'Mensajes favoritos', 0) + item('energy', I.batt, 'Tu EnerX de hoy', 1) + item('guide', I.guide, 'Guía de SynthFlow', 2) + item('help', I.help, 'Centro de ayuda', 3) + '</div>';
+    + item('new', I.new, 'Crear', 0) + item('cmp', I.cmp, 'Comparar IAs', 1) + item('proj', I.proj, 'Espacios', 2) + item('syn', I.syn, 'Obras', 3) + item('favs', I.star, 'Favoritos', 4);
   head.after(nav); }
   /* v3.7 · «Recientes» y el pie (tu cuenta + lupa) también los pinta React (PieBarra); aquí solo el motor de la cuenta */
   const reactFoot = !!document.getElementById('sFoot');
@@ -5983,7 +5986,7 @@ let accInfo = { ready:false, name:'Entrar', plan:'Gratis' };
   const ab = $('#accBtn'); if (ab) new MutationObserver(accPaint).observe(ab, { childList:true, subtree:true, attributes:true, attributeFilter:['class'] });
 
   if (!reactFoot){
-    $('#sAcc').addEventListener('click', () => accModal());
+    $('#sAcc').addEventListener('click', e => accMenu(e.currentTarget));
     /* la lupa muestra la búsqueda arriba de los chats (y la esconde si está vacía) */
     const q = $('#thQ');
     const findOn = on => { cin.classList.toggle('sfind', on); $('#sFind').setAttribute('aria-pressed', String(on)); if (on) setTimeout(() => q.focus(), 60); };
@@ -5992,23 +5995,15 @@ let accInfo = { ready:false, name:'Entrar', plan:'Gratis' };
   }
 
   if (!reactNav){
-  const more = $('#snMore'), mb = $('[data-sn="more"]', nav);
-  const moreOn = on => { more.hidden = !on; mb.setAttribute('aria-expanded', String(on)); nav.classList.toggle('mopen', on); };
   nav.addEventListener('click', e => {
     const b = e.target.closest('[data-sn]'); if (!b) return;
     const k = b.dataset.sn; SZ.SND && SZ.SND.tap && SZ.SND.tap();
-    if (k === 'more'){ moreOn(more.hidden); return; }
     if (k === 'hide'){ $('#chatsClose').click(); return; }
     if (k === 'new') newChat();
     else if (k === 'cmp') cmpOpen(b);
     else if (k === 'proj') pjOpen('list');
     else if (k === 'syn') synOpen();
-    else if (k === 'cfg') SZ.cfgModal();
     else if (k === 'favs') showChats('favs');
-    else if (k === 'energy') coinModal('panel');
-    else if (k === 'guide'){ openGuide(); }
-    else if (k === 'help') location.href = 'ayuda.html';
-    if (k !== 'new' && k !== 'favs') moreOn(false);
     if (isMobile() && k !== 'favs') closeChatsSheet();
   });
   /* el que está abierto se marca, como en Claude */
@@ -7078,7 +7073,8 @@ window.SZFlow = Object.freeze({
   energy:() => coinModal('panel'),
   guide:() => openGuide(),
   help:() => { location.href = 'ayuda.html'; },
-  account:() => accModal(),
+  account:anchor => accMenu(anchor),
+  signIn:() => { if (SZ.ACC.ready) SZ.cfgModal('cuenta'); else accModal(); },
   hideBar:() => { const c = $('#chatsClose'); if (c) c.click(); },
   closeSheet:() => { if (isMobile()) closeChatsSheet(); },
   mode:() => mode,
