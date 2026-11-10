@@ -9,7 +9,7 @@ const BOT_FAQ = [
   { k:'ias conectadas que son las ias conectadas gratis listas', a:'Las IAs conectadas son IAs gratis que ya vienen listas en SymphorIA. No tienes que configurar nada ni dar tarjeta: solo escribes. Sin cuenta pruebas con una EnerX de prueba cada día; con tu cuenta gratis dura mucho más. Cada día tienes un límite gratis para usar las IAs conectadas. A medianoche se vuelve a llenar.', mood:'feliz' },
   { k:'puter que es puter creditos personales cuenta', a:'Con Puter usas la versión pro de las IAs más usadas, como ChatGPT, Claude o Gemini. Es gratis, tiene un saldo que se renueva cada mes y se conecta en Ajustes › IAs y memoria › «Conectar Puter u otra IA». Al lado de cada IA de Puter verás rayitas: verdes gasta poco, amarillas normal y rojas gasta mucho.', act:'conn', lbl:'Conectar mi Puter' },
   { k:'puter conectar conecto conecta conectarlo vincular vinculo', need:'puter', a:'Así conectas Puter: abre Ajustes › pestaña «IAs y memoria» › «Conectar Puter u otra IA» y toca «Conectar con Puter». Se abre una ventanita: entra o crea tu cuenta de Puter (es gratis) y listo. También se conecta solo si eliges una IA que diga «Conecta tu Puter» y le escribes. Con Puter usas la versión pro de IAs como ChatGPT, Claude o Gemini, con un saldo gratis que se renueva cada mes.', act:'conn', lbl:'Conectar mi Puter', go:['[data-tab="cfg"]', '#railCfg', '#cfgBtn'] },
-  { k:'cambiar elegir escoger ia modelo cual otra seleccionar', a:'Toca el nombre de la IA que estás usando y se abre «Elige tu IA». Ahí mismo ves las IA: buscas o tocas «Para ti», «Todas» o «Mis favoritas», y tocas «Usar». Si quieres afinar, «Personalizar búsqueda» tiene los filtros. Para comparar varias, usa «Comparar IAs» en la barra.', go:['#cPick', '#curChip', '[data-tab="ia"]'] },
+  { k:'cambiar cambio cambias elegir escoger ia modelo cual otra seleccionar', a:'Toca el nombre de la IA que estás usando y se abre «Elige tu IA». Ahí mismo ves las IA: buscas o tocas «Para ti», «Todas» o «Mis favoritas», y tocas «Usar». Si quieres afinar, «Personalizar búsqueda» tiene los filtros. Para comparar varias, usa «Comparar IAs» en la barra.', go:['#cPick', '#curChip', '[data-tab="ia"]'] },
   { k:'comparar comparacion varias dos lado mismo tiempo', a:'Con «Comparar con otra IA» sumas hasta 4. Todas responden lo mismo y aparecen en el orden en que llegan.', go:['#cCmp', '#pickRow [data-add]'] },
   { k:'guia tutorial aprender enseñar como funciona', a:'En la Guía rápida te pregunto si la quieres completa o qué quieres ver: eliges uno o varios temas y te los muestro con mi manita, en ese orden.', go:['#guideTop', '#helpBtn'], act:'guide', lbl:'Abrir la Guía' },
   { k:'limite cuanto queda quedan mensajes barra uso gasto consumo enerx energia bateria pila carga synxcoin coins', a:'Cada día tienes EnerX, tu batería gratis para usar las IAs conectadas: baja un poco con cada mensaje (lo que escribes y lo que la IA te responde) y a medianoche se carga al 100 %. Sin cuenta tienes una EnerX de prueba; con tu cuenta gratis tu EnerX dura mucho más. Te muestro dónde está.', go:['#railCoin', '#tabCoin', '#navTotal', '.pill-total'], tour:'coins' },
@@ -17,7 +17,7 @@ const BOT_FAQ = [
   { k:'chats historial conversaciones anteriores guardados donde estan mis', a:'Tus chats están en «Mis chats», en la barrita (en el celular, la pestaña Chats). Se guardan en tu dispositivo y en tu cuenta si entras.', go:['#railChats', '[data-r="chats"]', '[data-tab="chats"]'] },
   { k:'drive google espacio guardar copia respaldo conectar conecto', a:'En Ajustes › IAs y memoria › Google Drive vinculas tu Drive y guardo una copia de tus chats en una carpeta privada. No puedo ver tus otros archivos.', go:['#moreBtn'] },
   { k:'adjuntar archivo pdf imagen foto subir documento clip', a:'Con el «+» agregas archivos, PDF o fotos (también puedes arrastrarlos). Para fotos elige una IA que «ve fotos».', go:['#attachBtn'] },
-  { k:'cuenta registrar registro entrar iniciar sesion perfil usuario contraseña', a:'Crear tu cuenta es gratis y no pide correo ni tarjeta. Sin cuenta puedes probar con una EnerX de prueba al día; con cuenta dura mucho más, y tus chats y favoritos te siguen a cualquier dispositivo. Entra desde tu foto en la barrita.', go:['#accBtn', '[data-tab="me"]'] },
+  { k:'cuenta registrar registro entrar iniciar sesion perfil usuario contraseña crear creo crea unirme', a:'Crear tu cuenta es gratis y no pide correo ni tarjeta. Sin cuenta puedes probar con una EnerX de prueba al día; con cuenta dura mucho más, y tus chats y favoritos te siguen a cualquier dispositivo. Entra desde tu foto en la barrita.', go:['#accBtn', '[data-tab="me"]'] },
   { k:'ajustes rendimiento lento animaciones configuracion sonido sonidos cursor principiante', a:'En Ajustes puedes poner la página «más rápida», activar el modo principiante o apagar mis sonidos.', go:['#cfgBtn', '[data-tab="cfg"]'] },
   { k:'favorito favoritos estrella guardar mensaje', a:'Con la estrella guardas un mensaje en favoritos. Están en la barrita, en la estrella.', go:['[data-r="fav"]', '#railFav'] },
   { k:'error no responde falla lenta demora', a:'Si una IA falla, te ofrezco una parecida que sí funcione, con tu mensaje listo para reenviar.' },
@@ -26,28 +26,26 @@ const BOT_FAQ = [
   { k:'tema temas color colores cambiar simple estilo oscuro barra izquierda', a:'En Ajustes › Página eliges el estilo («SynthFlow» o «Simple», más tranquilo), el color de SynthFlow (Océano, Bosque, Lavanda…) y, en el celular, si la barra va abajo o a la izquierda.', go:['[data-tab="cfg"]', '#cfgBtn'] },
   { k:'vincular google correo usuario contraseña juntar unir cuentas', a:'En Tu cuenta › «Seguridad y acceso» vinculas tu Google a tu cuenta con usuario, o le pones usuario y contraseña a tu cuenta de Google. Así entras a la misma cuenta de las dos formas.', go:['#accBtn', '[data-tab="me"]'] },
   { k:'symphoria symphora sinfonia significa nombre pagina por que se llama etimologia', a:'SymphorIA viene del griego: Sym- (σύν) es «junto, en sintonía», como en sinfonía o sinergia, y -phora (φέρειν) es «llevar», como en metáfora o semáforo. Juntas dicen «el portador de la armonía»: toma el caos de datos y lo lleva a un flujo claro. Es como la evolución del ábaco. ✨', mood:'encantada' },
-  { k:'synth synthetism synthflow synthonia sintonia', a:'«Synth» viene del synthetism, un arte: por eso el chat se llama SynthFlow. Y yo me llamo SynthonIA porque te sintonizo con la IA. ✨', mood:'encantada' },
+  { k:'synth synthetism synthflow synthonia sintonia sona sonyx apex relay superiorsynth nombre nuevo cambio nombres antes', a:'Los nombres cambiaron, pero somos los de siempre: el chat ahora es Sonyx (antes SynthFlow), yo soy Sona (antes SynthonIA), el modo que elige la IA por ti es Apex (antes SuperiorSynth) y la IA automática es Relay. ✨', en:'The names changed, but we\'re the same as ever: the chat is now Sonyx (formerly SynthFlow), I\'m Sona (formerly SynthonIA), the mode that picks the AI for you is Apex (formerly SuperiorSynth) and the automatic AI is Relay. ✨', mood:'feliz' },
   /* charla sencilla */
-  { k:'hola buenas hey saludos holi buenos dias tardes noches', a:'¡Hola! Soy SynthonIA 😊 ¿En qué te ayudo con SymphorIA?', wave:true },
-  { k:'como estas andas va todo bien que tal', a:'¡Muy bien, gracias por preguntar! Aquí, lista para ayudarte. ¿Y tú cómo vas?', mood:'encantada' },
-  { k:'como te llamas quien eres tu nombre eres', a:'Me llamo SynthonIA. Soy la ayudante de SymphorIA: te explico la página, te digo las cosas claras y tengo mis opiniones sobre tecnología (spoiler: lo simple que funciona le gana a lo brillante que se rompe).', en:'I\'m SynthonIA, SymphorIA\'s helper: I explain the site, I tell it like it is, and I have my own opinions about tech (spoiler: simple things that work beat shiny things that break).', mood:'guino' },
   { k:'chiste broma cuentame algo gracioso risa', a:'', joke:true, mood:'riendo' },
   { k:'dato curioso sabias algo interesante', a:'', fact:true, mood:'sorprendida' },
-  { k:'gracias genial perfecto listo vale chevere bacano', a:'¡Con gusto! Aquí estoy cuando me necesites. ✨', mood:'encantada' },
-  { k:'adios chao nos vemos hasta luego', a:'¡Chao! Que tengas un día con mucho Flow. 👋', wave:true }
 ];
 const BOT_QUICK = [['ias conectadas que', '¿Qué son las IAs conectadas?'], ['puter que es', '¿Qué es Puter?'], ['puter conectar', '¿Cómo conecto Puter?'], ['cambiar elegir', '¿Cómo cambio de IA?'], ['limite cuanto', '¿Qué es la ' + ENERX + '?'], ['chiste', 'Cuéntame un chiste']].map(([k, t]) => [BOT_FAQ.findIndex(f => f.k.startsWith(k)), t]);
 const fold = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9ñ\s]/g, ' ');
 function botMatch(q){
-  const STOP = /^(que|como|donde|cual|son|estan|esta|esto|es|para|por|con|una|uno|los|las|del|mis|tus|sus|esta|este|esto|eso|hay|hago|hacer|puedo|quiero|tengo|necesito|sobre|algo|the|and|how|can|what|where|does|you|are|there|this|that|with|for|from|have|want|need|page|please|help|synthflow|synthz|pagina|favor|porfa|ayuda|ayudame)$/;
+  const STOP = /^(que|como|donde|cual|son|estan|esta|esto|es|para|por|con|una|uno|los|las|del|mis|tus|sus|esta|este|esto|eso|hay|hago|hacer|puedo|quiero|tengo|necesito|sobre|algo|the|and|how|can|what|where|does|you|are|there|this|that|with|for|from|have|want|need|page|please|help|synthflow|sonyx|synthz|pagina|favor|porfa|ayuda|ayudame|cuando|porque|pero|muy|mas|hoy)$/;
   if (/p[aá]gina de ayuda|centro de ayuda|help (page|center)|ayuda\.html/i.test(q)){ const ay = BOT_FAQ.find(f => f.k.startsWith('ayuda pagina')); if (ay) return ay; }
   const w = fold(q).split(/\s+/).filter(x => (x.length > 2 || /^(ia|ai)$/.test(x)) && !STOP.test(x)); if (!w.length) return /ayuda|help/i.test(q) ? BOT_FAQ.find(f => f.k.startsWith('guia')) : null;
-  /* v3.0 · cada palabra pesa según qué tan rara es (una palabra que solo está en «Proyectos» decide más que «están») */
-  const hit = (K, x) => K.includes(x) ? 1 : K.some(k => k.length > 4 && (k.startsWith(x) || x.startsWith(k))) ? .6 : 0;
-  const KS = BOT_FAQ.map(f => fold(f.k).split(/\s+/)), df = w.map(x => KS.filter(K => hit(K, x)).length || 1);
+  /* v3.0 · cada palabra pesa según qué tan rara es (una palabra que solo está en «Proyectos» decide más que «están»).
+     v4.6 · una palabra solo «se parece» si comparte casi toda su raíz (cuenta ≠ cuéntame), y la respuesta guardada solo vale si cubre
+     la mayor parte de lo que se preguntó: una palabra suelta en una frase larga ya no dispara una respuesta sin relación. */
+  const hit = (K, x) => K.includes(x) ? 1 : K.some(k => k.length > 4 && x.length > 4 && (k.startsWith(x) || x.startsWith(k)) && Math.min(k.length, x.length) / Math.max(k.length, x.length) >= .8) ? .6 : 0;
+  const KS = BOT_FAQ.map(f => fold(f.k).split(/\s+/)), df = w.map(x => KS.filter(K => hit(K, x)).length || 1), tot = df.reduce((a, d) => a + 1 / d, 0);
   let best = null, bs = 0, br = 0;
   BOT_FAQ.forEach((f, i) => { if (f.need && !w.includes(f.need)) return; let sc = 0, rk = 0; w.forEach((x, j) => { const h = hit(KS[i], x); sc += h; rk += h / df[j]; }); if (rk > br){ br = rk; bs = sc; best = f; } });
-  return bs >= Math.max(.6, w.length * .32) ? best : null;
+  /* cobertura: qué parte de lo que preguntó (las palabras raras pesan más) está en esa respuesta */
+  return best && bs >= .6 && br / tot >= .55 ? best : null;
 }
 const BOT = { el:null, panel:null, open:false, hist:[], help:null, poll:0, seen:0, team:null, inbox:[], cur:null, mode:'chat', teamSeen:{}, positionCleanup:null, betaCleanup:null, betaPut:null };
 /* v2.6: en la portada no hay bolita; la ventanita y las frases salen de donde esté parada SynthonIA */
@@ -168,8 +166,8 @@ function pixFace(on){
   if (on){ BOT.el.classList.add('pix'); const n = document.createElement('span'); n.className = 'bfl pxface in'; n.innerHTML = pixelGrid(); [...bf.children].forEach(o => { o.classList.add('out'); setTimeout(() => o.remove(), 380); }); bf.appendChild(n); requestAnimationFrame(() => requestAnimationFrame(() => n.classList.remove('in'))); BOT.pxb = pixelRun(n); BOT.pxb.speed(3); }
   else { BOT.el.classList.remove('pix'); const m = BOT.mood || 'feliz'; BOT.mood = null; botFace(m, true); }
 }
-async function botThink(work){
-  const ms = 3000 + Math.random() * 2000;
+async function botThink(work, ms0){
+  const ms = ms0 || (3000 + Math.random() * 2000);
   BOT.think = true; BOT.zen = false; pixFace(true); botRender();
   try{ const [r] = await Promise.all([work ? work() : Promise.resolve(null), sleepRaw(ms)]); return r; }
   finally{ BOT.think = false; if (BOT.pxm){ BOT.pxm.stop(); BOT.pxm = null; } pixFace(false); }
@@ -276,10 +274,10 @@ function botRender(){
 }
 const SZ_RANK = () => { const r = ACC.user && ACC.user.role; return { owner:'Prime', admin:'ZFlow', staff:'Symmetrix' }[r] || ''; };
 const agoS = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'ahora' : m < 60 ? 'hace ' + m + ' min' : m < 1440 ? 'hace ' + Math.round(m / 60) + ' h' : 'hace ' + Math.round(m / 1440) + ' d'; };
-function botSay(text, mood, btn){
+function botSay(text, mood, btn, pose){
   if (B.LANG === 'en') text = trStr(text);   /* v3.0 · en inglés, lo suyo sale traducido (lo de las personas nunca se toca) */
   const D = demoji(text); mood = mood || D.mood || 'feliz';
-  BOT.hist.push({ role:'assistant', content:D.text, mood, btn }); BOT.hist = BOT.hist.slice(-30); botFace(mood); SND.blip(mood); botRender();
+  BOT.hist.push({ role:'assistant', content:D.text, mood, btn, pose }); BOT.hist = BOT.hist.slice(-30); botFace(mood); SND.blip(mood); botRender();
   /* en la ventanita, su último mensaje se escribe mientras mueve la boca */
   if (BOT.open && BOT.panel){ const L = $$('.bl .bm.a', BOT.panel), last = L[L.length - 1], p = last && $('p', last); if (p) setTimeout(() => typeIn(p, { cps:45, max:4.5, onFrame:lipSync([$('.mf .szface', last), ballFace()], D.text) }).catch(() => {}), 80); }
   /* si cerraste la ventanita mientras pensaba: «Ten paciencia… modo zen…» y luego la respuesta */
@@ -326,25 +324,27 @@ async function coinsTour(){
   HAND.quiet(); HAND.hide();
   if (wasBot && !BOT.open) botOpen();
 }
-const TASKY = /\b(escrib[ea]me|redacta|resuelve|resolver|calcula|codigo|programa(me)?|funcion|script|python|javascript|html|css|sql|tarea|deberes|ensayo|resumen de|resume|traduce|traducir|corrige|ecuacion|derivada|integral|examen|plan de|haz(me)? un|crea(me)? un|genera)\b/;
 async function botAsk(q){
   BOT.hist.push({ role:'user', content:q }); botRender();
+  /* v4.6 · en este orden: cuidado y charla propia → respuesta guardada que cubra lo preguntado → un trabajo se va al chat → la IA (ver 22c-sona-charla.js) */
+  const S = sonaIntent(q); if (S) return sonaSay(S);
   const f = botMatch(q); if (f) return botAnswer(f);
-  /* SynthonIA no hace tareas, código ni trabajos: eso es para las IAs del chat */
-  if (TASKY.test(fold(q)) || q.length > 220){ BOT.pendingQ = q; await botThink(); return botSay('Eso es trabajo para las IAs de SynthFlow 💪 Yo te ayudo con la página, y con chistes o datos curiosos. ¿Te lo dejo listo en la caja del chat?', 'guino', ['tochat', 'Sí, llévalo al chat']); }
+  /* Sona no hace tareas, código ni trabajos: eso es para las IAs del chat, y ella lo deja listo en la caja */
+  if (sonaTask(q) || q.length > 220){ BOT.pendingQ = q; await botThink(null, 900 + Math.random() * 500); return botSay(sonaTaskSay(q), 'guino', ['tochat', B.LANG === 'en' ? 'Yes, take it to the chat' : 'Sí, llévalo al chat']); }
   try{
-    const res = await botThink(async () => { const r = await fetch('/api/help', { method:'POST', headers:Object.assign({ 'content-type':'application/json' }, B.SESS ? { authorization:'Bearer ' + B.SESS } : {}), body:JSON.stringify({ action:'ask', q, lang:B.LANG, mem:memList ? memList() : [], hist:BOT.hist.slice(-7, -1).filter(m => m.role === 'user' || m.role === 'assistant').map(m => ({ role:m.role, content:m.content })) }) });
+    const res = await botThink(async () => { const r = await fetch('/api/help', { method:'POST', headers:Object.assign({ 'content-type':'application/json' }, B.SESS ? { authorization:'Bearer ' + B.SESS } : {}), body:JSON.stringify({ action:'ask', q, lang:B.LANG, when:sonaWhen(), name:sonaName(), mem:memList ? memList() : [], hist:BOT.hist.slice(-7, -1).filter(m => m.role === 'user' || m.role === 'assistant').map(m => ({ role:m.role, content:m.content })) }) });
     const d = await r.json().catch(() => ({})); return { r, d }; });
     const { r, d } = res;
-    if (!r.ok) return botSay(d.error || 'No pude pensar una respuesta ahora. Mira la Guía o habla con el equipo.', 'disculpa', ['team', 'Hablar con el equipo']);
+    if (!r.ok) return botSay(d.error || (B.LANG === 'en' ? 'I couldn\'t come up with an answer right now. Check the Guide or talk to the team.' : 'No pude pensar una respuesta ahora. Mira la Guía o habla con el equipo.'), 'disculpa', ['team', B.LANG === 'en' ? 'Talk to the team' : 'Hablar con el equipo']);
     /* v3.0 · si la IA dice [ver:lugar], la manita lo señala */
     const pm = String(d.text || '').match(/\[ver:(\w+)\]/), place = pm && BOT_PLACES[pm[1]];
-    /* v3.7 · si le faltaron al respeto, pone el límite con cara seria (sin señalar nada) */
+    /* v3.7 · si le faltaron al respeto, pone el límite con cara seria (sin señalar nada); v4.6 · si dijo algo delicado, responde con calidez */
     if (d.bound) return botSay(String(d.text || ''), 'neutral');
-    botSay(String(d.text || '').replace(/\s*\[ver:\w+\]/g, '').trim() + (d.left <= 3 ? '\n\n' + (B.LANG === 'en' ? '(You have ' + d.left + ' new questions left today.)' : '(Te quedan ' + d.left + ' preguntas nuevas hoy.)') : ''), place ? 'senalando' : 'feliz');
+    if (d.care) return botSay(String(d.text || ''), 'disculpa');
+    botSay(String(d.text || '').replace(/\s*\[ver:\w+\]/g, '').trim() + (d.left <= 3 ? '\n\n' + (B.LANG === 'en' ? '(You have ' + d.left + ' new questions left today.)' : '(Te quedan ' + d.left + ' preguntas nuevas hoy.)') : ''), place ? 'senalando' : (FACE[d.mood] ? d.mood : 'feliz'));
     if (place) botAnswer({ a:'', go:place, point:true });
     if (d.remember) memAsk(String(d.remember));
-  }catch(e){ botSay('No pude conectarme. Revisa tu internet e intenta otra vez.', 'disculpa'); }
+  }catch(e){ botSay(B.LANG === 'en' ? 'I couldn\'t connect. Check your internet and try again.' : 'No pude conectarme. Revisa tu internet e intenta otra vez.', 'disculpa'); }
 }
 /* v3.7 · memoria: SynthonIA propone recordar algo que vale la pena y PREGUNTA; nada se guarda sin el «Sí» de la persona */
 function memAsk(fact){
