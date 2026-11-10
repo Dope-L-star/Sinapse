@@ -37,9 +37,7 @@ const mock = async b => {
    En local, con `node cloudflare/preparar.mjs` hecho, se prueba la página armada de verdad. */
 const PUB = path.join(ROOT, 'cloudflare/public'), ARMADA = fs.existsSync(path.join(PUB, 'chat.html'));
 const s = await start({ reply:mock, root: ARMADA ? PUB : ROOT });
-/* la página guarda la sesión en una cookie «Secure» (__Host-szs): Chromium solo la acepta en un sitio http si es «localhost» (con 127.0.0.1 depende de la versión;
-   el CI usa Chromium 130 y ahí la sesión se perdía en el primer pedido). Por eso la prueba entra por localhost. */
-const BASE = s.base.replace('127.0.0.1', 'localhost');
+const BASE = s.base;
 const { sha } = await import('../../api/_lib.js');   /* después de start(): _lib.js lee las llaves de Redis al importarse */
 const tok = {};
 for (const [k, role] of [['equipo', 'owner'], ['synther', null]]){
@@ -57,6 +55,10 @@ async function nueva(quien, W = 1280, lang = 'es'){
   const ctx = await b.newContext({ viewport:{ width:W, height:mob ? 844 : 800 }, locale:lang === 'en' ? 'en-US' : 'es-CO', isMobile:mob, hasTouch:mob });
   ctx.setDefaultTimeout(LARGO);
   await ctx.route(u => !u.href.startsWith(BASE), r => r.abort());
+  /* La página pide cambiar su sesión por una cookie «Secure» (__Host-szs) y luego solo manda una marca corta. El Chromium 130 del CI no guarda una cookie
+     «Secure» en un sitio http, así que la primera llamada a /api/me daba 401 y la cuenta se perdía. La prueba contesta ese cambio como un servidor sin cookies
+     (la página lo prevé: «servidor viejo → se guarda el token como antes»); el resto del servidor es el de verdad. */
+  await ctx.route('**/api/auth', r => r.request().method() === 'POST' ? r.fulfill({ status:501, contentType:'application/json', body:'{"error":"sin cookie en la prueba"}' }) : r.continue());
   await ctx.addInitScript(([t, l]) => { try{
     if (!sessionStorage.getItem('pz:init')){ sessionStorage.setItem('pz:init', '1'); localStorage.setItem('synthz:tour', '1'); localStorage.setItem('synthz:lang', l); sessionStorage.setItem('synthz:in', '1'); if (t) localStorage.setItem('synthz:sess', t); }
   }catch(e){} }, [quien ? tok[quien] : '', lang]);
