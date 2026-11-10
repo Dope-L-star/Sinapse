@@ -130,6 +130,7 @@ function botMount(){
   if (b.dataset.synthoniaPointerBound !== '1') b.dataset.synthoniaPointerBound = '1';
   if (!reactOwned && !b.dataset.synthoniaClickBound){ b.addEventListener('click', botAvatarClick); b.dataset.synthoniaClickBound = '1'; }
   setTimeout(botSync, 1200);
+  if (SONA_LINK && !BOT.deepDone){ BOT.deepDone = BOT.deepNow = true; setTimeout(sonaDeepLink, 700); }   /* v4.6 · enlace directo ?sona=1 */
 }
 
 /* v1.4: la carita cambia suave (una se desvanece y la otra aparece), y si está «pegada» (triste) no cambia */
