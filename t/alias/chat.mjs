@@ -30,7 +30,7 @@ const mock = async b => {
   if (/Responde SOLO con JSON, sin ```: \{"reply"/.test(txt)){ calls.ajustar++; return JSON.stringify({ reply:'Listo, lo hago más corto.', steps:[
     { title:'Hacerlo más corto', tool:'think', input:'Resumir el borrador' },
     { title:'Entregar el texto corto', tool:'think', input:'Dar el texto final corto' }] }); }
-  if (/Tarea: haz SOLO este paso/.test(txt)){ calls.paso++; await lento(1400); return 'RESULTADO-QUORYN: texto de prueba para tu emprendimiento de velas.'; }
+  if (/Tarea: haz SOLO este paso/.test(txt)){ calls.paso++; await lento(3000); return 'RESULTADO-QUORYN: texto de prueba para tu emprendimiento de velas.'; }
   calls.charla++; return 'Respuesta normal de prueba de Relay.';
 };
 /* En el CI no hay export de Next (cloudflare/public no existe): ahí se prueba con chat.html de la raíz del repo, que es el mismo motor (chat.js).
@@ -51,6 +51,7 @@ const errs = [];
 async function nueva(quien, W = 1280, lang = 'es'){
   const mob = W < 700;
   const ctx = await b.newContext({ viewport:{ width:W, height:mob ? 844 : 800 }, locale:lang === 'en' ? 'en-US' : 'es-CO', isMobile:mob, hasTouch:mob });
+  ctx.setDefaultTimeout(LARGO);
   await ctx.route(u => !u.href.startsWith(s.base), r => r.abort());
   await ctx.addInitScript(([t, l]) => { try{
     if (!sessionStorage.getItem('pz:init')){ sessionStorage.setItem('pz:init', '1'); localStorage.setItem('synthz:tour', '1'); localStorage.setItem('synthz:lang', l); sessionStorage.setItem('synthz:in', '1'); if (t) localStorage.setItem('synthz:sess', t); }
@@ -60,18 +61,24 @@ async function nueva(quien, W = 1280, lang = 'es'){
   return p;
 }
 const ocultar = p => p.addStyleTag({ content:'#blk,#letreroAlfa{display:none !important}' }).catch(() => {});
+/* el aviso «Seguir sin Puter» (#blk) sale porque la prueba no deja salir a internet: NO se le hace clic (abre la ventana de conectar y tapa el chat), solo se esconde */
 async function flow(p, query = ''){
   await p.goto(s.base + '/chat.html' + query); await p.waitForTimeout(4500);
-  await p.click('#blk .lnk').catch(() => {}); await ocultar(p); await p.waitForTimeout(300);
+  await ocultar(p);
+  await p.waitForSelector('#ptModos', { timeout:LARGO }).catch(() => {}); await p.waitForTimeout(1500);   /* y un momento a que el servidor confirme si la cuenta es del equipo */
 }
 /* en el celular Enter da salto de línea: ahí se envía con el botón de la flecha, como lo hace la gente */
 const escribe = async (p, t) => { await p.fill('#inp', t); if (await p.evaluate(() => matchMedia('(hover: none) and (pointer: coarse)').matches)) await p.click('#sendBtn'); else await p.press('#inp', 'Enter'); };
 const botN = p => p.locator('#lane .m.bot').count();
+/* el CI es varias veces más lento que un computador: en vez de esperas fijas, se espera a que pase lo que se busca */
+const LARGO = 90000;
+const until = async (fn, ms = LARGO) => { const t0 = Date.now(); while (Date.now() - t0 < ms){ try{ if (await fn()) return true; }catch(e){} await lento(250); } return false; };
 
 /* ---------- equipo, computador ---------- */
 {
   const p = await nueva('equipo');
   await flow(p);
+  await until(async () => await p.locator('#ptModos [data-pm="agente"]').count() === 1);
   check('equipo: el modo Agente se ve', await p.locator('#ptModos [data-pm="agente"]').count() === 1);
   await p.click('#ptModos [data-pm="agente"]'); await p.waitForTimeout(500);
   check('equipo: «Agente» no abre otra página, se queda en SynthFlow y deja el modo puesto', /chat/.test(p.url()) && await p.evaluate(() => document.body.classList.contains('aliasing')), p.url());
@@ -79,7 +86,9 @@ const botN = p => p.locator('#lane .m.bot').count();
 
   /* 1) lo fácil → Relay, sin plan */
   const antes = await botN(p);
-  await escribe(p, 'hola'); await p.waitForTimeout(6000);
+  await escribe(p, 'hola');
+  await until(async () => /Respuesta normal de prueba de Relay/.test(await p.locator('#lane').innerText()) && await p.locator('#lane .alhand').count() === 1);
+  await p.waitForTimeout(500);
   check('«hola» NO arma plan ni gasta una IA de planear', calls.plan === 0 && await p.locator('.alrun').count() === 0, 'plan=' + calls.plan);
   check('«hola» lo responde la IA de siempre (Relay)', await botN(p) > antes && /Respuesta normal de prueba de Relay/.test(await p.locator('#lane').innerText()), String(await botN(p)));
   check('queda el chip «Quoryn vio que era algo fácil…» con «Hacerlo con Quoryn»', await p.locator('#lane .alhand').count() === 1 && /Relay/.test(await p.locator('#lane .alhand').innerText()) && await p.locator('#lane .alhand [data-alforce]').count() === 1);
@@ -88,7 +97,7 @@ const botN = p => p.locator('#lane .m.bot').count();
 
   /* 2) el ejemplo de Sammuel: hola + pedido real → Quoryn arma el plan */
   await escribe(p, 'Hola como estas? me puedes ayudar a redactar un texto para presentar mi emprendimiento de velas');
-  await p.waitForSelector('.alrun [data-al="go"]', { timeout:25000 });
+  await p.waitForSelector('.alrun [data-al="go"]', { timeout:LARGO });
   check('«Hola… ¿me puedes ayudar a redactar un texto…?» SÍ lo toma Quoryn: plan en una tarjeta', calls.plan === 1 && await p.locator('.alrun .al-s li').count() >= 3, 'plan=' + calls.plan);
   check('esa pregunta NO se manda a otra IA (sin chip de «lo respondió»)', await p.locator('#lane .alhand').count() === 1, 'chips=' + await p.locator('#lane .alhand').count());
   check('la tarjeta dice Quoryn y trae «Aprobar y empezar» + «Descartar»', /Quoryn/.test(await p.locator('.alrun .ag-t').innerText()) && await p.locator('.alrun [data-al="no"]').count() === 1);
@@ -97,10 +106,11 @@ const botN = p => p.locator('#lane .m.bot').count();
   /* 3) aprobar UNA vez, trabaja solo; escribirle a mitad se suma */
   await p.click('.alrun [data-al="go"]'); await p.waitForTimeout(1800);
   check('aprobado: empieza solo («Voy a empezar con…»)', /Voy a (empezar|continuar) con/.test(await p.locator('.alrun .ag-t small').innerText()) && await p.locator('.alrun [data-al="stop"]').count() === 1);
-  await escribe(p, 'hazlo más corto'); await p.waitForTimeout(1500);
+  await escribe(p, 'hazlo más corto');
+  await until(async () => calls.ajustar === 1 && /más corto/.test(await p.locator('.alrun .al-log').innerText().catch(() => '')), 30000);
   check('lo que escribes mientras trabaja se suma (sin pararlo)', calls.ajustar === 1 && /más corto/.test(await p.locator('.alrun .al-log').innerText().catch(() => '')) && await p.locator('.alrun').count() === 1, 'ajustar=' + calls.ajustar);
   if (OUT) await p.screenshot({ path:`${OUT}/3-trabajando-y-sumando.png` });
-  await p.waitForSelector('.m.bot.alias-msg', { timeout:40000 });
+  await p.waitForSelector('.m.bot.alias-msg', { timeout:LARGO });
   const res = await p.locator('.m.bot.alias-msg').last().innerText();
   check('al terminar, el resultado queda como un mensaje del chat (de Quoryn)', /RESULTADO-QUORYN/.test(res) && /Quoryn/.test(res), res.slice(0, 160));
   check('y la tarjeta se va', await p.locator('.alrun').count() === 0);
@@ -110,13 +120,14 @@ const botN = p => p.locator('#lane .m.bot').count();
   /* 4) el chip: «Hacerlo con Quoryn» fuerza el plan de un «hola» */
   const pl = calls.plan;
   await p.locator('#lane .alhand [data-alforce]').first().click();
-  await p.waitForSelector('.alrun [data-al="go"]', { timeout:25000 });
+  await p.waitForSelector('.alrun [data-al="go"]', { timeout:LARGO });
   check('«Hacerlo con Quoryn» arma el plan aunque era un «hola»', calls.plan === pl + 1);
 
   /* 5) Detener sin haber hecho nada: sin resultado vacío; con algo hecho: entrega lo que alcanzó */
-  await p.click('.alrun [data-al="go"]'); await p.waitForSelector('.alrun .al-s li.done', { timeout:20000 });
+  await p.click('.alrun [data-al="go"]'); await p.waitForSelector('.alrun .al-s li.done', { timeout:LARGO });
   const n0 = await p.locator('.m.bot.alias-msg').count();
-  await p.click('.alrun [data-al="stop"]'); await p.waitForTimeout(1200);
+  await p.click('.alrun [data-al="stop"]');
+  await until(async () => await p.locator('.m.bot.alias-msg').count() === n0 + 1, 30000);
   check('Detener entrega lo que alcanzó a hacer', await p.locator('.m.bot.alias-msg').count() === n0 + 1 && /Detuve la misión/.test(await p.locator('.m.bot.alias-msg').last().innerText()));
 
   /* 6) apagar el modo */
@@ -130,7 +141,7 @@ const botN = p => p.locator('#lane .m.bot').count();
 /* ---------- desde la portada: ?quoryn=1&q=… deja el modo puesto y manda el pedido ---------- */
 {
   const p = await nueva('equipo');
-  await p.goto(s.base + '/chat.html?quoryn=1'); await p.waitForTimeout(4500); await p.click('#blk .lnk').catch(() => {}); await ocultar(p);
+  await p.goto(s.base + '/chat.html?quoryn=1'); await p.waitForTimeout(4500); await ocultar(p);
   check('?quoryn=1 deja puesto el modo Agente', await p.evaluate(() => document.body.classList.contains('aliasing')));
   await p.context().close();
 }
@@ -140,7 +151,7 @@ const botN = p => p.locator('#lane .m.bot').count();
   const p = await nueva('equipo', 390, 'en');
   await flow(p);
   await p.click('#ptModos [data-pm="agente"]').catch(() => {}); await p.waitForTimeout(500);
-  await escribe(p, 'Research the best laptops under 800 dollars and compare them for a student'); await p.waitForSelector('.alrun [data-al="go"]', { timeout:25000 });
+  await escribe(p, 'Research the best laptops under 800 dollars and compare them for a student'); await p.waitForSelector('.alrun [data-al="go"]', { timeout:LARGO });
   const t = await p.locator('.alrun').innerText();
   check('celular EN: la tarjeta está en inglés', /Approve and start/.test(t) && /Discard/.test(t) && /Plan ready/.test(t), t.slice(0, 160));
   check('celular: sin scroll de lado', await p.evaluate(() => document.documentElement.scrollWidth) <= 390);

@@ -38,9 +38,10 @@ async function nueva(quien, W = 1280, lang = 'es'){
   return p;
 }
 const ocultar = p => p.addStyleTag({ content:'#blk,#letreroAlfa{display:none !important}' }).catch(() => {});
+/* el aviso «Seguir sin Puter» (#blk) sale porque la prueba no deja salir a internet: NO se le hace clic (abre la ventana de conectar y tapa el chat), solo se esconde */
 async function flow(p){
   await p.goto(s.base + '/chat.html'); await p.waitForTimeout(4500);
-  await p.click('#blk .lnk').catch(() => {}); await ocultar(p); await p.waitForTimeout(300);
+  await ocultar(p); await p.waitForTimeout(300);
 }
 const menuTxt = async p => { await p.evaluate(() => document.getElementById('moreBtn').click()); await p.waitForTimeout(600); const t = await p.evaluate(() => document.body.innerText); return t; };
 
