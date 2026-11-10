@@ -17,7 +17,7 @@ function winBox(o){
   const b = document.createElement('div'); b.className = 'ap-win';
   b.innerHTML = '<a class="ap-win-go" href="/descargar/windows" rel="nofollow"><span class="ap-win-ico">' + WIN_LOGO + '</span><span class="ap-win-t"><b>Descargar para Windows</b><small class="ap-win-n">Obertura · instalador gratis · Windows 10 y 11</small></span>'
     + '<svg class="ap-win-ar" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></a>'
-    + '<ol class="ap-win-pasos" hidden><li><b>Abre el archivo</b> Sinapse-Obertura.exe desde tus descargas.</li><li>Si Windows dice «protegió tu PC»: <b>Más información › Ejecutar de todas formas</b>.</li><li><b>Haz clic en Instalar</b> y listo: queda en tu escritorio.</li></ol>';
+    + '<ol class="ap-win-pasos" hidden><li><b>Abre el archivo</b> SymphorIA-Obertura.exe desde tus descargas.</li><li>Si Windows dice «protegió tu PC»: <b>Más información › Ejecutar de todas formas</b>.</li><li><b>Haz clic en Instalar</b> y listo: queda en tu escritorio.</li></ol>';
   const go = $('.ap-win-go', b), n = $('.ap-win-n', b);
   const pronto = () => { b.classList.add('pronto'); go.removeAttribute('href'); go.setAttribute('aria-disabled', 'true'); $('b', go).textContent = 'Muy pronto para Windows'; n.textContent = 'Mientras tanto, instálala desde el navegador'; };
   fetch('/descargar/windows?info=1', { cache:'no-store' }).then(r => r.ok && /json/.test(r.headers.get('content-type') || '') ? r.json() : null).then(d => {
