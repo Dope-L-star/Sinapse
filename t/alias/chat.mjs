@@ -37,6 +37,9 @@ const mock = async b => {
    En local, con `node cloudflare/preparar.mjs` hecho, se prueba la página armada de verdad. */
 const PUB = path.join(ROOT, 'cloudflare/public'), ARMADA = fs.existsSync(path.join(PUB, 'chat.html'));
 const s = await start({ reply:mock, root: ARMADA ? PUB : ROOT });
+/* la página guarda la sesión en una cookie «Secure» (__Host-szs): Chromium solo la acepta en un sitio http si es «localhost» (con 127.0.0.1 depende de la versión;
+   el CI usa Chromium 130 y ahí la sesión se perdía en el primer pedido). Por eso la prueba entra por localhost. */
+const BASE = s.base.replace('127.0.0.1', 'localhost');
 const { sha } = await import('../../api/_lib.js');   /* después de start(): _lib.js lee las llaves de Redis al importarse */
 const tok = {};
 for (const [k, role] of [['equipo', 'owner'], ['synther', null]]){
@@ -44,6 +47,7 @@ for (const [k, role] of [['equipo', 'owner'], ['synther', null]]){
   s.kv.set('u:' + sub, JSON.stringify(Object.assign({ sub, username:k, email:k + '@x.test', name:k, kind:'pass', created:Date.now(), seen:Date.now() }, role ? { role } : {})));
   s.kv.set('s:' + sha(t), sub);
 }
+if (process.env.DIAG) console.log('  [arranque] sesiones de prueba guardadas:', [...s.kv.keys()].filter(k => /^(s|u):/.test(k)).map(k => k.slice(0, 14)).join(','), '| NODE', process.version, '| CI', process.env.CI);
 const b = await chromium.launch();
 let bad = 0;
 const check = (name, ok, extra = '') => { console.log((ok ? 'OK    ' : 'FALLO ') + name + (ok ? '' : '  ' + extra)); if (!ok) bad++; };
@@ -52,7 +56,7 @@ async function nueva(quien, W = 1280, lang = 'es'){
   const mob = W < 700;
   const ctx = await b.newContext({ viewport:{ width:W, height:mob ? 844 : 800 }, locale:lang === 'en' ? 'en-US' : 'es-CO', isMobile:mob, hasTouch:mob });
   ctx.setDefaultTimeout(LARGO);
-  await ctx.route(u => !u.href.startsWith(s.base), r => r.abort());
+  await ctx.route(u => !u.href.startsWith(BASE), r => r.abort());
   await ctx.addInitScript(([t, l]) => { try{
     if (!sessionStorage.getItem('pz:init')){ sessionStorage.setItem('pz:init', '1'); localStorage.setItem('synthz:tour', '1'); localStorage.setItem('synthz:lang', l); sessionStorage.setItem('synthz:in', '1'); if (t) localStorage.setItem('synthz:sess', t); }
   }catch(e){} }, [quien ? tok[quien] : '', lang]);
@@ -61,14 +65,15 @@ async function nueva(quien, W = 1280, lang = 'es'){
   if (process.env.DIAG){   /* DIAG=1: cuenta lo que pasa por dentro (para entender un fallo que solo sale en el CI) */
     p.on('console', m => { if (/error|warn/.test(m.type())) console.log('  [consola ' + m.type() + ']', m.text().slice(0, 240)); });
     p.on('requestfailed', r => console.log('  [pedido fallido]', r.method(), r.url().slice(0, 120), r.failure() && r.failure().errorText));
-    p.on('response', async r => { if (r.url().includes('/api/')){ let t = ''; try{ t = (await r.text()).slice(0, 200); }catch(e){} console.log('  [api]', r.status(), r.request().method(), r.url().replace(s.base, '').slice(0, 60), t.replace(/\s+/g, ' ')); } });
+    p.on('request', r => { if (r.url().includes('/api/me') || r.url().includes('/api/ai')) console.log('  [pedido]', r.method(), r.url().replace(BASE, '').slice(0, 40), '| authorization:', (r.headers().authorization || '(ninguna)').slice(0, 18), '| cookie:', (r.headers().cookie || '(ninguna)').slice(0, 30)); });
+    p.on('response', async r => { if (r.url().includes('/api/')){ let t = ''; try{ t = (await r.text()).slice(0, 200); }catch(e){} console.log('  [api]', r.status(), r.request().method(), r.url().replace(BASE, '').slice(0, 60), t.replace(/\s+/g, ' ')); } });
   }
   return p;
 }
 const ocultar = p => p.addStyleTag({ content:'#blk,#letreroAlfa{display:none !important}' }).catch(() => {});
 /* el aviso «Seguir sin Puter» (#blk) sale porque la prueba no deja salir a internet: NO se le hace clic (abre la ventana de conectar y tapa el chat), solo se esconde */
 async function flow(p, query = ''){
-  await p.goto(s.base + '/chat.html' + query); await p.waitForTimeout(4500);
+  await p.goto(BASE + '/chat.html' + query); await p.waitForTimeout(4500);
   await ocultar(p);
   await p.waitForSelector('#ptModos', { timeout:LARGO }).catch(() => {}); await p.waitForTimeout(1500);   /* y un momento a que el servidor confirme si la cuenta es del equipo */
 }
@@ -147,7 +152,7 @@ const until = async (fn, ms = LARGO) => { const t0 = Date.now(); while (Date.now
 /* ---------- desde la portada: ?quoryn=1&q=… deja el modo puesto y manda el pedido ---------- */
 {
   const p = await nueva('equipo');
-  await p.goto(s.base + '/chat.html?quoryn=1'); await p.waitForTimeout(4500); await ocultar(p);
+  await p.goto(BASE + '/chat.html?quoryn=1'); await p.waitForTimeout(4500); await ocultar(p);
   check('?quoryn=1 deja puesto el modo Agente', await p.evaluate(() => document.body.classList.contains('aliasing')));
   await p.context().close();
 }

@@ -24,7 +24,7 @@ export async function start({ root = path.join(REPO, 'cloudflare/public'), reply
   const kv = new Map(), sets = new Map(), hs = new Map();
   const run = c => {
     const op = String(c[0]).toUpperCase(), k = String(c[1] ?? '');
-    if (op === 'GET') return kv.has(k) ? kv.get(k) : null;
+    if (op === 'GET'){ if (process.env.DIAG && /^(s|u):/.test(k) && !kv.has(k)) console.log('  [redis] GET sin dato:', k.slice(0, 24), '| claves s:/u: guardadas:', [...kv.keys()].filter(x => /^(s|u):/.test(x)).map(x => x.slice(0, 14)).join(',')); return kv.has(k) ? kv.get(k) : null; }
     if (op === 'SET'){ kv.set(k, String(c[2])); return 'OK'; }
     if (op === 'DEL'){ c.slice(1).forEach(x => { kv.delete(String(x)); sets.delete(String(x)); }); return 1; }
     if (/^(INCR|INCRBY|HINCRBY|INCRBYFLOAT)$/.test(op)){ const n = (+kv.get(k) || 0) + (op === 'INCR' ? 1 : +c[c.length - 1]); kv.set(k, String(n)); return n; }
