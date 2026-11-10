@@ -201,7 +201,14 @@ body.agenting #cPick,body.agenting #cCmp,body.agenting #tabbar [data-tab="ia"]{d
 .agsum .ag-d small{display:block;margin-bottom:4px;color:var(--mute,#8d909c);font:600 10.5px var(--mono,monospace);letter-spacing:.08em;text-transform:uppercase}
 .agsum .ag-d p{margin:0;white-space:pre-wrap}
 .agkeep{margin:-2px 0 10px 0;max-width:620px}
-.agkeep .agk-b{display:flex;flex-wrap:wrap;gap:8px}
+.agk-b{display:flex;flex-wrap:wrap;gap:8px}
+/* la tarjeta de agente también sirve con botones, notas y pasos saltados o con error (la usan Apex y Quoryn: no hay estilos aparte para ninguno) */
+.agrun p{margin:0}
+.agrun small{color:var(--mute,#8d909c);font-size:12.5px;overflow-wrap:anywhere}
+.agrun .ag-s li span{min-width:0;overflow-wrap:anywhere}
+.agrun .ag-s li.skip{text-decoration:line-through;opacity:.6}
+.agrun .ag-s li.bad{opacity:1;color:#ffb4b4}
+.agrun .ag-s li.bad i{border-color:#ff7a7a;background:rgba(255,122,122,.25)}
 .agkeep small{flex-basis:100%;color:var(--mute,#8d909c);font-size:12px}
 html.noanim .agrun,html.noanim .aghello .agbadge{animation:none}
 html.noanim .agrun .ag-s li.on i{animation-duration:2s}

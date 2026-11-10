@@ -54,7 +54,7 @@ jobs:
         run: node t/alias/chat.mjs
       - name: Cerebro de las IAs (tipo de trabajo, pensar en lo difícil, respuesta vacía → otra IA)
         run: node t/cerebro/cerebro.mjs
-      - name: Internet con regla fija (misma pregunta, misma decisión; SynthFlow y A.L.I.A.S. iguales)
+      - name: Internet con regla fija (misma pregunta, misma decisión; SynthFlow y Quoryn iguales)
         run: node --test t/web/regla.test.mjs
       - name: Frases de carga (al azar, con nombre, nunca repetidas; ES/EN)
         run: node --test t/web/frases-carga.test.mjs

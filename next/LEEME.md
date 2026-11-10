@@ -24,15 +24,11 @@ Las páginas principales tienen su estructura renderizada como elementos de Reac
 
 `componentes/pulsem/PulsemApp.jsx` reemplaza a `pulsem.js` en la versión publicada: hace la puerta (iniciar sesión / solo el equipo, con su cabecera y botón ES/EN) y, si la cuenta es del equipo, monta el panel nuevo `componentes/admin/PanelAdmin.jsx` (`api={SZ.api}`, `toast={SZ.toast}`, `onAuth` vuelve a la puerta). Textos de la puerta en `componentes/pulsem/textos.js`; los del panel en `componentes/admin/textos.mjs`. `src/pulsem/` queda solo para el `pulsem.html` estático (pruebas de humo y Vercel).
 
-## Quoryn (antes A.L.I.A.S.): historia de la página React (v3.8–v4.5) — borrada en v4.6
+## Quoryn (antes A.L.I.A.S.): sin interfaz propia
 
-> Desde v4.6 Quoryn no tiene página: vive en el chat (`src/chat/16w-alias-en-chat.js`) y `componentes/alias/`, `alias.js` y `alias-tools.js` ya no existen. Lo de abajo se deja como historia; el enrutador `api/_ruta.js` y los datos siguen vigentes.
+Quoryn no tiene página, ni componentes React, ni CSS, ni imágenes propias (`/alias` y `/alias.html` redirigen a `/chat`). Vive en el chat (`src/chat/16w-alias-en-chat.js`) y usa solo lo normal de SynthFlow: la tarjeta de agente, los botones y los mensajes del chat. El diseño «Mission workspace» (`ALIAS_VISUAL_CONCEPT`) se retiró por completo. Lo que sigue vigente es el motor (`src/chat/16p…16u`, `window.ALIAS`), el servidor (`api/alias.js`, `api/_triage.js`) y el enrutador `api/_ruta.js`.
 
-`componentes/alias/` reemplaza a `alias.js` en la versión publicada: `AliasApp.jsx` (idioma, tema, inicio, plan, controles y el recorrido paso a paso), `Pasos.jsx`, `Resultado.jsx` (texto, Síntesis, descargas .pptx/archivos, fuentes) e `iconos.jsx`. El motor sigue igual: `alias-tools.js` (`window.ALIAS`). Textos en `alias-textos.json`. Se conservan IDs y `data-alias`; la suite de siempre corre contra la versión React con `ALIAS_UI_ROOT=next/out node t/alias/ui.mjs` (después de `node next/armar.mjs`).
-
-**v3.9 · enrutador estilo RouteLLM (`api/_ruta.js`):** cada pedido de A.L.I.A.S. se clasifica (código, escritura, razonamiento, resúmenes, traducción, datos, plan) y va a la IA gratis que mejor lo resuelve entre las que funcionan ahora, con respaldos de otros proveedores (si la primera tarda más de 20 s, responde otra). Cada intento y cada 👍/👎 se guardan por tipo y modelo (`rt:<tipo>`, `rt:log`) y corrigen la siguiente elección. El paso trae `route` (qué IA y por qué); Agentes muestra lo aprendido (`action:'rutas'`). Pruebas: `node t/alias/ruta.mjs`.
-
-**v3.9 · diseño de Sammuel («Mission workspace», `ALIAS_VISUAL_CONCEPT`):** barra lateral (Nueva misión · Misión actual · Mis misiones · Agentes), inicio con orbe, rutas rápidas, misiones recientes y equipo de agentes; la misión muestra la ruta de pasos y la «orquesta» (qué herramienta trabaja ahora). Solo tema oscuro (pedido de Sammuel). Estilos en `alias-mision.css` (todo bajo `.am`, encima de `alias.css`; la página estática `alias.html` no cambia). Del prototipo no se copió lo inventado: las misiones recientes son reales (solo en este navegador, `localStorage` `alias:misiones`) y los agentes son las herramientas del motor (search, memory, think, image, file).
+**Enrutador estilo RouteLLM (`api/_ruta.js`, v3.9):** cada pedido de Quoryn se clasifica (código, escritura, razonamiento, resúmenes, traducción, datos, plan) y va a la IA gratis que mejor lo resuelve entre las que funcionan ahora, con respaldos de otros proveedores (si la primera tarda más de 20 s, responde otra). Cada intento y cada 👍/👎 se guardan por tipo y modelo (`rt:<tipo>`, `rt:log`) y corrigen la siguiente elección. El paso trae `route` (qué IA y por qué). Pruebas: `node t/alias/ruta.mjs`.
 
 ## Pruebas de estructura
 
@@ -75,7 +71,7 @@ No usar `out` como directorio de salida para este pipeline personalizado: `cloud
 
 ## Pruebas funcionales pendientes
 
-En una vista previa con los servicios configurados: envío y streaming, detener/reintentar, cambio de IA y modo, login/cierre/Google, historial/favoritos, adjuntos, comparación, búsqueda web, Sintéticos, A.L.I.A.S., idioma inglés, modo compacto, Pulsem y accesibilidad móvil. No publicar sobre la versión estable hasta completarlas.
+En una vista previa con los servicios configurados: envío y streaming, detener/reintentar, cambio de IA y modo, login/cierre/Google, historial/favoritos, adjuntos, comparación, búsqueda web, Sintéticos, Quoryn, idioma inglés, modo compacto, Pulsem y accesibilidad móvil. No publicar sobre la versión estable hasta completarlas.
 
 
 ## Microsoft Clarity: variante futura 18+

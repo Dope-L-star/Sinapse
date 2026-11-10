@@ -280,7 +280,7 @@ function makeUser(label) {
   const sub = 'sub-alias-' + userN;
   store.set('s:' + sha(token), sub);
   store.set('u:' + sub, JSON.stringify({ sub, name: 'Prueba Alias', email: 'alias' + userN + '@test.local', blocked: false }));
-  /* v4.5: A.L.I.A.S. viene apagado para los Synthers; a la cuenta de prueba se le prende a mano, como en Pulsem › Usuarios */
+  /* v4.5: Quoryn viene apagado para los Synthers; a la cuenta de prueba se le prende a mano, como en Pulsem › Usuarios */
   store.set('perm:' + sub, JSON.stringify({ f: { alias: true } }));
   return { token, sub };
 }
@@ -485,12 +485,12 @@ async function testSimple(user) {
   if (state.modelCalls !== 0) throw new Error('lo fácil no debe llamar a ninguna IA (' + state.modelCalls + ' llamadas)');
 }
 async function testSimpleReal(user) {
-  /* «Hola, ¿cómo estás? ¿me puedes ayudar a redactar un texto…?» = hay un pedido: lo toma A.L.I.A.S., NO se manda a otra IA */
+  /* «Hola, ¿cómo estás? ¿me puedes ayudar a redactar un texto…?» = hay un pedido: lo toma Quoryn, NO se manda a otra IA */
   const goal = 'Hola como estas? me puedes ayudar a redactar un texto para presentar mi emprendimiento de velas';
   const r = needJson(await post({ action: 'plan', goal, lang: 'es' }, user.token), 'saludo con pedido');
   if (r.ok !== true || r.simple || !r.plan) throw new Error('un saludo con un pedido real NO puede mandarse a otra IA: ' + clip(JSON.stringify(r)));
   const why = assertPlan(r.plan, goal); if (why) throw new Error(why);
-  /* y quien insiste en que lo haga A.L.I.A.S. («hazlo igual») recibe el plan aunque sea un saludo */
+  /* y quien insiste en que lo haga Quoryn («hazlo igual») recibe el plan aunque sea un saludo */
   const f = needJson(await post({ action: 'plan', goal: 'hola', lang: 'es', force: true }, user.token), 'force');
   if (f.ok !== true || f.simple || !f.plan) throw new Error('con force:true debía armar el plan: ' + clip(JSON.stringify(f)));
 }
@@ -686,7 +686,7 @@ const TESTS = [
   ['plan devuelve de 3 a 7 pasos', 'action plan, en español: id, goal y de 3 a 7 pasos con tool search, file, memory, image o think.', u => testPlan(u, GOAL_ES, 'es')],
   ['plan en inglés devuelve de 3 a 7 pasos', 'La misma forma con lang en y un objetivo en inglés.', u => testPlan(u, GOAL_EN, 'en')],
   ['lo fácil no arma plan', 'Un saludo va a la IA Automática y una preguntita a SuperiorSynth: ok true, simple true, to, una frase en el idioma pedido, sin plan, sin llamar a ninguna IA.', testSimple],
-  ['un saludo con un pedido real sí arma plan', '«Hola, ¿cómo estás? ¿me puedes ayudar a redactar un texto…?» lo toma A.L.I.A.S. (no se manda a otra IA). Con force:true también un «hola».', testSimpleReal],
+  ['un saludo con un pedido real sí arma plan', '«Hola, ¿cómo estás? ¿me puedes ayudar a redactar un texto…?» lo toma Quoryn (no se manda a otra IA). Con force:true también un «hola».', testSimpleReal],
   ['paso hecho devuelve done', 'action step devuelve ok, status done, output, sources, file y error null. También con prev. Dice qué IA eligió el enrutador, guarda el 👍 y lo aprendido lo cuenta.', testDone],
   ['paso fallido devuelve error', 'Si la fuente o el modelo fallan, ok true y status error con mensaje.', testError],
   ['límite diario devuelve limit true', 'Al pasar el cupo del día: ok false, error "límite" y limit true. Sigue igual en el uso siguiente.', testLimit],

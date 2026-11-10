@@ -1,5 +1,5 @@
-/* Prueba del enrutado de A.L.I.A.S. (api/_triage.js): lo realmente fácil va a la Automática o a SuperiorSynth;
-   un pedido de verdad (aunque empiece con «hola») lo toma A.L.I.A.S. Sin servidor, sin claves.   node t/alias/triage.mjs */
+/* Prueba del enrutado de Quoryn (api/_triage.js): lo realmente fácil va a la Automática o a SuperiorSynth;
+   un pedido de verdad (aunque empiece con «hola») lo toma Quoryn Sin servidor, sin claves.   node t/alias/triage.mjs */
 import { triage } from '../../api/_triage.js';
 
 let bad = 0;
@@ -24,7 +24,7 @@ console.log('— preguntas y pedidos chiquitos → SuperiorSynth');
 for (const g of ['cuánto es 2+2', 'qué es un token', 'capital de Francia', 'quién escribió Don Quijote', 'dame un chiste', 'cuéntame un chiste', 'what is photosynthesis', 'who won the world cup in 2022?', 'traduce hello world al español', 'explícame la fotosíntesis', 'qué hora es', 'hola, cuéntame un chiste', 'what does API mean?'])
   row(g, 'superior');
 
-console.log('— un pedido de verdad (aunque empiece con «hola») → A.L.I.A.S.');
+console.log('— un pedido de verdad (aunque empiece con «hola») → Quoryn');
 for (const g of [
   'Hola como estas? me puedes ayudar a redactar un texto para presentar mi emprendimiento de velas',   /* el ejemplo de Sammuel */
   'Hola, ¿me puedes ayudar a redactar un texto?',

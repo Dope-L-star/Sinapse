@@ -1,4 +1,4 @@
-/* v4.2 · Regla de internet: misma pregunta → misma decisión, siempre, en SynthFlow (chat.js) y en el servidor (A.L.I.A.S.).
+/* v4.2 · Regla de internet: misma pregunta → misma decisión, siempre, en SynthFlow (chat.js) y en el servidor (Quoryn).
    Uso: node --test t/web/regla.test.mjs */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -54,7 +54,7 @@ test('la regla decide bien las preguntas de los dos tipos (ES/EN)', () => {
   assert.deepEqual(mal, []);
 });
 
-test('SynthFlow y el servidor (A.L.I.A.S.) dicen exactamente lo mismo', () => {
+test('SynthFlow y el servidor (Quoryn) dicen exactamente lo mismo', () => {
   for (const [q] of CASOS) assert.deepEqual(client(q), server(q), q);
 });
 

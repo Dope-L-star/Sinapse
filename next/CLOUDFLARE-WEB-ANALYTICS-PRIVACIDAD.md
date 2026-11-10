@@ -21,7 +21,7 @@ Fuentes oficiales:
 - **No, gracias** guarda una preferencia de rechazo y no carga el beacon.
 - La decisión se guarda en `localStorage` como un registro mínimo: versión, decisión y fecha; caduca a los 180 días. No contiene un ID de usuario ni se envía al servidor.
 - El botón «Analítica» permite volver a abrir las preferencias. Al retirar un permiso activo, se guarda el rechazo, se retira el elemento `<script>` y se recarga la página para destruir listeners que el beacon pudiera haber instalado en memoria.
-- Solo se miden rutas públicas de una lista exacta (`/`, `index.html`, chat, alias, ayuda, offline, privacidad y términos). Las rutas desconocidas, privadas, Pulsem, Sintético, API y auth se excluyen. También se omite la medición si la URL o el referrer tiene query/fragmento o credenciales.
+- Solo se miden rutas públicas de una lista exacta (`/`, `index.html`, chat, ayuda, offline, privacidad y términos). Las rutas desconocidas, privadas, Pulsem, Sintético, API y auth se excluyen. También se omite la medición si la URL o el referrer tiene query/fragmento o credenciales.
 - El beacon se configura con `spa: false`: no observa cambios de ruta cliente de manera automática. Las navegaciones de documento completo se cuentan; transiciones futuras de cliente podrían no contarse, decisión intencional para reducir la posibilidad de enviar parámetros sensibles.
 - La carga es idempotente y los errores del beacon no interrumpen el chat.
 - El consentimiento es opcional; las funciones del producto no dependen de aceptar.

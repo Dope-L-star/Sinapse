@@ -49,7 +49,7 @@ if (process.env.DIAG) console.log('  [arranque] sesiones de prueba guardadas:', 
 const b = await chromium.launch();
 let bad = 0;
 const check = (name, ok, extra = '') => { console.log((ok ? 'OK    ' : 'FALLO ') + name + (ok ? '' : '  ' + extra)); if (!ok) bad++; };
-const errs = [];
+const errs = [], pedidos = [];
 async function nueva(quien, W = 1280, lang = 'es'){
   const mob = W < 700;
   const ctx = await b.newContext({ viewport:{ width:W, height:mob ? 844 : 800 }, locale:lang === 'en' ? 'en-US' : 'es-CO', isMobile:mob, hasTouch:mob });
@@ -64,6 +64,7 @@ async function nueva(quien, W = 1280, lang = 'es'){
   }catch(e){} }, [quien ? tok[quien] : '', lang]);
   const p = await ctx.newPage();
   p.on('pageerror', e => errs.push(quien + ' ' + W + ': ' + e.message));
+  p.on('request', r => pedidos.push(r.url()));
   if (process.env.DIAG){   /* DIAG=1: cuenta lo que pasa por dentro (para entender un fallo que solo sale en el CI) */
     p.on('console', m => { if (/error|warn/.test(m.type())) console.log('  [consola ' + m.type() + ']', m.text().slice(0, 240)); });
     p.on('requestfailed', r => console.log('  [pedido fallido]', r.method(), r.url().slice(0, 120), r.failure() && r.failure().errorText));
@@ -93,59 +94,67 @@ const until = async (fn, ms = LARGO) => { const t0 = Date.now(); while (Date.now
   await until(async () => await p.locator('#ptModos [data-pm="agente"]').count() === 1);
   check('equipo: el modo Agente se ve', await p.locator('#ptModos [data-pm="agente"]').count() === 1);
   await p.click('#ptModos [data-pm="agente"]'); await p.waitForTimeout(500);
-  check('equipo: «Agente» no abre otra página, se queda en SynthFlow y deja el modo puesto', /chat/.test(p.url()) && await p.evaluate(() => document.body.classList.contains('aliasing')), p.url());
+  check('equipo: «Agente» no abre otra página, se queda en SynthFlow y deja el modo puesto', /chat/.test(p.url()) && await p.evaluate(() => document.body.dataset.quoryn === 'on'), p.url());
   check('equipo: el botón Agente queda marcado', await p.locator('#ptModos [data-pm="agente"][aria-checked="true"]').count() === 1);
 
   /* 1) lo fácil → Relay, sin plan */
   const antes = await botN(p);
   await escribe(p, 'hola');
-  await until(async () => /Respuesta normal de prueba de Relay/.test(await p.locator('#lane').innerText()) && await p.locator('#lane .alhand').count() === 1);
+  await until(async () => /Respuesta normal de prueba de Relay/.test(await p.locator('#lane').innerText()) && await p.locator('#lane [data-quoryn="hand"]').count() === 1);
   await p.waitForTimeout(500);
-  check('«hola» NO arma plan ni gasta una IA de planear', calls.plan === 0 && await p.locator('.alrun').count() === 0, 'plan=' + calls.plan);
+  check('«hola» NO arma plan ni gasta una IA de planear', calls.plan === 0 && await p.locator('.agrun[data-quoryn="card"]').count() === 0, 'plan=' + calls.plan);
   if (process.env.DIAG) console.log('  [chat tras «hola»]', JSON.stringify((await p.locator('#lane').innerText()).slice(0, 400)), '| conn abierta:', await p.locator('#conn.on').count());
   check('«hola» lo responde la IA de siempre (Relay)', await botN(p) > antes && /Respuesta normal de prueba de Relay/.test(await p.locator('#lane').innerText()), String(await botN(p)));
-  check('queda el chip «Quoryn vio que era algo fácil…» con «Hacerlo con Quoryn»', await p.locator('#lane .alhand').count() === 1 && /Relay/.test(await p.locator('#lane .alhand').innerText()) && await p.locator('#lane .alhand [data-alforce]').count() === 1);
-  check('el modo Agente sigue puesto para el siguiente mensaje', await p.evaluate(() => document.body.classList.contains('aliasing')));
+  check('queda el chip «Quoryn vio que era algo fácil…» con «Hacerlo con Quoryn»', await p.locator('#lane [data-quoryn="hand"]').count() === 1 && /Relay/.test(await p.locator('#lane [data-quoryn="hand"]').innerText()) && await p.locator('#lane [data-quoryn="hand"] [data-alforce]').count() === 1);
+  check('el modo Agente sigue puesto para el siguiente mensaje', await p.evaluate(() => document.body.dataset.quoryn === 'on'));
   if (OUT) await p.screenshot({ path:`${OUT}/1-hola-lo-responde-relay.png` });
 
   /* 2) el ejemplo de Sammuel: hola + pedido real → Quoryn arma el plan */
   await escribe(p, 'Hola como estas? me puedes ayudar a redactar un texto para presentar mi emprendimiento de velas');
-  await p.waitForSelector('.alrun [data-al="go"]', { timeout:LARGO });
-  check('«Hola… ¿me puedes ayudar a redactar un texto…?» SÍ lo toma Quoryn: plan en una tarjeta', calls.plan === 1 && await p.locator('.alrun .al-s li').count() >= 3, 'plan=' + calls.plan);
-  check('esa pregunta NO se manda a otra IA (sin chip de «lo respondió»)', await p.locator('#lane .alhand').count() === 1, 'chips=' + await p.locator('#lane .alhand').count());
-  check('la tarjeta dice Quoryn y trae «Aprobar y empezar» + «Descartar»', /Quoryn/.test(await p.locator('.alrun .ag-t').innerText()) && await p.locator('.alrun [data-al="no"]').count() === 1);
+  await p.waitForSelector('.agrun[data-quoryn="card"] [data-al="go"]', { timeout:LARGO });
+  check('«Hola… ¿me puedes ayudar a redactar un texto…?» SÍ lo toma Quoryn: plan en una tarjeta', calls.plan === 1 && await p.locator('.agrun[data-quoryn="card"] .ag-s li').count() >= 3, 'plan=' + calls.plan);
+  check('esa pregunta NO se manda a otra IA (sin chip de «lo respondió»)', await p.locator('#lane [data-quoryn="hand"]').count() === 1, 'chips=' + await p.locator('#lane [data-quoryn="hand"]').count());
+  check('la tarjeta dice Quoryn y trae «Aprobar y empezar» + «Descartar»', /Quoryn/.test(await p.locator('.agrun[data-quoryn="card"] .ag-t').innerText()) && await p.locator('.agrun[data-quoryn="card"] [data-al="no"]').count() === 1);
+  /* Quoryn NO tiene interfaz propia (Sammuel, 10 nov: «alias ya no debe tener su propio UI»): la tarjeta es la normal de agente del chat (ícono de píxeles, lista de pasos, botones .btn) */
+  const normal = await p.evaluate(() => { const c = document.querySelector('[data-quoryn="card"]'); if (!c) return { sin:true };
+    const raras = [...c.querySelectorAll('[class]')].flatMap(e => [...e.classList]).concat([...c.classList]).filter(k => !/^(agrun|ag-h|ag-t|ag-s|agk-b|pxw|pxg|btn|sm|ghost|on|done|skip|bad)$/.test(k));
+    return { pxw:!!c.querySelector('.ag-h .pxw'), pasos:c.querySelectorAll('.ag-s li').length, botones:c.querySelectorAll('button.btn').length, raras };
+  });
+  check('la tarjeta de Quoryn es la normal de agente del chat (ícono de píxeles, pasos, botones .btn)', !normal.sin && normal.pxw && normal.pasos >= 3 && normal.botones === 2 && !normal.raras.length, JSON.stringify(normal));
+  const hojas = await p.evaluate(() => { const reglas = []; for (const h of document.styleSheets){ try{ for (const r of h.cssRules) reglas.push(r.cssText); }catch(e){} } return { n:reglas.length, alias:reglas.filter(t => /\.al(run|hand)\b|\.al-(ico|bar|log|hand|x|s|b|h)\b|alias-msg|\.aliasing|\balias\b|quoryn/i.test(t)).slice(0, 5) }; });
+  check('ninguna hoja de estilos trae reglas propias de Quoryn/ALIAS', hojas.n > 50 && !hojas.alias.length, JSON.stringify(hojas.alias));
   if (OUT) await p.screenshot({ path:`${OUT}/2-plan-en-el-chat.png` });
 
   /* 3) aprobar UNA vez, trabaja solo; escribirle a mitad se suma */
-  await p.click('.alrun [data-al="go"]'); await p.waitForTimeout(1800);
-  check('aprobado: empieza solo («Voy a empezar con…»)', /Voy a (empezar|continuar) con/.test(await p.locator('.alrun .ag-t small').innerText()) && await p.locator('.alrun [data-al="stop"]').count() === 1);
+  await p.click('.agrun[data-quoryn="card"] [data-al="go"]'); await p.waitForTimeout(1800);
+  check('aprobado: empieza solo («Voy a empezar con…»)', /Voy a (empezar|continuar) con/.test(await p.locator('.agrun[data-quoryn="card"] .ag-t small').innerText()) && await p.locator('.agrun[data-quoryn="card"] [data-al="stop"]').count() === 1);
   await escribe(p, 'hazlo más corto');
-  await until(async () => calls.ajustar === 1 && /más corto/.test(await p.locator('.alrun .al-log').innerText().catch(() => '')), 30000);
-  check('lo que escribes mientras trabaja se suma (sin pararlo)', calls.ajustar === 1 && /más corto/.test(await p.locator('.alrun .al-log').innerText().catch(() => '')) && await p.locator('.alrun').count() === 1, 'ajustar=' + calls.ajustar);
+  await until(async () => calls.ajustar === 1 && /más corto/.test(await p.locator('[data-quoryn="card"] [data-quoryn="log"]').innerText().catch(() => '')), 30000);
+  check('lo que escribes mientras trabaja se suma (sin pararlo)', calls.ajustar === 1 && /más corto/.test(await p.locator('[data-quoryn="card"] [data-quoryn="log"]').innerText().catch(() => '')) && await p.locator('.agrun[data-quoryn="card"]').count() === 1, 'ajustar=' + calls.ajustar);
   if (OUT) await p.screenshot({ path:`${OUT}/3-trabajando-y-sumando.png` });
-  await p.waitForSelector('.m.bot.alias-msg', { timeout:LARGO });
-  const res = await p.locator('.m.bot.alias-msg').last().innerText();
+  await p.waitForSelector('.m.bot[data-quoryn="msg"]', { timeout:LARGO });
+  const res = await p.locator('.m.bot[data-quoryn="msg"]').last().innerText();
   check('al terminar, el resultado queda como un mensaje del chat (de Quoryn)', /RESULTADO-QUORYN/.test(res) && /Quoryn/.test(res), res.slice(0, 160));
-  check('y la tarjeta se va', await p.locator('.alrun').count() === 0);
+  check('y la tarjeta se va', await p.locator('.agrun[data-quoryn="card"]').count() === 0);
   check('los pasos corrieron sin pedir «continuar» en cada uno', calls.paso >= 3, 'pasos=' + calls.paso);
   if (OUT) await p.screenshot({ path:`${OUT}/4-resultado.png` });
 
   /* 4) el chip: «Hacerlo con Quoryn» fuerza el plan de un «hola» */
   const pl = calls.plan;
-  await p.locator('#lane .alhand [data-alforce]').first().click();
-  await p.waitForSelector('.alrun [data-al="go"]', { timeout:LARGO });
+  await p.locator('#lane [data-quoryn="hand"] [data-alforce]').first().click();
+  await p.waitForSelector('.agrun[data-quoryn="card"] [data-al="go"]', { timeout:LARGO });
   check('«Hacerlo con Quoryn» arma el plan aunque era un «hola»', calls.plan === pl + 1);
 
   /* 5) Detener sin haber hecho nada: sin resultado vacío; con algo hecho: entrega lo que alcanzó */
-  await p.click('.alrun [data-al="go"]'); await p.waitForSelector('.alrun .al-s li.done', { timeout:LARGO });
-  const n0 = await p.locator('.m.bot.alias-msg').count();
-  await p.click('.alrun [data-al="stop"]');
-  await until(async () => await p.locator('.m.bot.alias-msg').count() === n0 + 1, 30000);
-  check('Detener entrega lo que alcanzó a hacer', await p.locator('.m.bot.alias-msg').count() === n0 + 1 && /Detuve la misión/.test(await p.locator('.m.bot.alias-msg').last().innerText()));
+  await p.click('.agrun[data-quoryn="card"] [data-al="go"]'); await p.waitForSelector('.agrun[data-quoryn="card"] .ag-s li.done', { timeout:LARGO });
+  const n0 = await p.locator('.m.bot[data-quoryn="msg"]').count();
+  await p.click('.agrun[data-quoryn="card"] [data-al="stop"]');
+  await until(async () => await p.locator('.m.bot[data-quoryn="msg"]').count() === n0 + 1, 30000);
+  check('Detener entrega lo que alcanzó a hacer', await p.locator('.m.bot[data-quoryn="msg"]').count() === n0 + 1 && /Detuve la misión/.test(await p.locator('.m.bot[data-quoryn="msg"]').last().innerText()));
 
   /* 6) apagar el modo */
   await p.click('#ptModos [data-pm="auto"]'); await p.waitForTimeout(400);
-  check('al elegir Auto, Quoryn se apaga', !(await p.evaluate(() => document.body.classList.contains('aliasing'))));
+  check('al elegir Auto, Quoryn se apaga', !(await p.evaluate(() => document.body.dataset.quoryn === 'on')));
   const menu = await p.evaluate(() => { document.getElementById('moreBtn').click(); return new Promise(r => setTimeout(() => r(document.body.innerText), 600)); });
   check('el menú «⋯» dice Quoryn (ya no A.L.I.A.S. ni otra página)', /Quoryn/.test(menu) && !/A\.L\.I\.A\.S\./.test(menu));
   await p.context().close();
@@ -155,7 +164,7 @@ const until = async (fn, ms = LARGO) => { const t0 = Date.now(); while (Date.now
 {
   const p = await nueva('equipo');
   await p.goto(BASE + '/chat.html?quoryn=1'); await p.waitForTimeout(4500); await ocultar(p);
-  check('?quoryn=1 deja puesto el modo Agente', await p.evaluate(() => document.body.classList.contains('aliasing')));
+  check('?quoryn=1 deja puesto el modo Agente', await p.evaluate(() => document.body.dataset.quoryn === 'on'));
   await p.context().close();
 }
 
@@ -164,8 +173,8 @@ const until = async (fn, ms = LARGO) => { const t0 = Date.now(); while (Date.now
   const p = await nueva('equipo', 390, 'en');
   await flow(p);
   await p.click('#ptModos [data-pm="agente"]').catch(() => {}); await p.waitForTimeout(500);
-  await escribe(p, 'Research the best laptops under 800 dollars and compare them for a student'); await p.waitForSelector('.alrun [data-al="go"]', { timeout:LARGO });
-  const t = await p.locator('.alrun').innerText();
+  await escribe(p, 'Research the best laptops under 800 dollars and compare them for a student'); await p.waitForSelector('.agrun[data-quoryn="card"] [data-al="go"]', { timeout:LARGO });
+  const t = await p.locator('.agrun[data-quoryn="card"]').innerText();
   check('celular EN: la tarjeta está en inglés', /Approve and start/.test(t) && /Discard/.test(t) && /Plan ready/.test(t), t.slice(0, 160));
   check('celular: sin scroll de lado', await p.evaluate(() => document.documentElement.scrollWidth) <= 390);
   await p.waitForTimeout(900);   /* que termine de aparecer la tarjeta */
@@ -193,6 +202,8 @@ for (const quien of ['', 'synther']){
   }
 }
 
+const viejo = pedidos.filter(u => /\/alias([-.][a-z]+)*\.(css|js|html)(\?|$)/i.test(u) && !/alias-textos\.json/.test(u));
+check('nada pidió archivos de la página vieja de ALIAS (alias.css/js/html, alias-mision.css, alias-tools.js)', !viejo.length, viejo.join(' | '));
 check('sin errores de página', !errs.length, errs.join(' | '));
 await b.close(); s.close();
 console.log(bad ? `\n${bad} con FALLO` : '\nTodo bien.');
