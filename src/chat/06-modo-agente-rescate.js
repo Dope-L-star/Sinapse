@@ -32,10 +32,14 @@ function agentCard(){
   const el = document.createElement('div'); el.className = 'agrun';
   el.innerHTML = '<div class="ag-h"><span class="pxw">' + SZ.pixelGrid() + '</span><span class="ag-t"><b>SuperiorSynth</b><small>Trabajando en tu pedido…</small></span></div><ol class="ag-s">' + AG_STEPS.map((t, i) => '<li data-i="' + i + '"><i aria-hidden="true"></i><span>' + t + '</span></li>').join('') + '</ol>';
   const px = SZ.pixelRun($('.pxw', el));
+  /* v4.5 · la línea de abajo es una frase al azar (con tu nombre a veces) que cambia sola mientras trabaja */
+  const sm = $('.ag-t small', el); let seen = false;
+  const fr = () => { try{ if (el.isConnected) seen = true; else if (seen){ clearInterval(fiv); return; } const f = window.SZFrases && window.SZFrases.frase('agente', SZ.lang() === 'en' ? 'en' : 'es'); if (f && sm) sm.textContent = f + '…'; }catch(e){} };
+  const fiv = setInterval(fr, 2800); fr();
   return {
     el,
     set(i, txt){ $$('li', el).forEach((li, j) => { li.classList.toggle('done', j < i); li.classList.toggle('on', j === i); }); if (txt) $('li[data-i="' + i + '"] span', el).textContent = txt; follow(); },
-    stop(){ px.stop(); $$('li', el).forEach(li => { li.classList.remove('on'); li.classList.add('done'); }); }
+    stop(){ clearInterval(fiv); px.stop(); $$('li', el).forEach(li => { li.classList.remove('on'); li.classList.add('done'); }); }
   };
 }
 /* lo que queda guardado debajo de tu mensaje: «El agente eligió …» con el pedido mejorado para ver */

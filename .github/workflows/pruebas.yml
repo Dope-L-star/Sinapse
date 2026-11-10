@@ -46,6 +46,8 @@ jobs:
         run: node t/cerebro/cerebro.mjs
       - name: Internet con regla fija (misma pregunta, misma decisión; SynthFlow y A.L.I.A.S. iguales)
         run: node --test t/web/regla.test.mjs
+      - name: Frases de carga (al azar, con nombre, nunca repetidas; ES/EN)
+        run: node --test t/web/frases-carga.test.mjs
       - name: Permisos y límites por persona (Pulsem › Usuarios, con Redis local) y reglas premium
         run: sudo apt-get install -y redis-server && node t/humo/permisos.mjs && node t/premium/premium.mjs
       - name: Vista previa de temas y panel admin nuevo (ES/EN)

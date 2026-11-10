@@ -33,7 +33,11 @@ async function toJpeg(dataUrl){
 function imgWorkEl(){
   const el = document.createElement('div'); el.className = 'm bot brand think-wrap imgwork';
   el.innerHTML = '<div class="who"><b>Creador de imágenes</b></div><div class="work"><div class="wk-row"><span class="pxw">' + SZ.pixelGrid() + '</span><span class="wk-t"><b class="wk-w">Creando tu imagen</b><small class="wk-s">puede tardar unos segundos</small></span></div></div>';
-  el._px = SZ.pixelRun($('.pxw', el)); el._t0 = performance.now(); return el;
+  el._t0 = performance.now();
+  /* v4.5 · con SynthFlow en React, mientras se crea la imagen sale el anillo de luz con una frase al azar en las letras («Generating», dexter-st) */
+  const fx = document.createElement('div'); fx.className = 'fxhost';
+  if (window.SZFx && window.SZFx.mount(fx, 'imagen', { lang:SZ.lang(), tam:170 })){ el.innerHTML = '<div class="who"><b>Creador de imágenes</b></div>'; el.appendChild(fx); el.classList.add('fxi'); el._fx = fx; el._px = { stop(){} }; return el; }
+  el._px = SZ.pixelRun($('.pxw', el)); return el;
 }
 async function createImage(prompt){
   if (!SZ.ACC.ready){ toast('Para crear imágenes entra a tu cuenta (es gratis).'); SZ.guestGate({ mode:'signup' }); return; }

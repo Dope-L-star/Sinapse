@@ -12,6 +12,7 @@ import { useSZ, useLang, useReloj, still } from './usos';
 import { Html, rc } from './comunes';
 import PanelAdmin from '../admin/PanelAdmin';
 import Esqueleto from '../entrada/Esqueleto';
+import FraseCarga from '../entrada/FraseCarga';
 
 const EKG = 'M3 17h13l4-10 6 18 5-13 4 5h26';
 
@@ -33,7 +34,7 @@ function Puerta({ kind, msg, SZ, t, onRetry, onLogin }) {
         {kind === 'loading' ? <>
           <div className="tn">PULSEM</div>
           {/* v4.4 · «Entrada»: la puerta muestra su forma con el brillo de Gestión mientras abre */}
-          <div className="tb"><h3 role="status">{t.opening}</h3></div>
+          <div className="tb"><h3 role="status">{t.opening}</h3><FraseCarga ctx="pagina" lang={t.lang} cada={2400} respaldo="" className="pu-frase" /></div>
           <Esqueleto forma="lista" n={3} className="pu-esq" />
         </> : kind === 'login' ? <>
           {word}<div className="tn">{t.gateTeam}</div>

@@ -1,0 +1,30 @@
+/* v4.5 · Frases de carga: las animaciones de carga (lluvia, radar, libro, imagen, blob) hablan con una frase al azar, distinta cada vez,
+   que a veces lleva tu nombre y cambia sola mientras dura la espera. Las frases viven en next/componentes/entrada/frases.js (ES/EN).
+   Con «Animaciones» apagadas (html.noanim) la frase se queda y cambia sin movimiento. */
+.pm-fr,.br-fr,.lb-fr,.bc-fr{animation:frIn .55s cubic-bezier(.22,1,.36,1) both}
+@keyframes frIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+/* radar: la frase va debajo del título */
+.br-tx small{display:block;margin-top:2px;font-size:12.5px;color:var(--soft,#ddd7ef)}
+
+/* libro: título + frase + (al terminar) las fuentes */
+.lb-c{display:flex;flex-direction:column;gap:2px;min-width:0}
+.lb-fr{display:block;font-size:12.5px;color:var(--soft,#c3c5ce)}
+.lb-hs{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0 0;padding:0;list-style:none}
+.lb-hs li{font-size:11.5px;padding:2px 9px;border-radius:99px;background:rgba(255,255,255,.07);color:var(--soft,#ddd7ef);animation:soUp .45s cubic-bezier(.22,1,.36,1) both;animation-delay:var(--d)}
+
+/* imagen: el anillo con la frase en las letras y, debajo, la nota fija */
+.gi-w{display:flex;flex-direction:column;align-items:center;gap:2px}
+.gi-w .gi{margin:6px auto 0}
+.gi-nota{font-size:12px;color:var(--soft,#c3c5ce);opacity:.85}
+.fxi .gi-w{align-items:flex-start}.fxi .gi-w .gi{margin:6px 0 0}.fxi .gi-tx{font-weight:400}
+
+/* Sintético que se prepara dentro de su ventana: cubre la vista previa hasta que la página ya corre */
+.fxsyn{position:absolute;inset:0;z-index:5;display:grid;place-items:center;padding:10px;background:rgba(10,9,16,.82);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:opacity .35s ease}
+.fxsyn.off{opacity:0;pointer-events:none}
+.fxsyn .bc{width:min(440px,100%);height:min(260px,100%)}
+
+html.noanim :is(.pm-fr,.br-fr,.lb-fr,.bc-fr){animation:none!important}
+html.noanim .fxsyn{transition:none}
+.pm-tx{overflow-wrap:anywhere}
+@media (max-width:480px){.br-tx small,.lb-fr{font-size:12px}}
