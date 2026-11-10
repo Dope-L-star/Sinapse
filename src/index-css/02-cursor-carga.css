@@ -3,8 +3,6 @@
 .cursor-busy #cw{opacity:1;scale:1;animation:cwspin .9s linear infinite}
 #cd.mini #cw{opacity:0 !important}
 @keyframes cwspin{to{rotate:360deg}}
-.pz{position:absolute;left:50%;top:50%;width:132px;height:132px;margin:-66px 0 0 -66px;pointer-events:none}
-.pz svg{display:block;width:100%;height:100%;overflow:visible}
 #portal{position:fixed;inset:0;z-index:9500;background:#0b0c10;pointer-events:none;opacity:0}
 #portal .pg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 46%,rgba(214,128,104,.24),transparent 60%)}
 .field.mw{position:relative}
@@ -79,17 +77,7 @@ main,footer{transition:opacity 1.3s ease}
 /* v8: mensajes */
 .sxc{width:1.05em;height:1.05em;vertical-align:-.17em;flex:none;display:inline-block;filter:drop-shadow(0 0 6px rgba(214,128,104,.35))}
 
-/* v9: péndulo de Newton en el logo (muy leve); al pasar el mouse se separan y crecen la S y la z */
 .mark{overflow:visible}
-.mark .sw{transform-box:view-box}
-.mark .sw1{transform-origin:11px -25px;animation:swL 2.8s infinite}
-.mark .sw3{transform-origin:33px -25px;animation:swR 2.8s infinite}
-@keyframes swL{0%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.25,.75,.45,1)}16%{transform:rotate(11deg);animation-timing-function:cubic-bezier(.55,0,.75,.25)}32%,100%{transform:rotate(0deg)}}
-@keyframes swR{0%,50%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.25,.75,.45,1)}66%{transform:rotate(-11deg);animation-timing-function:cubic-bezier(.55,0,.75,.25)}82%,100%{transform:rotate(0deg)}}
-.mark circle{transition:transform .6s var(--ease);transform-box:fill-box;transform-origin:center}
-.mark text{transition:transform .55s var(--ease);transform-box:fill-box;transform-origin:center}
-.mk-s{font-family:var(--serif);font-size:20px;fill:#0b0c10}
-.mk-z{font-family:var(--serif);font-size:9.5px;fill:#0b0c10}
 /* cuenta */
 .accb{flex:none;display:inline-flex;align-items:center;gap:8px;padding:5px 12px 5px 5px;border:1px solid var(--line);border-radius:999px;background:rgba(0,0,0,.25);color:var(--soft);font-size:13px;transition:background .3s,color .3s,border-color .3s}
 .accb:hover{background:rgba(255,255,255,.07);color:var(--text)}
@@ -110,12 +98,7 @@ main,footer{transition:opacity 1.3s ease}
 @media (max-width:760px){html.js .how-card{--dx:-36px}html.js .how-card:nth-child(2){--dx:36px}}
 
 /* ===== v10 ===== */
-/* péndulo de Newton rápido y seguido: tin, sale, tin, sale */
-.mark .sw1{animation:swL 1.15s infinite}
-.mark .sw3{animation:swR 1.15s infinite}
-@keyframes swL{0%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.2,.7,.4,1)}25%{transform:rotate(13deg);animation-timing-function:cubic-bezier(.6,0,.8,.3)}50%,100%{transform:rotate(0deg)}}
-@keyframes swR{0%,50%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.2,.7,.4,1)}75%{transform:rotate(-13deg);animation-timing-function:cubic-bezier(.6,0,.8,.3)}100%{transform:rotate(0deg)}}
-/* al pasar el mouse: deja el péndulo, crece un poquito, se separan y crecen la S y la z */
+/* al pasar el mouse el logo crece un poquito */
 .logo .mark,.back .mark{transition:transform .5s var(--ease),opacity .8s var(--ease)}
 /* fondo repartido por toda la pantalla y que gira suave al bajar */
 .aurora .orbit{position:absolute;inset:0;transform:rotate(calc(var(--sp,0) * 140deg)) scale(calc(1 + var(--sp,0) * .18));transition:transform .5s cubic-bezier(.2,.7,.3,1);will-change:transform}
@@ -124,12 +107,12 @@ main,footer{transition:opacity 1.3s ease}
 .aurora .orbit i:nth-child(3){left:-12vmax;bottom:-24vmax;right:auto;top:auto}
 .aurora .orbit i:nth-child(4){right:-8vmax;bottom:-18vmax;left:auto;top:auto}
 .aurora::after{background:radial-gradient(ellipse at calc(50% + var(--sp,0) * 30%) calc(30% + var(--sp,0) * 45%),rgba(11,12,16,.2),rgba(11,12,16,.5) 78%)}
-/* modo rendimiento: sin vidrios, sin fondo animado, sin péndulo */
+/* modo rendimiento: sin vidrios y sin fondo animado */
 html.noglass *,html.noglass *::before,html.noglass *::after{backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
 html.noglass .tcard,html.noglass .ctxm{background:#15161d !important}
 html.nobg .aurora i{animation:none !important;opacity:.45}
 html.nobg .aurora .orbit{transform:none !important}
-html.noanim .mark .sw,html.noanim .tcard,html.noanim .ctxm{animation:none !important}
+html.noanim .tcard,html.noanim .ctxm{animation:none !important}
 html.nocur .cursor-on,html.nocur .cursor-on *,html.nocur.cursor-on,html.nocur.cursor-on *{cursor:auto !important}
 html.nocur #cd,html.nocur #cr,html.nocur #cl{display:none !important}
 /* ventanas flotantes comunes */

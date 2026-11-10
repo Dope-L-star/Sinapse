@@ -18,8 +18,6 @@ const GI_GLOW = { C:'rgba(61,224,255,.8)', V:'rgba(155,123,255,.8)', O:'rgba(255
     /* la ficha: vidrio que deja ver el fondo, más claro arriba; el filo con los colores de la marca */
     + '<linearGradient id="giTile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".2"/><stop offset=".45" stop-color="#fff" stop-opacity=".06"/><stop offset="1" stop-color="#fff" stop-opacity=".1"/></linearGradient>'
     + '<linearGradient id="giEdge" gradientUnits="userSpaceOnUse" x1="4" y1="4" x2="60" y2="60"><stop offset="0" stop-color="#e6fdff" stop-opacity=".9"/><stop offset=".35" stop-color="#9b7bff" stop-opacity=".45"/><stop offset=".7" stop-color="#ff3d9a" stop-opacity=".35"/><stop offset="1" stop-color="#ffc857" stop-opacity=".7"/></linearGradient>'
-    /* la onda del orbe de SynthFlow (flowOrb, core 00) */
-    + '<linearGradient id="sfOrbG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3de0ff"/><stop offset=".45" stop-color="#7b3ff2"/><stop offset=".75" stop-color="#ff3d9a"/><stop offset="1" stop-color="#ff7a45"/></linearGradient>'
     + '<radialGradient id="giLow" cx=".5" cy="1" r=".7"><stop offset="0" stop-color="#bff6ff" stop-opacity=".35"/><stop offset="1" stop-color="#bff6ff" stop-opacity="0"/></radialGradient>'
     + '</defs></svg>';
   (document.body || document.documentElement).appendChild(d);

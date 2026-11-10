@@ -49,12 +49,8 @@ const sleepRaw = ms => new Promise(r => setTimeout(r, ms));
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
 const est = s => Math.ceil(s.length / 4);
 
-/* rayo-Z: recta, con el inicio (arriba izquierda) y el final (abajo derecha) en forma de rayo */
-const Z_PATH = 'M13 4H44V12L18 36H49L39 40H45L35 44H4V36L30 12H-1L9 8H3Z';
-
 /* ---------- logos de cada IA ---------- */
 const ICONS = {
-  synthz: () => `<defs><linearGradient id="szig" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fb0ff"/><stop offset=".55" stop-color="#c9566c"/><stop offset="1" stop-color="#e6b65f"/></linearGradient></defs><rect x="1" y="1" width="22" height="22" rx="7" fill="#15121c"/><path d="${Z_PATH}" transform="translate(4.4 4.4) scale(.32)" fill="url(#szig)"/>`,
   puter: () => `<rect x="1" y="1" width="22" height="22" rx="6" fill="#1e2a4a"/><text x="12" y="16.5" text-anchor="middle" font-family="Figtree,system-ui,sans-serif" font-size="13" font-weight="700" fill="#fff">P</text><image href="${PUTER_LOGO}" x="0" y="0" width="24" height="24" preserveAspectRatio="xMidYMid meet" onerror="this.remove()"/>`,
   groq: (c, d) => `<path d="M19.2 7.2A8.6 8.6 0 1 0 20.6 12.9H12.6" fill="none" stroke="${c}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12.6" cy="12.9" r="1.7" fill="${d}"/>`,
   gemini: (c, d) => `<path d="M12 1.5C12.4 7.8 16.2 11.6 22.5 12C16.2 12.4 12.4 16.2 12 22.5C11.6 16.2 7.8 12.4 1.5 12C7.8 11.6 11.6 7.8 12 1.5Z" fill="${c}"/><path d="M19.5 2.5C19.6 4 20.5 4.9 22 5C20.5 5.1 19.6 6 19.5 7.5C19.4 6 18.5 5.1 17 5C18.5 4.9 19.4 4 19.5 2.5Z" fill="${d}"/>`,
@@ -77,7 +73,7 @@ const SPARKS = '<i class="sp s1" aria-hidden="true"></i><i class="sp s2" aria-hi
 const GS = '<span class="gS">S</span>ynth';
 /* v2.8: el degradado de la onda del orbe vive en los íconos (core 25g), siempre visible: antes cada orbe traía uno con el mismo id
    y, si el primero de la página estaba escondido, las ondas de todos los logos de Sonyx desaparecían */
-/* v2.5 · logos del boceto: SymphorIA = Z de vidrio + «Synth» blanco con la Z en degradado; SynthFlow = la esfera de vidrio con la onda */
+/* logos de la marca: SymphorIA = la S de vidrio con su órbita + «Symphor» blanco con «IA» en degradado; SynthFlow = la F de corriente */
 const LOGO_Z = '<img class="lgz" src="media/v30/symphoria.svg" alt="" draggable="false">';
 /* v4.4 · SynthFlow: la F de corriente en vidrio líquido (misma familia que la S de SymphorIA) */
 const flowOrb = cls => '<span class="sforb' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><img src="media/v44/synthflow.svg" alt="" draggable="false"></span>';
@@ -1436,13 +1432,7 @@ const paintPulse = () => { const b = document.getElementById('railPulse'); if (b
 accHooks.push(paintPulse);
 
 /* ---------- icono de la pestaña: la S de vidrio (SymphorIA) o la F de corriente (SynthFlow) ---------- */
-function cradleAngles(t, A){
-  const u = (t % 1150) / 1150, out = x => 1 - Math.pow(1 - x, 2.4), inn = x => Math.pow(x, 2.4);
-  const L = u < .25 ? out(u / .25) : u < .5 ? 1 - inn((u - .25) / .25) : 0;
-  const R = u >= .5 && u < .75 ? out((u - .5) / .25) : u >= .75 ? 1 - inn((u - .75) / .25) : 0;
-  return [L * A, -R * A];
-}
-(function favCradle(){
+(function favIcon(){
   const link = document.getElementById('favi'); if (!link) return;
   const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); if (!g) return;
   /* v4.4 · SynthFlow: la F de corriente (media/v44/synthflow.svg); la chispa de la punta late un poquito */
@@ -2262,8 +2252,8 @@ if (matchMedia('(pointer: fine)').matches && CFG.cursor){
     lw = el.offsetWidth || b.width; lh = el.offsetHeight || b.height;
     c.style.width = lw + 'px'; c.style.height = lh + 'px'; c.style.boxSizing = 'border-box';
     cl.appendChild(c);
-    /* el logo de la copia imita al original cuadro a cuadro: mismo tamaño y el péndulo frenando igual */
-    const om = el.querySelectorAll('.mark, .mark .sw'), cmk = c.querySelectorAll && c.querySelectorAll('.mark, .mark .sw');
+    /* el logo de la copia imita al original cuadro a cuadro: mismo tamaño */
+    const om = el.querySelectorAll('.mark'), cmk = c.querySelectorAll && c.querySelectorAll('.mark');
     lblSync = om.length && cmk && cmk.length === om.length ? [...om].map((o, i) => { cmk[i].style.animation = 'none'; cmk[i].style.transition = 'none'; return [o, cmk[i]]; }) : null;
   }
   function setHover(el){
@@ -2475,19 +2465,6 @@ function thud(x, y){
   document.body.append(g, r);
   g.animate([{ transform:'scale(.2)', opacity:0 }, { transform:'scale(2.6)', opacity:1, offset:.2 }, { transform:'scale(5)', opacity:0 }], { duration:1100, easing:'cubic-bezier(.16,.8,.3,1)', fill:'both' }).onfinish = () => g.remove();
   r.animate([{ transform:'scale(.3)', opacity:0 }, { transform:'scale(1.2)', opacity:1, offset:.15 }, { transform:'scale(4.2)', opacity:0 }], { duration:1300, easing:'cubic-bezier(.16,.8,.3,1)', fill:'both' }).onfinish = () => r.remove();
-}
-/* portal: la Z carga, se hace zoom hacia adentro y se entra al chat */
-const zoomK = () => Math.hypot(innerWidth, innerHeight) / 2 / ((132 / 48) * 4.7) * 1.12;
-const portalPaint = (p, k) => p.setAttribute('transform', 'translate(24 24) scale(' + k.toFixed(3) + ') translate(-24 -24)');
-function zBox(host){
-  const w = document.createElement('div'); w.className = 'pz';
-  w.innerHTML = '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="' + Z_PATH + '" fill="url(#zgrad)"/></svg>';
-  host.appendChild(w); return { w, p: w.querySelector('path') };
-}
-function portalFill(host){ const z = zBox(host); portalPaint(z.p, zoomK()); return z.p; }
-function portalReveal(p){
-  if (!p) return; const K = zoomK(), t0 = performance.now(), D = 950;
-  (function f(now){ const e = Math.min(1, (now - t0) / D); portalPaint(p, K * Math.pow(2.4, e)); if (e < 1) requestAnimationFrame(f); })(t0);
 }
 /* v2.8 · el portal nuevo, con los logos de ahora (pedido de Sammuel: «sorpréndeme»):
    ida:    «Sinapse» sale de su esquina y llega al centro → la S de vidrio gira y se vuelve el orbe de Sonyx,
@@ -3231,20 +3208,6 @@ addEventListener('keydown', e => {
   const c = [...document.querySelectorAll('.szm [data-close], .szm [data-d="x"], #blk #bClose, #acc #aClose, #sx #sxClose, #conn #cClose, #szChat [data-cx]')].filter(x => x.isConnected && !x.closest('.bye')).pop();
   if (c){ e.preventDefault(); c.click(); }
 });
-
-/* el péndulo del logo se frena con suavidad cuando lo señalas y vuelve a moverse al salir */
-function calmMark(host, on){
-  host.querySelectorAll('.mark .sw').forEach(g => {
-    if (on){
-      if (g._calm) return; g._calm = true;
-      const tf = getComputedStyle(g).transform;
-      g.style.animation = 'none';
-      if (tf && tf !== 'none' && !reduce) g.animate([{ transform:tf }, { transform:'rotate(0deg)' }], { duration:700, easing:'cubic-bezier(.22,1,.36,1)' });
-    } else if (g._calm){ g._calm = false; g.style.animation = ''; }
-  });
-}
-document.addEventListener('pointerover', e => { const h = e.target.closest && e.target.closest('.logo, a, button'); if (h && h.querySelector('.mark .sw')) calmMark(h, true); });
-document.addEventListener('pointerout', e => { const h = e.target.closest && e.target.closest('.logo, a, button'); if (h && !(e.relatedTarget && h.contains(e.relatedTarget)) && h.querySelector('.mark .sw')) calmMark(h, false); });
 
 /* clic con el botón del medio: el cursor cambia al de desplazamiento automático */
 if (document.getElementById('cm')){
@@ -4154,8 +4117,6 @@ const GI_GLOW = { C:'rgba(61,224,255,.8)', V:'rgba(155,123,255,.8)', O:'rgba(255
     /* la ficha: vidrio que deja ver el fondo, más claro arriba; el filo con los colores de la marca */
     + '<linearGradient id="giTile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".2"/><stop offset=".45" stop-color="#fff" stop-opacity=".06"/><stop offset="1" stop-color="#fff" stop-opacity=".1"/></linearGradient>'
     + '<linearGradient id="giEdge" gradientUnits="userSpaceOnUse" x1="4" y1="4" x2="60" y2="60"><stop offset="0" stop-color="#e6fdff" stop-opacity=".9"/><stop offset=".35" stop-color="#9b7bff" stop-opacity=".45"/><stop offset=".7" stop-color="#ff3d9a" stop-opacity=".35"/><stop offset="1" stop-color="#ffc857" stop-opacity=".7"/></linearGradient>'
-    /* la onda del orbe de SynthFlow (flowOrb, core 00) */
-    + '<linearGradient id="sfOrbG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3de0ff"/><stop offset=".45" stop-color="#7b3ff2"/><stop offset=".75" stop-color="#ff3d9a"/><stop offset="1" stop-color="#ff7a45"/></linearGradient>'
     + '<radialGradient id="giLow" cx=".5" cy="1" r=".7"><stop offset="0" stop-color="#bff6ff" stop-opacity=".35"/><stop offset="1" stop-color="#bff6ff" stop-opacity="0"/></radialGradient>'
     + '</defs></svg>';
   (document.body || document.documentElement).appendChild(d);
@@ -4772,10 +4733,10 @@ addEventListener('keydown', e => { if (e.key === 'Escape' && pwrEl && pwrEl.clas
 onLang(() => pwrPrep());
 /* la esquina la pinta la página (o React) un poco después de cargar: se revisa un par de veces */
 [0, 600, 2500].forEach(ms => setTimeout(pwrPrep, ms));
-window.SZ = { I18N, LANGS, t, lang, setLang, onLang, i18nApply, root, $, $$, clamp, fmt, reduce, today, sleepRaw, esc, est, Z_PATH, ICONS, ico, zWord, API, MANUAL, ALL, byId,
+window.SZ = { I18N, LANGS, t, lang, setLang, onLang, i18nApply, root, $, $$, clamp, fmt, reduce, today, sleepRaw, esc, est, ICONS, ico, zWord, API, MANUAL, ALL, byId,
   get state(){ return state; }, set state(v){ state = v; normalize(); },
   normalize, cleanUsage, cleanChats, cleanStrMap, save, total, addUsage, resetUsage, estAll, todayEst, todayReq, providerBalance, balanceHtml, splitHtml, syncNote, helpGuide, smoothDetails, szPrompt, swapDir, swapDir, get face(){ return face; }, get FACE_GOOD(){ return FACE_GOOD; }, get randomGoodFace(){ return randomGoodFace; }, get welcomeBack(){ return welcomeBack; }, get wasAway(){ return wasAway; }, accSignOutAll, accClaim, ROLE_NAME, trialGet, trialSet, trialStart, legacyRow, cleanLedger, mergeLedger, DEV, hooks, toast, hydrateIcons, md, countTo,
-  BRAND, SPACE, AURORA, isFlow, flowWord, flowOrb, LOGO_Z, fileIco, gIcon, giFill, giFile, zMark, get synBody(){ return synBody; }, get synSet(){ return synSet; }, get SPOSE(){ return SPOSE; }, charify, typeIn, showAll, getJSON, parseModels, loadCatalog, fetchCatalog, vendorLabel, vendorColor, burst, friendly, netMsg, fetchModels, refreshModels, verify, ask, metaOf, history, S, mirrorType, thud, portalOut, portalBack, portalArrive, portalFill, portalReveal, waterIn, ctxMenu, SXC, coins, ACC, accHooks, accStart, accPush, accSignOut, accName, accHandle, securityModal, recoveryPanel, MARK_HTML, expertOf, EXP_LABEL, surveyModal, surveyPicks, surveyScore, orGuide, profileModal, puterLogo, PUTER_LOGO, api, accConfig, accDelete, saveProfile, avatarHtml, myAvatar, grad, tint, TINTS, loadGsi, SESS_get:() => SESS, CFG, PERF, saveCfg, cfgModal, cfgChooser, applyCfg, smoothWheel, orbitBg, authBox, isBlocked, lowEnd, askStream, mkReveal, reveals, chatsReady, IDB, provOf, totalAll, todayAll, BRANDS, brandOf, glassIcon, PIXART, pixelRun, pixelGrid, workView, workSaved, mdLoad, MDLIB, SZ_P, SZQ, SZ_AUTO, szqSet, msgsLeft, msgsTotal, coinsOf, coinsLeft, coinsTotal, coinsFmt, coinsShort, coinNote, limTxt, limShort, limLvl, limPct, limRing, battPct, limBar, szCatalog, szHeaders, guestGate, guestFull, guestLeft, isGuestQ, setTurn, puterOut, puterOutNote, TEL, telEv, telBeat, DEVH, szConfirm, cfgPreset, CFG_KEYS, cfgClasses, get SND(){ return SND; }, get HAND(){ return HAND; }, get feedbackModal(){ return feedbackModal; }, get guideChooser(){ return guideChooser; }, DRIVE, isBad, markBad, markSick, markGood, modelGone, badReady, GROQ_P, get BOT(){ return BOTAPI; }, get EV(){ return EV; }, get lipSync(){ return lipSync; }, get ballFace(){ return ballFace; }, get guideAsk(){ return guideAsk; }, get GTOPICS(){ return GTOPICS; }, get whatsNew(){ return whatsNew; }, signedish, cfgLinks, memAddCore, memList, memPanel, menuOpen, menuClose, MICO, appInstall, appPromo, appStandalone, appWin, appPhone, plansModal, planOf, aliasOk };
+  BRAND, SPACE, AURORA, isFlow, flowWord, flowOrb, LOGO_Z, fileIco, gIcon, giFill, giFile, zMark, get synBody(){ return synBody; }, get synSet(){ return synSet; }, get SPOSE(){ return SPOSE; }, charify, typeIn, showAll, getJSON, parseModels, loadCatalog, fetchCatalog, vendorLabel, vendorColor, burst, friendly, netMsg, fetchModels, refreshModels, verify, ask, metaOf, history, S, mirrorType, thud, portalOut, portalBack, portalArrive, waterIn, ctxMenu, SXC, coins, ACC, accHooks, accStart, accPush, accSignOut, accName, accHandle, securityModal, recoveryPanel, MARK_HTML, expertOf, EXP_LABEL, surveyModal, surveyPicks, surveyScore, orGuide, profileModal, puterLogo, PUTER_LOGO, api, accConfig, accDelete, saveProfile, avatarHtml, myAvatar, grad, tint, TINTS, loadGsi, SESS_get:() => SESS, CFG, PERF, saveCfg, cfgModal, cfgChooser, applyCfg, smoothWheel, orbitBg, authBox, isBlocked, lowEnd, askStream, mkReveal, reveals, chatsReady, IDB, provOf, totalAll, todayAll, BRANDS, brandOf, glassIcon, PIXART, pixelRun, pixelGrid, workView, workSaved, mdLoad, MDLIB, SZ_P, SZQ, SZ_AUTO, szqSet, msgsLeft, msgsTotal, coinsOf, coinsLeft, coinsTotal, coinsFmt, coinsShort, coinNote, limTxt, limShort, limLvl, limPct, limRing, battPct, limBar, szCatalog, szHeaders, guestGate, guestFull, guestLeft, isGuestQ, setTurn, puterOut, puterOutNote, TEL, telEv, telBeat, DEVH, szConfirm, cfgPreset, CFG_KEYS, cfgClasses, get SND(){ return SND; }, get HAND(){ return HAND; }, get feedbackModal(){ return feedbackModal; }, get guideChooser(){ return guideChooser; }, DRIVE, isBad, markBad, markSick, markGood, modelGone, badReady, GROQ_P, get BOT(){ return BOTAPI; }, get EV(){ return EV; }, get lipSync(){ return lipSync; }, get ballFace(){ return ballFace; }, get guideAsk(){ return guideAsk; }, get GTOPICS(){ return GTOPICS; }, get whatsNew(){ return whatsNew; }, signedish, cfgLinks, memAddCore, memList, memPanel, menuOpen, menuClose, MICO, appInstall, appPromo, appStandalone, appWin, appPhone, plansModal, planOf, aliasOk };
 /* v3.4 · el «turno» del mensaje actual: la revisión de calidad viaja en el mismo turno (no cuenta como otro mensaje sin cuenta) */
 /* v3.4 · SynthonIA (synthonia.js): lo que necesita de core, y cuándo se carga */
 window.SZ.synReady = synReady;

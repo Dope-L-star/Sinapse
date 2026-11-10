@@ -3,7 +3,6 @@
 /* el logo: al señalarlo todo crece parejo y suave (círculos y letras igual); el péndulo se frena desde core.js */
 .logo .mark,a .mark,button .mark{transition:transform .8s cubic-bezier(.22,1,.36,1),opacity .8s var(--ease)}
 .logo:hover .mark,a:hover .mark,button:hover .mark,.cur-hov .mark{transform:scale(1.08)}
-.logo:hover .mark circle,a:hover .mark circle,.logo:hover .mark text,a:hover .mark text{transform:none !important}
 /* sobre una barra de desplazamiento se ve el cursor normal */
 .cursor-bar #cd,.cursor-bar #cr,.cursor-bar #cl{opacity:0 !important;transition:opacity .12s !important}
 
@@ -279,20 +278,8 @@ html.noanim #szSay,html.noanim #szSpot{transition-duration:.01s}
 #portal.szportal{position:fixed;inset:0;z-index:9950;display:grid;place-items:center;overflow:hidden;background:#0b0c10;pointer-events:none;opacity:0}
 #portal.szportal.clear{opacity:1;background:transparent}
 #portal.szportal .pg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(255,226,168,.4),rgba(var(--gold-rgb),.14) 35%,transparent 70%);opacity:0}
-.szpw{position:relative;display:flex;align-items:flex-start;font-family:var(--serif,'Bricolage Grotesque',system-ui,sans-serif);font-weight:400;font-size:clamp(64px,12vw,180px);line-height:1;letter-spacing:-.02em;color:#ecebe7;white-space:nowrap;will-change:transform}
 .szps{display:block;overflow:hidden;flex:none;height:1.12em;margin-bottom:-.12em}
 .szps>span{display:block;line-height:1}
-.szpslot{position:relative;display:block;flex:none;height:1em}
-.szpz,.szpcur{position:absolute;left:.08em;top:.1em;width:.8em;height:.8em;overflow:visible}
-.szpcur{opacity:0}
-.szpcur path{stroke-dasharray:1;stroke-dashoffset:1;filter:drop-shadow(0 0 6px rgba(var(--gold-rgb),.55))}
-.szpf{position:absolute;left:0;top:0;display:block;line-height:1;opacity:0;padding-right:.04em;background:linear-gradient(90deg,var(--wine),var(--gold) 62%,#ffd9a0);-webkit-background-clip:text;background-clip:text;color:transparent}
-.szpf.shine{animation:szpshine 1.6s cubic-bezier(.22,1,.36,1) both}
-@keyframes szpshine{0%,100%{filter:none}35%{filter:brightness(1.35) drop-shadow(0 0 18px rgba(var(--gold-rgb),.6))}}
-.szpbar{position:absolute;left:-2px;width:3px;border-radius:3px;background:linear-gradient(#fff,#ffe7b0 70%,var(--gold));box-shadow:0 0 12px 2px rgba(255,231,176,.7),0 0 34px 6px rgba(var(--gold-rgb),.3);opacity:0;transform:scaleY(0);transform-origin:50% 0;transition:opacity .25s ease,transform .32s cubic-bezier(.22,1,.36,1)}
-.szpbar.on{opacity:1;transform:scaleY(1)}
-.szpcaret{position:absolute;left:0;width:2px;margin-left:1px;border-radius:2px;background:#fff;box-shadow:0 0 8px rgba(255,255,255,.75);opacity:0;transition:opacity .2s ease,transform .12s cubic-bezier(.22,1,.36,1)}
-.szpcaret.on{opacity:1}
 .szpring{position:fixed;left:50%;top:50%;z-index:301;width:0;height:0;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;box-shadow:0 0 0 2px rgba(var(--gold-rgb),.7),0 0 40px 8px rgba(var(--gold-rgb),.25)}
 html.backin::before{content:"";position:fixed;inset:0;z-index:9998;background:#0b0c10;pointer-events:none;opacity:.92;transition:opacity .85s ease}
 html.backin.backout::before{opacity:0}
@@ -614,20 +601,11 @@ html.noanim #side.two-p .pf-l,html.noanim #side.two-p .pf-r{transition-duration:
 /* v3.7 · «De dónde» salía vacío: el panel de filtros es una columna con scroll y achicaba la fila de proveedores (tiene overflow:auto) a 10 px. Ningún filtro se achica: el panel hace scroll. */
 #side.two-p .pf-l>*{flex-shrink:0}
 #side.two-p .pf-l #provSeg{min-height:max-content}
-/* ===== v1.3 · logos de vidrio: la S de «Synth», la Z y «Flow» ===== */
+/* ===== v1.3 · «IA» de vidrio (.gS) y las chispas del botón (flwsp) ===== */
 .gS{position:relative;display:inline-block;color:transparent;background:linear-gradient(165deg,rgba(255,255,255,.96) 0%,rgba(255,198,220,.62) 20%,rgba(196,128,214,.42) 46%,rgba(255,150,140,.62) 70%,rgba(255,255,255,.92) 100%);background-size:100% 240%;-webkit-background-clip:text;background-clip:text;-webkit-text-stroke:.024em rgba(255,236,246,.78);filter:drop-shadow(0 0 .12em rgba(232,140,190,.42)) drop-shadow(0 .03em .02em rgba(0,0,0,.35));animation:gSflow 6s ease-in-out infinite;padding-right:.01em}
 @keyframes gSflow{0%,100%{background-position:0 0}50%{background-position:0 100%}}
-img.zb.zg{width:auto;height:.84em;margin-left:.06em;flex:none;object-fit:contain;filter:drop-shadow(0 0 .14em rgba(230,140,190,.35));animation:zgGlow 5s ease-in-out infinite;user-select:none;-webkit-user-drag:none}
-@keyframes zgGlow{0%,100%{filter:drop-shadow(0 0 .1em rgba(230,140,190,.28))}50%{filter:drop-shadow(0 0 .24em rgba(200,150,255,.5)) brightness(1.08)}}
-.flwg{position:relative;display:inline-flex;align-items:flex-end;margin-left:.06em}
-.flwi{display:block;height:.8em;width:auto;user-select:none;-webkit-user-drag:none;filter:drop-shadow(0 0 .12em rgba(230,140,190,.3));animation:zgGlow 5s ease-in-out infinite}
-.flwg .sp{position:absolute;width:9px;height:9px;background:#fff6e0;clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);filter:drop-shadow(0 0 3px #f2a6c8);opacity:0;pointer-events:none;animation:flwsp 2.6s ease-in-out infinite}
-.flwg .s1{top:-4px;right:-6px}.flwg .s2{top:30%;left:-3px;width:6px;height:6px;animation-delay:.65s}.flwg .s3{bottom:-3px;right:34%;width:7px;height:7px;animation-delay:1.3s}
 @keyframes flwsp{0%,100%{opacity:0;transform:scale(.3) rotate(0)}40%{opacity:1;transform:scale(1) rotate(45deg)}70%{opacity:0;transform:scale(.4) rotate(90deg)}}
-/* portal con la película Z → Flow */
 #portal.szportal{pointer-events:auto;cursor:default}
-.szpbar{top:.1em;height:.86em}
-.szpslot{width:1em}
 /* BETA junto a la bolita de SynthonIA (SynthFlow) */
 .beta-tag.bb{position:fixed;z-index:9599;margin:0;opacity:0;animation:bbIn .5s .4s cubic-bezier(.22,1,.36,1) forwards}
 @keyframes bbIn{from{opacity:0;transform:translateX(6px)}to{opacity:1;transform:none}}
@@ -650,16 +628,7 @@ html.idle-sleep #szBot::after{content:"z z";position:absolute;right:-4px;top:-14
 .tapr{position:fixed;z-index:99999;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;pointer-events:none;border:1.5px solid rgba(255,236,246,.7);background:radial-gradient(circle,rgba(255,255,255,.35),rgba(230,140,190,.12) 60%,transparent 70%);animation:tapr .55s cubic-bezier(.22,1,.36,1) forwards}
 @keyframes tapr{to{transform:scale(4.2);opacity:0}}
 
-/* portal en vivo: la Z de vidrio se derrite y se vuelve «Flow» */
-.szpdefs{position:absolute;width:0;height:0}
-.szpm{position:absolute;left:.06em;top:0;height:1em;width:3em;pointer-events:none;--glow:0}
-.szpm img{position:absolute;left:0;bottom:.2em;width:auto;transform-origin:30% 100%;will-change:transform,opacity;filter:drop-shadow(0 0 calc(.08em + var(--glow) * .3em) rgba(232,140,200,calc(.3 + var(--glow) * .4)))}
-.szpm .szpz{height:.84em}
-.szpm .szpfl{height:.8em;opacity:0}
-.szpm.shine img{animation:szpGlass 1.2s cubic-bezier(.22,1,.36,1)}
-@keyframes szpGlass{0%,100%{filter:drop-shadow(0 0 .08em rgba(232,140,200,.3))}40%{filter:drop-shadow(0 0 .3em rgba(255,200,230,.75)) brightness(1.25)}}
-#portal.zooming .szpm img,#portal.zooming .gS,#portal.zooming .szpw{filter:none !important;animation:none !important}
-#portal.zooming .szpw{will-change:transform}
+#portal.zooming .gS{filter:none !important;animation:none !important}
 /* ===== v1.4 · SynthonIA más visible y con caras suaves ===== */
 #szBot .bf{position:relative;width:40px;height:40px;display:block}
 #szBot.inhead .bf{width:30px;height:30px}
@@ -1279,7 +1248,7 @@ html.noanim #szIdle{display:none}
   75%{transform:translate(calc(var(--S)*.45),calc(var(--S)*.3));animation-timing-function:ease-in}
   100%{transform:translate(calc(var(--S)*.12),calc(var(--S)*.62))}}
 @keyframes sziDrop{to{transform:translate(calc(var(--S)*.9),calc(var(--S)*1.5)) rotate(200deg);opacity:0}}
-/* ===== v2.5 · logos del boceto ===== */
+/* ===== logos de la marca ===== */
 /* v3.0 · SymphorIA: la S de vidrio con su órbita + «Symphor» blanco con «IA» en degradado (letra Chakra Petch, de la rama simple) */
 .lgz{display:block;flex:none;width:auto;height:38px;aspect-ratio:1;object-fit:contain;filter:drop-shadow(0 0 10px rgba(176,92,255,.45));transition:transform .5s cubic-bezier(.22,1,.36,1),filter .4s}
 a:hover>.lgz,.logo:hover .lgz{transform:rotate(-8deg) scale(1.08);filter:drop-shadow(0 0 14px rgba(255,61,154,.6))}
@@ -1287,16 +1256,10 @@ a:hover>.lgz,.logo:hover .lgz{transform:rotate(-8deg) scale(1.08);filter:drop-sh
 .zw{font-family:var(--brand,"Chakra Petch",system-ui,sans-serif);font-weight:700;letter-spacing:.01em;color:#f6f3ff}
 .zw .zt{background:linear-gradient(160deg,#9b5cff 0%,#ff3d9a 55%,#ff7a45 100%);-webkit-background-clip:text;background-clip:text;color:transparent;padding-right:.04em}
 .word .zw{font-size:.86em}
-/* SynthFlow: la esfera de vidrio con la onda (la misma del centro de «Todas las IAs») */
-.sforb{position:relative;display:inline-grid;place-items:center;flex:none;width:1.35em;height:1.35em;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.5),rgba(123,63,242,.25) 45%,rgba(10,6,30,.4));
-  border:1px solid rgba(255,255,255,.35);box-shadow:0 0 .5em rgba(123,63,242,.7),inset 0 0 .3em rgba(61,224,255,.35)}
-.sforb svg{width:80%;height:80%;overflow:visible}
-.sforb path{stroke-dasharray:80;animation:sforbw 3.2s ease-in-out infinite}
-@keyframes sforbw{50%{stroke-dashoffset:-14}}
+/* SynthFlow: su logo (la F de corriente, ver 44-v44-iconos-ias.css) va en esta cajita */
+.sforb{position:relative;display:inline-grid;place-items:center;flex:none;width:1.35em;height:1.35em;overflow:visible}
 .flw-w{display:inline-flex;align-items:center;gap:.32em}
 .flw-w .fw-t{font-family:var(--sans,"Figtree",system-ui,sans-serif);font-weight:700;letter-spacing:-.025em;color:#f6f3ff;font-size:.86em}
-html.noanim .sforb path{animation:none}
 html[data-scheme="light"] .zw,html[data-scheme="light"] .flw-w .fw-t{color:#1b1035}
 .logo .lgz.mark,.sf-b .lgz.mark{width:auto}
 .gico .zmini{width:86%;height:86%;object-fit:contain;filter:drop-shadow(0 0 4px rgba(176,92,255,.5))}
@@ -2020,8 +1983,7 @@ html.simple .beta-tag{background:var(--sbg,#252422);border:1px solid var(--sline
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 0 3px color-mix(in srgb,var(--b1) 16%,transparent),0 6px 18px -8px color-mix(in srgb,var(--b1) 70%,transparent) !important}
 html.noanim .gico{transition:none}
 
-/* ===== v4.4 · logo de SynthFlow: la F de corriente (media/v44/synthflow.svg), sin la esfera de antes ===== */
-.sforb{background:none !important;border:0 !important;box-shadow:none !important;border-radius:0;overflow:visible}
+/* ===== v4.4 · logo de SynthFlow: la F de corriente (media/v44/synthflow.svg) ===== */
 .sforb img{width:118%;height:118%;max-width:none;object-fit:contain;pointer-events:none;filter:drop-shadow(0 0 .18em rgba(123,63,242,.45))}
 .sforb img{animation:sfF 4.6s ease-in-out infinite}
 @keyframes sfF{50%{transform:translateY(-4%) rotate(-2deg);filter:drop-shadow(0 0 .3em rgba(255,61,154,.5))}}
