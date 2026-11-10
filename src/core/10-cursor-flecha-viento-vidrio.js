@@ -31,7 +31,7 @@ if (matchMedia('(pointer: fine)').matches && CFG.cursor){
     const cs = getComputedStyle(o);
     PROPS.forEach(k => { c.style[k] = cs[k]; });
     /* solo la raíz se pone en su sitio dentro del vidrio; las piezas de adentro guardan su posición y márgenes
-       (antes todo quedaba «static»: en las tarjetas de usos la SynthonIA se caía fuera de la escena y desaparecía) */
+       (antes todo quedaba «static»: en las tarjetas de usos la Sona se caía fuera de la escena y desaparecía) */
     if (isRoot){ c.style.margin = '0'; c.style.position = 'static'; c.style.transform = 'none'; }
     else ['position','top','right','bottom','left','zIndex','marginTop','marginRight','marginBottom','marginLeft','transform','transformOrigin'].forEach(k => { c.style[k] = cs[k]; });
     c.style.transition = 'none';

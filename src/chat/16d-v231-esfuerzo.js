@@ -6,10 +6,10 @@
    Con OpenRouter directo solo se manda reasoning.effort cuando es low/high. Profundo pide cuenta (entrar es gratis).
    Lo guardado con los nombres viejos se lee así: Bajo → Veloz, Alto → Profundo, Medio → Auto. */
 const EFF = {
-  auto:     { n:'Auto',     d:'La IA decide cuánto pensar según tu pregunta.',              api:'',         hint:'',  tok:0, ico:'<path d="M4.5 16a8 8 0 1 1 15 0"/><path d="M12 14l3.5-4"/>' },
-  fast:     { n:'Veloz',    d:'Respuestas rápidas y cortas, para lo del día a día.',          api:'low',      hint:'Responde rápido y directo, en pocas frases y sin rodeos.', tok:700, ico:'<path d="M13 3L5 14h6l-1 7 8-11h-6l1-7z"/>' },
-  deep:     { n:'Profundo', d:'Piensa a fondo y revisa su respuesta. Es el que más EnerX gasta.', api:'high', hint:'Razona con cuidado antes de responder: analiza el problema paso a paso, revisa tu respuesta y entrega una respuesta completa y bien fundamentada.', tok:0, ico:'<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/><path d="M11 8v3l2 1.5"/>' },
-  creative: { n:'Creativo', d:'Ideas originales y textos con chispa, para crear.',            api:'creative', hint:'Sé creativo y original: propone ideas poco obvias, usa imágenes y ejemplos vivos, juega con el tono y evita lo genérico, sin perder la claridad ni inventar datos.', tok:0, ico:'<path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/><circle cx="12" cy="12" r="2.5"/>' }
+  auto:     { n:'Flow',     d:'La IA decide cuánto pensar según tu pregunta.',              api:'',         hint:'',  tok:0, ico:'<path d="M4.5 16a8 8 0 1 1 15 0"/><path d="M12 14l3.5-4"/>' },
+  fast:     { n:'Fragment', d:'Respuestas rápidas y cortas, para lo del día a día.',          api:'low',      hint:'Responde rápido y directo, en pocas frases y sin rodeos.', tok:700, ico:'<path d="M13 3L5 14h6l-1 7 8-11h-6l1-7z"/>' },
+  deep:     { n:'Focus',    d:'Piensa a fondo y revisa su respuesta. Es el que más EnerX gasta.', api:'high', hint:'Razona con cuidado antes de responder: analiza el problema paso a paso, revisa tu respuesta y entrega una respuesta completa y bien fundamentada.', tok:0, ico:'<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/><path d="M11 8v3l2 1.5"/>' },
+  creative: { n:'Horizon',  d:'Ideas originales y textos con chispa, para crear.',            api:'creative', hint:'Sé creativo y original: propone ideas poco obvias, usa imágenes y ejemplos vivos, juega con el tono y evita lo genérico, sin perder la claridad ni inventar datos.', tok:0, ico:'<path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/><circle cx="12" cy="12" r="2.5"/>' }
 };
 const EFF_KEYS = ['auto', 'fast', 'deep', 'creative'];
 const EFF_OLD = { low:'fast', high:'deep', medium:'auto' };
@@ -30,7 +30,7 @@ function effortOpts(saver){ const k = effKey(); if (k === 'auto') return {}; con
   btn.addEventListener('click', e => { e.stopPropagation(); open(menu.hidden); });
   menu.addEventListener('click', e => {
     const b = e.target.closest('[data-eff]'); if (!b) return; const k = b.dataset.eff;
-    if (locked(k)){ open(false); toast('El esfuerzo Profundo es para cuentas (entrar es gratis).'); SZ.guestGate({ mode:'signup' }); return; }
+    if (locked(k)){ open(false); toast('El esfuerzo Focus es para cuentas (entrar es gratis).'); SZ.guestGate({ mode:'signup' }); return; }
     st().sx.effort = k; save(); paint(); open(false); btn.focus(); toast('Esfuerzo: ' + EFF[k].n + (k === 'auto' ? '' : ' · ' + EFF[k].d));
   });
   document.addEventListener('pointerdown', e => { if (!menu.hidden && !menu.contains(e.target) && !btn.contains(e.target)) open(false); });

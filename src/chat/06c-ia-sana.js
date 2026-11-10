@@ -4,7 +4,7 @@
    · vuelves a la IA que tenías, y una ventana te pregunta para qué la querías:
      «Solo quería probar» → sigues navegando, sin las IAs caídas;  «La quiero para…» → te recomienda la que sí funciona y mejor sirve para eso.
    Para no gastar: el resultado se guarda (bien 10 min, llena 2 min, caída 30 min) y en el servidor se comparte entre todos.
-   Las de SymphorIA se prueban en /api/ai (no gasta tu batería); Puter y tus llaves, con una respuesta de 4 palabras como mucho. */
+   Las de Sinapse se prueban en /api/ai (no gasta tu batería); Puter y tus llaves, con una respuesta de 4 palabras como mucho. */
 const HEALTH = new Map(), H_TTL = { ok:10 * 60e3, busy:2 * 60e3, down:30 * 60e3 };
 function iaCached(id){ const h = HEALTH.get(id); return h && h.v && Date.now() - h.t < H_TTL[h.v] ? h.v : null; }
 const iaSkip = id => !id || id === 'sz:auto' || /^tr:/.test(id) || !connected(id);
@@ -35,7 +35,7 @@ function iaProbe(id){
   const p = (async () => {
     if (/^sz:/.test(id)){
       try{ const v = (await szPing([id]))[id]; return v === 'down' || v === 'busy' ? v : 'ok'; }
-      catch(e){ return 'ok'; }   /* sin conexión con SymphorIA: no es culpa de la IA, no se esconde */
+      catch(e){ return 'ok'; }   /* sin conexión con Sinapse: no es culpa de la IA, no se esconde */
     }
     const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 15000);
     try{ const r = await SZ.askStream(OR, [{ role:'user', content:'Responde solo: ok' }], { model:id, maxTokens:4, signal:ctl.signal }, () => {}); return r && r.aborted ? 'busy' : 'ok'; }

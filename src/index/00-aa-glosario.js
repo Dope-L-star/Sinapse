@@ -3,11 +3,11 @@
    Va antes que todo: la escritura letra por letra parte el texto en letras sueltas y ya no se podría encontrar la palabra. ===== */
 (() => {
 const DEF = {
-  'SynthFlow':     SZ.t('gl.0'),
-  'SuperiorSynth': SZ.t('gl.1'),
-  'SynthonIA':     SZ.t('gl.2'),
+  'Sonyx':     SZ.t('gl.0'),
+  'Apex': SZ.t('gl.1'),
+  'Sona':     SZ.t('gl.2'),
   'EnerX':         SZ.t('gl.3'),
-  'A.L.I.A.S.':    SZ.t('gl.4'),
+  'Quoryn':    SZ.t('gl.4'),
   'Puter':         SZ.t('gl.5'),
   'IAs conectadas':SZ.t('gl.6')
 };

@@ -1,12 +1,12 @@
 /* ---------- v2.1 · «Buscar en internet»: la IA responde con información de hoy y te muestra sus fuentes ----------
    Se activa con el botón del globo, sola cuando la pregunta lo pide (hoy, precio, noticias…) o cuando el agente lo decide. */
 /* v4.2 · REGLA FIJA (pedido de Sammuel, 3 nov: «las IAs buscan porque sí y porque no, ESO NO PUEDE PASAR»).
-   Ya no decide la IA ni el azar: la misma pregunta da SIEMPRE la misma decisión, con cualquier IA, en Comparar y en A.L.I.A.S.
+   Ya no decide la IA ni el azar: la misma pregunta da SIEMPRE la misma decisión, con cualquier IA, en Comparar y en Quoryn
    · Se busca: si lo pides («busca en internet», «con fuentes», «investiga»), o si preguntas algo que cambia con el tiempo
      (noticias, precios, cotizaciones, clima, resultados, horarios, «hoy», «esta semana», lo más reciente…).
    · No se busca: charla, opinión, código, tareas, explicaciones generales, escribir o crear algo.
    · Tú mandas: en «+» puedes forzar «Buscar en internet» o «No buscar» para el próximo mensaje, y en Ajustes apagar la búsqueda sola.
-   La misma regla está en api/_web-regla.js (servidor, A.L.I.A.S.); t/web/regla.test.mjs revisa que las dos digan lo mismo. */
+   La misma regla está en api/_web-regla.js (servidor, Quoryn); t/web/regla.test.mjs revisa que las dos digan lo mismo. */
 function webRule(text){
   let s = String(text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   if (/```/.test(s) || (s.split('\n').filter(l => /[;{}]\s*$|^\s*(def|function|const|let|var|import|class|return|if|for|while|<\w+)/.test(l)).length >= 3)) return { go:false, why:'codigo' };

@@ -57,7 +57,7 @@ function warnBlocked(){
 /* ---------- SynXCoin's: medidor, límite diario, avisos y modo ahorro ---------- */
 function todayUsed(){ return SZ.todayAll(); }
 let sxEl = null;
-function budgetOk(){ return true; }        /* ya no hay límite personal: el límite de hoy lo pone SymphorIA */
+function budgetOk(){ return true; }        /* ya no hay límite personal: el límite de hoy lo pone Sinapse */
 let limWarned = '';
 function coinWatch(){
   const q = SZ.SZQ; if (!q.limit || q.on === false) return;

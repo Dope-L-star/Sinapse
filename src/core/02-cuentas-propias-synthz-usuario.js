@@ -67,7 +67,7 @@ function projSlim(){
 }
 const pjStr = (v, n) => typeof v === 'string' ? v.slice(0, n) : '';
 function cleanProj(r){
-  return { id:pjStr(r.id, 40), name:pjStr(r.name, 60) || 'Proyecto', desc:pjStr(r.desc, 300), instr:pjStr(r.instr, 8000), star:!!r.star, arch:!!r.arch, c:+r.c || 0, c0:+r.c0 || 0, t:+r.t || 0, u:+r.u || 0,
+  return { id:pjStr(r.id, 40), name:pjStr(r.name, 60) || 'Espacio', desc:pjStr(r.desc, 300), instr:pjStr(r.instr, 8000), star:!!r.star, arch:!!r.arch, c:+r.c || 0, c0:+r.c0 || 0, t:+r.t || 0, u:+r.u || 0,
     files:(Array.isArray(r.files) ? r.files : []).filter(f => f && typeof f.id === 'string').slice(0, 60).map(f => Object.assign({ id:pjStr(f.id, 40), name:pjStr(f.name, 120) || 'archivo' }, typeof f.text === 'string' ? { text:f.text.slice(0, 200000) } : {})) };
 }
 function mergeProjects(p){
@@ -110,8 +110,8 @@ function mergeIn(p, chats){
   Object.keys(chats || {}).forEach(k => { const r = chats[k], l = state.chats[k]; if (Array.isArray(r) && /^openrouter::./.test(k) && (!Array.isArray(l) || r.length > l.length)) state.chats[k] = r.filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string'); });
 }
 /* ---------- Google Drive (opcional): una copia de tus chats en TU Drive, en la carpeta privada de la app ----------
-   · Solo pide permiso para la carpeta oculta de SynthFlow (drive.appdata): no puede ver ni tocar tus otros archivos.
-   · El permiso dura ~1 hora y vive solo en memoria; nunca se guarda ni se envía a SymphorIA.
+   · Solo pide permiso para la carpeta oculta de Sonyx (drive.appdata): no puede ver ni tocar tus otros archivos.
+   · El permiso dura ~1 hora y vive solo en memoria; nunca se guarda ni se envía a Sinapse.
    · Al traer la copia se MEZCLA con lo que tienes: nunca se borra un chat. Tus llaves no van en la copia. */
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata', DRIVE_FILE = 'synthflow-chats.json', DRIVE_API = 'https://www.googleapis.com';
 const DRV = { tok:'', exp:0, fileId:'', busy:false, t:0, tc:null, cid:'' };
@@ -124,7 +124,7 @@ function driveToken(prompt){
   return new Promise((ok, no) => {
     if (!window.google || !google.accounts || !google.accounts.oauth2) return no(Object.assign(new Error('No pude abrir el botón de Google. Revisa tu internet o tu bloqueador de anuncios.'), { gsi:true }));
     DRV.tc = google.accounts.oauth2.initTokenClient({ client_id:DRV.cid, scope:DRIVE_SCOPE, include_granted_scopes:false,
-      callback:r => { if (r && r.access_token && google.accounts.oauth2.hasGrantedAllScopes(r, DRIVE_SCOPE)){ DRV.tok = r.access_token; DRV.exp = Date.now() + (+r.expires_in || 3600) * 1000; ok(true); } else no(new Error('No diste permiso para la carpeta de SynthFlow en tu Drive.')); },
+      callback:r => { if (r && r.access_token && google.accounts.oauth2.hasGrantedAllScopes(r, DRIVE_SCOPE)){ DRV.tok = r.access_token; DRV.exp = Date.now() + (+r.expires_in || 3600) * 1000; ok(true); } else no(new Error('No diste permiso para la carpeta de Sonyx en tu Drive.')); },
       error_callback:e => no(new Error(e && e.type === 'popup_closed' ? 'Cerraste la ventana de Google antes de terminar.' : e && e.type === 'popup_failed_to_open' ? 'Tu navegador no dejó abrir la ventanita de Google. Permite las ventanitas de este sitio.' : 'Google no completó el permiso.')) });
     DRV.tc.requestAccessToken({ prompt:prompt == null ? '' : prompt });
   });
@@ -133,7 +133,7 @@ async function dfetch(path, o = {}){
   const r = await fetch(DRIVE_API + path, Object.assign({}, o, { headers:Object.assign({ Authorization:'Bearer ' + DRV.tok }, o.headers || {}) })).catch(() => null);
   if (!r) throw new Error('No pude hablar con Google Drive. Revisa tu conexión.');
   if (r.status === 401){ DRV.tok = ''; throw Object.assign(new Error('El permiso de Drive venció. Toca «Sincronizar» otra vez.'), { expired:true }); }
-  if (r.status === 403){ const t = await r.text().catch(() => ''); throw new Error(/storageQuota|quota/i.test(t) ? 'Tu Google Drive está lleno.' : /accessNotConfigured|has not been used|disabled/i.test(t) ? 'Falta activar la «Google Drive API» en el proyecto de Google de SymphorIA (lo hace Prime una sola vez).' : 'Google Drive no dio permiso para guardar.'); }
+  if (r.status === 403){ const t = await r.text().catch(() => ''); throw new Error(/storageQuota|quota/i.test(t) ? 'Tu Google Drive está lleno.' : /accessNotConfigured|has not been used|disabled/i.test(t) ? 'Falta activar la «Google Drive API» en el espacio de Google de Sinapse (lo hace Prime una sola vez).' : 'Google Drive no dio permiso para guardar.'); }
   if (!r.ok) throw new Error('Google Drive respondió con un error (' + r.status + '). Intenta más tarde.');
   return r;
 }
@@ -146,7 +146,7 @@ async function driveFind(){
 async function drivePull(){
   const id = await driveFind(); if (!id) return 0;
   const d = await (await dfetch('/drive/v3/files/' + id + '?alt=media')).json().catch(() => null);
-  if (!d || d.app !== 'SynthFlow' || typeof d.chats !== 'object') return 0;
+  if (!d || d.app !== 'Sonyx' || typeof d.chats !== 'object') return 0;
   const before = Object.keys(state.chats).length;
   mergeIn(d.prefs || null, d.chats || {}); save();
   try{ hooks.chats(); }catch(e){}
@@ -155,7 +155,7 @@ async function drivePull(){
 async function drivePush(){
   const chats = {}; Object.keys(state.chats).forEach(k => { const a = state.chats[k]; if (Array.isArray(a) && a.length) chats[k] = a.map(m => ({ role:m.role, content:m.content, meta:m.meta, model:m.model, star:m.star || undefined, files:Array.isArray(m.files) ? m.files.map(f => ({ name:f.name, kind:f.kind })) : undefined })); });
   const prefs = prefsOut(); delete prefs.cfg;
-  const body = JSON.stringify({ app:'SynthFlow', v:1, t:Date.now(), prefs, chats });
+  const body = JSON.stringify({ app:'Sonyx', v:1, t:Date.now(), prefs, chats });
   const id = await driveFind();
   if (id) await dfetch('/upload/drive/v3/files/' + id + '?uploadType=media', { method:'PATCH', headers:{ 'Content-Type':'application/json' }, body });
   else {

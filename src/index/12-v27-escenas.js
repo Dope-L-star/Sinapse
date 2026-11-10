@@ -1,5 +1,5 @@
 /* ===== v2.7 · «SynthonIA es para ti»: las tres escenas, dibujadas en código (antes eran imágenes pegadas).
-   Cada escena es un escenario de 400 × 214 con sus cosas atrás, SynthonIA (la misma de toda la página) y lo que va adelante.
+   Cada escena es un escenario de 400 × 214 con sus cosas atrás, Sona (la misma de toda la página) y lo que va adelante.
    Todo se mueve en vivo: hojas que flotan, la página del libro que pasa, código que se escribe, errores que se arreglan,
    un documento que se arma solo. Cuando la escena no se ve, se queda quieta (cero trabajo de más). ===== */
 (() => {

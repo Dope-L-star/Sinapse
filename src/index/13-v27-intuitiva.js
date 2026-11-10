@@ -1,6 +1,6 @@
 /* ===== v2.7 · portada más intuitiva (lo que se investigó y se aplicó):
    1. Nunca empezar en blanco: al tocar el cuadro de la portada aparecen 3 preguntas de ejemplo que funcionan tal cual
-      (como las sugerencias de un buscador). Un toque y SynthFlow abre con esa pregunta. Se cierran con Esc o al escribir.
+      (como las sugerencias de un buscador). Un toque y Sonyx abre con esa pregunta. Se cierran con Esc o al escribir.
    2. La acción principal siempre a mano: cuando «Empezar gratis» sale de la pantalla, aparece en el menú de arriba.
    3. Los botones dicen a dónde llevan: «Ver demo» ahora es «Cómo funciona» (baja a «Así de fácil»).
    4. Más liviana: lo que se mueve en una sección se queda quieto mientras esa sección no se ve. ===== */

@@ -1,7 +1,7 @@
 /* ===== v3.8 · Vista previa de temas en Ajustes
-   Antes de tocar «Guardar» ya ves cómo queda: una ventanita de SynthFlow (componente React VistaTemas, montado por
+   Antes de tocar «Guardar» ya ves cómo queda: una ventanita de Sonyx (componente React VistaTemas, montado por
    next/componentes/ajustes/PuenteVistaTemas.jsx) pintada con el tema que señalas o eliges, con tu estilo y tamaño.
-   En SynthFlow, además, la página de atrás cambia de color al instante; si cierras sin guardar, vuelve como estaba.
+   En Sonyx, además, la página de atrás cambia de color al instante; si cierras sin guardar, vuelve como estaba.
    Los temas «Pronto» (Aurora y Oro negro) se pueden mirar, pero no elegir. ===== */
 let vtCur = null;
 function vtSend(){

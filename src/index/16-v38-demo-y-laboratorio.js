@@ -1,5 +1,5 @@
 /* v3.8c · Pedido de Sammuel (2-nov-2026, eligió «B y C juntas»):
-   B · «SynthonIA te lo muestra en vivo»: en «Así de fácil», una ventanita de SynthFlow de mentira que SynthonIA maneja sola con su
+   B · «Sona te lo muestra en vivo»: en «Así de fácil», una ventanita de Sonyx de mentira que Sona maneja sola con su
        manita (escribe, elige 3 IAs, envía, las respuestas llegan y elige la mejor). No llama a ninguna IA ni gasta EnerX.
        Arriba tiene pestañas con candado (Voz, Chats en grupo): son puertas falsas que llevan a votar.
    C · «El laboratorio»: sección nueva con tubos de ensayo, uno por función que todavía no existe. Arrastras tu batería de EnerX
@@ -14,22 +14,22 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '
 const dormir = ms => new Promise(r => setTimeout(r, ms));
 
 const T = {
-  es:{ demoT:'Mírala hacerlo', demoS:'SynthonIA usa SynthFlow por ti. Es una demostración: no gasta tu EnerX.', ejemplo:'Ejemplo',
+  es:{ demoT:'Mírala hacerlo', demoS:'Sona usa Sonyx por ti. Es una demostración: no gasta tu EnerX.', ejemplo:'Ejemplo',
     tabs:['Chat', 'Comparar', 'Voz', 'Chats en grupo'], q:'¿Cómo aprendo a programar desde cero?', escribe:'Pregúntale lo que sea…',
     resp:['Empieza con Python: es claro y sirve para todo. 20 minutos al día y un proyecto pequeño cada semana.', 'Elige algo que quieras crear (un juego, una página) y aprende solo lo que ese proyecto te pida.', 'Primero lógica con juegos como Scratch, luego Python. Repite poco cada día, no mucho un solo día.'],
     elige:'Esta', mejor:'La mejor', listo:'lista', pensando:'pensando…', candado:'Aún no existe. ¿La quieres?', quiero:'La quiero', gracias:'¡Anotado! Te escribimos solo cuando esté.', alLab:'Ver el laboratorio',
     votos:n => n === 0 ? 'Aún nadie dejó su correo' : n === 1 ? '1 persona dejó su correo' : n + ' personas dejaron su correo',
     labK:'El laboratorio', labT:'Tú decides qué inventamos después', labS:'Arrastra tu batería al tubo de la función que más quieres (o toca «La quiero») y déjanos tu correo. Cada correo llena el tubo. No cuesta nada.',
     bat:'Tu voto', votar:'La quiero', votado:'Anotado', correoT:'Para que cuente, déjanos tu correo: te avisamos solo cuando esté lista.', correoF:n => 'Para que tu voto por «' + n + '» cuente, déjanos tu correo. Te avisamos solo cuando esté lista.', correo:'Tu correo', avisame:'Avísame', correoOk:'Listo, te escribimos solo cuando esté.', correoMal:'Ese correo no parece válido.', fallo:'No pudimos guardarlo ahora. Intenta más tarde.', gratis:'Nada se cobra: solo queremos saber qué quieres.', soltar:'Suelta aquí',
-    f:{ voz:['Hablar en voz alta', 'Pregunta con tu voz y escucha la respuesta.'], grupo:['Chats en grupo', 'Tú, tus amigos y las IAs en la misma conversación.'], agenda:['Tareas que se hacen solas', 'Un agente que trabaja a la hora que le digas.'], extension:['Extensión del navegador', 'Pregúntale a varias IAs desde cualquier página.'], escritorio:['App de escritorio', 'SymphorIA en tu computador, con un atajo.'] } },
-  en:{ demoT:'Watch her do it', demoS:'SynthonIA uses SynthFlow for you. It is a demo: it does not use your EnerX.', ejemplo:'Example',
+    f:{ voz:['Hablar en voz alta', 'Pregunta con tu voz y escucha la respuesta.'], grupo:['Chats en grupo', 'Tú, tus amigos y las IAs en la misma conversación.'], agenda:['Tareas que se hacen solas', 'Un agente que trabaja a la hora que le digas.'], extension:['Extensión del navegador', 'Pregúntale a varias IAs desde cualquier página.'], escritorio:['App de escritorio', 'Sinapse en tu computador, con un atajo.'] } },
+  en:{ demoT:'Watch her do it', demoS:'Sona uses Sonyx for you. It is a demo: it does not use your EnerX.', ejemplo:'Example',
     tabs:['Chat', 'Compare', 'Voice', 'Group chats'], q:'How do I learn to code from scratch?', escribe:'Ask it anything…',
     resp:['Start with Python: it is clear and works for everything. 20 minutes a day and a small project every week.', 'Pick something you want to build (a game, a page) and learn only what that project needs.', 'First logic with games like Scratch, then Python. A little every day beats a lot in one day.'],
     elige:'This one', mejor:'The best', listo:'done', pensando:'thinking…', candado:'This does not exist yet. Want it?', quiero:'I want it', gracias:'Got it! We will only write when it is ready.', alLab:'See the lab',
     votos:n => n === 0 ? 'Nobody has left their email yet' : n === 1 ? '1 person left their email' : n + ' people left their email',
     labK:'The lab', labT:'You decide what we build next', labS:'Drag your battery to the tube of the feature you want most (or tap «I want it») and leave your email. Every email fills the tube. It costs nothing.',
     bat:'Your vote', votar:'I want it', votado:'Counted', correoT:'For it to count, leave your email: we will only write when it is ready.', correoF:n => 'For your vote for «' + n + '» to count, leave your email. We will only write when it is ready.', correo:'Your email', avisame:'Let me know', correoOk:'Done, we will only write when it is ready.', correoMal:'That email does not look right.', fallo:'We could not save it right now. Try again later.', gratis:'Nothing is charged: we just want to know what you want.', soltar:'Drop it here',
-    f:{ voz:['Talk out loud', 'Ask with your voice and hear the answer.'], grupo:['Group chats', 'You, your friends and the AIs in one conversation.'], agenda:['Tasks that run themselves', 'An agent that works at the time you choose.'], extension:['Browser extension', 'Ask several AIs from any web page.'], escritorio:['Desktop app', 'SymphorIA on your computer, one shortcut away.'] } }
+    f:{ voz:['Talk out loud', 'Ask with your voice and hear the answer.'], grupo:['Group chats', 'You, your friends and the AIs in one conversation.'], agenda:['Tasks that run themselves', 'An agent that works at the time you choose.'], extension:['Browser extension', 'Ask several AIs from any web page.'], escritorio:['Desktop app', 'Sinapse on your computer, one shortcut away.'] } }
 };
 const t = () => T[L()];
 const IAS = [['Llama', '#ff7a45'], ['Mistral', '#3de0ff'], ['Gemini', '#ff3d9a']];

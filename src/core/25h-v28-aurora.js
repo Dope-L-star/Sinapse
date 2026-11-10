@@ -1,11 +1,11 @@
 /* ===== v2.8 · cielo en vivo: los fondos que mandó Sammuel, hechos en código (ninguno es una imagen) =====
    Cinco escenas que se dibujan y se mueven en tiempo real:
    · «fondo»     aurora rosa y cian arriba a la derecha, «V» violeta a la izquierda, brillo turquesa abajo (la portada).
-   · «seda»      una cinta ancha en diagonal: rosa arriba, lavanda al medio, verde agua abajo (SynthFlow sin mensajes).
+   · «seda»      una cinta ancha en diagonal: rosa arriba, lavanda al medio, verde agua abajo (Sonyx sin mensajes).
    · «nebulosa»  nube violeta y magenta cruzando el cielo con hilos cian, una galaxia y cúmulos de estrellas.
    · «planeta»   nube de colores arriba a la izquierda, velos lavanda abajo, la galaxia y un planeta con anillos.
-   · «calma»     un arco tenue y oscuro (SynthFlow con mensajes: se lee mejor).
-   En la portada el cielo pasa de una escena a la otra mientras bajas. En SynthFlow, apenas hay mensajes, la «seda»
+   · «calma»     un arco tenue y oscuro (Sonyx con mensajes: se lee mejor).
+   En la portada el cielo pasa de una escena a la otra mientras bajas. En Sonyx, apenas hay mensajes, la «seda»
    se apaga en «calma» y sube una ola de noche desde la caja de escribir.
    Cómo es tan liviano: las nubes se pintan en un lienzo chiquito (~36 000 píxeles) y la pantalla lo estira; ese estirado
    ES el desenfoque. Estrellas, galaxia y planeta se dibujan una sola vez y solo se mueven con la tarjeta gráfica.

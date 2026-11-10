@@ -34,7 +34,7 @@ const CODE_SYS = [
 ].join('\n');
 const CODE_SYS_SHORT = 'MODO SYNTHCODE (ahorro). Eres un ingeniero senior perfeccionista. Entrega código COMPLETO y funcional (nunca «...», TODO ni partes omitidas), con el nombre del archivo antes de cada bloque y el lenguaje en la cerca. Para webs: un solo index.html con <style> y <script>, responsive, accesible y bonito. Revisa sintaxis, nombres y casos borde antes de terminar. Explica en 1 a 3 líneas cómo usarlo.';
 /* ¿esta conversación es de programar? (el último pedido, un archivo de código adjunto o seguir hablando de un código anterior) */
-const FIX_TAG = '[Revisión automática de SynthFlow]';
+const FIX_TAG = '[Revisión automática de Sonyx]';
 const isFix = m => !!m && m.role === 'user' && (!!m.fix || String(m.content || '').startsWith(FIX_TAG));
 function codeMode(chat){
   const u = [...chat].reverse().find(m => m.role === 'user'); if (!u) return false;

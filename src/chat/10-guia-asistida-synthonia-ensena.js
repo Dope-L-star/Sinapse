@@ -1,8 +1,8 @@
 /* =====================================================================
-   Guía Asistida: SynthonIA enseña SynthFlow con su manita (camino B)
+   Guía Asistida: Sona enseña Sonyx con su manita (camino B)
    1 temas · 2 IA recomendadas · 3 recorrido · 4 comparar 2 · 5 prueba real · 6 conectar
-   v3.0: arranca sola al terminar «Empieza en SynthFlow» (ya elegiste tema e IA, así que salta 1 y 2) y el recorrido
-   muestra también Nuevo chat, los modos, el esfuerzo, Proyectos, Sintéticos y los Ajustes (temas, Simple, tamaño, rápido, idioma)
+   v3.0: arranca sola al terminar «Empieza en Sonyx» (ya elegiste tema e IA, así que salta 1 y 2) y el recorrido
+   muestra también Nuevo chat, los modos, el esfuerzo, Espacios, Sintéticos y los Ajustes (temas, Simple, tamaño, rápido, idioma)
    ===================================================================== */
 const H = SZ.HAND;
 const GUIDE_PROMPTS = {
@@ -111,9 +111,9 @@ function gRestore(s){
 async function waitCatalog(ms){ const t0 = Date.now(); while (!cat.list.length && Date.now() - t0 < ms){ await gWait(250); } }
 
 async function runGuide(o = {}){
-  await SZ.synReady;   /* v3.4 · SynthonIA llega en su propio archivo: la guía la espera */
+  await SZ.synReady;   /* v3.4 · Sona llega en su propio archivo: la guía la espera */
   if (G) return;
-  const pre = o.topic && TOPIC[o.topic] ? o.topic : null;   /* v3.0: vienes de «Empieza en SynthFlow»: ya elegiste tema e IA */
+  const pre = o.topic && TOPIC[o.topic] ? o.topic : null;   /* v3.0: vienes de «Empieza en Sonyx»: ya elegiste tema e IA */
   closeSide(); closeChatsSheet(); if (tourEl) closeTour(false);
   if ($('#conn')) { const c = $('#cClose'); if (c) c.click(); }
   const off = pre ? 2 : 0;
@@ -128,7 +128,7 @@ async function runGuide(o = {}){
     await H.moveTo({ x:innerWidth / 2, y:innerHeight * .26 }, { shape:'arrow' });
     H.wave(2);
     let r = await H.talk(pre ? '¡Aquí está la guía! Ya elegiste «' + TOPIC[pre].l + '» y tu IA. En unos 2 minutos te muestro cómo seguir: dónde está cada cosa, cómo comparar IAs y tu primer chat de verdad, gratis.'
-      : '¡Hola! Soy SynthonIA. Te enseño SynthFlow en unos 2 minutos: eliges tus temas, te muestro las IA que mejor los hacen, comparamos 2 y chateas de verdad, gratis.', { mood:'feliz', buttons:[{ label:'¡Vamos!' }, { label:'Ahora no', ghost:true }] });
+      : '¡Hola! Soy Sona. Te enseño Sonyx en unos 2 minutos: eliges tus temas, te muestro las IA que mejor los hacen, comparamos 2 y chateas de verdad, gratis.', { mood:'feliz', buttons:[{ label:'¡Vamos!' }, { label:'Ahora no', ghost:true }] });
     if (r === 1){ endGuide(false); return; }
     gNeed();
 
@@ -186,17 +186,17 @@ async function runGuide(o = {}){
     await gPoint(gT('.tchip[data-topic]', '.tchip[data-topic]'), 'Toca un tema cuando quieras y te recomiendo IA expertas en eso.');
     /* v3.0: lo nuevo, para que nadie se quede sin saber dónde está */
     await gPoint(gT('#sNav [data-sn="new"]', '#rail [data-r="new"]') || gT('#cNew', '#rail [data-r="new"]') || gT('#rail [data-r="new"]', '#tabbar [data-tab="chats"]'), 'Con «Nuevo chat» empiezas una conversación limpia cuando cambies de tema. La anterior queda guardada.', { side:true });
-    await gPoint(gAny('#cMode'), 'Aquí eliges el modo: «Automática» escoge la mejor IA por ti, «Chat» te deja elegirla, y «SuperiorSynth» trabaja por pasos como un agente.');
-    await gPoint(gAny('#cEffort'), 'Y aquí, cómo piensa: Auto, Veloz (rápido), Profundo (a fondo, el que más gasta) o Creativo (ideas originales).');
-    await gPoint(gT('#sNav [data-sn="proj"]', '#cProj') || gT('#railProj', '#cProj') || gT('#cProj', '#cProj'), '«Proyectos» junta chats, instrucciones y archivos de un mismo tema. La IA los tiene en cuenta en cada chat del proyecto, como en Claude.', { side:true });
-    await gPoint(gT('#sNav [data-sn="syn"]', '#cSyn') || gT('#railSyn', '#cSyn') || gT('#cSyn', '#cSyn'), '«Sintéticos» guarda todo lo que la IA crea: páginas, juegos, dibujos y documentos. Cuando una respuesta trae uno, se abre solo al lado del chat.', { side:true });
+    await gPoint(gAny('#cMode'), 'Aquí eliges el modo: «Automática» escoge la mejor IA por ti, «Chat» te deja elegirla, y «Apex» trabaja por pasos como un agente.');
+    await gPoint(gAny('#cEffort'), 'Y aquí, cómo piensa: Flow (según tu pregunta), Fragment (rápido), Focus (a fondo, el que más gasta) u Horizon (ideas originales).');
+    await gPoint(gT('#sNav [data-sn="proj"]', '#cProj') || gT('#railProj', '#cProj') || gT('#cProj', '#cProj'), '«Espacios» junta chats, instrucciones y archivos de un mismo tema. La IA los tiene en cuenta en cada chat del espacio, como en Claude.', { side:true });
+    await gPoint(gT('#sNav [data-sn="syn"]', '#cSyn') || gT('#railSyn', '#cSyn') || gT('#cSyn', '#cSyn'), '«Obras» guarda todo lo que la IA crea: páginas, juegos, dibujos y documentos. Cuando una respuesta trae una, se abre sola al lado del chat.', { side:true });
     const cfgB = gT('#cfgBtn', '#tabbar [data-tab="cfg"]');
     const rr = await gPoint(cfgB, 'En «Ajustes» cambias cómo se ve todo. ¿Te muestro lo más útil?', { buttons:[{ label:'Muéstrame' }, { label:'Ahora no', ghost:true }], auto:15000, mood:'guino' });
     if (rr === 0 && cfgB){
       SZ.cfgModal(); await gWait(700);
       await gPoint(gAny('#cfgCh'), '«Más bonito» trae todos los efectos. Si tu equipo va lento, «Más rápido» quita efectos y todo responde al instante.');
-      await gPoint(gAny('#cfgTh'), 'Aquí eliges el color: SymphorIA, Océano, Bosque, Lavanda y los que vienen.');
-      await gPoint(gAny('#cfgUi'), 'Y el estilo: «SynthFlow» con vidrio y animaciones, o «Simple», el más limpio y parecido a Claude.');
+      await gPoint(gAny('#cfgTh'), 'Aquí eliges el color: Sinapse, Océano, Bosque, Lavanda y los que vienen.');
+      await gPoint(gAny('#cfgUi'), 'Y el estilo: «Sonyx» con vidrio y animaciones, o «Simple», el más limpio y parecido a Claude.');
       await gPoint(gAny('#cfgSz'), 'Si quieres que todo se vea más pequeño, usa el tamaño compacto.');
       await gPoint(gAny('#cfgLang'), 'Y aquí pones la página en inglés o en español.');
       const x = $('#cfgm [data-close]'); if (x) x.click();
@@ -261,7 +261,7 @@ async function runGuide(o = {}){
         } else {
         if (last) await H.moveTo(last, { shape:'arrow', fx:.15, fy:.2 });
         SZ.SND.done();
-        await H.talk(useSz ? '¡Lo lograste! Puedes seguir chateando gratis. Abajo ves cómo va tu límite de hoy.' : '¡Lo lograste! Todavía tienes EnerX de prueba para seguir practicando. Abajo dice quién la paga: SymphorIA.', { near:last || inp, mood:'celebrando', buttons:[{ label:'Siguiente' }], auto:9000 });
+        await H.talk(useSz ? '¡Lo lograste! Puedes seguir chateando gratis. Abajo ves cómo va tu límite de hoy.' : '¡Lo lograste! Todavía tienes EnerX de prueba para seguir practicando. Abajo dice quién la paga: Sinapse.', { near:last || inp, mood:'celebrando', buttons:[{ label:'Siguiente' }], auto:9000 });
         }
       } else await H.talk('Puedes enviarlo después: el mensaje te espera en la caja.', { mood:'guino', buttons:[{ label:'Siguiente' }] });
     }
@@ -286,7 +286,7 @@ async function runGuide(o = {}){
     /* 7 · tu Drive (opcional): más espacio y una copia de tus chats */
     if (SZ.ACC.dcid && !(SZ.DRIVE.meta() || {}).linked){
       gHud(7, 'Tu Drive'); SZ.DRIVE.preload(); H.quiet();
-      const r7 = await H.talk('¿Quieres más espacio? Vincula tu Google Drive y guardo una copia de tus chats en una carpeta privada de SynthFlow. No puedo ver tus otros archivos.', { mood:'encantada', buttons:[{ label:'Vincular mi Drive' }, { label:'Ahora no', ghost:true }] });
+      const r7 = await H.talk('¿Quieres más espacio? Vincula tu Google Drive y guardo una copia de tus chats en una carpeta privada de Sonyx. No puedo ver tus otros archivos.', { mood:'encantada', buttons:[{ label:'Vincular mi Drive' }, { label:'Ahora no', ghost:true }] });
       gNeed();
       if (r7 === 0){ H.quiet(); const ok = await driveGo(null); gNeed(); if (ok) await H.talk('¡Hecho! Desde ahora tus chats también viven en tu Drive. Lo encuentras en «⋯ › Google Drive».', { mood:'celebrando', buttons:[{ label:'Terminar' }] }); }
       else { H.talk('Sin problema. Cuando quieras, está en Ajustes › IAs y memoria › Google Drive.', { mood:'guino' }); await gWait(2400); }

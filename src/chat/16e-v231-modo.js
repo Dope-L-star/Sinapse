@@ -1,11 +1,11 @@
 /* ---------- v2.3.1 · modo de uso: Automática · Chat · SuperiorSynth ----------
-   Automática: SymphorIA elige sola la IA y no se muestra el selector.  Chat: eliges tú la IA (empieza en Gemini).
-   SuperiorSynth: el agente elige la IA; cuando la persona dice «me quedo con esta» pasa a Chat con esa IA al lado.
+   Automática: Sinapse elige sola la IA y no se muestra el selector.  Chat: eliges tú la IA (empieza en Gemini).
+   Apex: el agente elige la IA; cuando la persona dice «me quedo con esta» pasa a Chat con esa IA al lado.
    El modo se deduce del estado (agente encendido, IA elegida), así que sigue funcionando con todo lo que ya cambia de IA. */
 const MODES = {
   auto:  { n:'Automática',   d:'Elige sola la mejor IA para cada pedido.',          ico:'<path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/><path d="M19 15l.7 1.8 1.8.7-1.8.7L19 20l-.7-1.8-1.8-.7 1.8-.7z"/>' },
   chat:  { n:'Chat',         d:'Tú eliges con qué IA hablas.',                       ico:'<path d="M4 5h16v11H9l-5 4z"/>' },
-  agent: { n:'SuperiorSynth', d:'Tareas largas: elige la IA y mejora tu pedido.',   ico:'<path d="M12 3l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/>' }
+  agent: { n:'Apex', d:'Tareas largas: elige la IA y mejora tu pedido.',   ico:'<path d="M12 3l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/>' }
 };
 const MODE_KEYS = ['auto', 'chat', 'agent'];
 const modeSvg = k => k === 'agent' && typeof ssIco === 'function' ? ssIco() : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + MODES[k].ico + '</svg>';
@@ -28,7 +28,7 @@ function applyMode(k){
   if (k === 'auto'){ const cur = selId(); if (cur !== 'sz:auto') sx.lastChat = cur; sx.cmode = 'auto'; st().pinned = ''; st().model.openrouter = 'sz:auto'; }
   else { sx.cmode = 'chat'; const want = (sx.lastChat && connected(sx.lastChat) ? sx.lastChat : '') || geminiDefault(); if (want && want !== selId()) setModel(want); }
   save(); paintMode(); try{ paintSel(); renderTop(true); renderMsgs(); updateHint(); }catch(e){}
-  toast(k === 'auto' ? 'Modo Automática: SymphorIA elige la IA por ti.' : 'Modo Chat: tú eliges la IA (' + info(selId()).name + ').');
+  toast(k === 'auto' ? 'Modo Automática: Sinapse elige la IA por ti.' : 'Modo Chat: tú eliges la IA (' + info(selId()).name + ').');
 }
 function paintMode(){
   const k = modeKey(), b = $('#cMode'); if (!b) return;
