@@ -19,6 +19,18 @@ function sonaRibbon(){
 const SONA_MIC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
 const SONA_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
 
+/* enlace directo: …/chat.html?sona=1 (o …#sona puesto después de cargar) abre a Sona, también si la habías escondido en esta visita.
+   Sirve para compartirla y para probarla. (El «#» del inicio lo borra core al cargar, por eso el enlace de carga usa ?sona.) */
+const SONA_LINK = (() => { try{ return /(?:^|[?&])sona(?:=|&|$)/i.test(location.search); }catch(e){ return false; } })();
+function sonaDeepLink(){
+  if (!(BOT.deepNow || /^#sona\b/i.test(location.hash))) return;
+  BOT.deepNow = false;
+  try{ sessionStorage.removeItem('synthz:bothide'); }catch(e){}
+  if (!BOT.el) botMount();
+  if (BOT.el && !BOT.open) botOpen();
+}
+addEventListener('hashchange', sonaDeepLink);
+
 /* el marcador del escenario de ella (se llama al abrir) */
 function sonaPanelHtml(){
   return '<div class="bstage" aria-hidden="true"><i class="bs-bg"></i>' + sonaRibbon() + '<i class="bs-sp a"></i><i class="bs-sp b"></i><i class="bs-sp c"></i><i class="bs-base"></i><div class="bsc"></div></div>'
