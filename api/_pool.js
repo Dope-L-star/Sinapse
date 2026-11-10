@@ -489,7 +489,7 @@ export async function searchWiki(q, n = 4, lang = 'es'){
   return ((d.query && d.query.search) || []).map(x => ({ t:String(x.title), u:base + '/wiki/' + encodeURIComponent(String(x.title).replace(/ /g, '_')), s:String(x.snippet || '').replace(/<[^>]+>/g, '').replace(/&quot;/g, '"').replace(/&amp;/g, '&').slice(0, 500) }));
 }
 /* v3.8 · respaldos gratis y sin llave cuando Tavily/Exa no responden: los feeds RSS públicos de Bing (web y noticias) */
-const RSS_UA = { 'user-agent':'Mozilla/5.0 (compatible; SymphorIA/3.8; +https://symphoria.pages.dev)', accept:'application/rss+xml,application/xml,text/xml;q=0.9,*/*;q=0.5' };
+const RSS_UA = { 'user-agent':'Mozilla/5.0 (compatible; SymphorIA/3.8; +https://sinapse.pages.dev)', accept:'application/rss+xml,application/xml,text/xml;q=0.9,*/*;q=0.5' };
 const unx = t => String(t || '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').replace(/<[^>]+>/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&nbsp;/g, ' ').replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(+d)).replace(/&amp;/g, '&').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 export async function searchRss(q, n = 6, news = false, lang = 'es'){
   const mkt = lang === 'en' ? 'en-US' : 'es-CO';

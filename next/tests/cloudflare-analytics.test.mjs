@@ -25,7 +25,7 @@ function memoryStorage() {
 function fakeBrowser(location = { pathname: '/chat.html', search: '', hash: '' }) {
   const scripts = [];
   const documentObject = {
-    location: { hostname: 'symphoria.pages.dev' },
+    location: { hostname: 'sinapse.pages.dev' },
     head: { appendChild: s => scripts.push(s) },
     querySelector: selector => selector === 'script[data-symphoria-cloudflare-analytics="true"]' ? scripts.find(s => !s.removed) || null : null,
     createElement: tag => ({ tagName: String(tag).toUpperCase(), dataset: {}, remove() { this.removed = true; } }),

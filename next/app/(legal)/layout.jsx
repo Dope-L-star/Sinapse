@@ -6,7 +6,7 @@ import Umami from '../../componentes/Umami';   /* v4.3 · visitas con Umami, sin
 /* Marco común de las páginas hechas en Next.js: fuentes, colores oscuros y la capa de animaciones compartida (movimiento.css/js),
    la misma que usan la portada y SynthFlow. */
 export const metadata = {
-  metadataBase: new URL('https://symphoria.pages.dev'),
+  metadataBase: new URL('https://sinapse.pages.dev'),
   icons: { icon: '/icon.svg' }
 };
 export const viewport = { width: 'device-width', initialScale: 1, colorScheme: 'dark' };

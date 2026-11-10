@@ -1,7 +1,7 @@
 import Umami from '../../componentes/Umami';   /* v4.3 · visitas con Umami, sin cookies */
 /* Marco del tablero de gestión (Fase 3): página aparte de Pulsem, solo para el equipo, sin indexar. */
 export const metadata = {
-  metadataBase: new URL('https://symphoria.pages.dev'),
+  metadataBase: new URL('https://sinapse.pages.dev'),
   robots: { index: false, follow: false },
   icons: { icon: '/media/v30/fav-s.png' }
 };

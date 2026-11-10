@@ -2,7 +2,7 @@
    · node t/cerebro/tanda.mjs --seco           → sin internet: muestra qué decide el cerebro para cada pregunta
                                                  (tipo de trabajo, fácil/difícil, si piensa antes) y las instrucciones que recibe la IA.
    · node t/cerebro/tanda.mjs <url> <nombre>   → pregunta de verdad a <url>/api/ai (sin cuenta) y guarda las respuestas en
-                                                 t/cerebro/resultados/<nombre>.md. Ej.: «… https://symphoria.pages.dev antes»
+                                                 t/cerebro/resultados/<nombre>.md. Ej.: «… https://sinapse.pages.dev antes»
    Sin cuenta hay 5 mensajes al día por dispositivo: cada 5 preguntas se usa otro «dispositivo» de prueba. */
 import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));

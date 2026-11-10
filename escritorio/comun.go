@@ -25,7 +25,7 @@ var version = "0.0.0-dev"
 const (
 	nombreApp  = "SymphorIA"
 	editor     = "SymphorIA (proyecto gratis)"
-	sitioApp   = "https://symphoria.pages.dev/chat.html?app=1&escritorio=1"
+	sitioApp   = "https://sinapse.pages.dev/chat.html?app=1&escritorio=1"
 	repoGitHub = "Dope-L-star/Sinapse"
 	prefijoTag = "obertura-v"
 	nombreExe  = "SymphorIA.exe"

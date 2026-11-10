@@ -21,7 +21,7 @@ jobs:
           node-version: 22
       - name: Revisar
         id: revisar
-        run: node ops/vigia.mjs https://symphoria.pages.dev | tee vigia.txt
+        run: node ops/vigia.mjs https://sinapse.pages.dev | tee vigia.txt
         continue-on-error: true
       - name: Avisar o cerrar el aviso
         uses: actions/github-script@v7

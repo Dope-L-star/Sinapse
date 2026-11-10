@@ -2,7 +2,7 @@ import Umami from '../../componentes/Umami';   /* v4.3 · visitas con Umami, sin
 /* Marco de Pulsem (panel del equipo) en Next.js: sus estilos de siempre (pulsem.css + core.css) y la capa de animaciones.
    Es otro «layout raíz» (grupo (panel)) porque no comparte nada con Términos y Privacidad. */
 export const metadata = {
-  metadataBase: new URL('https://symphoria.pages.dev'),
+  metadataBase: new URL('https://sinapse.pages.dev'),
   robots: { index: false, follow: false },
   icons: { icon: '/media/v30/fav-s.png' }
 };

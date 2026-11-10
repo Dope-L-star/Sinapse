@@ -150,7 +150,7 @@
     },
     {
       "source": "/:ruta((?!api/|v/|portal\\.css$|portal\\.js$|sw\\.js$|icon\\.svg$|og-symphoria\\.jpg$|robots\\.txt$).+)",
-      "destination": "https://symphoria.pages.dev/:ruta",
+      "destination": "https://sinapse.pages.dev/:ruta",
       "permanent": false
     }
   ],

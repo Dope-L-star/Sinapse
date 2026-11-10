@@ -9,7 +9,7 @@ Un solo archivo, `SymphorIA-Obertura.exe` (unos 6 MB), hace todo:
 |---|---|
 | **Instala** | Se copia a `%LOCALAPPDATA%\Programs\SymphorIA\SymphorIA.exe`. Solo para ese usuario: **no pide administrador**. |
 | **Acceso directo** | En el escritorio (también si el escritorio está en OneDrive) y en el menú Inicio, con el ícono de SymphorIA. |
-| **Abre la app** | En su propia ventana, sin barra del navegador (modo app), con **tu navegador, no con Edge** (ver «Qué navegador usa» abajo). Usa el perfil normal del navegador, así Puter y las cuentas siguen conectadas. Abre `https://symphoria.pages.dev/chat.html` (SynthFlow directo). |
+| **Abre la app** | En su propia ventana, sin barra del navegador (modo app), con **tu navegador, no con Edge** (ver «Qué navegador usa» abajo). Usa el perfil normal del navegador, así Puter y las cuentas siguen conectadas. Abre `https://sinapse.pages.dev/chat.html` (SynthFlow directo). |
 | **Se actualiza solo** | Al abrirse (como mucho cada 6 horas) mira los *releases* de GitHub con etiqueta `obertura-vX.Y.Z`. Si hay uno más nuevo, lo baja, **revisa su huella SHA-256** y cambia el .exe. La próxima vez que se abra ya es la nueva. La página en sí siempre está al día (es la web). |
 | **Se desinstala limpio** | Aparece en *Configuración › Aplicaciones › Aplicaciones instaladas* como «SymphorIA». Al quitarla se borran los accesos directos, la entrada del registro, la carpeta del programa y la de datos. Los chats siguen en la cuenta. |
 | **ES / EN** | Todos los textos en español o inglés según el idioma de Windows. |
