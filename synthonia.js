@@ -828,7 +828,11 @@ function botAvatarClick(e){
   const b = BOT.el; if (!b || b._skip) return;
   BOT.lostN = 0; b.classList.remove('g1', 'g2');
   /* según dónde la toques, hace una cara distinta */
-  const z = e && e.detail ? botZone(e) : '';
+  let z = e && e.detail ? botZone(e) : '';
+  /* v4.6 · en el celular (o con la bolita pegada al logo, de 37 px) tocar el ojo o la antenita TAMBIÉN abre a Sona: antes solo
+     decía «¡Ay! Ese es mi ojo.» y parecía que no había cómo abrirla. La carita igual reacciona. */
+  let touch = false; try{ touch = b.classList.contains('inhead') || matchMedia('(pointer:coarse)').matches; }catch(er){}
+  if (touch && (z === 'eye' || z === 'top')){ botFace(z === 'eye' ? 'auch' : 'sorprendida', true); setTimeout(() => botFace('feliz', true), 1500); z = ''; }
   if (z === 'eye'){ SND.blip('auch'); botFace('auch', true); botBubble('¡Ay! Ese es mi ojo.', 2200); setTimeout(() => botFace('feliz', true), 1900); return; }
   if (z === 'top'){ botFace('sorprendida', true); botBubble('¡Uy, mi antena! Me haces cosquillas.', 2200); setTimeout(() => botFace('feliz', true), 1900); return; }
   if (z === 'cheek'){ botFace('encantada', true); setTimeout(() => botFace('feliz'), 1600); }
@@ -903,6 +907,7 @@ function botMount(){
   if (b.dataset.synthoniaPointerBound !== '1') b.dataset.synthoniaPointerBound = '1';
   if (!reactOwned && !b.dataset.synthoniaClickBound){ b.addEventListener('click', botAvatarClick); b.dataset.synthoniaClickBound = '1'; }
   setTimeout(botSync, 1200);
+  if (SONA_LINK && !BOT.deepDone){ BOT.deepDone = BOT.deepNow = true; setTimeout(sonaDeepLink, 700); }   /* v4.6 · enlace directo ?sona=1 */
 }
 
 /* v1.4: la carita cambia suave (una se desvanece y la otra aparece), y si está «pegada» (triste) no cambia */
@@ -1449,6 +1454,18 @@ function sonaRibbon(){
 }
 const SONA_MIC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
 const SONA_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+
+/* enlace directo: …/chat.html?sona=1 (o …#sona puesto después de cargar) abre a Sona, también si la habías escondido en esta visita.
+   Sirve para compartirla y para probarla. (El «#» del inicio lo borra core al cargar, por eso el enlace de carga usa ?sona.) */
+const SONA_LINK = (() => { try{ return /(?:^|[?&])sona(?:=|&|$)/i.test(location.search); }catch(e){ return false; } })();
+function sonaDeepLink(){
+  if (!(BOT.deepNow || /^#sona\b/i.test(location.hash))) return;
+  BOT.deepNow = false;
+  try{ sessionStorage.removeItem('synthz:bothide'); }catch(e){}
+  if (!BOT.el) botMount();
+  if (BOT.el && !BOT.open) botOpen();
+}
+addEventListener('hashchange', sonaDeepLink);
 
 /* el marcador del escenario de ella (se llama al abrir) */
 function sonaPanelHtml(){

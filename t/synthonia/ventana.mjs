@@ -24,19 +24,21 @@ const browser = await chromium.launch();
 let fails = 0, ok = 0;
 const check = (name, cond, why) => { if (cond){ ok++; console.log('OK    ' + name); } else { fails++; console.log('FALLO ' + name + ' — ' + (why || '')); } };
 
-async function open(lang, { W = 1280, H = 800, mobile = false, mic = false, delay = 0 } = {}){
+async function open(lang, { W = 1280, H = 800, mobile = false, mic = false, delay = 0, hash = '', ui = '' } = {}){
   const ctx = await browser.newContext({ viewport:{ width:W, height:H }, deviceScaleFactor:1, isMobile:mobile, hasTouch:mobile });
   const page = await ctx.newPage(); const errors = []; page.on('pageerror', e => errors.push(e.message));
   await page.route(u => !u.href.startsWith(BASE), r => r.abort());
   await page.route('**/api/help', async r => { if (delay) await new Promise(x => setTimeout(x, delay)); await r.fulfill({ status:200, contentType:'application/json', body:JSON.stringify({ text:lang === 'en' ? 'Sure, tell me more.' : 'Claro, cuéntame más.', mood:'encantada', left:19 }) }); });
-  await page.addInitScript(([l, m]) => {
+  await page.addInitScript(([l, m, u]) => {
+    try{ if (u) localStorage.setItem('synthz:cfg', JSON.stringify({ v:2, ui:u })); }catch(e){}
     try{ localStorage.setItem('synthz:visited', '1'); localStorage.setItem('synthz:tour', '1'); localStorage.setItem('synthz:lang', l); localStorage.setItem('synthz:portada', JSON.stringify({ v:'nuevo', t:1 })); localStorage.setItem('synthz:bloq', '1'); sessionStorage.setItem('synthz:blkwarn', '1'); }catch(e){}
     if (m){ window.__mic = { started:0 }; window.SpeechRecognition = window.webkitSpeechRecognition = function(){ this.start = () => { window.__mic.started++; window.__mic.self = this; }; this.stop = () => { if (this.onend) this.onend(); }; }; }
     else { delete window.SpeechRecognition; delete window.webkitSpeechRecognition; }
-  }, [lang, mic]);
-  await page.goto(BASE + '/chat.html');
+  }, [lang, mic, ui]);
+  await page.goto(BASE + '/chat.html' + (hash === '?sona' ? '?sona=1' : hash));
   await page.waitForFunction(() => window.SZ && window.SZ.BOT && typeof window.SZ.BOT.open === 'function', null, { timeout:15000 });
   const c = await page.$('text=Continuar sin Puter'); if (c) await c.click();
+  if (hash){ await page.waitForSelector('#szBotP.on .bsc .szbody', { timeout:12000 }).catch(() => {}); await page.waitForTimeout(500); return { page, errors, ctx }; }
   await page.evaluate(() => window.SZ.BOT.open()); await page.waitForSelector('#szBotP.on .bsc .szbody', { timeout:8000 });
   await page.waitForTimeout(500);
   return { page, errors, ctx };
@@ -114,6 +116,39 @@ for (const cls of ['simple', 'noanim']){
   check('«' + cls + '»: la ventanita sigue completa y ella a la vista', pan.w > 300 && sc.w > 100 && pan.b <= 800);
   if (cls === 'noanim') check('«noanim»: el fondo y las ondas del escenario no se mueven', await page.evaluate(() => ['.bs-bg', '.bs-l', '.bs-sp'].every(s => getComputedStyle(document.querySelector('#szBotP ' + s)).animationName === 'none')));
   check('«' + cls + '»: sin errores de JavaScript', errors.length === 0, errors.join(' | '));
+  await ctx.close();
+}
+
+/* 5) el acceso a Sona se ve en TODOS los estilos y tamaños (en Simple estaba escondido: «no hay cómo abrir a Sona») y el enlace #sona la abre */
+for (const [name, opts] of [['PC', {}], ['celular', { W:390, H:844, mobile:true }], ['PC · estilo Simple', { ui:'simple' }], ['celular · estilo Simple', { W:390, H:844, mobile:true, ui:'simple' }]]){
+  const { page, errors, ctx } = await open('es', { ...opts, hash:'#nada' });
+  await page.evaluate(() => { const c = document.querySelector('#szBotP'); if (c) c.remove(); });
+  await page.waitForTimeout(1500);
+  const b = await page.evaluate(() => { const e = document.getElementById('szBot'); if (!e) return null; const cs = getComputedStyle(e), r = e.getBoundingClientRect(); return { show:cs.display !== 'none' && cs.visibility !== 'hidden', w:r.width, h:r.height, inside:r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight }; });
+  check(name + ': el botón de Sona se ve en pantalla (visible, con tamaño y dentro)', !!b && b.show && b.w >= 36 && b.h >= 36 && b.inside, JSON.stringify(b));
+  /* la bolita se corre cuando carga la letra del logo: esperar a que quede quieta antes de tocarla (en el CI, más lento, se movía) */
+  await page.evaluate(async () => { try{ await document.fonts.ready; }catch(e){} let last = '', same = 0; for (let i = 0; i < 40 && same < 3; i++){ const r = document.getElementById('szBot').getBoundingClientRect(), k = [r.x, r.y, r.width].map(Math.round).join(); same = k === last ? same + 1 : 0; last = k; await new Promise(x => setTimeout(x, 250)); } });
+  await page.click('#szBot'); await page.waitForTimeout(900);
+  check(name + ': tocar el botón abre a Sona', await page.evaluate(() => { const p = document.querySelector('#szBotP'); return !!p && p.classList.contains('on'); }));
+  if (opts.mobile){
+    /* en el celular, tocar justo su ojo o su antenita también la abre (antes solo decía «¡Ay! Ese es mi ojo.» y parecía que no había cómo abrirla) */
+    for (const [que, fx, fy] of [['el ojo', .40, .52], ['la antenita', .5, .12]]){
+      await page.evaluate(() => document.querySelector('#szBotP .bx').click()); await page.waitForTimeout(700);
+      const pt = await page.evaluate(([fx, fy]) => { const r = document.getElementById('szBot').getBoundingClientRect(); return { x:r.left + ((fx - .5) * .667 + .5) * r.width, y:r.top + ((fy - .5) * .667 + .5) * r.height }; }, [fx, fy]);
+      await page.mouse.click(pt.x, pt.y); await page.waitForTimeout(900);
+      check(name + ': tocar ' + que + ' de Sona también abre el panel', await page.evaluate(() => { const p = document.querySelector('#szBotP'); return !!p && p.classList.contains('on'); }));
+    }
+  }
+  check(name + ': sin errores de JavaScript', errors.length === 0, errors.join(' | '));
+  await ctx.close();
+}
+{
+  const { page, errors, ctx } = await open('es', { ui:'simple', hash:'?sona' });
+  check('enlace chat.html?sona=1: abre a Sona sola (también en estilo Simple)', await page.evaluate(() => { const p = document.querySelector('#szBotP'); return !!p && p.classList.contains('on'); }));
+  await page.evaluate(() => { sessionStorage.setItem('synthz:bothide', '1'); document.querySelector('#szBotP .bx').click(); location.hash = '#nada'; });
+  await page.waitForTimeout(400); await page.evaluate(() => { location.hash = '#sona'; }); await page.waitForTimeout(1200);
+  check('«#sona» puesto después la trae de vuelta aunque la hayas escondido en esta visita', await page.evaluate(() => { const p = document.querySelector('#szBotP'); return !!p && p.classList.contains('on') && sessionStorage.getItem('synthz:bothide') !== '1'; }));
+  check('sin errores de JavaScript (enlace #sona)', errors.length === 0, errors.join(' | '));
   await ctx.close();
 }
 
