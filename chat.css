@@ -2926,13 +2926,12 @@ html.noanim .send.stop.fly::after{display:block}
 /* v3.8.1 · Sammuel quiere que el cuadrito de píxeles siga debajo de la lluvia */
 .agrun.fxr{padding:0;border:0;background:none;box-shadow:none}
 .agrun.fxr .fxhost{max-width:520px}
-/* v3.9 · modo dictado (next/componentes/synthflow/Dictado.jsx). Apagado por defecto: solo se ve con html.dicta (Ajustes › Modo dictado).
+/* v3.9 · modo dictado (next/componentes/synthflow/Dictado.jsx). v3.9.2 · siempre disponible (ya no hay interruptor en Ajustes).
    El micrófono va entre los botones de abajo y el avión de enviar; arriba de la caja sale el panel «Te escucho» con las ondas,
    el reloj, Cancelar / Pausa / Listo y lo que vas diciendo. Usa los colores del tema activo (--gold, --wine) y respeta «Animaciones». */
-.dic-mic{display:none}
-html.dicta .dic-mic:not([hidden]){display:grid}
-html.dicta .composer .comp-in{grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-areas:"c c c c" "f f f f" "a p m s"}
-html.dicta .composer.big .comp-in{grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-areas:"f f f f" "a p m s"}
+.dic-mic{display:grid}
+html .composer .comp-in{grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-areas:"c c c c" "f f f f" "a p m s"}
+html .composer.big .comp-in{grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-areas:"f f f f" "a p m s"}
 .composer .comp-in{position:relative}
 .composer .comp-in:has(.dic-card,.dic-pane){z-index:40}
 .composer .dic-mic{grid-area:m;position:relative;width:36px;height:36px;border-radius:12px;overflow:visible}

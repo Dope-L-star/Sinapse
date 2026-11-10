@@ -50,7 +50,7 @@ const T = {
 };
 
 const OK_KEY = 'synthz:dictadoOk';
-const IDLE_MS = 14000, MAX_MS = 5 * 60 * 1000;
+const IDLE_MS = 60000, MAX_MS = 20 * 60 * 1000;
 
 /* ---------- texto: comandos de voz, espacios, mayúsculas y «¿¡» ---------- */
 const CMD = {
@@ -177,7 +177,6 @@ function langTag(L){
   return L === 'en' ? 'en-US' : 'es-ES';
 }
 const siteLang = () => { try{ return window.SZ && window.SZ.lang() === 'en' ? 'en' : 'es'; }catch(e){ return 'es'; } };
-const cfgOn = () => { try{ return !(window.SZ && window.SZ.CFG && window.SZ.CFG.dictado === false); }catch(e){ return true; } };
 const touchy = () => { try{ return matchMedia('(pointer:coarse)').matches; }catch(e){ return false; } };
 const fmtT = ms => { const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 
@@ -201,9 +200,11 @@ const IcoOk = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" s
 const IcoX = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" /></svg>;
 
 export default function Dictado(){
-  const SR = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null;
+  /* el navegador se mira después de montar (en el servidor no hay window): así el botón no se queda marcado «sin dictado» */
+  const [SR, setSR] = useState(null);
+  useEffect(() => { const C = window.SpeechRecognition || window.webkitSpeechRecognition || null; setSR(() => C); }, []);
   const [L, setL] = useState('es');
-  const [on, setOn] = useState(false);           /* el interruptor de Ajustes */
+  const on = true;                           /* siempre disponible (Sammuel, 10 nov): ya no depende de un interruptor de Ajustes */
   const [st, setSt] = useState('off');           /* off · start · listen · pause */
   const [card, setCard] = useState(null);        /* null · ask · no · err */
   const [err, setErr] = useState('');
@@ -284,7 +285,7 @@ export default function Dictado(){
       }
     };
     e.rec = r;
-    try{ r.start(); }catch(x){ e.rec = null; if (e.st !== 'off'){ setState('pause'); } }
+    try{ r.start(); }catch(x){ e.rec = null; if (e.st !== 'off'){ if (e.st === 'start' && !e.restarts){ finish(false, true); setErr('errOther'); setCard('err'); } else setState('pause'); } }
   }, [SR, paint, absorb]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const begin = useCallback(() => {
@@ -317,24 +318,20 @@ export default function Dictado(){
   const tap = useCallback(() => {
     if (E.current.st !== 'off'){ finish(false); return; }
     if (!SR || (typeof window !== 'undefined' && window.isSecureContext === false)){ setCard(c => c === 'no' ? null : 'no'); return; }
-    let ok = false; try{ ok = localStorage.getItem(OK_KEY) === '1'; }catch(x){}
-    if (!ok){ setCard(c => c === 'ask' ? null : 'ask'); return; }
-    begin();
+    begin();   /* sin aviso previo: el navegador ya pide permiso del micrófono; la privacidad se explica en Ajustes y en privacidad.html */
   }, [SR, begin, finish]);
 
   const accept = () => { try{ localStorage.setItem(OK_KEY, '1'); }catch(x){} begin(); };
 
   /* idioma del sitio y el interruptor de Ajustes */
   useEffect(() => {
-    setL(siteLang()); setOn(document.documentElement.classList.contains('dicta'));
+    setL(siteLang());
     const mo = new MutationObserver(() => {
       setL(siteLang());
-      const v = document.documentElement.classList.contains('dicta'); setOn(v);
-      if (!v && E.current.st !== 'off') finish(false);
     });
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'lang'] });
     let hooked = false;
-    const hook = () => { if (hooked || !window.SZ || !window.SZ.onLang) return; hooked = true; window.SZ.onLang(() => { setL(siteLang()); const e = E.current; if (e.rec && (e.st === 'listen' || e.st === 'start')){ absorb(); paint(); stopRec(true); startRec(); } }); setOn(document.documentElement.classList.contains('dicta')); };
+    const hook = () => { if (hooked || !window.SZ || !window.SZ.onLang) return; hooked = true; window.SZ.onLang(() => { setL(siteLang()); const e = E.current; if (e.rec && (e.st === 'listen' || e.st === 'start')){ absorb(); paint(); stopRec(true); startRec(); } }); };
     hook(); addEventListener('synthflow-ready', hook);
     return () => { mo.disconnect(); removeEventListener('synthflow-ready', hook); };
   }, [finish, stopRec, absorb, paint, startRec]);
@@ -345,7 +342,7 @@ export default function Dictado(){
     const onInput = ev => { const e = E.current; if (e.writing || e.st === 'off' || !ev.isTrusted) return; const el = ev.target; e.pre = el.value.slice(0, el.selectionStart ?? el.value.length); e.post = el.value.slice(el.selectionEnd ?? el.value.length); e.parts = []; e.sess = []; e.sessP = []; e.mid = ''; if (e.rec){ stopRec(true); startRec(); } };
     const onKey = ev => {
       const e = E.current;
-      if (ev.key === ' ' && ev.shiftKey && (ev.ctrlKey || ev.metaKey) && document.documentElement.classList.contains('dicta')){ ev.preventDefault(); tap(); return; }
+      if (ev.key === ' ' && ev.shiftKey && (ev.ctrlKey || ev.metaKey) ){ ev.preventDefault(); tap(); return; }
       if (e.st === 'off') return;
       if (ev.key === 'Escape'){ ev.preventDefault(); ev.stopPropagation(); finish(false); return; }
       if (ev.key === 'Enter' && !ev.shiftKey && ev.target && ev.target.id === 'inp'){ absorb(); paint(); finish(false, true); }
