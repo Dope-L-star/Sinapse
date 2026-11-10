@@ -1,8 +1,8 @@
 {
   "id": "/chat.html",
-  "name": "SynthFlow",
-  "short_name": "SynthFlow",
-  "description": "Chatea gratis con muchas IA desde un solo lugar. Parte de SymphorIA.",
+  "name": "Sonyx",
+  "short_name": "Sonyx",
+  "description": "Chatea gratis con muchas IA desde un solo lugar. Parte de Sinapse.",
   "lang": "es",
   "start_url": "/chat.html?app=1",
   "scope": "/",

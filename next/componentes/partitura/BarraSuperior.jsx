@@ -6,9 +6,9 @@ import './partitura.css';
 import { useAliasVisible } from '../../lib/solo-equipo';
 
 const PRODUCTOS = [
-  { id: 'synthflow', nombre: 'SynthFlow', href: '/chat.html', color: 'var(--c)' },
-  { id: 'alias', nombre: 'A.L.I.A.S.', href: '/alias.html', color: 'var(--v)' },
-  { id: 'obertura', nombre: 'Obertura', href: '/#obertura', color: 'var(--g)' },
+  { id: 'synthflow', nombre: 'Sonyx', href: '/chat.html', color: 'var(--c)' },
+  { id: 'alias', nombre: 'Quoryn', href: '/alias.html', color: 'var(--v)' },
+  { id: 'obertura', nombre: 'Lumbra', href: '/#obertura', color: 'var(--g)' },
 ];
 const T = {
   es: { entrar: 'Entrar', productos: 'Productos', alfa: 'ALFA' },
@@ -24,7 +24,7 @@ export default function BarraSuperior({ producto = '', idioma = 'es', onIdioma, 
       <div className="wrap">
         <a className="brand" href="/">
           <img src="/media/v30/symphoria.svg" alt="" width="30" height="30" />
-          <b>Symphor<i>IA</i></b>
+          <b>Sinapse</b>
         </a>
         <span className="alpha hide-m">{t.alfa}</span>
         <nav className="switch" aria-label={t.productos}>

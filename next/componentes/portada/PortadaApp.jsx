@@ -250,7 +250,7 @@ export default function PortadaApp() {
                 <div className="pt-botones">
                   {mios.escritorio
                     ? <span className="btn btn-s">{t.anotado}</span>
-                    : <button type="button" className="btn btn-w" onClick={() => puerta('escritorio', 'Obertura')} data-chispas>{t.obeBtn}</button>}
+                    : <button type="button" className="btn btn-w" onClick={() => puerta('escritorio', 'Lumbra')} data-chispas>{t.obeBtn}</button>}
                   <span className="chip">{t.obeChip}</span>
                 </div>
                 {caja('escritorio')}
@@ -322,7 +322,7 @@ export default function PortadaApp() {
 
       <footer className="foot">
         <div className="wrap">
-          <span className="brand"><img src="/media/v30/symphoria.svg" alt="" /><b>Symphor<i>IA</i></b></span>
+          <span className="brand"><img src="/media/v30/symphoria.svg" alt="" /><b>Sinapse</b></span>
           <span className="grow" />
           <a href="/privacidad.html">{t.pie.privacidad}</a><a href="/terminos.html">{t.pie.terminos}</a><a href="/ayuda.html">{t.pie.ayuda}</a>
           <span className="lang" role="group" aria-label="Idioma / Language">
@@ -333,8 +333,8 @@ export default function PortadaApp() {
 
       <nav className="tabbar" aria-label="Menú">
         <a className="on" href="/" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z" /></svg>{t.tabs.inicio}</a>
-        <a href="/chat.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z" /></svg>SynthFlow</a>
-        {conAlias && <a href="/alias.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M7 8c-3 0-4 2-4 4s1 4 4 4c4 0 6-8 10-8 3 0 4 2 4 4s-1 4-4 4c-4 0-6-8-10-8z" /></svg>A.L.I.A.S.</a>}
+        <a href="/chat.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z" /></svg>Sonyx</a>
+        {conAlias && <a href="/alias.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M7 8c-3 0-4 2-4 4s1 4 4 4c4 0 6-8 10-8 3 0 4 2 4 4s-1 4-4 4c-4 0-6-8-10-8z" /></svg>Quoryn</a>}
         <a href="/chat.html#entrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c1-4 4-6 8-6s7 2 8 6" /></svg>{t.tabs.yo}</a>
       </nav>
     </div>
