@@ -19,12 +19,11 @@ const synMd = s => {
     .replace(/\*\*/g, '').replace(/\n/g, '<br>');
   return h;
 };
+// Generado por next/generar-chasis-sona.mjs desde ChasisSona.jsx.
+const SONA_CHASIS = "<g><g class=\"rb-ant sb-ant\"><path d=\"M50 30V10\" stroke=\"#9da8ba\" stroke-width=\"3\"></path><rect class=\"rb-bulb sb-bulb\" x=\"46\" y=\"6\" width=\"8\" height=\"6\" rx=\"1\" fill=\"#ff78c1\"></rect></g><path d=\"M44 66h12v11H44z\" fill=\"#8892a6\"></path><path d=\"M33 74h34l7 7-4 12H30l-4-12z\" fill=\"#131722\" stroke=\"#8995ad\" stroke-width=\"2\"></path><path d=\"M35 82h14m-14 4h10\" stroke=\"#596777\" stroke-width=\"2\"></path><rect x=\"57\" y=\"81\" width=\"7\" height=\"4\" fill=\"#4ce7ff\"></rect><path d=\"M21 25h58l8 8v28l-8 8H21l-8-8V33z\" fill=\"#151822\" stroke=\"#ad82ee\" stroke-width=\"2.5\"></path><path d=\"M23 32h54l4 4v22l-5 5H24l-5-5V36z\" fill=\"#030811\" stroke=\"#465367\" stroke-width=\"1.6\"></path><path d=\"M24 27h21\" stroke=\"#ffa5d1\" stroke-width=\"2\"></path><path d=\"M58 66h18l7-7\" stroke=\"#56e7ff\" stroke-width=\"2\" fill=\"none\"></path></g>";
 /* ---------- Sona: su carita de robot (SVG), con una expresión para cada momento ---------- */
 const FACE_G = '#3DE0FF';   /* los ojos son pantallitas de neón cian */
-/* 2026-11-10 · Sona es un robotcito NEGRO con neón (pedido de Sammuel, con su dibujo de referencia): cabeza cuadradita de esquinas
-   redondas, antena con su rizo, orejitas a los lados y dos ojos de pantalla. Cuerpo de vidrio negro, filo de luz rosa → violeta → cian,
-   ojos cian que brillan y un foquito en la antena que late según lo que hace (escucha, piensa, habla, duerme…).
-   SIN manos y SIN boca. Ondas de voz: azules a la IZQUIERDA cuando escucha, rosadas a la DERECHA cuando habla. */
+/* ChasisSona aporta la pantalla, la antena recta y el torso. FACE conserva las expresiones. */
 const FACE_EYE = '#3de0ff';
 (function faceDefs(){
   if (document.getElementById('szFaceDefs')) return;
@@ -94,18 +93,7 @@ function headSvg(f){
   const eyes = f.glasses
     ? '<path d="M28 45h19v6.5a7 7 0 0 1-7 7h-5a7 7 0 0 1-7-7z" fill="#050508" stroke="#3DE0FF" stroke-width="2.2"/><path d="M53 45h19v6.5a7 7 0 0 1-7 7h-5a7 7 0 0 1-7-7z" fill="#050508" stroke="#3DE0FF" stroke-width="2.2"/><path d="M47 47.5q3-2.5 6 0" stroke="#3DE0FF" stroke-width="2.2" fill="none"/><path d="M32 49l4.5-3M57 49l4.5-3" stroke="rgba(255,255,255,.55)" stroke-width="1.6" stroke-linecap="round"/>'
     : f.e.map(d => P(d, 'stroke="' + G + '" stroke-width="' + (f.ew || 7) + '" stroke-linecap="round" stroke-linejoin="round" fill="' + (f.ef || 'none') + '"')).join('');
-  return ''
-    /* antena con su rizo y el foquito que late */
-    + '<g class="rb-ant"><g filter="url(#rbNeon)" fill="none" stroke="#ff7ac0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M50 28V19"/><path d="M50 19c0-4.6 2.8-7.6 6.6-7.6s6.2 2.8 6.2 6-2.4 5-4.8 5"/></g>'
-    + '<circle class="rb-bulb" cx="58" cy="22.4" r="2.9" fill="#ff7ac0" filter="url(#rbNeon)"/></g>'
-    /* orejitas y cabeza de vidrio negro */
-    + '<rect x="10.5" y="43" width="9" height="20" rx="4.5" fill="url(#rbBody)"/><rect x="80.5" y="43" width="9" height="20" rx="4.5" fill="url(#rbBody)"/>'
-    + '<rect x="19" y="27" width="62" height="54" rx="17" fill="url(#rbBody)"/>'
-    + '<path d="M27 36q4-5 14-5.5" stroke="#fff" stroke-opacity=".2" stroke-width="2" stroke-linecap="round" fill="none"/>'
-    /* el filo de neón */
-    + '<g class="rb-rim" filter="url(#rbNeon)" fill="none" stroke="url(#rbRim)" stroke-width="2.2" stroke-linecap="round"><rect x="19" y="27" width="62" height="54" rx="17"/><rect x="10.5" y="43" width="9" height="20" rx="4.5" stroke-width="1.9"/><rect x="80.5" y="43" width="9" height="20" rx="4.5" stroke-width="1.9"/></g>'
-    /* la pantalla: negra, con un barrido de luz que pasa de vez en cuando */
-    + '<rect x="26.5" y="35.5" width="47" height="36" rx="11" fill="url(#rbScreen)" stroke="#fff" stroke-opacity=".09"/>'
+  return SONA_CHASIS
     + '<g clip-path="url(#rbScr)"><rect class="rb-sheen" x="22" y="26" width="56" height="9" fill="url(#rbSheen)"/></g>'
     + P(f.b, 'stroke="' + G + '" stroke-width="2.6" stroke-linecap="round" fill="none"')
     + '<g class="rb-eyes"><g class="fe" filter="url(#szEye)">' + eyes + '</g></g>'
@@ -124,7 +112,7 @@ function face(mood, size, cls){
   return '<svg class="szface' + (cls ? ' ' + cls : '') + (f.w ? ' w' + f.w : '') + '" data-mood="' + m + '" viewBox="0 0 100 100" width="' + z + '" height="' + z + '" aria-hidden="true">'
     + wavesSvg() + headSvg(f) + '</svg>';
 }
-/* ---------- Sona entera: su cabecita flotando (sin cuerpo y SIN manos) ----------
+/* ---------- Sona entera: su figura mecánica flotando ----------
    La cabeza es la del botón, grande y al centro, con todas sus caras. Flota, respira y deja un brillo en el piso.
    Cada «postura» (pose) es un gesto de la CABEZA y la antena: se inclina, se asoma, salta, se asusta, se columpia…
    Alrededor: chispitas, y un detalle según la cara (corazones, confeti, zzz, burbujas, «!», notas, ondas de aviso).
