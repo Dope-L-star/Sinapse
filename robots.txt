@@ -3,7 +3,6 @@ Allow: /
 Disallow: /api/
 Disallow: /pulsem
 Disallow: /pulso
-Disallow: /alias
 Disallow: /sintetico
 
 Sitemap: https://symphoria.pages.dev/sitemap.xml

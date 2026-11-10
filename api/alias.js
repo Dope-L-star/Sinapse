@@ -2,6 +2,8 @@
 /* Integrado en alias-fase1: claves de textos unificadas con ESCRIBA (prefijo srv.*) y diccionario movido a la raíz (.vercelignore excluye /src). */
 /* POST /api/alias · A.L.I.A.S. (agente por pasos)
    { action:'plan', lang, goal }                  → { ok, plan:{ id, goal, steps:[{ id, title, tool, input }] } }
+     v4.6 · si el pedido es de verdad fácil (saludo, gracias, una preguntita): { ok, simple:true, to:'auto'|'superior', kind, reply } y NO se arma plan
+     ni se gasta cupo (api/_triage.js). { force:true } = armarlo con A.L.I.A.S. de todos modos.
    { action:'step', lang, plan, stepId, prev, synth? } → { ok, step:{ id, status, output, sources, file, error, synth?, route? } }
    v3.9 · enrutador (api/_ruta.js): cada pedido va a la IA gratis que mejor resuelve ese tipo de trabajo, con respaldos.
      route = { cat, model, name, prov, why:'quality'|'fast'|'learned'|'backup'|'synth', first?, slow?, voices? } (también en plan.route)
@@ -15,6 +17,7 @@
    Errores: { ok:false, error } · límite diario: { ok:false, error, limit:true }
    Textos visibles: todos salen de alias-textos.json (raíz, para que viaje con la función) con t(). Los prompts del modelo no se ven y viven aquí. */
 import TX from './_alias-textos.js';
+import { triage } from './_triage.js';
 import { perksOf, enerOf } from './_permisos.js';
 import { route, body, json, auth, redis, pipe, limit, today, str, rid, sha, ipOf, roleOf } from './_lib.js';
 import { chat, pickKeys, searchWith, searchWiki, markPay, PAY_RX, classify } from './_pool.js';
@@ -183,6 +186,13 @@ async function doPlan(req, me, b, lang){
   const raw = typeof b.goal === 'string' ? b.goal.trim() : '', goal = str(raw, MAX_GOAL);
   if (goal.length < 3) throw A('srv.objetivoVacio');
   if (raw.length > MAX_GOAL) throw A('srv.objetivoLargo');
+  /* v4.6 · enrutado con sentido (api/_triage.js): lo realmente fácil («hola», «gracias», una preguntita) NO arma un plan: se le dice a
+     la persona que lo responde la IA Automática o SuperiorSynth. Un pedido de verdad (aunque empiece con «hola») sí lo toma A.L.I.A.S.
+     Sin IA y sin gastar cupo. b.force = «hazlo con A.L.I.A.S. de todos modos». */
+  if (!b.force){
+    const tr = triage(goal);
+    if (!tr.agent) return json({ ok:true, simple:true, to:tr.to, kind:tr.kind, reply:t(lang, tr.to === 'superior' ? 'srv.facilSuperior' : 'srv.facilAuto') });
+  }
   const undo = await spend(me.sub, 'p', PLANS_DAY * mult(me));
   let steps = null, answered = false; const R = {};
   try{

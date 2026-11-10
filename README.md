@@ -6,7 +6,7 @@ Este proyecto conserva la app y sus funciones y suma una migración de las rutas
 
 - `/` y `/index.html`: portada.
 - `/chat.html`: SynthFlow.
-- `/alias.html`: A.L.I.A.S.
+- Quoryn (antes A.L.I.A.S.): ya no tiene página; es el modo Agente dentro de SynthFlow (`/alias` y `/alias.html` llevan a `/chat`).
 - `/ayuda.html`: Ayuda.
 - `/offline.html`: página sin conexión.
 - `/pulsem.html`: panel privado Pulsem.

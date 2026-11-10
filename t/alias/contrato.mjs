@@ -474,6 +474,26 @@ async function testPlan(user, goal, lang) {
   if (why) throw new Error(why);
   return json.plan;
 }
+async function testSimple(user) {
+  /* un saludo NO arma plan ni llama a ninguna IA ni gasta cupo: dice a dónde ir */
+  state.modelCalls = 0;
+  const es = needJson(await post({ action: 'plan', goal: 'Hola, ¿cómo estás?', lang: 'es' }, user.token), 'saludo');
+  if (es.ok !== true || es.simple !== true || es.to !== 'auto' || es.plan) throw new Error('un saludo debía ir a la Automática sin plan: ' + clip(JSON.stringify(es)));
+  if (typeof es.reply !== 'string' || !es.reply.trim()) throw new Error('falta la frase (reply) en el idioma pedido');
+  const en = needJson(await post({ action: 'plan', goal: 'who won the world cup in 2022?', lang: 'en' }, user.token), 'pregunta');
+  if (en.simple !== true || en.to !== 'superior' || en.reply === es.reply) throw new Error('una preguntita debía ir a SuperiorSynth, con la frase en inglés: ' + clip(JSON.stringify(en)));
+  if (state.modelCalls !== 0) throw new Error('lo fácil no debe llamar a ninguna IA (' + state.modelCalls + ' llamadas)');
+}
+async function testSimpleReal(user) {
+  /* «Hola, ¿cómo estás? ¿me puedes ayudar a redactar un texto…?» = hay un pedido: lo toma A.L.I.A.S., NO se manda a otra IA */
+  const goal = 'Hola como estas? me puedes ayudar a redactar un texto para presentar mi emprendimiento de velas';
+  const r = needJson(await post({ action: 'plan', goal, lang: 'es' }, user.token), 'saludo con pedido');
+  if (r.ok !== true || r.simple || !r.plan) throw new Error('un saludo con un pedido real NO puede mandarse a otra IA: ' + clip(JSON.stringify(r)));
+  const why = assertPlan(r.plan, goal); if (why) throw new Error(why);
+  /* y quien insiste en que lo haga A.L.I.A.S. («hazlo igual») recibe el plan aunque sea un saludo */
+  const f = needJson(await post({ action: 'plan', goal: 'hola', lang: 'es', force: true }, user.token), 'force');
+  if (f.ok !== true || f.simple || !f.plan) throw new Error('con force:true debía armar el plan: ' + clip(JSON.stringify(f)));
+}
 async function testDone(user) {
   const plan = await testPlan(user, GOAL_ES, 'es');
   const stepId = plan.steps[0].id;
@@ -665,6 +685,8 @@ async function testNotes(user) {
 const TESTS = [
   ['plan devuelve de 3 a 7 pasos', 'action plan, en español: id, goal y de 3 a 7 pasos con tool search, file, memory, image o think.', u => testPlan(u, GOAL_ES, 'es')],
   ['plan en inglés devuelve de 3 a 7 pasos', 'La misma forma con lang en y un objetivo en inglés.', u => testPlan(u, GOAL_EN, 'en')],
+  ['lo fácil no arma plan', 'Un saludo va a la IA Automática y una preguntita a SuperiorSynth: ok true, simple true, to, una frase en el idioma pedido, sin plan, sin llamar a ninguna IA.', testSimple],
+  ['un saludo con un pedido real sí arma plan', '«Hola, ¿cómo estás? ¿me puedes ayudar a redactar un texto…?» lo toma A.L.I.A.S. (no se manda a otra IA). Con force:true también un «hola».', testSimpleReal],
   ['paso hecho devuelve done', 'action step devuelve ok, status done, output, sources, file y error null. También con prev. Dice qué IA eligió el enrutador, guarda el 👍 y lo aprendido lo cuenta.', testDone],
   ['paso fallido devuelve error', 'Si la fuente o el modelo fallan, ok true y status error con mensaje.', testError],
   ['límite diario devuelve limit true', 'Al pasar el cupo del día: ok false, error "límite" y limit true. Sigue igual en el uso siguiente.', testLimit],

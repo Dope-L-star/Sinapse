@@ -2,7 +2,7 @@
 
 ## Antes
 
-- Cada ruta interactiva (`index.html`, `chat.html`, `alias.html`, `ayuda.html`, `offline.html`, `pulsem.html`) se servía como documento HTML independiente.
+- Cada ruta interactiva (`index.html`, `chat.html`, `alias.html` (borrada en v4.6: Quoryn vive en el chat), `ayuda.html`, `offline.html`, `pulsem.html`) se servía como documento HTML independiente.
 - El chat usa una arquitectura madura de módulos y selectores DOM, con IDs `data-*` compartidos entre `src/chat/` y el marcado.
 - El estilo Glass y las animaciones ya eran parte del diseño; la migración debe conservar el aspecto de SynthFlow y no sustituirlo por una plantilla genérica.
 
@@ -45,7 +45,7 @@ Se comprueba que cada página fuente coincide con el módulo de referencia, que 
 ## Checklist antes de producción
 
 - [ ] `npm ci && node cloudflare/preparar.mjs` finaliza con código 0.
-- [ ] Las rutas `/`, `/chat.html`, `/alias.html`, `/ayuda.html`, `/offline.html`, `/pulsem.html`, `/privacidad.html` y `/terminos.html` devuelven 200.
+- [ ] Las rutas `/`, `/chat.html`, `/ayuda.html`, `/offline.html`, `/pulsem.html`, `/privacidad.html` y `/terminos.html` devuelven 200.
 - [ ] SynthFlow: enviar, recibir streaming, parar/reintentar y cambiar de modelo.
 - [ ] Login, cierre de sesión, Google, cuenta y persistencia de chats.
 - [ ] Historial, favoritos, adjuntos, comparación, búsqueda web, Sintéticos y A.L.I.A.S.

@@ -73,7 +73,7 @@ for (const size of ['pc', 'cel']) for (const lang of ['es', 'en']){
   where(p) === '/chat.html' ? ok(tag + ' después ya no vuelve a ver la portada') : ko(tag + ' no vuelve', where(p)); await p.context().close();
 }
 /* 6 · las demás páginas cargan sin errores y su «Volver a SymphorIA» lleva a SynthFlow a quien ya entró */
-for (const pg of ['ayuda.html', 'privacidad.html', 'terminos.html', 'offline.html', 'pulsem.html', 'alias.html']){
+for (const pg of ['ayuda.html', 'privacidad.html', 'terminos.html', 'offline.html', 'pulsem.html']){
   const p = await open('pc', 'es', { 'synthz:entro':String(now) }, '/' + pg); await p.waitForTimeout(1800);
   p.errs.length ? ko(pg + ' errores', p.errs.join(' | ')) : ok(pg + ' carga sin errores');
   const has = await p.evaluate(() => !!document.querySelector('a[href="index.html"],a[href="/"]'));

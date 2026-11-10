@@ -4,7 +4,7 @@ const SPACE = (() => {
   const au = document.querySelector('.aurora'); if (!au) return null;
   const path = location.pathname;
   const kind = /chat(\.html)?$/.test(path) || document.getElementById('composer') ? 'chat'
-    : /pulsem/.test(path) ? 'pulsem' : /alias/.test(path) ? 'alias' : 'home';
+    : /pulsem/.test(path) ? 'pulsem' : 'home';
   /* x, y en vw/vh; c = color del tema; s = escala */
   const V = {
     home:   { glows:[{ x:100, y:0, c:'light' }, { x:0, y:100, c:'secondary' }, { x:58, y:42, c:'primary', s:.7 }], ribbon:'mid', bubbles:[{ x:4, y:62, d:110 }, { x:63, y:8, d:70 }, { x:92, y:46, d:52 }, { x:46, y:82, d:30 }] },

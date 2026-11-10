@@ -89,11 +89,16 @@
     } catch (e) { fail(s, e); }
   }
 
-  A.plan = async function (goal) {
+  /* v4.6 · enrutado con sentido: si el pedido es de verdad fácil el servidor NO arma plan y responde { ok, simple:true, to:'auto'|'superior', kind, reply }.
+     opts.force = true → armar el plan igual («hazlo con A.L.I.A.S.»). */
+  A.plan = async function (goal, opts) {
     goal = String(goal || '').trim().slice(0, 500);   /* mismo tope que el servidor y la pantalla */
     if (!goal) return { ok: false, error: T('alias_err_goal') };
-    var r = await post({ action: 'plan', goal: goal });
+    var body = { action: 'plan', goal: goal };
+    if (opts && opts.force) body.force = true;
+    var r = await post(body);
     if (!r || !r.ok) return r || { ok: false, error: T('alias_err_server') };
+    if (r.simple) return r;
     var p = r.plan;
     if (!p || !Array.isArray(p.steps) || p.steps.length < 3 || p.steps.length > 7) {
       return { ok: false, error: T('alias_err_plan') };

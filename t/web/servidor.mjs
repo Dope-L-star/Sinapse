@@ -2,6 +2,7 @@
    · Sirve los archivos con las mismas CSP de vercel.json (la de la página y la de /sintetico.html).
    · /api/* lo atienden los archivos reales de api/ con un Redis de mentira; el proveedor de IA es de mentira
      y responde lo que diga RESPUESTA (por defecto, t/web/respuesta-sitio.md: una página web de varios archivos).
+     reply también puede ser una función (cuerpo del pedido → texto): así una prueba contesta distinto al plan, a cada paso y a una charla.
    Uso: import { start } from './servidor.mjs'; const s = await start(); … s.close() */
 import http from 'node:http';
 import fs from 'node:fs';
@@ -23,7 +24,7 @@ export async function start({ root = path.join(REPO, 'cloudflare/public'), reply
   const kv = new Map(), sets = new Map(), hs = new Map();
   const run = c => {
     const op = String(c[0]).toUpperCase(), k = String(c[1] ?? '');
-    if (op === 'GET') return kv.has(k) ? kv.get(k) : null;
+    if (op === 'GET'){ if (process.env.DIAG && /^(s|u):/.test(k) && !kv.has(k)) console.log('  [redis] GET sin dato:', k.slice(0, 24), '| claves s:/u: guardadas:', [...kv.keys()].filter(x => /^(s|u):/.test(x)).map(x => x.slice(0, 14)).join(',')); return kv.has(k) ? kv.get(k) : null; }
     if (op === 'SET'){ kv.set(k, String(c[2])); return 'OK'; }
     if (op === 'DEL'){ c.slice(1).forEach(x => { kv.delete(String(x)); sets.delete(String(x)); }); return 1; }
     if (/^(INCR|INCRBY|HINCRBY|INCRBYFLOAT)$/.test(op)){ const n = (+kv.get(k) || 0) + (op === 'INCR' ? 1 : +c[c.length - 1]); kv.set(k, String(n)); return n; }
@@ -53,7 +54,7 @@ export async function start({ root = path.join(REPO, 'cloudflare/public'), reply
     const u = String(url && url.url || url);
     if (u.startsWith('http://redis.test')){ const b = JSON.parse(o.body || '[]'); const out = u.endsWith('/pipeline') ? b.map(c => ({ result:run(c) })) : { result:run(b) }; return new Response(JSON.stringify(out)); }
     if (u.endsWith('/models')) return new Response(JSON.stringify({ data:[{ id:'llama-3.3-70b-versatile' }, { id:'openai/gpt-oss-120b' }] }));
-    if (u.endsWith('/chat/completions')){ const b = JSON.parse(o.body); return b.stream ? sse(RESP) : new Response(JSON.stringify({ choices:[{ message:{ content:RESP } }], usage:{ prompt_tokens:10, completion_tokens:10 } })); }
+    if (u.endsWith('/chat/completions')){ const b = JSON.parse(o.body); const RESP_ = typeof RESP === 'function' ? await RESP(b) : RESP; return b.stream ? sse(RESP_) : new Response(JSON.stringify({ choices:[{ message:{ content:RESP_ } }], usage:{ prompt_tokens:10, completion_tokens:10 } })); }
     if (u.startsWith('http://127.0.0.1') || u.startsWith('http://localhost')) return realFetch(url, o);
     return new Response('{}', { status:404 });
   };

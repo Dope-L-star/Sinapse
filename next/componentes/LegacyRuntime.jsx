@@ -116,15 +116,9 @@ export default function LegacyRuntime({ page, scripts = [], puter = false }) {
         } else if (page === 'chat') {
           document.documentElement.classList.add('enter');
           if (window.sessionStorage.getItem('synthz:portal')) document.documentElement.classList.add('po');
-        } else if (page === 'alias') {
-          let scheme = window.localStorage.getItem('synthz:alias:scheme');
-          if (scheme !== 'light' && scheme !== 'dark') {
-            scheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-          }
-          document.documentElement.dataset.scheme = scheme;
         }
       } catch {
-        if (page === 'alias') document.documentElement.dataset.scheme = 'dark';
+        /* sin guardado: nada que preparar */
       }
 
       if (puter) {

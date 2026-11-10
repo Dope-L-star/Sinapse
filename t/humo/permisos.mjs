@@ -98,7 +98,7 @@ r = await T('prime', { action:'users' });
 check('el historial guarda quién cambió qué', r.s === 200 && r.d.log && r.d.log[0] && r.d.log[0].who === '@ana' && /Prime/.test(r.d.log[0].by), JSON.stringify(r.d.log).slice(0, 200));
 
 /* se aplica en el servidor */
-r = await call(alias, 'ana', 'alias', 'POST', { action:'plan', goal:'hola mundo', lang:'en' });
+r = await call(alias, 'ana', 'alias', 'POST', { action:'plan', goal:'Haz un plan de estudio para mi examen de matemáticas', lang:'en' });
 check('A.L.I.A.S. quitada: 403 con su texto en el idioma pedido', r.s === 403 && /in testing/.test(r.d.error || ''), r.s + ' ' + JSON.stringify(r.d));
 r = await call(ai, 'ana', 'ai', 'POST', { action:'image', prompt:'un gato' });
 check('imágenes quitadas: 403', r.s === 403 && /no está activado/.test(r.d.error || ''), r.s + ' ' + JSON.stringify(r.d));
@@ -112,7 +112,7 @@ r = await call(ai, 'beto', 'ai', 'POST', { action:'search', q:'' });
 check('a Beto (sin cambios) internet le sigue funcionando', r.s === 400, r.s + ' ' + JSON.stringify(r.d));
 /* v4.5 (Sammuel, 9 nov): A.L.I.A.S. solo para el equipo. Un Synther sin cambios no entra por ninguna acción; el equipo sí */
 for (const action of ['plan', 'step', 'ajustar', 'feedback', 'rutas']){
-  r = await call(alias, 'beto', 'alias', 'POST', { action, goal:'hola mundo', lang:'es' });
+  r = await call(alias, 'beto', 'alias', 'POST', { action, goal:'Haz un plan de estudio para mi examen de matemáticas', lang:'es' });
   check('A.L.I.A.S. cerrado para un Synther sin cambios (' + action + ')', r.s === 403 && /solo lo usa el equipo/.test(r.d.error || ''), r.s + ' ' + JSON.stringify(r.d));
 }
 r = await call(ai, 'beto', 'ai', 'GET');

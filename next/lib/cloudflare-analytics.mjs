@@ -11,7 +11,6 @@ const BEACON_SRC = 'https://static.cloudflareinsights.com/beacon.min.js';
 const SAFE_PUBLIC_PATHS = new Set([
   '/', '/index.html',
   '/chat', '/chat.html',
-  '/alias', '/alias.html',
   '/ayuda', '/ayuda.html',
   '/offline', '/offline.html',
   '/privacidad', '/privacidad.html',

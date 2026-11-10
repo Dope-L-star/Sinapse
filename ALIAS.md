@@ -1,13 +1,24 @@
 <!-- Hecho por: ESCRIBA -->
 
-# A.L.I.A.S.
+# Quoryn (antes A.L.I.A.S.)
 
+> **v4.6 · 10 de noviembre de 2026 — Quoryn ya NO tiene página.** Sammuel: «ALIAS ya no tiene UI, elimina esa página». El nombre visible pasó a **Quoryn**
+> (las claves internas siguen siendo `alias`: `api/alias.js`, `alias-textos.json`, `synthz:alias`, `window.ALIAS`). Vive dentro de SynthFlow, en el modo **Agente**
+> (selector de arriba o menú «⋯ › Quoryn · equipo»): el plan sale como una tarjeta del chat, se aprueba UNA vez, trabaja solo y lo que escribes mientras trabaja se suma
+> sin pararlo; el resultado llega como un mensaje de Quoryn. Código: `src/chat/16p…16u-alias-motor-*.js` (motor) y `src/chat/16w-alias-en-chat.js` (la parte del chat).
+> `alias.html`, `alias.js`, `alias.css`, `alias-mision.css`, `alias-tools.js`, `src/alias/` y la ruta React `/alias` se borraron (copia en la rama `respaldo-main-2026-11-09-alias`);
+> `/alias` y `/alias.html` llevan a `/chat` (vercel.json → `_redirects` de Cloudflare).
+> **Cribado «¿es algo fácil?» (`api/_triage.js`, sin IA y sin gastar cupo):** un «hola» o «gracias» solos no arman plan: los responde **Relay** (la IA Automática) y queda el chip
+> «Hacerlo con Quoryn». Un tipo de pregunta muy chica (≤ 5 palabras, sin entregable) puede ir a **Apex** (SuperiorSynth). Pero un saludo con un pedido real
+> («Hola, ¿cómo estás? ¿me puedes ayudar a redactar un texto…?») SÍ lo toma Quoryn: el saludo se quita antes de juzgar y, si hay duda, se queda con Quoryn. `force:true` lo obliga.
+> Pruebas: `node t/alias/triage.mjs`, `node t/alias/contrato.mjs`, `node t/alias/chat.mjs`.
+>
 > **Solo para el equipo desde el 9 de noviembre de 2026 (v4.5).** Sammuel: «quita a todos el ALIAS excepto los admins».
 > Servidor: `FEATS.alias = false` en `api/_permisos.js` (el equipo lo tiene; a una persona se le puede prender en Pulsem › Usuarios), y `api/alias.js` responde 403 en todas las acciones.
 > Pantalla: `perks.f.alias` de `/api/ai` se recuerda en `localStorage` `synthz:alias`; sin eso no hay modo Agente, ni enlaces, ni tarjeta en la portada.
-> `alias.html` monta `PuertaAlias.jsx`: pregunta al servidor y, si no tiene permiso, explica que está en pruebas y lleva a SynthFlow con lo escrito. Prueba: `node t/alias/solo-equipo.mjs`.
+> Sin permiso no se ve nada de Quoryn (ni el modo Agente, ni el menú, ni la tarjeta o la pestaña de la portada). Prueba: `node t/alias/solo-equipo.mjs`.
 
-Sistema de lógica e inteligencia aumentada. En la interfaz el nombre se queda **A.L.I.A.S.** Agente aparte dentro de SynthFlow (Colombia). No es el chat, no es SuperiorSynth y no es SynthonIA.
+Sistema de lógica e inteligencia aumentada. En la interfaz se llama **Quoryn** (el nombre largo, A.L.I.A.S., ya no se muestra). Agente dentro de SynthFlow (Colombia). No es el chat, no es SuperiorSynth y no es SynthonIA.
 
 ## English summary
 
@@ -88,13 +99,13 @@ window.ALIAS = {
 3. **Archivos y memoria.** Texto, código y PPTX (`file`). Memoria solo de lo ya guardado en la cuenta (`memory`).
 4. **Imágenes.** `image`, una imagen de apoyo por misión cuando exista. Sigue sin navegador completo y sin publicar apps.
 
-`api/alias.js` ya existe (rama `alias-fase1`) y cubre `plan` y `step` de las fases 1 a 3 en el servidor. Falta la ventana (`alias.html`) y las herramientas del cliente (`window.ALIAS`).
+`api/alias.js` ya existe (rama `alias-fase1`) y cubre `plan` y `step` de las fases 1 a 3 en el servidor. La ventana ya no es una página: es el modo Agente del chat (v4.6), con las herramientas del cliente en `window.ALIAS`.
 
 ## Cómo se prueba (sin claves)
 
 1. `alias-textos.json` parsea y `es` y `en` tienen las mismas claves, ninguna vacía.
 2. Cuando exista la API, con la misma sesión del chat: `plan` devuelve 3–7 pasos en el `lang` pedido; `step` devuelve `output` en ese idioma; si buscó, `sources` trae título y URL. Sin sesión: `ok:false` y `srv.sesion`. Pasado el cupo: `limit:true` y `error` igual a `límite`.
-3. En la página, los rótulos salen de `t('clave')`. Existen `window.ALIAS.plan` y `runStep`.
+3. En el chat, los rótulos de Quoryn salen de `t('clave')` (diccionario `alias-textos.json`). Existen `window.ALIAS.plan` y `runStep`; `plan(goal, {force})` devuelve `{simple:true, to, reply}` si era algo fácil.
 
 ## Qué no hace aún
 

@@ -3,7 +3,7 @@
      Auto      Sinapse elige la IA para cada pedido (y dice cuál usó).            → applyMode('auto')
      Una IA    tú eliges de la lista con buscador; abajo se ve cuál tienes.          → applyMode('chat') + abre la lista
      Comparar  2 a 3 IAs lado a lado; te quedas con la mejor.                         → cmpOpen()
-     Agente    Quoryn: arma un plan, lo apruebas una vez y trabaja solo.          → abre alias.html con lo escrito
+     Agente    Quoryn (antes A.L.I.A.S.): arma un plan, lo apruebas una vez y trabaja solo → setAlias(true), dentro del chat (16w)
                v4.5: solo para el equipo (SZ.aliasOk()); los demás ven 3 modos. Se repinta si cambia (evento synthz-alias).
    Y el esfuerzo, al lado: Auto · Veloz · Profundo · Creativo (los niveles de v4.3, Profundo pide cuenta) · Apex (el agente de Sonyx elige la IA y mejora tu pedido).
    Reemplaza a los botones «Modo», «Esfuerzo» y «Comparar con otra IA», que se esconden con CSS (siguen en el DOM para el motor). */
@@ -17,7 +17,7 @@
         ayuda:{ auto:'Sinapse elige la IA para cada pedido y te dice cuál usó.', una:'Tú eliges la IA de la lista.', cmp:'Varias IAs responden lado a lado. Te quedas con la mejor.', agente:'Quoryn arma un plan, lo apruebas una vez y trabaja solo.' } };
   const MODOS_TODOS = ['auto', 'una', 'cmp', 'agente'];
   const modos = () => MODOS_TODOS.filter(k => k !== 'agente' || (SZ.aliasOk && SZ.aliasOk()));
-  const actual = () => mode === 'cmp' ? 'cmp' : selId() === 'sz:auto' && !agentOn() ? 'auto' : 'una';
+  const actual = () => mode === 'cmp' ? 'cmp' : alOn() ? 'agente' : selId() === 'sz:auto' && !agentOn() ? 'auto' : 'una';
   const NIV = ['auto', 'fast', 'deep', 'creative'], SS = NIV.length;
   const esfActual = () => agentOn() ? SS : Math.max(0, NIV.indexOf(effKey()));
   const bloqueado = i => NIV[i] === 'deep' && !SZ.ACC.ready;
@@ -41,10 +41,9 @@
       const k = b.dataset.pm;
       if (k === 'agente'){
         if (!(SZ.aliasOk && SZ.aliasOk())){ pinta(); return; }
-        const q = (inp.value || '').trim();
-        location.href = 'alias.html?' + new URLSearchParams(q ? { from:'flow', meta:q } : { from:'flow' }).toString();
-        return;
+        salirDeComparar(); setAlias(true); pinta(); return;      /* v4.6 · Quoryn vive aquí mismo: ya no abre otra página */
       }
+      if (alOn()) setAlias(false);
       if (k === 'cmp'){ cmpOpen(b); setTimeout(pinta, 50); return; }
       salirDeComparar();
       if (k === 'auto'){ if (agentOn()) setAgent(false); applyMode('auto'); }
@@ -94,7 +93,7 @@
     const b = ev.target.closest('[data-pe]'); if (!b) return; const i = +b.dataset.pe; abreMenu(false); eBtn.focus();
     if (i === SS){ if (!agentOn()) setAgent(true); }
     else if (bloqueado(i)){ toast(TT().pen); SZ.guestGate({ mode:'signup' }); }
-    else { if (agentOn()) setAgent(false); st().sx.effort = NIV[i]; save(); }
+    else { if (alOn()) setAlias(false); if (agentOn()) setAgent(false); st().sx.effort = NIV[i]; save(); }
     pinta();
   });
   menu.addEventListener('keydown', ev => { if (ev.key !== 'ArrowDown' && ev.key !== 'ArrowUp') return; ev.preventDefault(); const L = $$('button', menu), i = L.indexOf(document.activeElement); L[(i + (ev.key === 'ArrowDown' ? 1 : L.length - 1)) % L.length].focus(); });
@@ -104,6 +103,7 @@
   iaBtn.addEventListener('click', () => {
     if (side.classList.contains('open')){ closeSide(); return; }
     if (mode === 'cmp'){ openSide('add', iaBtn); return; }
+    if (alOn()) setAlias(false);
     if (agentOn()) setAgent(false); if (selId() === 'sz:auto') applyMode('chat'); openSide('set', iaBtn); pinta();
   });
   $('#tbNew', grp).addEventListener('click', () => newChat());

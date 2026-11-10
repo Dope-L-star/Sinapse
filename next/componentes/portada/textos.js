@@ -44,7 +44,7 @@ export const TEXTOS = {
     instS: 'Mismo aspecto, misma cuenta, misma Sona. Pasas de uno a otro sin aprender nada nuevo.',
     inst: [
       { n: 'Sonyx', href: '/chat.html', k: 'var(--c)', p: 'El chat. Pregunta a una o a varias IAs y compara.', m: 'CHAT', b: 'Abrir' },
-      { n: 'Quoryn', href: '/alias.html', k: 'var(--v)', p: 'El agente. Le das una meta, arma un plan, lo apruebas una vez y trabaja solo. Lo detienes o le sumas cosas cuando quieras.', m: 'AGENTE', b: 'Abrir' },
+      { n: 'Quoryn', href: '/chat.html?quoryn=1', k: 'var(--v)', p: 'El agente, dentro de Sonyx. Le das una meta, arma un plan, lo apruebas una vez y trabaja solo. Lo detienes o le sumas cosas cuando quieras.', m: 'AGENTE', b: 'Abrir' },
       { n: 'Lumbra', href: '#obertura', k: 'var(--g)', p: 'Sinapse en tu escritorio de Windows, con su propia ventana y atajo.', m: 'APP', b: 'Ver' },
     ],
     obeK: 'LUMBRA · WINDOWS', obeT: 'Muy pronto, desde aquí mismo.',
@@ -128,7 +128,7 @@ export const TEXTOS = {
     instS: 'Same look, same account, same Sona. Move between them without learning anything new.',
     inst: [
       { n: 'Sonyx', href: '/chat.html', k: 'var(--c)', p: 'The chat. Ask one or several AIs and compare.', m: 'CHAT', b: 'Open' },
-      { n: 'Quoryn', href: '/alias.html', k: 'var(--v)', p: 'The agent. Give it a goal, it makes a plan, you approve it once and it works on its own. Stop it or add things anytime.', m: 'AGENT', b: 'Open' },
+      { n: 'Quoryn', href: '/chat.html?quoryn=1', k: 'var(--v)', p: 'The agent, inside Sonyx. Give it a goal, it makes a plan, you approve it once and it works on its own. Stop it or add things anytime.', m: 'AGENT', b: 'Open' },
       { n: 'Lumbra', href: '#obertura', k: 'var(--g)', p: 'Sinapse on your Windows desktop, with its own window and shortcut.', m: 'APP', b: 'See' },
     ],
     obeK: 'LUMBRA · WINDOWS', obeT: 'Coming soon, right from here.',
