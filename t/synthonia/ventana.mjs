@@ -126,8 +126,19 @@ for (const [name, opts] of [['PC', {}], ['celular', { W:390, H:844, mobile:true 
   await page.waitForTimeout(1500);
   const b = await page.evaluate(() => { const e = document.getElementById('szBot'); if (!e) return null; const cs = getComputedStyle(e), r = e.getBoundingClientRect(); return { show:cs.display !== 'none' && cs.visibility !== 'hidden', w:r.width, h:r.height, inside:r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight }; });
   check(name + ': el botón de Sona se ve en pantalla (visible, con tamaño y dentro)', !!b && b.show && b.w >= 36 && b.h >= 36 && b.inside, JSON.stringify(b));
+  /* la bolita se corre cuando carga la letra del logo: esperar a que quede quieta antes de tocarla (en el CI, más lento, se movía) */
+  await page.evaluate(async () => { try{ await document.fonts.ready; }catch(e){} let last = '', same = 0; for (let i = 0; i < 40 && same < 3; i++){ const r = document.getElementById('szBot').getBoundingClientRect(), k = [r.x, r.y, r.width].map(Math.round).join(); same = k === last ? same + 1 : 0; last = k; await new Promise(x => setTimeout(x, 250)); } });
   await page.click('#szBot'); await page.waitForTimeout(900);
   check(name + ': tocar el botón abre a Sona', await page.evaluate(() => { const p = document.querySelector('#szBotP'); return !!p && p.classList.contains('on'); }));
+  if (opts.mobile){
+    /* en el celular, tocar justo su ojo o su antenita también la abre (antes solo decía «¡Ay! Ese es mi ojo.» y parecía que no había cómo abrirla) */
+    for (const [que, fx, fy] of [['el ojo', .40, .52], ['la antenita', .5, .12]]){
+      await page.evaluate(() => document.querySelector('#szBotP .bx').click()); await page.waitForTimeout(700);
+      const pt = await page.evaluate(([fx, fy]) => { const r = document.getElementById('szBot').getBoundingClientRect(); return { x:r.left + ((fx - .5) * .667 + .5) * r.width, y:r.top + ((fy - .5) * .667 + .5) * r.height }; }, [fx, fy]);
+      await page.mouse.click(pt.x, pt.y); await page.waitForTimeout(900);
+      check(name + ': tocar ' + que + ' de Sona también abre el panel', await page.evaluate(() => { const p = document.querySelector('#szBotP'); return !!p && p.classList.contains('on'); }));
+    }
+  }
   check(name + ': sin errores de JavaScript', errors.length === 0, errors.join(' | '));
   await ctx.close();
 }

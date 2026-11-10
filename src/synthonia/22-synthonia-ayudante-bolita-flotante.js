@@ -55,7 +55,11 @@ function botAvatarClick(e){
   const b = BOT.el; if (!b || b._skip) return;
   BOT.lostN = 0; b.classList.remove('g1', 'g2');
   /* según dónde la toques, hace una cara distinta */
-  const z = e && e.detail ? botZone(e) : '';
+  let z = e && e.detail ? botZone(e) : '';
+  /* v4.6 · en el celular (o con la bolita pegada al logo, de 37 px) tocar el ojo o la antenita TAMBIÉN abre a Sona: antes solo
+     decía «¡Ay! Ese es mi ojo.» y parecía que no había cómo abrirla. La carita igual reacciona. */
+  let touch = false; try{ touch = b.classList.contains('inhead') || matchMedia('(pointer:coarse)').matches; }catch(er){}
+  if (touch && (z === 'eye' || z === 'top')){ botFace(z === 'eye' ? 'auch' : 'sorprendida', true); setTimeout(() => botFace('feliz', true), 1500); z = ''; }
   if (z === 'eye'){ SND.blip('auch'); botFace('auch', true); botBubble('¡Ay! Ese es mi ojo.', 2200); setTimeout(() => botFace('feliz', true), 1900); return; }
   if (z === 'top'){ botFace('sorprendida', true); botBubble('¡Uy, mi antena! Me haces cosquillas.', 2200); setTimeout(() => botFace('feliz', true), 1900); return; }
   if (z === 'cheek'){ botFace('encantada', true); setTimeout(() => botFace('feliz'), 1600); }
