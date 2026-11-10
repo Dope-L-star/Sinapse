@@ -1,8 +1,10 @@
 'use client';
 /* SynthFlow en React · pie de la barra: tu cuenta (foto, nombre y plan) y la lupa para buscar en tus chats.
    v3.7 · nombre y plan llegan del motor con el evento «synthflow-acc» (src/chat/16g-v32-barra-simple.js);
-   la foto la pone el motor en .sf-av porque sale de su HTML. Mismas clases e IDs de antes (#sFoot, #sAcc, #sFind). */
+   la foto la pone el motor en .sf-av porque sale de su HTML. Mismas clases e IDs de antes (#sFoot, #sAcc, #sFind).
+   v4.6 · al tocar tu cuenta sale el panelito del perfil (MenuCuenta.jsx), como en Claude. */
 import { useEffect, useState } from 'react';
+import MenuCuenta from './MenuCuenta';
 
 const P = { fill: 'none', stroke: 'currentColor', strokeLinecap: 'round', strokeLinejoin: 'round' };
 
@@ -36,7 +38,7 @@ export default function PieBarra(){
 
   return (
     <div className="sfoot" id="sFoot">
-      <button type="button" className="sf-acc" id="sAcc" data-clarity-mask="true" aria-label={acc.ready ? 'Tu cuenta: ' + acc.name : 'Entrar a tu cuenta'} onClick={() => window.SZFlow?.account()}>
+      <button type="button" className="sf-acc" id="sAcc" data-clarity-mask="true" aria-label={acc.ready ? 'Tu cuenta: ' + acc.name : 'Entrar a tu cuenta'} aria-haspopup="menu" onClick={e => window.SZFlow?.account(e.currentTarget)}>
         <span className="sf-av" />
         <span className="sf-n"><b>{acc.name}</b><small>{acc.plan}</small></span>
         <span className="sf-chev" aria-hidden="true"><svg viewBox="0 0 24 24" {...P} strokeWidth="2"><path d="M7 10l5 5 5-5" /></svg></span>
@@ -44,6 +46,7 @@ export default function PieBarra(){
       <button type="button" className="sf-find" id="sFind" aria-label="Buscar en tus chats" data-tip="Buscar en tus chats" aria-pressed={find} onClick={toggleFind}>
         <svg viewBox="0 0 24 24" {...P} strokeWidth="1.9"><circle cx="11" cy="11" r="6.5" /><path d="M20 20l-4-4" /></svg>
       </button>
+      <MenuCuenta />
     </div>
   );
 }

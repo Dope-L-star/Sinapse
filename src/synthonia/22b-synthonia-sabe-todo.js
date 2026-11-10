@@ -2,7 +2,7 @@
    Cada entrada: k = palabras que la activan (es + en, sin tildes), a = respuesta, en = respuesta en inglés,
    go = dónde señala (el primero que se vea), pre = qué abre antes de señalar (por ejemplo Ajustes).
    Cuando agregues algo a la página, agrégalo aquí también: así SynthonIA nunca queda desactualizada. */
-const openCfg = tab => () => { if (!$('.szm.cfg, #cfgPane, .cfgtabs')) cfgModal(tab); };
+const openCfg = tab => () => { if (!$('#cfgm')) cfgModal(tab); };
 const inFlow = () => isFlow();
 BOT_FAQ.push(
   { k:'proyecto proyectos carpeta tesis negocio instrucciones conocimiento project projects folder knowledge',
@@ -12,17 +12,17 @@ BOT_FAQ.push(
     a:'Los Sintéticos son lo que la IA crea para ti: páginas, juegos, dibujos o documentos. Cuando la respuesta termina, se abren solos al lado del chat (como en Claude) y corren aparte, seguros. Todos quedan juntos en «Sintéticos», en la barrita.',
     en:'Synthetics are what the AI creates for you: pages, games, drawings or documents. When the answer finishes, they open by themselves next to the chat (like in Claude) and run separately, safely. They\'re all together in «Synthetics», in the bar.', go:['#railSyn', '#cSyn'] },
   { k:'idioma ingles espanol english spanish language languages change traducir traduccion idioma',
-    a:'Puedes poner toda la página en inglés o en español: Ajustes › Página › «Idioma · Language», o en el menú «⋯» de arriba. Cambia al instante.',
-    en:'You can switch the whole page to English or Spanish: Settings › Page › «Language · Idioma», or in the «⋯» menu at the top. It changes instantly.', pre:openCfg(), go:['#cfgLang', '#cfgBtn', '[data-tab="cfg"]'] },
+    a:'Puedes poner toda la página en inglés o en español: Ajustes › General › «Idioma · Language», en tu perfil › Idioma, o en el menú «⋯» de arriba. Cambia al instante.',
+    en:'You can switch the whole page to English or Spanish: Settings › General › «Language · Idioma», in your profile › Language, or in the «⋯» menu at the top. It changes instantly.', pre:openCfg(), go:['#cfgLang', '#sAcc', '#cfgBtn', '[data-tab="cfg"]'] },
   { k:'tamano tamaño compacto normal grande pequeno pequena pequeña achicar reducir agrandar zoom letra size compact bigger smaller',
-    a:'En Ajustes › Página › «Tamaño de SynthFlow» eliges Compacto (todo un poco más pequeño, ves más chat) o Normal (el tamaño grande).',
-    en:'In Settings › Page › «SynthFlow size» you pick Compact (everything a bit smaller, you see more chat) or Normal (the big size).', pre:openCfg(), go:['#cfgSz', '#cfgBtn', '[data-tab="cfg"]'] },
+    a:'En Ajustes › General › «Tamaño de Sonyx» eliges Compacto (todo un poco más pequeño, ves más chat) o Normal (el tamaño grande).',
+    en:'In Settings › General › «Sonyx size» you pick Compact (everything a bit smaller, you see more chat) or Normal (the big size).', pre:openCfg(), go:['#cfgSz', '#sAcc', '#cfgBtn', '[data-tab="cfg"]'] },
   { k:'color tema temas oceano bosque lavanda atardecer theme colors ocean forest lavender',
-    a:'En Ajustes › Página › «Color de SynthFlow» eliges el color: SymphorIA, Océano, Bosque, Atardecer o Lavanda.',
-    en:'In Settings › Page › «SynthFlow color» you choose the color: SymphorIA, Ocean, Forest, Sunset or Lavender.', pre:openCfg(), go:['#cfgTh', '#cfgBtn', '[data-tab="cfg"]'] },
+    a:'En Ajustes › General › «Color de Sonyx» eliges el color: SymphorIA, Océano, Bosque, Atardecer o Lavanda.',
+    en:'In Settings › General › «Sonyx color» you choose the color: SymphorIA, Ocean, Forest, Sunset or Lavender.', pre:openCfg(), go:['#cfgTh', '#sAcc', '#cfgBtn', '[data-tab="cfg"]'] },
   { k:'simple estilo tranquilo sin efectos style calm plain',
-    a:'El estilo «Simple» deja solo tus chats, la caja de escribir y las respuestas, tranquilo y sin efectos. Está en Ajustes › Página › «Estilo de SynthFlow».',
-    en:'The «Simple» style leaves just your chats, the text box and the answers, calm and with no effects. It\'s in Settings › Page › «SynthFlow style».', pre:openCfg(), go:['#cfgUi', '#cfgBtn', '[data-tab="cfg"]'] },
+    a:'El estilo «Simple» deja solo tus chats, la caja de escribir y las respuestas, tranquilo y sin efectos. Está en Ajustes › General › «Estilo de Sonyx».',
+    en:'The «Simple» style leaves just your chats, the text box and the answers, calm and with no effects. It\'s in Settings › General › «Sonyx style».', pre:openCfg(), go:['#cfgUi', '#sAcc', '#cfgBtn', '[data-tab="cfg"]'] },
   { k:'nuevo chat empezar otro conversacion nueva limpiar new chat start fresh',
     a:'Para empezar de cero toca «Nuevo chat», arriba en la barrita. El chat anterior queda guardado en «Mis chats».',
     en:'To start fresh tap «New chat», at the top of the bar. The previous chat stays saved in «My chats».', go:['#cNew', '[data-r="new"]'] },
@@ -48,8 +48,8 @@ BOT_FAQ.push(
     a:'El botón de modo, junto a la caja, tiene 3: «Automática» (elige sola la mejor IA libre), «Chat» (tú eliges la IA) y «SuperiorSynth» (mejora tu pedido y elige la IA que más sabe).',
     en:'The mode button, next to the box, has 3: «Automatic» (picks the best free AI by itself), «Chat» (you pick the AI) and «SuperiorSynth» (improves your request and picks the AI that knows the most).', go:['#cMode'] },
   { k:'memoria recordar recuerdas olvidar datos mios memory remember forget',
-    a:'Si escribes «recuerda que…», te pregunto si lo guardo. Lo que recuerdo de ti lo ves y lo borras en Ajustes › IAs y memoria.',
-    en:'If you write «remember that…», I ask whether to save it. You see and delete what I remember about you in Settings › AIs and memory.', pre:openCfg('mem'), go:['[data-pane="ia"]', '#cfgBtn', '[data-tab="cfg"]'] },
+    a:'Si escribes «recuerda que…», te pregunto si lo guardo. Lo que recuerdo de ti lo ves y lo borras en Ajustes › Memoria.',
+    en:'If you write «remember that…», I ask whether to save it. You see and delete what I remember about you in Settings › Memory.', pre:openCfg('memoria'), go:['[data-pane="memoria"]', '#sAcc', '#cfgBtn', '[data-tab="cfg"]'] },
   { k:'presentacion diapositivas powerpoint pptx slides presentation deck',
     a:'Escribe «hazme una presentación de…» y la IA te la entrega con vista previa, lista para descargar en PowerPoint.',
     en:'Write «make me a presentation about…» and the AI hands it to you with a preview, ready to download as PowerPoint.', go:['#inp'] },
@@ -108,15 +108,15 @@ BOT_FAQ.push(
     a:'En Pulsem (solo para el equipo), en las llaves de las IAs conectadas, cada quien puede quitar la suya con «Quitar». Las de los demás siguen funcionando.',
     en:'In Pulsem (team only), under the connected AIs\' keys, each person can remove theirs with «Remove». The others keep working.', go:['#railPulse'] },
   { k:'groq rapida llave propia fast own key',
-    a:'Groq es una opción muy rápida que usa tu propia llave (gratis con límites). Se conecta en Ajustes › IAs y memoria › «Conectar Puter u otra IA».',
-    en:'Groq is a very fast option that uses your own key (free with limits). Connect it in Settings › AIs and memory › «Connect Puter or another AI».', pre:openCfg('ia'), go:['[data-pane="ia"]', '#cfgBtn'] },
+    a:'Groq es una opción muy rápida que usa tu propia llave (gratis con límites). Se conecta en Ajustes › Tus IAs › «Conectar Puter u otra IA».',
+    en:'Groq is a very fast option that uses your own key (free with limits). Connect it in Settings › Your AIs › «Connect Puter or another AI».', pre:openCfg('ias'), go:['[data-pane="ias"] .cfglk', '#sAcc', '#cfgBtn'] },
   { k:'planes plan chispa chispa+ plus syntonia timeless orquesta cuesta cuestan vale valen premium suscripcion pro mejorar cuenta plans subscription upgrade',
     a:'Los planes están en el menú «⋯» › Planes: Chispa (gratis, el de todos), Chispa+, Syntonia, Timeless y Orquesta. Por ahora solo se muestran: los pagos están apagados, así que nadie te cobra nada. Se encenderán cuando la página reciba su primer dinero y se puedan pagar las APIs con él, no antes. El equipo (Prime, ZFlow y Symmetrix) ya tiene Orquesta para probarlo todo.',
     en:'Plans are in the «⋯» menu › Plans: Chispa (free, everyone\'s), Chispa+, Syntonia, Timeless and Orquesta. For now they are only shown: payments are off, so nobody charges you anything. They will turn on when the page gets its first money and the APIs can be paid with it, not before. The team (Prime, ZFlow and Symmetrix) already has Orquesta to test everything.',
     pre:() => { if (!$('#szPlans') && typeof plansModal === 'function') plansModal(); }, go:['#szPlans', '#moreBtn'] },
   { k:'aurora oro negro tema orquesta exclusivo bloqueado candado gold black theme locked',
-    a:'Aurora y Oro negro son los colores del plan Orquesta. Si eres del equipo ya los tienes en Ajustes › Página › «Color de SynthFlow»; para los demás salen con candado mientras los pagos estén apagados.',
-    en:'Aurora and Black gold are the Orquesta plan colors. If you are on the team you already have them in Settings › Page › «SynthFlow color»; for everyone else they show a lock while payments are off.', pre:openCfg(), go:['#cfgTh', '#cfgBtn', '[data-tab="cfg"]'] },
+    a:'Aurora y Oro negro son los colores del plan Orquesta. Si eres del equipo ya los tienes en Ajustes › General › «Color de Sonyx»; para los demás salen con candado mientras los pagos estén apagados.',
+    en:'Aurora and Black gold are the Orquesta plan colors. If you are on the team you already have them in Settings › General › «Sonyx color»; for everyone else they show a lock while payments are off.', pre:openCfg(), go:['#cfgTh', '#sAcc', '#cfgBtn', '[data-tab="cfg"]'] },
   { k:'equipo sin limite admin prime zflow symmetrix acceso todo enerx infinita team unlimited full access',
     a:'Prime, ZFlow y Symmetrix tienen acceso a todo, como si tuvieran Orquesta: su EnerX no baja («sin límite · equipo»), A.L.I.A.S. les aparece en el menú «⋯» con 100 veces más pasos y tienen los temas Aurora y Oro negro. Es para que puedan probar la página completa.',
     en:'Prime, ZFlow and Symmetrix have access to everything, as if they had Orquesta: their EnerX never drops («no limit · team»), A.L.I.A.S. shows up in their «⋯» menu with 100 times more steps and they get the Aurora and Black gold themes. It is so they can test the whole page.', go:['#railCoin', '#tabCoin'] },
@@ -149,4 +149,4 @@ BOT_FAQ.push(
  ['gracias', 'thanks thank great perfect cool'], ['adios', 'bye goodbye see you later']].forEach(([s, en]) => { const f = BOT_FAQ.find(x => x.k.startsWith(s)); if (f) f.k += ' ' + en; });
 /* lo que sí existe en la página, para que la IA de SynthonIA (cuando no hay respuesta guardada) diga dónde está y la manita lo señale */
 const BOT_PLACES = { chats:['[data-r="chats"]', '[data-tab="chats"]'], nuevo:['#cNew', '[data-r="new"]'], buscar:['[data-r="search"]'], favoritos:['#railFav', '[data-r="favs"]'], proyectos:['#railProj', '#cProj'], sinteticos:['#railSyn', '#cSyn'],
-  ajustes:['#cfgBtn', '[data-tab="cfg"]'], cuenta:['#accBtn', '[data-tab="me"]'], mas:['#attachBtn'], menu:['#moreBtn'], ia:['#cPick'], comparar:['#cCmp'], modo:['#cMode'], esfuerzo:['#cEffort'], cortas:['#saverBtn'], caja:['#inp'], planes:['#moreBtn'], ayuda:['a[href*="ayuda"]'], enerx:['#railCoin', '#tabCoin'], guia:['#guideTop', '#helpBtn'] };
+  ajustes:['#sAcc', '#cfgBtn', '[data-tab="cfg"]'], cuenta:['#accBtn', '[data-tab="me"]'], mas:['#attachBtn'], menu:['#moreBtn'], ia:['#cPick'], comparar:['#cCmp'], modo:['#cMode'], esfuerzo:['#cEffort'], cortas:['#saverBtn'], caja:['#inp'], planes:['#moreBtn'], ayuda:['a[href*="ayuda"]'], enerx:['#railCoin', '#tabCoin'], guia:['#guideTop', '#helpBtn'] };

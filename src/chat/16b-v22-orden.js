@@ -1,5 +1,5 @@
 /* ===== v2.2 · orden nuevo: todo donde lo buscarías (estilo Claude) ===== */
-/* Ajustes › IAs y memoria: atajos a lo que antes estaba regado en menús */
+/* Ajustes › Tus IAs: atajos a lo que antes estaba regado en menús */
 SZ.cfgLinks.push(
   ['Elegir mis IA ideales', () => SZ.surveyModal(ok => { if (ok){ forMeK = ''; applySurvey(true); renderList({ keep:true }); } }), '3 preguntas y te digo cuáles te sirven más'],
   ['Conectar Puter u otra IA', () => openConnect(), 'Tu versión pro de las IAs más usadas, gratis'],

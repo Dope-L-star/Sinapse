@@ -26,7 +26,7 @@ const TOPIC_STEPS = {
   },
   extras:async () => {
     await gPoint(gT('#attachBtn', '#attachBtn'), 'En el «+» está «Buscar en internet»: la IA busca datos de hoy y te muestra de dónde los sacó. Si preguntas por algo de hoy, busca sola.');
-    await gPoint(gT('#cfgBtn', '#tabbar [data-tab="cfg"]'), 'Y en Ajustes › «IAs y memoria» ves lo que recuerdo de ti y lo borras cuando quieras.', { side:true });
+    await gPoint(gT('#sAcc', '#tabbar [data-tab="cfg"]') || gT('#cfgBtn', '#tabbar [data-tab="cfg"]'), 'Y en Ajustes › «Memoria» ves lo que recuerdo de ti y lo borras cuando quieras.', { side:true });
     await gPoint(null, 'Un truco más: escribe «hazme una presentación de…» y te la entrego lista para PowerPoint.', { mood:'guino' });
   },
   chats:async () => {
@@ -41,7 +41,7 @@ const TOPIC_STEPS = {
     await gPoint(null, 'Y si quieres más, conecta Puter y usa la versión pro de las IAs más usadas (ChatGPT, Claude, Gemini…), gratis y con un clic.', { mood:'guino' });
   },
   ajustes:async () => {
-    await gPoint(gT('#cfgBtn', '#tabbar [data-tab="cfg"]'), 'Ajustes tiene 2 pestañas: «Página» (más bonito o más rápido, sonidos, animaciones) e «IAs y memoria» (modo principiante, respuestas cortas, lo que recuerdo de ti y tus IAs).', { side:true });
+    await gPoint(gT('#sAcc', '#tabbar [data-tab="cfg"]') || gT('#cfgBtn', '#tabbar [data-tab="cfg"]'), 'Ajustes está en tu perfil y tiene un menú a la izquierda: «Cuenta», «General» (estilo, color e idioma), «Efectos» (más bonito o más rápido, sonidos, animaciones), «Respuestas» (modo principiante, respuestas cortas), «Memoria» (lo que recuerdo de ti) y «Tus IAs».', { side:true });
   },
   synthonia:async () => {
     await gPoint(gT('#szBot', '#szBot'), 'Y yo siempre estoy aquí. Tócame y pregúntame cómo se hace algo: te lo explico o te lo señalo con mi manita.', { mood:'encantada' });

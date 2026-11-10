@@ -16,9 +16,9 @@ function memOffer(text){
   fact = (ai && ai.length >= 3 ? fact : memLimpia(fact)).slice(0, 300); if (fact.length < 3) return;
   $$('.memoff', lane).forEach(x => x.remove());
   const d = document.createElement('div'); d.className = 'agkeep memoff';
-  d.innerHTML = '<span>¿Quieres que lo recuerde para tus próximos chats? «<b></b>»</span><div class="agk-b"><button type="button" class="btn sm" data-mm="yes">Recordar</button><button type="button" class="btn sm ghost" data-mm="no">No</button></div><small>Lo ves y lo borras cuando quieras en Ajustes › IAs y memoria.</small>';
+  d.innerHTML = '<span>¿Quieres que lo recuerde para tus próximos chats? «<b></b>»</span><div class="agk-b"><button type="button" class="btn sm" data-mm="yes">Recordar</button><button type="button" class="btn sm ghost" data-mm="no">No</button></div><small>Lo ves y lo borras cuando quieras en Ajustes › Memoria.</small>';
   $('span b', d).textContent = fact; lane.appendChild(d); follow();
   d.addEventListener('click', e => { const b = e.target.closest('[data-mm]'); if (!b) return; d.remove(); if (b.dataset.mm === 'yes' && memAdd(fact)) toast('¡Listo! Lo voy a recordar.'); });
 }
-/* v2.2 · «Lo que recuerdo de ti» vive en Ajustes › IAs y memoria */
+/* v2.2 · «Lo que recuerdo de ti» vive en Ajustes › Memoria */
 function memModal(){ SZ.cfgModal('mem'); }

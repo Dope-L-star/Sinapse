@@ -39,7 +39,7 @@ $('#tabbar').addEventListener('click', e => {
   const t = b.dataset.tab;
   if (t === 'chats'){ if ($('#chats').classList.contains('msheet')) closeChatsSheet(); else { closeSide(); openChatsSheet(); } }
   else if (t === 'ia'){ if (side.classList.contains('open')) closeSide(); else { closeChatsSheet(); openSide(mode === 'cmp' ? 'add' : 'set'); } }
-  else { closeSide(); closeChatsSheet(); if (t === 'coins') coinModal('panel'); else if (t === 'cfg') SZ.cfgModal(); else if (t === 'me') accModal(); }
+  else { closeSide(); closeChatsSheet(); if (t === 'coins') coinModal('panel'); else if (t === 'cfg') SZ.cfgModal(); else if (t === 'me') accMenu(b); }
 });
 /* chat nuevo: también cambia la frase de bienvenida */
 function newChat(){

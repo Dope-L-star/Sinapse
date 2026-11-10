@@ -1,5 +1,5 @@
 /* ===== v3.2 · la barra de chats al estilo Claude en el modo Simple (pedido de Sammuel, 28 oct) =====
-   Arriba Crear, Proyectos, Sintéticos, Personalización y Más; en medio tus chats («Recientes»);
+   Arriba Crear, Comparar IAs, Espacios, Obras y Favoritos (v4.6: sin «Personalización» ni «Más»; Ajustes, Idioma, Ayuda y Planes están en el panelito del perfil); en medio tus chats («Recientes»);
    abajo tu cuenta y una lupa para buscar. La barrita de íconos se esconde mientras la lista está abierta.
    v3.7 · ahora también en el estilo SynthFlow (con los colores del tema): una sola barra, más simple, para todos. */
 let accInfo = { ready:false, name:'Entrar', plan:'Gratis' };
@@ -25,9 +25,7 @@ let accInfo = { ready:false, name:'Entrar', plan:'Gratis' };
   const reactNav = !!document.getElementById('sNav');
   const nav = reactNav ? document.getElementById('sNav') : document.createElement('nav'); if (!reactNav){ nav.className = 'snav'; nav.id = 'sNav'; nav.setAttribute('aria-label', 'Menú de SynthFlow');
   nav.innerHTML = '<div class="sn-top"><a class="sn-logo" href="index.html" aria-label="Volver a SymphorIA">' + SZ.flowWord() + '</a><button type="button" class="sn-x" data-sn="hide" aria-label="Cerrar la barra" data-tip="Cerrar la barra">' + I.side + '</button></div>'
-    + item('new', I.new, 'Crear', 0) + item('cmp', I.cmp, 'Comparar IAs', 1) + item('proj', I.proj, 'Proyectos', 2) + item('syn', I.syn, 'Sintéticos', 3) + item('cfg', I.cfg, 'Personalización', 4)
-    + '<button type="button" class="sn-i sn-more" data-sn="more" aria-expanded="false" aria-controls="snMore" style="--d:5"><span class="sn-ic" aria-hidden="true">' + I.more + '</span><span class="sn-t">Más</span><span class="sn-chev" aria-hidden="true">' + I.chev + '</span></button>'
-    + '<div class="sn-sub" id="snMore" hidden>' + item('favs', I.star, 'Mensajes favoritos', 0) + item('energy', I.batt, 'Tu EnerX de hoy', 1) + item('guide', I.guide, 'Guía de SynthFlow', 2) + item('help', I.help, 'Centro de ayuda', 3) + '</div>';
+    + item('new', I.new, 'Crear', 0) + item('cmp', I.cmp, 'Comparar IAs', 1) + item('proj', I.proj, 'Espacios', 2) + item('syn', I.syn, 'Obras', 3) + item('favs', I.star, 'Favoritos', 4);
   head.after(nav); }
   /* v3.7 · «Recientes» y el pie (tu cuenta + lupa) también los pinta React (PieBarra); aquí solo el motor de la cuenta */
   const reactFoot = !!document.getElementById('sFoot');
@@ -59,7 +57,7 @@ let accInfo = { ready:false, name:'Entrar', plan:'Gratis' };
   const ab = $('#accBtn'); if (ab) new MutationObserver(accPaint).observe(ab, { childList:true, subtree:true, attributes:true, attributeFilter:['class'] });
 
   if (!reactFoot){
-    $('#sAcc').addEventListener('click', () => accModal());
+    $('#sAcc').addEventListener('click', e => accMenu(e.currentTarget));
     /* la lupa muestra la búsqueda arriba de los chats (y la esconde si está vacía) */
     const q = $('#thQ');
     const findOn = on => { cin.classList.toggle('sfind', on); $('#sFind').setAttribute('aria-pressed', String(on)); if (on) setTimeout(() => q.focus(), 60); };
@@ -68,23 +66,15 @@ let accInfo = { ready:false, name:'Entrar', plan:'Gratis' };
   }
 
   if (!reactNav){
-  const more = $('#snMore'), mb = $('[data-sn="more"]', nav);
-  const moreOn = on => { more.hidden = !on; mb.setAttribute('aria-expanded', String(on)); nav.classList.toggle('mopen', on); };
   nav.addEventListener('click', e => {
     const b = e.target.closest('[data-sn]'); if (!b) return;
     const k = b.dataset.sn; SZ.SND && SZ.SND.tap && SZ.SND.tap();
-    if (k === 'more'){ moreOn(more.hidden); return; }
     if (k === 'hide'){ $('#chatsClose').click(); return; }
     if (k === 'new') newChat();
     else if (k === 'cmp') cmpOpen(b);
     else if (k === 'proj') pjOpen('list');
     else if (k === 'syn') synOpen();
-    else if (k === 'cfg') SZ.cfgModal();
     else if (k === 'favs') showChats('favs');
-    else if (k === 'energy') coinModal('panel');
-    else if (k === 'guide'){ openGuide(); }
-    else if (k === 'help') location.href = 'ayuda.html';
-    if (k !== 'new' && k !== 'favs') moreOn(false);
     if (isMobile() && k !== 'favs') closeChatsSheet();
   });
   /* el que está abierto se marca, como en Claude */
