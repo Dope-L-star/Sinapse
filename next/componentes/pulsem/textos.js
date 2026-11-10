@@ -2,9 +2,9 @@
    Cambian al instante (sin recargar) cuando cambia <html lang>. */
 
 const es = {
-  back: 'Volver a SymphorIA',
+  back: 'Volver a Sinapse',
   refresh: 'Actualizar ahora',
-  toFlow: 'Ir a SynthFlow',
+  toFlow: 'Ir a Sonyx',
   langBtn: 'English',
   langAria: 'Cambiar idioma a inglés',
   connecting: 'conectando…',
@@ -16,9 +16,9 @@ const es = {
   oneMoment: 'Un momento.',
   gateTeam: 'PULSEM · SOLO EL EQUIPO',
   gateLoginH: 'Entra con tu cuenta del equipo',
-  gateLoginP: 'El Pulsem muestra cómo está SymphorIA por dentro. Solo pueden verlo las cuentas Prime, ZFlow y Symmetrix.',
+  gateLoginP: 'El Pulsem muestra cómo está Sinapse por dentro. Solo pueden verlo las cuentas Prime, ZFlow y Symmetrix.',
   gateTeamH: 'Esta página es del equipo',
-  gateTeamP: 'Solo las cuentas con rango Prime, ZFlow o Symmetrix pueden ver Pulsem. Si necesitas ayuda, escríbele al equipo desde SynthonIA.',
+  gateTeamP: 'Solo las cuentas con rango Prime, ZFlow o Symmetrix pueden ver Pulsem. Si necesitas ayuda, escríbele al equipo desde Sona.',
   gateErrH: 'No pude abrir Pulsem',
   gateErrP: 'Revisa tu conexión e inténtalo de nuevo.',
   retry: 'Reintentar',
@@ -27,9 +27,9 @@ const es = {
 };
 
 const en = {
-  back: 'Back to SymphorIA',
+  back: 'Back to Sinapse',
   refresh: 'Refresh now',
-  toFlow: 'Go to SynthFlow',
+  toFlow: 'Go to Sonyx',
   langBtn: 'Español',
   langAria: 'Switch language to Spanish',
   connecting: 'connecting…',
@@ -41,9 +41,9 @@ const en = {
   oneMoment: 'One moment.',
   gateTeam: 'PULSEM · TEAM ONLY',
   gateLoginH: 'Sign in with your team account',
-  gateLoginP: 'Pulsem shows how SymphorIA is doing inside. Only Prime, ZFlow and Symmetrix accounts can see it.',
+  gateLoginP: 'Pulsem shows how Sinapse is doing inside. Only Prime, ZFlow and Symmetrix accounts can see it.',
   gateTeamH: 'This page is for the team',
-  gateTeamP: 'Only Prime, ZFlow or Symmetrix accounts can see Pulsem. If you need help, write to the team from SynthonIA.',
+  gateTeamP: 'Only Prime, ZFlow or Symmetrix accounts can see Pulsem. If you need help, write to the team from Sona.',
   gateErrH: 'I couldn’t open Pulsem',
   gateErrP: 'Check your connection and try again.',
   retry: 'Try again',

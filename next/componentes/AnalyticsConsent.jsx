@@ -119,7 +119,7 @@ export default function AnalyticsConsent() {
           </div>
           <h2 id="analytics-consent-title">Ayúdanos a mejorar el rendimiento</h2>
           <p id="analytics-consent-description">
-            Si aceptas, Cloudflare Web Analytics medirá visitas a páginas y métricas técnicas de carga para ayudarnos a mejorar la velocidad. No usamos grabaciones de sesiones, mapas de calor ni eventos personalizados; este código no envía tus prompts, mensajes, títulos de chats, datos de cuenta ni resultados de SynthonIA. No es necesario para usar SymphorIA. Puedes rechazarlo o cambiar tu decisión cuando quieras desde «Analítica».
+            Si aceptas, Cloudflare Web Analytics medirá visitas a páginas y métricas técnicas de carga para ayudarnos a mejorar la velocidad. No usamos grabaciones de sesiones, mapas de calor ni eventos personalizados; este código no envía tus prompts, mensajes, títulos de chats, datos de cuenta ni resultados de Sona. No es necesario para usar Sinapse. Puedes rechazarlo o cambiar tu decisión cuando quieras desde «Analítica».
           </p>
           <div className="analytics-consent__actions">
             <button type="button" className="analytics-consent__accept" onClick={accept}>Permitir métricas</button>
