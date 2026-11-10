@@ -72,3 +72,4 @@ html.simple body:not(.locked) #hexR.luma-starters { display: grid !important; }
   .luma-starters { grid-template-columns: 1fr; gap: 6px; }
   .luma-starter { min-height: 44px; padding: 6px 10px; }
 }
+.flowq:focus-visible{outline:2px solid var(--accent,#3de0ff);outline-offset:2px;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent,#3de0ff) 35%,transparent)}
