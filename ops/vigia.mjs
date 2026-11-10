@@ -1,6 +1,6 @@
 /* Fase 4 · vigía: revisa que SymphorIA responda (la usa .github/workflows/vigia.yml cada 30 min).
-   Uso: node ops/vigia.mjs https://symphoria.pages.dev   → sale con error si algo falla o va muy lento. */
-const base = (process.argv[2] || 'https://symphoria.pages.dev').replace(/\/$/, '');
+   Uso: node ops/vigia.mjs https://sinapse.pages.dev   → sale con error si algo falla o va muy lento. */
+const base = (process.argv[2] || 'https://sinapse.pages.dev').replace(/\/$/, '');
 const PRUEBAS = [
   ['Portada', '/', r => r.status === 200, 4000],
   ['SynthFlow', '/chat', r => r.status === 200, 4000],

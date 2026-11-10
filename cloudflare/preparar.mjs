@@ -6,7 +6,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-export const SITIO = 'https://symphoria.pages.dev';
+export const SITIO = 'https://sinapse.pages.dev';
 const VIEJO = 'https://synthz-style.vercel.app';
 const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const sale = path.join(raiz, 'cloudflare', 'public');

@@ -6,7 +6,7 @@
    · Para apagarlo sin tocar código: NEXT_PUBLIC_UMAMI=off al armar. */
 export const UMAMI_SRC = 'https://cloud.umami.is/script.js';
 export const UMAMI_ID = 'f07649c8-d8ba-4bcc-a1b7-915fd65b9b8c';
-export const UMAMI_DOMAINS = 'symphoria.pages.dev';
+export const UMAMI_DOMAINS = 'sinapse.pages.dev';
 export const UMAMI_OPT_OUT_KEY = 'umami.disabled';
 
 export function umamiOn(env = {}) { return String(env.NEXT_PUBLIC_UMAMI || '').toLowerCase() !== 'off'; }

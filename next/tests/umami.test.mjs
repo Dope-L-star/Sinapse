@@ -20,7 +20,7 @@ test('sin decisión: agrega la etiqueta de Umami con su id, solo el dominio publ
   assert.equal(a[0].src, UMAMI_SRC);
   assert.equal(a[0].defer, true);
   assert.equal(a[0].attrs['data-website-id'], UMAMI_ID);
-  assert.equal(a[0].attrs['data-domains'], 'symphoria.pages.dev');
+  assert.equal(a[0].attrs['data-domains'], 'sinapse.pages.dev');
   assert.equal(a[0].attrs['data-do-not-track'], 'true');
 });
 test('con cookies aceptadas también cuenta', () => {

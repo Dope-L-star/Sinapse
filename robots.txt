@@ -5,4 +5,4 @@ Disallow: /pulsem
 Disallow: /pulso
 Disallow: /sintetico
 
-Sitemap: https://symphoria.pages.dev/sitemap.xml
+Sitemap: https://sinapse.pages.dev/sitemap.xml

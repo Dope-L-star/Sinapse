@@ -133,7 +133,7 @@ func registrar(exe string) error {
 		"InstallLocation":      filepath.Dir(exe),
 		"UninstallString":      `"` + exe + `" --desinstalar`,
 		"QuietUninstallString": `"` + exe + `" --desinstalar --silencioso`,
-		"URLInfoAbout":         "https://symphoria.pages.dev/",
+		"URLInfoAbout":         "https://sinapse.pages.dev/",
 		"InstallDate":          time.Now().Format("20060102"),
 	} {
 		if err := k.SetStringValue(n, v); err != nil {
