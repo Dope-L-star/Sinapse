@@ -140,6 +140,7 @@ const botN = p => p.locator('#lane .m.bot').count();
   const t = await p.locator('.alrun').innerText();
   check('celular EN: la tarjeta está en inglés', /Approve and start/.test(t) && /Discard/.test(t) && /Plan ready/.test(t), t.slice(0, 160));
   check('celular: sin scroll de lado', await p.evaluate(() => document.documentElement.scrollWidth) <= 390);
+  await p.waitForTimeout(900);   /* que termine de aparecer la tarjeta */
   if (OUT) await p.screenshot({ path:`${OUT}/5-celular-en.png` });
   await p.context().close();
 }
