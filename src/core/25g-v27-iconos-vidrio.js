@@ -59,7 +59,7 @@ const GI = {
   nube:   ['C', () => giP('M19 47a10 10 0 0 1-1.5-19.9A14 14 0 0 1 44 23a11 11 0 0 1 2 24z', 'C', .18) + giH('M20 30q2-8 10-9')
             + '<g class="gi-sync">' + giL('M25 35a7 7 0 0 1 12-4.5M39 38a7 7 0 0 1-12 4.5', 'V', 2.2) + giL('M37.5 26.5v4.5H33M26.5 47v-4.5H31', 'V', 2.2) + '</g>'],
   celular: ['V', () => giP('M23 6h18a6 6 0 0 1 6 6v40a6 6 0 0 1-6 6H23a6 6 0 0 1-6-6V12a6 6 0 0 1 6-6z', 'V', .14) + giL('M29 11h6M29 53h6', 'V', 2)
-            /* adentro, la carita de SynthonIA */
+            /* adentro, la carita de Sona */
             + giC(32, 28, 9.5, 'C', .18, 1.8) + '<ellipse cx="32" cy="29" rx="6.6" ry="5.2" fill="#0b0719" stroke="#ff7ad0" stroke-opacity=".8" stroke-width=".9"/>'
             + '<g class="gi-eyes"><rect x="28.6" y="26.5" width="2.2" height="5" rx="1.1" fill="#3de0ff"/><rect x="33.2" y="26.5" width="2.2" height="5" rx="1.1" fill="#3de0ff"/></g>'
             + giP('M27 40h10a4 4 0 0 1 4 4v2H23v-2a4 4 0 0 1 4-4z', 'C', .2, 1.6)],

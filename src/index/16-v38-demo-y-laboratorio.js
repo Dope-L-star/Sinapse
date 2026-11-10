@@ -1,6 +1,6 @@
 /* v3.8c · Pedido de Sammuel (2-nov-2026, eligió «B y C juntas»):
    B · «Sona te lo muestra en vivo»: en «Así de fácil», una ventanita de Sonyx de mentira que Sona maneja sola con su
-       manita (escribe, elige 3 IAs, envía, las respuestas llegan y elige la mejor). No llama a ninguna IA ni gasta EnerX.
+       puntero (escribe, elige 3 IAs, envía, las respuestas llegan y elige la mejor). No llama a ninguna IA ni gasta EnerX.
        Arriba tiene pestañas con candado (Voz, Chats en grupo): son puertas falsas que llevan a votar.
    C · «El laboratorio»: sección nueva con tubos de ensayo, uno por función que todavía no existe. Arrastras tu batería de EnerX
        (o tocas «Votar») al tubo que quieres y el líquido sube con los votos de todos. Correo opcional para avisarte. Nada se cobra.
@@ -61,7 +61,7 @@ const demo = document.createElement('div');
 demo.className = 'dm'; demo.id = 'szDemo';
 const grid = como.querySelector('.how-grid');
 (grid ? grid.nextSibling : null) ? como.insertBefore(demo, grid.nextSibling) : como.appendChild(demo);
-const MANO = '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M11 3.5c1.4 0 2.5 1.1 2.5 2.5v8.2l1-.2V11c0-1.3 1-2.3 2.3-2.3s2.3 1 2.3 2.3v3.2l.9-.1V12.6c0-1.2 1-2.2 2.2-2.2s2.2 1 2.2 2.2v3.6l.6-.1c1.2-.1 2.2.9 2.2 2.1v3.6c0 4.6-3.7 8.3-8.3 8.3h-1.6c-2.5 0-4.8-1.1-6.4-3.1l-4.6-5.8c-.8-1-.6-2.4.4-3.1.9-.7 2.2-.6 3 .2l1.8 1.9V6c0-1.4 1.1-2.5 2.5-2.5Z" fill="url(#dmMG)" stroke="rgba(255,255,255,.75)" stroke-width="1.1"/><defs><linearGradient id="dmMG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd2c2"/><stop offset="1" stop-color="#ff8fb8"/></linearGradient></defs></svg>';
+const MANO = '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 3l20 11.2-8.6 2.2L12 25.5z" fill="#0b0b12" stroke="url(#dmMG)" stroke-width="1.9" stroke-linejoin="round"/><circle cx="12.4" cy="17.4" r="1.5" fill="#ff7ac0"/><defs><linearGradient id="dmMG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7ac0"/><stop offset=".5" stop-color="#a866ff"/><stop offset="1" stop-color="#3de0ff"/></linearGradient></defs></svg>';
 function pintaDemo(){
   const x = t();
   demo.innerHTML =
@@ -105,7 +105,7 @@ demo.addEventListener('submit', async e => {
 });
 pintores.push(() => { const p = demo.querySelector('.dm-pop'); if (p && !p.hidden && p._pinta) p._pinta(); });
 
-/* la película: SynthonIA maneja la ventanita */
+/* la película: Sona maneja la ventanita */
 let corrida = 0, visible = false;
 const $d = s => demo.querySelector(s);
 function manoA(el, dx = .5, dy = .55){

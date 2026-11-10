@@ -23,7 +23,7 @@
 > Pantalla: `perks.f.alias` de `/api/ai` se recuerda en `localStorage` `synthz:alias`; sin eso no hay modo Agente, ni enlaces, ni tarjeta en la portada.
 > Sin permiso no se ve nada de Quoryn (ni el modo Agente, ni el menú, ni la tarjeta o la pestaña de la portada). Prueba: `node t/alias/solo-equipo.mjs`.
 
-Sistema de lógica e inteligencia aumentada. En la interfaz se llama **Quoryn** (el nombre largo, A.L.I.A.S., ya no se muestra). Agente dentro de SynthFlow (Colombia). No es el chat, no es SuperiorSynth y no es SynthonIA.
+Sistema de lógica e inteligencia aumentada. En la interfaz se llama **Quoryn** (el nombre largo, A.L.I.A.S., ya no se muestra). Agente dentro de SynthFlow (Colombia). No es el chat, no es SuperiorSynth y no es Sona.
 
 ## English summary
 
@@ -116,7 +116,7 @@ window.ALIAS = {
 
 - No abre un navegador completo ni entra a cuentas, bancos o páginas con login.
 - No publica apps ni las sube a una tienda.
-- No es SuperiorSynth ni SynthonIA. No sustituye el chat.
+- No es SuperiorSynth ni Sona. No sustituye el chat.
 - No cobra y no enciende los planes de pago (Syntonia, Timeless, Orquesta).
 - No guarda el archivo en el servidor para siempre: se copia o se descarga.
 - No asegura que cada enlace siga vivo.

@@ -5,7 +5,7 @@
    · Cuando la cuenta es del equipo, se monta el panel nuevo: next/componentes/admin/PanelAdmin.jsx
      (Resumen, Llaves, Ajustes, Comentarios, Ayuda, «Para atender ahora», Ctrl+K), que se actualiza solo cada minuto.
    · textos.js: los textos de la puerta y la cabecera en español e inglés; cambian al instante al cambiar el idioma.
-   De core.js se sigue usando lo compartido con el resto del sitio (cuenta, llamadas al servidor, avisos, íconos, SynthonIA). */
+   De core.js se sigue usando lo compartido con el resto del sitio (cuenta, llamadas al servidor, avisos, íconos, Sona). */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { tx } from './textos';
 import { useSZ, useLang, useReloj, still } from './usos';

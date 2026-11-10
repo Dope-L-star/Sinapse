@@ -1,4 +1,4 @@
-/* Sona (antes SynthonIA, la ayudante) y ayuda de personas del equipo.
+/* Sona (la ayudante) y ayuda de personas del equipo.
    POST { action:'ask', q, hist?, when?, name? } → Sona responde con una IA gratis (máx. 15 al día por persona); ver api/_sona-saber.js
    POST { action:'open', text, page? }   → pedir ayuda a una persona del equipo (necesita cuenta)
    POST { action:'say', id, text }       → escribir en la conversación de ayuda (la persona o el equipo)
@@ -21,7 +21,7 @@ const MAINT_SYS = 'Eres ' + NAMES.bot + ', la ayudante de ' + NAMES.site + ': ju
   + 'Límites: nada sexual, romántico ni de coqueteo, nada violento ni ofensivo; si alguien va por ahí, dices con amabilidad que de eso no hablas y cambias de tema. No haces tareas largas ni código. Nunca pidas contraseñas ni datos personales. '
   + 'Nunca escribas lo que estás pensando ni tus pasos: solo la respuesta final. '
   + 'Empieza SIEMPRE tu respuesta con tu cara entre corchetes, una de: [feliz] [encantada] [riendo] [guino] [pensando] [sorprendida] [disculpa] [celebrando] [neutral] [confundida]. Ejemplo: «[encantada] ¡Ay, gracias! Me alegraste el día.»';
-/* lo que el equipo escribió en Pulsem al encender el mantenimiento = «qué estamos arreglando»: SynthonIA lo cuenta si le preguntan */
+/* lo que el equipo escribió en Pulsem al encender el mantenimiento = «qué estamos arreglando»: Sona lo cuenta si le preguntan */
 const maintSys = (L, note) => LANG_HEAD[L] + MAINT_SYS + ' ' + PERSONA[L]
   + (note ? (L === 'en' ? ' What the team is fixing right now (tell it in your own words, in English, if asked): «' : ' Lo que el equipo está arreglando ahora mismo (cuéntalo con tus palabras si te preguntan): «') + note + '».' : (L === 'en' ? ' You don\'t know the details of what is being fixed: say so honestly.' : ' No sabes el detalle de qué se arregla: dilo con honestidad.'))
   + LANG_TAIL[L];

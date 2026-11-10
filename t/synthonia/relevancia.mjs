@@ -1,4 +1,4 @@
-/* Sona (antes SynthonIA) responde con sentido (v4.6): qué tipo de mensaje es, qué datos se le dan a la IA, la guardia de relevancia
+/* Sona responde con sentido (v4.6): qué tipo de mensaje es, qué datos se le dan a la IA, la guardia de relevancia
    y el cuidado cuando alguien dice que se quiere hacer daño. Todo con una IA falsa: no necesita internet.
    node t/synthonia/relevancia.mjs */
 import assert from 'node:assert/strict';
@@ -9,7 +9,7 @@ let ok = 0; const t = async (name, fn) => { await fn(); ok++; console.log('OK', 
 await t('nombres nuevos en un solo lugar', () => {
   assert.equal(NAMES.bot, 'Sona'); assert.equal(NAMES.flow, 'Sonyx'); assert.equal(NAMES.apex, 'Apex'); assert.equal(NAMES.relay, 'Relay');
   const s = buildSystem({ kind:'pagina', chunks:pickSaber('como elijo la ia o el modo') });
-  assert.match(s, /Eres Sona\./); assert.match(s, /Sonyx/); assert.match(s, /Apex/); assert.doesNotMatch(s, /Eres SynthonIA/);
+  assert.match(s, /Eres Sona\./); assert.match(s, /Sonyx/); assert.match(s, /Apex/); assert.doesNotMatch(s, /SynthonIA/, 'el nombre viejo ya no aparece');
   assert.doesNotMatch(s, /\{\w+\}/, 'no queda ningún {marcador} sin llenar');
 });
 
@@ -90,7 +90,7 @@ await t('si la repetición también sale mal, responde ella con su frase', async
   assert.ok(FALLBACK.es.some(f => f.replace(/^\[\w+\]\s*/, '') === r.text), r.text); assert.equal(r.mood === 'confundida' || r.mood === 'disculpa', true);
 });
 
-await t('pregunta de la página: lleva los datos y se señala con la manita', async () => {
+await t('pregunta de la página: lleva los datos y se señala con el puntero', async () => {
   const m = mk(['[feliz] Abre Ajustes › «IAs y memoria» › «Conectar con Puter». [ver:ajustes]']);
   const r = await sonaReply({ q:'como conecto puter', L:'es', hist:[{ role:'user', content:'hola' }, { role:'assistant', content:'¡Hola!' }], now:'estamos arreglando el chat', ask:m.ask });
   assert.match(m.calls[0].messages[0].content, /DATOS:[\s\S]*Conectar con Puter/); assert.match(m.calls[0].messages[0].content, /estamos arreglando el chat/);

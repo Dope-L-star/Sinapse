@@ -46,7 +46,7 @@ test('el runtime espera SZ.synReady con tiempo límite antes de chat.js', () => 
   assert.doesNotMatch(chatRoute, /'synthonia\.js'/);
 });
 
-test('SynthonIA y BETA salen como elementos reales del árbol React', () => {
+test('Sona y BETA salen como elementos reales del árbol React', () => {
   assert.match(page, /page === 'chat' \? <SynthonIAHost \/>/);
   assert.match(host, /id="synthonIA-react-host"/);
   assert.match(host, /id="szBot"/);
@@ -55,7 +55,7 @@ test('SynthonIA y BETA salen como elementos reales del árbol React', () => {
   assert.match(host, /onClick=\{openFeedback\}/);
 });
 
-test('el motor de SynthonIA reutiliza el botón React y no crea otro con el mismo ID', () => {
+test('el motor de Sona reutiliza el botón React y no crea otro con el mismo ID', () => {
   assert.match(bot, /const existing = document\.getElementById\('szBot'\)/);
   assert.match(bot, /existing\.dataset\.reactComponent === 'synthonia-avatar'/);
   assert.match(bot, /if \(!reactOwned\)\{[\s\S]*?appendChild\(b\)/);
@@ -69,7 +69,7 @@ test('expresiones y botón arrastrable se mantienen en el motor existente', () =
   assert.match(bot, /botToggle\(\)/);
 });
 
-test('la navegación cliente puede desmontar y volver a montar SynthonIA', () => {
+test('la navegación cliente puede desmontar y volver a montar Sona', () => {
   assert.match(host, /window\.SZ\?\.BOT\?\.unmount\?\.\(\)/);
   assert.match(bot, /function botReactUnmount\(\)/);
   assert.match(bot, /BOT\.el = null/);
@@ -83,7 +83,7 @@ test('BETA se posiciona junto a la bolita React sin perderse en móvil', () => {
   assert.match(beta, /t\.style\.visibility = 'visible'/);
 });
 
-test('ocultar SynthonIA limpia el motor antes de que React retire sus nodos', () => {
+test('ocultar Sona limpia el motor antes de que React retire sus nodos', () => {
   assert.match(assistantPanel, /symphoria:hide-synthonIA/);
   assert.match(host, /window\.addEventListener\('symphoria:hide-synthonIA', hide\)/);
   assert.match(host, /const hide = \(\) => \{[\s\S]*?window\.SZ\?\.BOT\?\.unmount\?\.\(\)[\s\S]*?setHidden\(true\)/);

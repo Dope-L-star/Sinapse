@@ -1,10 +1,8 @@
-/* ===== v15: SynthonIA (carita) y bienvenida tras 12 horas ===== */
+/* ===== v15: Sona (carita) y bienvenida tras 12 horas ===== */
 .szface{display:block;overflow:visible;flex:none}
 .szface .fe{transform-box:fill-box;transform-origin:center;animation:szblink 5.2s ease-in-out infinite}
 .szface[data-mood=dormida] .fe,.szface[data-mood=flow] .fe{animation:none}
-.szface .fb{transform-box:fill-box;transform-origin:center;animation:szant 2.6s ease-in-out infinite}
 @keyframes szblink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.12)}}
-@keyframes szant{0%,100%{transform:scale(1);filter:none}50%{transform:scale(1.18);filter:drop-shadow(0 0 4px var(--wine))}}
 #szWelcome{position:fixed;left:50%;top:18px;z-index:9600;display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"f t" "f b";align-items:center;gap:6px 16px;width:min(620px,calc(100vw - 24px));padding:16px 46px 16px 16px;border:1px solid rgba(var(--gold-rgb),.32);border-radius:26px;background:rgba(18,16,20,.78);backdrop-filter:blur(26px) saturate(1.5);-webkit-backdrop-filter:blur(26px) saturate(1.5);box-shadow:0 30px 90px -20px rgba(0,0,0,.75),0 0 60px -30px rgba(var(--gold-rgb),.6);color:#ecebe7;font-family:var(--sans,system-ui);opacity:0;transform:translate(-50%,-30px) scale(.94);filter:blur(10px);transition:opacity .5s ease,transform .8s cubic-bezier(.22,1,.36,1),filter .55s ease}
 #szWelcome.on{opacity:1;transform:translate(-50%,0);filter:none}
 #szWelcome.bye{opacity:0;transform:translate(-50%,-24px) scale(.96);filter:blur(8px);transition-duration:.4s,.6s,.4s}
@@ -25,17 +23,17 @@
 @media (max-width:560px){#szWelcome{grid-template-columns:auto 1fr;grid-template-areas:"f t" "b b";top:10px;padding:14px 42px 14px 14px}#szWelcome .wbface,#szWelcome .wbface svg{width:52px;height:52px}#szWelcome .wbbtn .btn{flex:1 1 100%;justify-content:center}}
 html.noglass #szWelcome{background:#16141a;backdrop-filter:none;-webkit-backdrop-filter:none}
 html.noanim #szWelcome,html.noanim #szWelcome .wbface,html.noanim .szface:not(#szBot .szface) .fe,html.noanim .szface:not(#szBot .szface) .fb{animation:none !important;transition-duration:.01s !important}
-/* la bolita de SynthonIA sigue viva siempre (como el logo), también con el cursor encima */
+/* el botón de Sona sigue vivo siempre (como el logo), también con el cursor encima */
 #szBot:hover .bf,#szBot.cur-hov .bf{animation-play-state:running}
 
-/* ===== v16: la manita de SynthonIA, su burbuja, el aro de luz y la Guía ===== */
-#szHand{position:fixed;left:0;top:0;z-index:9750;width:40px;height:40px;pointer-events:none;opacity:0;transition:opacity .45s ease,filter .45s ease;filter:drop-shadow(0 6px 14px rgba(0,0,0,.55)) drop-shadow(0 0 10px rgba(var(--gold-rgb),.35));will-change:transform}
+/* ===== v16: el puntero de luz de Sona, su burbuja, el aro de luz y la Guía ===== */
+#szHand{position:fixed;left:0;top:0;z-index:9750;width:40px;height:40px;pointer-events:none;opacity:0;transition:opacity .45s ease,filter .45s ease;filter:drop-shadow(0 6px 14px rgba(0,0,0,.55)) drop-shadow(0 0 10px rgba(255,79,163,.4));will-change:transform}
 #szHand.on{opacity:1}
 #szHand .hs{width:40px;height:40px;transition:transform .14s cubic-bezier(.22,1,.36,1)}
 #szHand .hs svg{width:40px;height:40px;display:block;overflow:visible;animation:hshape .28s cubic-bezier(.22,1,.36,1)}
 @keyframes hshape{from{transform:scale(.7) rotate(-10deg);opacity:.2}}
 #szHand.press .hs{transform:scale(.82) translateY(2px)}
-#szHand .hl{position:absolute;left:30px;top:34px;padding:3px 9px;border-radius:999px;background:linear-gradient(90deg,var(--wine),var(--gold));color:#1a0f08;font:600 11px var(--sans,system-ui);white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+#szHand .hl{position:absolute;left:30px;top:34px;padding:3px 9px;border-radius:999px;background:linear-gradient(90deg,#ff7ac0,#a866ff 55%,#3de0ff);color:#07060c;font:600 11px var(--sans,system-ui);white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.4)}
 #szHand[data-s=text] .hl{left:26px;top:30px}
 .szripple{position:fixed;z-index:9740;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;border:2px solid var(--gold);pointer-events:none;animation:szrip .65s cubic-bezier(.22,1,.36,1) forwards}
 @keyframes szrip{from{transform:scale(.4);opacity:1}to{transform:scale(4.2);opacity:0}}

@@ -144,12 +144,12 @@
 .sxerr{margin:8px 0 0;padding:10px 12px;border:1px solid rgba(255,143,122,.45);border-radius:12px;background:rgba(255,143,122,.08);color:#ffc0b3;font-size:13px}
 @media (max-width:520px){.sxsplit{grid-template-columns:1fr 1fr}.sxsplit div:last-child{grid-column:1 / -1}}
 
-/* manita del cursor: en todo lo que se puede tocar */
+/* puntero del cursor: en todo lo que se puede tocar */
 #chd{position:absolute;left:-9px;top:-3px;width:24px;height:28px;opacity:0;transform:scale(.6);transform-origin:9px 3px;transition:opacity .15s,transform .3s cubic-bezier(.22,1,.36,1);filter:drop-shadow(0 3px 4px rgba(0,0,0,.45));pointer-events:none}
 #cd.hand #chd{opacity:1;transform:none}
 #cd.hand #ca{visibility:hidden}
 #cd.hand #cw{opacity:0 !important}
-/* sin el cursor de SymphorIA: manita normal del sistema en esas mismas opciones */
+/* sin el cursor de SymphorIA: puntero normal del sistema en esas mismas opciones */
 html:not(.cursor-on) :is(a[href],button:not(:disabled),select,summary,[role=tab],[data-hover],.chip,.cfgsw,.sxsw){cursor:pointer}
 /* switches del menú: foco visible con teclado, sin cuadro de selección del cursor */
 #cfgm .cfgsw:focus-visible{outline:2px solid #b8c4ff;outline-offset:3px}

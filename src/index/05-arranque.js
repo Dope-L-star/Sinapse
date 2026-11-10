@@ -39,7 +39,7 @@ renderAccIdx();
   if (!st().models.openrouter) SZ.refreshModels(API[0]).catch(() => {});
 }
 boot();
-/* «Empezar a FlowIA'r»: SynthonIA guiña el ojo y luego se pone fachera (gafas de Flow) con brillitos */
+/* «Empezar a FlowIA'r»: Sona guiña el ojo y luego se pone fachera (gafas de Flow) con brillitos */
 (function startFace(){
   const f = $('#startFace'), b = $('#startBtn'); if (!f || !b) return;
   const put = m => { f.innerHTML = '<span class="fl">' + SZ.face(m, 38) + '</span>'; };
@@ -71,7 +71,7 @@ if (SZ.onLang) SZ.onLang(() => { try{ paintSzCard(); updateTotals(); renderLaunc
 $('#limPill').addEventListener('click', () => { const u = $('#consumo'); if (u) u.scrollIntoView({ behavior:SZ.reduce ? 'auto' : 'smooth' }); });
 })();
 
-/* v2.2 · Ajustes › Tus IAs en la portada, y el «!» de novedades sobre SynthonIA */
+/* v2.2 · Ajustes › Tus IAs en la portada, y el «!» de novedades sobre Sona */
 /* el texto se lee al abrir Ajustes, así sigue al idioma */
 const lk = (l, fn, d) => { const a = [, fn]; Object.defineProperties(a, { 0:{ get:() => SZ.t(l) }, 2:{ get:() => SZ.t(d) } }); return a; };
 SZ.cfgLinks.push(lk('ix.lk1', () => SZ.surveyModal(), 'ix.lk1d'), lk('ix.lk2', () => SZ.portalOut('chat.html?conn=1'), 'ix.lk2d'), lk('ixa.abrirsynthflow', () => { location.href = 'chat.html'; }, 'ix.lk3d'));

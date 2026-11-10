@@ -8,7 +8,7 @@ export const metadata = {
 };
 
 /* v3.8 · Pulsem ya es React de verdad (next/componentes/pulsem/*). pulsem.js ya no se carga aquí:
-   solo core.js (cuenta, servidor, SynthonIA, mantenimiento) y la capa de animaciones. */
+   solo core.js (cuenta, servidor, Sona, mantenimiento) y la capa de animaciones. */
 export default function Pulsem() {
   return (
     <>

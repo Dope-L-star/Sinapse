@@ -1,5 +1,5 @@
 /* =====================================================================
-   Guía Asistida: Sona enseña Sonyx con su manita (camino B)
+   Guía Asistida: Sona enseña Sonyx con su puntero (camino B)
    1 temas · 2 IA recomendadas · 3 recorrido · 4 comparar 2 · 5 prueba real · 6 conectar
    v3.0: arranca sola al terminar «Empieza en Sonyx» (ya elegiste tema e IA, así que salta 1 y 2) y el recorrido
    muestra también Nuevo chat, los modos, el esfuerzo, Espacios, Sintéticos y los Ajustes (temas, Simple, tamaño, rápido, idioma)
@@ -62,10 +62,10 @@ function gPanel(html, cls, say, mood, dir){
   const p = document.createElement('div'); p.id = 'szgPanel'; p.className = 'szgp' + (cls ? ' ' + cls : '') + (dir < 0 ? ' rev' : '');
   p.innerHTML = '<div class="gp-in">' + (say ? '<div class="gp-say"><span class="sf">' + SZ.face(mood || 'feliz', 58) + '</span><p>' + esc(say) + '</p></div>' : '') + html + '</div>';
   document.body.appendChild(p); requestAnimationFrame(() => p.classList.add('on'));
-  if (say){ SZ.SND.blip(mood); if (!SZ.reduce) SZ.typeIn($('.gp-say p', p), { cps:50, max:4, delay:250, onFrame:SZ.lipSync([$('.gp-say .sf .szface', p), SZ.ballFace()], say) }).catch(() => {}); }
+  if (say){ SZ.SND.blip(mood); if (!SZ.reduce) SZ.typeIn($('.gp-say p', p), { cps:50, max:4, delay:250, onFrame:SZ.lipSync([$('.gp-say .sf .szface', p), SZ.botFaceEl()], say) }).catch(() => {}); }
   return p;
 }
-/* la barra de la guía se aparta si tapa lo que SynthonIA está señalando */
+/* la barra de la guía se aparta si tapa lo que Sona está señalando */
 function gDodge(t){ const h = $('#szgHud'); if (!h || !t || !t.getBoundingClientRect) return; const r = t.getBoundingClientRect(); h.classList.toggle('low', r.top < 96); }
 function gPanelClose(dir){ if (H.wander) H.wander(null); const p = $('#szgPanel'); if (!p) return; p.id = ''; p.classList.remove('on', 'rev'); p.classList.add('bye'); if (dir < 0) p.classList.add('back'); setTimeout(() => p.remove(), 520); }
 /* lo primero que se vea de una lista de opciones (la pantalla cambia entre el inicio limpio y el chat) */
@@ -146,7 +146,7 @@ async function runGuide(o = {}){
       b.setAttribute('aria-pressed', String(!on)); SZ.SND.tap();
       const n = pickN(); $('.gp-n', P).textContent = n + ' de 3'; $('[data-gnext]', P).disabled = !n;
     });
-    /* el botón responde desde el primer instante, aunque la manita aún se esté moviendo */
+    /* el botón responde desde el primer instante, aunque el puntero aún se esté moviendo */
     const go1 = new Promise(res => { $('[data-gnext]', P).addEventListener('click', res, { once:true }); const iv = setInterval(() => { if (!G || G.skip){ clearInterval(iv); res(); } }, 300); });
     await gWait(450);
     const firstChip = $('[data-gt]', P);
@@ -202,7 +202,7 @@ async function runGuide(o = {}){
       const x = $('#cfgm [data-close]'); if (x) x.click();
       await gWait(400);
     }
-    await gPoint(gT('#guideTop', '#guideTop'), 'Y si te pierdes, la Guía rápida siempre está aquí: la ves completa o solo lo que quieras. También puedes preguntarme lo que sea con mi bolita.', { mood:'guino' });
+    await gPoint(gT('#guideTop', '#guideTop'), 'Y si te pierdes, la Guía rápida siempre está aquí: la ves completa o solo lo que quieras. También puedes preguntarme lo que sea tocando mi botón.', { mood:'guino' });
     H.unspot(); H.quiet();
 
     /* 4 · comparar 2 IA (ejemplo animado: no gasta nada) */

@@ -34,7 +34,7 @@ import PanelAdmin from '../../componentes/admin/PanelAdmin';
 - **En línea**: buscar persona y «Solo con problemas». **Comentarios**: buscar y marcar al instante (si falla, vuelve).
 - **Mantenimiento** y **copiar a Supabase** piden confirmación fuerte; quitar una llave también.
 - **SynXCoin gastadas** oculto con un ojo, por si compartes pantalla.
-- **Qué estamos arreglando**: muestra cómo lo contaría SynthonIA mientras escribes.
+- **Qué estamos arreglando**: muestra cómo lo contaría Sona mientras escribes.
 - Celular: el menú pasa a una barra abajo con los numeritos.
 
 ## Usuarios: permisos y límites por persona (v4.4)

@@ -36,7 +36,7 @@ check('las marcas no se ven en la respuesta', await p.evaluate(() => !/\[titulo/
 await shot('1-saludo.png');
 
 /* bug 3 nov: la IA escribió la marca con espacios y se veía en la respuesta */
-await say('¿Quién eres?', 'Soy SynthonIA, tu guía en SymphorIA.\n\n[ titulo: - ]');
+await say('¿Quién eres?', 'Soy Sona, tu guía en SymphorIA.\n\n[ titulo: - ]');
 check('marca con espacios «[ titulo: - ]» no se ve', await p.evaluate(() => !/titulo/i.test(document.querySelector('#lane').innerText)));
 await say('¿Y qué sabes hacer?', 'Te ayudo con chats, archivos y páginas web.\n\\[ titulo: Identidad de la IA \\]');
 check('marca escapada «\\[ titulo: … \\]» no se ve', await p.evaluate(() => !/titulo/i.test(document.querySelector('#lane').innerText)));

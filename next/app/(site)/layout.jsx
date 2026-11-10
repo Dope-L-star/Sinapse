@@ -16,7 +16,7 @@ export const metadata = {
 
 export const viewport = { width: 'device-width', initialScale: 1, colorScheme: 'dark' };
 
-/* <html data-brand> de cada página (chat.html = flow). Lo usan core.js (isFlow: SynthonIA en la
+/* <html data-brand> de cada página (chat.html = flow). Lo usan core.js (isFlow: Sona en la
    cabecera del celular, el BETA junto a ella) y el CSS. Va en línea para que esté puesto antes de pintar y antes de core.js.
    verificar-migracion.mjs revisa que coincida con el <html> de cada .html. */
 export const BRAND = { chat: 'flow' };

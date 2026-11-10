@@ -35,7 +35,7 @@ const EV = (() => {
     return () => { run = false; };
   }
   async function typeCode(o, kind){
-    const box = $('.hk-code', o), bar = $('.hk-bar i', o), lines = kind === 100 ? ['⚠ ALERTA: el núcleo de Flow se sobrecalentó', 'desviando energía a SynthonIA…', ...CODE.slice(2, 9), '[OK] temperatura normal'] : CODE;
+    const box = $('.hk-code', o), bar = $('.hk-bar i', o), lines = kind === 100 ? ['⚠ ALERTA: el núcleo de Flow se sobrecalentó', 'desviando energía a Sona…', ...CODE.slice(2, 9), '[OK] temperatura normal'] : CODE;
     for (let i = 0; i < lines.length; i++){
       const ln = document.createElement('div'); box.appendChild(ln);
       for (const ch of lines[i]){ ln.textContent += ch; if (Math.random() < .5) await sleepRaw(6); }

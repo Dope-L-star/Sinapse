@@ -10,13 +10,13 @@ const { sinMarcas, quitaMarcas, marcas } = new Function(head + '\nreturn { sinMa
 const casos = [
   ['¡Hola! ¿En qué te ayudo?\n[titulo: -]', '-'],
   ['¡Hola! ¿En qué te ayudo?\n[ titulo: - ]', '-'],
-  ['Soy SynthonIA, tu guía.\n\n[ titulo: Identidad de la IA ]', 'Identidad de la IA'],
-  ['Soy SynthonIA.\n\\[ titulo: Identidad de la IA \\]', 'Identidad de la IA'],
-  ['Soy SynthonIA.\n**[Título: Identidad de la IA]**', 'Identidad de la IA'],
-  ['Soy SynthonIA.\n`[titulo: Identidad de la IA]`', 'Identidad de la IA'],
-  ['I am SynthonIA.\n[ Title = AI identity ]', 'AI identity'],
-  ['Soy SynthonIA.\n[titulo：Identidad de la IA]', 'Identidad de la IA'],
-  ['Soy SynthonIA.\n[ titulo:-]', '-'],
+  ['Soy Sona, tu guía.\n\n[ titulo: Identidad de la IA ]', 'Identidad de la IA'],
+  ['Soy Sona.\n\\[ titulo: Identidad de la IA \\]', 'Identidad de la IA'],
+  ['Soy Sona.\n**[Título: Identidad de la IA]**', 'Identidad de la IA'],
+  ['Soy Sona.\n`[titulo: Identidad de la IA]`', 'Identidad de la IA'],
+  ['I am Sona.\n[ Title = AI identity ]', 'AI identity'],
+  ['Soy Sona.\n[titulo：Identidad de la IA]', 'Identidad de la IA'],
+  ['Soy Sona.\n[ titulo:-]', '-'],
 ];
 for (const [raw, title] of casos) test('marca escondida: ' + JSON.stringify(raw.split('\n').pop()), () => {
   const mk = marcas(raw);

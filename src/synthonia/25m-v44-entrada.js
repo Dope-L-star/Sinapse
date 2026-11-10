@@ -1,4 +1,4 @@
-/* ===== v4.4 · «Entrada»: la carga de Gestión en todo el sitio. SynthonIA lo cuenta y lo explica ===== */
+/* ===== v4.4 · «Entrada»: la carga de Gestión en todo el sitio. Sona lo cuenta y lo explica ===== */
 WHATSNEW.v = '4.4';
 WHATSNEW.items.unshift(
   ['chat', B.LANG === 'en'

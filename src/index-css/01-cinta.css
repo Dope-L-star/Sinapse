@@ -108,7 +108,7 @@ html.leaving main,html.leaving nav,html.leaving footer,html.leaving .band{opacit
 footer{text-align:center;color:var(--mute);font-size:13.5px;padding:70px 24px 90px}
 
 /* ---------- intro: la Z se pinta de arriba-derecha a abajo-izquierda ---------- */
-/* botón «Empezar a FlowIA'r»: SynthonIA guiña el ojo y luego se pone las gafas de Flow con brillitos */
+/* botón «Empezar a FlowIA'r»: Sona guiña el ojo y luego se pone las gafas de Flow con brillitos */
 .flowbtn{position:relative;display:inline-flex;align-items:center;gap:12px;padding:16px 22px 16px 28px;font-size:18px;border-radius:999px;overflow:visible}
 .flowbtn em{font-family:var(--serif);font-style:italic;font-size:1.25em;background:linear-gradient(100deg,#c9566c,#e6b65f 55%,#ffd9a0);-webkit-background-clip:text;background-clip:text;color:transparent}
 .flowbtn .fb-f{width:38px;height:38px;flex:none;display:grid;place-items:center;transition:transform .5s cubic-bezier(.34,1.56,.64,1)}

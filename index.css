@@ -241,7 +241,7 @@ html.leaving main,html.leaving nav,html.leaving footer,html.leaving .band{opacit
 footer{text-align:center;color:var(--mute);font-size:13.5px;padding:70px 24px 90px}
 
 /* ---------- intro: la Z se pinta de arriba-derecha a abajo-izquierda ---------- */
-/* botón «Empezar a FlowIA'r»: SynthonIA guiña el ojo y luego se pone las gafas de Flow con brillitos */
+/* botón «Empezar a FlowIA'r»: Sona guiña el ojo y luego se pone las gafas de Flow con brillitos */
 .flowbtn{position:relative;display:inline-flex;align-items:center;gap:12px;padding:16px 22px 16px 28px;font-size:18px;border-radius:999px;overflow:visible}
 .flowbtn em{font-family:var(--serif);font-style:italic;font-size:1.25em;background:linear-gradient(100deg,#c9566c,#e6b65f 55%,#ffd9a0);-webkit-background-clip:text;background-clip:text;color:transparent}
 .flowbtn .fb-f{width:38px;height:38px;flex:none;display:grid;place-items:center;transition:transform .5s cubic-bezier(.34,1.56,.64,1)}
@@ -633,7 +633,7 @@ footer .legal{margin-top:8px;font-size:13px}footer .legal a{color:var(--mute,#8d
 /* v2.2 · una sola letra limpia (monoespaciada solo para código) */
 :root{--code:'IBM Plex Mono',ui-monospace,'Cascadia Code',Consolas,Menlo,monospace;--mono:'IBM Plex Mono',ui-monospace,Consolas,Menlo,monospace}
 pre,code,kbd,.rccode,.hk-code,.og code{font-family:var(--code)!important}
-/* ===== v2.4 · portada SymphorIA según el boceto: vidrio líquido, degradados de neón y SynthonIA de cuerpo entero ===== */
+/* ===== v2.4 · portada SymphorIA según el boceto: vidrio líquido, degradados de neón y Sona de cuerpo entero ===== */
 .lqg{position:relative;background:var(--lg-bg),rgba(20,12,44,.16);border:1px solid var(--lg-edge);backdrop-filter:var(--lg-blur);-webkit-backdrop-filter:var(--lg-blur);box-shadow:var(--lg-shadow);border-radius:24px}
 html.noglass .lqg{background:rgba(24,16,50,.92);backdrop-filter:none;-webkit-backdrop-filter:none}
 .gt{background:var(--grad-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
@@ -656,7 +656,7 @@ nav#nav.scrolled{padding-top:8px;padding-bottom:8px;background:var(--lg-bg),rgba
 .lgbtn svg{width:16px;height:16px}
 .lgbtn:hover{border-color:rgba(61,224,255,.6) !important;box-shadow:0 0 24px -6px rgba(61,224,255,.6)}
 
-/* hero en dos columnas: texto a la izquierda, SynthonIA a la derecha */
+/* hero en dos columnas: texto a la izquierda, Sona a la derecha */
 .v24hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:clamp(20px,4vw,60px);text-align:left;max-width:1240px;margin:0 auto;padding:130px clamp(18px,4vw,48px) 70px}
 .v24hero .hero-inner{max-width:640px}
 .v24hero #h1{font-family:var(--sans);font-weight:600;font-size:clamp(42px,6.2vw,86px);line-height:1.02;letter-spacing:-.035em}
@@ -673,7 +673,7 @@ nav#nav.scrolled{padding-top:8px;padding-bottom:8px;background:var(--lg-bg),rgba
 @keyframes hbspin{50%{transform:rotate(180deg) scale(1.25);text-shadow:0 0 10px var(--sb-spark)}}
 .hstage{position:relative;min-height:520px;display:grid;place-items:center}
 
-/* SynthonIA de cuerpo entero */
+/* Sona de cuerpo entero */
 .sbody{position:relative;width:230px;display:flex;flex-direction:column;align-items:center;cursor:pointer;animation:sbfloat 5.5s ease-in-out infinite;--ex:0px;--ey:0px}
 .sbody .sb-h{position:relative;z-index:2;margin-bottom:-26px}
 .sbody .sb-h .fe{transform:translate(var(--ex),var(--ey));transition:transform .3s}
@@ -757,7 +757,7 @@ section .head p{color:var(--soft)}
 .ss7 circle:nth-child(2){animation-delay:.2s}.ss7 circle:nth-child(3){animation-delay:.4s}.ss7 circle:nth-child(4){animation-delay:.6s}.ss7 circle:nth-child(5){animation-delay:.8s}.ss7 circle:nth-child(6){animation-delay:1s}.ss7 circle:nth-child(7){animation-delay:1.2s}
 @keyframes ss7{20%{filter:drop-shadow(0 0 5px #ffc857);fill:#fff}}
 
-/* SynthonIA es para ti + Todo esto es gratis */
+/* Sona es para ti + Todo esto es gratis */
 #usos .uses{width:auto}
 #usos .use{padding:24px;border-radius:24px}
 #usos .use h3{font:600 22px var(--sans)}
@@ -881,7 +881,7 @@ section .head p{margin-inline:auto}
 #consumo .usage{background:none !important;border:0 !important;box-shadow:none !important;padding:0 !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;align-items:start}
 /* con la barra a la izquierda el <html> es flex: el body no debe ensancharse más que la pantalla (en el celular la página se cortaba a los lados) */
 html>body{min-width:0;max-width:100%}
-/* ===== v2.5 · portada igual al boceto: sin barra lateral, SynthonIA de cuerpo entero que te acompaña,
+/* ===== v2.5 · portada igual al boceto: sin barra lateral, Sona de cuerpo entero que te acompaña,
    un fondo distinto en cada sección y los íconos 3D del boceto ===== */
 :root{--rw:0px}
 .rail{display:none !important}
@@ -966,7 +966,7 @@ main>section{position:relative;isolation:isolate}
 @keyframes nebdrift{to{transform:translate(3%,-2%) scale(1.06) rotate(3deg)}}
 @keyframes twk{to{opacity:.35}}
 @keyframes spin{to{transform:rotate(360deg)}}
-/* SynthonIA es para ti: ondas líquidas de color que se apagan hacia abajo */
+/* Sona es para ti: ondas líquidas de color que se apagan hacia abajo */
 .bg-liquid{background:radial-gradient(46% 30% at 50% 58%,rgba(46,16,92,.55),transparent)}
 .bg-liquid i:nth-child(1){left:-10%;right:-10%;bottom:9%;height:40%;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 400' preserveAspectRatio='none'><path d='M0 200C360 90 760 330 1440 130V400H0Z' fill='%235b2bd8'/><path d='M0 200C360 90 760 330 1440 130' fill='none' stroke='%23fff' stroke-opacity='.35' stroke-width='3'/><path d='M0 250C400 150 780 360 1440 200V400H0Z' fill='%23ff3d9a'/><path d='M0 300C420 210 820 390 1440 265V400H0Z' fill='%23ff7a45'/><path d='M0 345C440 280 840 410 1440 330V400H0Z' fill='%23ffc857'/></svg>") 0 100%/100% 100% no-repeat;opacity:.55;animation:liq 12s ease-in-out infinite alternate;transform-origin:50% 100%;
   -webkit-mask:linear-gradient(180deg,#000 45%,transparent 96%);mask:linear-gradient(180deg,#000 45%,transparent 96%)}
@@ -1034,7 +1034,7 @@ div.ready .rd-f{margin:-110px 0 -30px}
 @media (min-width:761px){div.ready{margin-top:104px}}
 div.ready .rd-f .szbody{width:min(230px,50vw);height:auto}
 
-/* ---------- SynthonIA que te acompaña ---------- */
+/* ---------- Sona que te acompaña ---------- */
 .szroam{position:fixed;top:21vh;z-index:58;width:132px;cursor:pointer;opacity:0;pointer-events:none;transform:scale(.6) translateY(30px);transition:opacity .5s var(--ease),transform .6s cubic-bezier(.34,1.56,.64,1);--ex:0px;--ey:0px;--tilt:0deg}
 .szroam[data-side="r"]{right:18px}.szroam[data-side="l"]{left:18px}
 .szroam.abs{position:absolute;z-index:45;right:auto !important;bottom:auto !important;transition:opacity .5s var(--ease),transform .6s cubic-bezier(.34,1.56,.64,1)}
@@ -1063,7 +1063,7 @@ html.noanim .szroam .rb-fig{animation:none}
   .hstage{min-height:0;padding-top:0}
   .hdemo{position:relative !important;right:auto;bottom:auto;margin-top:-30px !important}
   .sbody .szbody{width:min(240px,58vw)}
-  #heroBot{min-height:calc(min(240px,58vw) * 4 / 3)}   /* guarda el sitio de SynthonIA antes de que aparezca: nada salta al cargar */
+  #heroBot{min-height:calc(min(240px,58vw) * 4 / 3)}   /* guarda el sitio de Sona antes de que aparezca: nada salta al cargar */
 }
 @media (max-width:620px){
   .v24hero{padding-top:96px}
@@ -1106,7 +1106,7 @@ main .free.lqg,main div.ready.lqg{backdrop-filter:var(--lg-blur);-webkit-backdro
   main .free.lqg,main div.ready.lqg{backdrop-filter:blur(8px) saturate(1.6);-webkit-backdrop-filter:blur(8px) saturate(1.6)}
 }
 
-/* ---------- v2.6 · SynthonIA es la ayudante: sin bolita en la portada ---------- */
+/* ---------- v2.6 · Sona es la ayudante: sin botón en la portada ---------- */
 html.szlive #szBot,html.szlive #betaBot{opacity:0 !important;pointer-events:none !important;visibility:hidden}
 #heroBot,#readyFace{cursor:pointer}
 #heroBot:focus-visible,#readyFace:focus-visible{outline:2px solid #3de0ff;outline-offset:6px;border-radius:24px}
@@ -1122,7 +1122,7 @@ html.szlive #szBot,html.szlive #betaBot{opacity:0 !important;pointer-events:none
   .hub{max-width:860px;width:100%;margin:0 auto}
 }
 .hub-i{text-align:left}
-/* «SynthonIA es para ti» no tenía margen a los lados: las tarjetas tocaban el borde de la pantalla */
+/* «Sona es para ti» no tenía margen a los lados: las tarjetas tocaban el borde de la pantalla */
 #usos{padding-left:clamp(18px,4vw,40px);padding-right:clamp(18px,4vw,40px)}
 /* «Descansando» en grande se salía de su tarjeta en celulares chicos: el texto se achica y nunca pasa del borde */
 #consumo .limbig>div{min-width:0;flex:1}
@@ -1175,12 +1175,12 @@ html.szlive #szBot,html.szlive #betaBot{opacity:0 !important;pointer-events:none
 /* «¿Listo para sintonizar?»: el listón de colores pasaba justo detrás del texto; un velo oscuro suave del lado del texto lo hace legible */
 main div.ready.lqg{background:linear-gradient(90deg,rgba(12,7,30,.62),rgba(12,7,30,.34) 55%,rgba(12,7,30,.08)),var(--lg-bg),rgba(20,12,44,.16)}
 @media (max-width:620px){main div.ready.lqg{background:linear-gradient(180deg,rgba(12,7,30,.6),rgba(12,7,30,.3) 60%,rgba(12,7,30,.1)),var(--lg-bg),rgba(20,12,44,.16)}}
-/* celular: la caja va en columna; SynthonIA quedaba subida encima del botón «Empezar gratis». Va debajo, sin pisarlo */
+/* celular: la caja va en columna; Sona quedaba subida encima del botón «Empezar gratis». Va debajo, sin pisarlo */
 @media (max-width:620px){div.ready .rd-f{margin:14px 0 -44px}div.ready .rd-f .szbody{width:min(190px,52vw)}}
 /* el campo no empuja el ancho de la portada en celulares chicos (antes la estiraba a 347 px en una pantalla de 320) */
 .hask{width:100%;max-width:520px;box-sizing:border-box}
 .hask input{width:0}
-/* la tarjeta «Ejemplo» quedaba montada sobre el aro de luz de la base de SynthonIA: un poco más abajo, sin tocarla */
+/* la tarjeta «Ejemplo» quedaba montada sobre el aro de luz de la base de Sona: un poco más abajo, sin tocarla */
 .hdemo{bottom:0}
 @media (max-width:980px){.hdemo{margin-top:8px !important}}
 /* tablet y PC chico (561–1023 px): los enlaces del menú no cabían, se partían en dos líneas y «Entrar» quedaba cortado.
@@ -1198,7 +1198,7 @@ main div.ready.lqg{background:linear-gradient(90deg,rgba(12,7,30,.62),rgba(12,7,
 [data-install][hidden],[data-install-note][hidden]{display:none !important}
 /* el menú ☰ con el mismo vidrio que el resto */
 .navdrop{background:linear-gradient(160deg,rgba(255,255,255,.1),rgba(255,255,255,.02)),rgba(18,10,40,.9);border-color:rgba(255,255,255,.14)}
-/* v2.7 · las escenas de «SynthonIA es para ti», dibujadas en código (index 12): fondo de vidrio con la luz del color de cada tarjeta */
+/* v2.7 · las escenas de «Sona es para ti», dibujadas en código (index 12): fondo de vidrio con la luz del color de cada tarjeta */
 #usos .uscene{position:relative;overflow:hidden;isolation:isolate;border:1px solid rgba(255,255,255,.09);box-shadow:inset 0 1px 0 rgba(255,255,255,.14);
   background:radial-gradient(70% 85% at 50% 108%,color-mix(in srgb,var(--c) 34%,transparent),transparent 70%),radial-gradient(55% 60% at 50% 34%,rgba(123,63,242,.22),transparent 72%),linear-gradient(180deg,rgba(28,18,64,.6),rgba(10,6,28,.8))}
 .use .uscene{margin-top:auto !important}
@@ -1315,7 +1315,7 @@ html.rtr .langdock{background:#15122a}
    y la tecla «/» te lleva al cuadro desde cualquier parte de la portada. */
 @property --hkA{syntax:'<angle>';inherits:false;initial-value:0deg}
 
-/* computador: el texto a la izquierda, SynthonIA a la derecha y el cuadro centrado debajo de los dos */
+/* computador: el texto a la izquierda, Sona a la derecha y el cuadro centrado debajo de los dos */
 @media (min-width:981px){
   .v24hero{max-width:1320px;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);grid-template-rows:auto auto auto auto 1fr auto auto auto;column-gap:clamp(20px,4vw,60px);row-gap:0;align-items:start;min-height:0;padding-top:104px;padding-bottom:48px}
   .v24hero .hero-inner{display:contents}
@@ -1325,7 +1325,7 @@ html.rtr .langdock{background:#15122a}
   .v24hero .hsub2{grid-row:3;font-size:clamp(21px,2.5vw,31px)}
   .v24hero p.sub{grid-row:4;font-size:18px}
   .v24hero .hstage{grid-column:2;grid-row:1 / span 5;align-self:start;min-height:0}
-  /* SynthonIA un poco más pequeña aquí para que el «Ejemplo» no la tape */
+  /* Sona un poco más pequeña aquí para que el «Ejemplo» no la tape */
   .v24hero #heroBot{zoom:.72}
   .v24hero .hstage{padding-top:0;min-height:0;justify-content:flex-start}
   .v24hero .hdemo{position:relative !important;right:auto;bottom:auto;margin-top:16px !important;width:min(100%,440px)}
@@ -1378,7 +1378,7 @@ html.noanim .hk-orbe .hk-ola,html.noanim .hk-idea,html.noanim .hask.lista .hk-or
 /* chispas que saltan del cursor al escribir */
 .hk-chispa{position:absolute;top:var(--y,50%);width:6px;height:6px;margin:-3px 0 0 -3px;pointer-events:none;z-index:3;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);animation:hkChispa .7s ease-out forwards}
 @keyframes hkChispa{0%{opacity:1;transform:translate(0,0) scale(.5) rotate(0)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1.3) rotate(160deg)}}
-/* SynthonIA asiente con cada letra */
+/* Sona asiente con cada letra */
 #heroBot.hk-asiente .sb-h{animation:hkAsiente .35s ease}
 @keyframes hkAsiente{40%{transform:translateY(3px) rotate(-2deg)}}
 html.noanim .hk-chispa,html.noanim #heroBot.hk-asiente .sb-h{animation:none;display:none}
@@ -1408,7 +1408,7 @@ html.noanim .hk-chispa,html.noanim #heroBot.hk-asiente .sb-h{animation:none;disp
 /* con Animaciones apagado el aro queda quieto y el avión no vuela */
 html.noanim .v24hero .hask::before,html.noanim .v24hero .hask::after{animation:none}
 html.noanim .hask .send.vuela > svg,html.noanim .hask .send.vuela .hk-avion{animation:none}
-/* v3.8c · «SynthonIA te lo muestra en vivo» (en «Así de fácil») y «El laboratorio» (puertas falsas que miden interés). */
+/* v3.8c · «Sona te lo muestra en vivo» (en «Así de fácil») y «El laboratorio» (puertas falsas que miden interés). */
 
 /* ---------- B · la demo ---------- */
 .dm{position:relative;max-width:980px;margin:46px auto 0;padding:0 4px}
@@ -1465,13 +1465,13 @@ html.noanim .hask .send.vuela > svg,html.noanim .hask .send.vuela .hk-avion{anim
 .dm-col.mejor{transform:translateY(-6px);border-color:var(--c);box-shadow:0 24px 50px -22px var(--c)}
 .dm-col.mejor .dm-pick{background:var(--c);color:#0b0820;border-color:transparent}
 .dm-col.apagada{opacity:.45}
-/* la manita de SynthonIA */
+/* el puntero de Sona */
 .dm-mano{position:absolute;left:0;top:0;z-index:5;width:34px;height:34px;opacity:0;pointer-events:none;transition:transform .7s cubic-bezier(.45,.05,.25,1),opacity .4s;filter:drop-shadow(0 6px 12px rgba(0,0,0,.45))}
 .dm-mano.on{opacity:1}
-.dm-mano svg{width:34px;height:34px;transform:rotate(-14deg)}
+.dm-mano svg{width:34px;height:34px;filter:drop-shadow(0 0 5px rgba(255,79,163,.55))}
 .dm-mano .dm-cara{position:absolute;left:24px;top:-22px;width:30px;height:30px}
 .dm-mano.clic svg{animation:dmClic .26s ease}
-@keyframes dmClic{50%{transform:rotate(-14deg) scale(.82)}}
+@keyframes dmClic{50%{transform:scale(.8)}}
 
 /* ---------- C · el laboratorio ---------- */
 .lab{position:relative;overflow-x:clip;max-width:1100px;margin:0 auto;padding:110px clamp(16px,4vw,40px) 40px;text-align:center}

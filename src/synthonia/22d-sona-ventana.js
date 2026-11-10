@@ -1,12 +1,12 @@
 /* =====================================================================
    v4.6 · La ventanita de Sona, como una compañera (estilo «compañero» de Grok, con la ropa de la portada)
-   Arriba un escenario con SU mismo dibujo de la portada (la bola de vidrio con ojos cian y las manitas flotantes), grande, con el pentagrama
-   de la marca detrás; ella reacciona: piensa con el dedo en la barbilla, se inclina a escucharte cuando escribes, señala, celebra y mueve
-   la boca (ondas naranjas) cuando habla. Abajo la charla en burbujas de vidrio, sugerencias que se deslizan y una píldora flotante
+   Arriba un escenario con SU dibujo de robotcito negro con neón (sin manos), grande, con el pentagrama
+   de la marca detrás; ella reacciona: piensa (el foquito de la antena parpadea), se inclina a escucharte cuando escribes, señala, celebra y
+   enciende el foquito y las ondas rosadas cuando habla. Abajo la charla en burbujas de vidrio, sugerencias que se deslizan y una píldora flotante
    para escribir con micrófono (el dictado del navegador: toca y habla, y el navegador pide el permiso, igual que en el chat).
    ===================================================================== */
 const T = (es, en) => B.LANG === 'en' ? en : es;
-/* la cara → qué pose del cuerpo (las de SPOSE en 20-synthonia-carita-svg-expresion.js) */
+/* la cara → qué postura de la cabeza (las de SPOSE en 20-synthonia-carita-svg-expresion.js) */
 const SONA_POSE = { senalando:'senala', pensando:'piensa', celebrando:'celebra', sorprendida:'sorpresa', escuchando:'escucha', confundida:'piensa', presenta:'presenta' };
 
 /* el pentagrama de la marca, ondulado, detrás de ella (como la cinta de la portada) */

@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 
 /**
- * SynthonIA's visible controls are real React nodes. The mature assistant engine
- * still supplies faces, voice, its hand/panel and guide choreography through a
+ * Sona's visible controls are real React nodes. The mature assistant engine
+ * still supplies faces, voice, its light pointer/panel and guide choreography through a
  * narrow adapter; it may attach pointer behaviour, but it never creates a second
  * avatar or BETA button beside React's nodes.
  */
@@ -63,7 +63,7 @@ export default function SynthonIAHost() {
           if (result && typeof result.catch === 'function') result.catch(() => {});
         }
       } catch {
-        // SynthonIA is optional; the core chat must remain available.
+        // Sona is optional; the core chat must remain available.
       }
     };
     const hide = () => {
@@ -91,14 +91,14 @@ export default function SynthonIAHost() {
   }, []);
 
   return (
-    <div id="synthonIA-react-host" data-react-component="SynthonIA" style={{ display: 'contents' }}>
+    <div id="synthonIA-react-host" data-react-component="Sona" style={{ display: 'contents' }}>
       {hidden ? null : (
         <>
           <button
             id="szBot"
             type="button"
-            aria-label="SynthonIA"
-            data-tip="SynthonIA"
+            aria-label="Sona"
+            data-tip="Sona"
             data-react-component="synthonia-avatar"
             onClick={activateAssistant}
           >

@@ -68,7 +68,7 @@ const chispa = x => {
     form.appendChild(i); setTimeout(() => i.remove(), 750);
   }
 };
-/* SynthonIA mira lo que escribes y asiente con cada letra */
+/* Sona mira lo que escribes y asiente con cada letra */
 const mira = x => {
   if (!bot) return;
   const r = bot.getBoundingClientRect(), ir = inp.getBoundingClientRect();

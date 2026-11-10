@@ -3,7 +3,7 @@
    POST { action:'keys', groq?, mistral?, cloudflare?, cfAccount?, openrouter? } → tus llaves (Prime, ZFlow y Symmetrix: cada uno las suyas)
    POST { action:'delkey', id }              → quitar una llave de la lista (la tuya; Prime/ZFlow cualquiera menos las de Vercel)
    POST { action:'check' }                     → probar llaves (Prime/ZFlow todas; Symmetrix solo las suyas)
-   POST { action:'now', text }                 → «Qué estamos arreglando ahora» (equipo); SynthonIA lo cuenta a quien pregunte
+   POST { action:'now', text }                 → «Qué estamos arreglando ahora» (equipo); Sona lo cuenta a quien pregunte
    POST { action:'limit', dayLimit }           → tope de SynXCoin's al día por persona (Prime/ZFlow)
    POST { action:'google', clientId }          → «ID de cliente» de Google para entrar con Google y Drive (Prime/ZFlow)
    POST { action:'drive', clientId }           → (opcional) otro ID solo para Drive (Prime/ZFlow)
@@ -23,7 +23,7 @@ const SYSTEM = 'Eres el asistente de la prueba guiada de SynthFlow (SymphorIA). 
 const err = (s, m, code) => Object.assign(new Error(m), { status:s, code });
 const team = me => roleOf(me) !== 'user', boss = me => ['owner', 'admin'].includes(roleOf(me));
 
-/* para SynthonIA (ayudante): una respuesta corta con la IA de SymphorIA (cuenta en su propio tope) */
+/* para Sona (ayudante): una respuesta corta con la IA de SymphorIA (cuenta en su propio tope) */
 export async function trialComplete(messages, maxTokens = 320, who = 'helper', opts = {}){
   const r = await chat({ who:'h:' + who, ipKey:'h:' + who, messages, model:'sz:auto', maxTokens, stream:false, temperature:Number.isFinite(+opts.temperature) ? +opts.temperature : .6 });
   return { text:r.text, via:r.meta.provName };
@@ -84,7 +84,7 @@ export default route({
       await setJ('cfg:maint', cur);
       return json({ ok:true, maint:cur });
     }
-    /* v3.7 · «Qué estamos arreglando ahora»: el equipo lo escribe y SynthonIA se lo cuenta a quien pregunte (vacío = se borra) */
+    /* v3.7 · «Qué estamos arreglando ahora»: el equipo lo escribe y Sona se lo cuenta a quien pregunte (vacío = se borra) */
     if (a === 'now'){
       const me = await auth(req); if (!team(me)) return fail(403, 'Solo el equipo de SymphorIA puede escribir esto.');
       await limit('trial-admin:' + me.sub, 30, 600);

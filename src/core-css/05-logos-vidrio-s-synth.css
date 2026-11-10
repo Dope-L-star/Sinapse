@@ -3,7 +3,7 @@
 @keyframes gSflow{0%,100%{background-position:0 0}50%{background-position:0 100%}}
 @keyframes flwsp{0%,100%{opacity:0;transform:scale(.3) rotate(0)}40%{opacity:1;transform:scale(1) rotate(45deg)}70%{opacity:0;transform:scale(.4) rotate(90deg)}}
 #portal.szportal{pointer-events:auto;cursor:default}
-/* BETA junto a la bolita de SynthonIA (SynthFlow) */
+/* BETA junto al botón de Sona (SynthFlow) */
 .beta-tag.bb{position:fixed;z-index:9599;margin:0;opacity:0;animation:bbIn .5s .4s cubic-bezier(.22,1,.36,1) forwards}
 @keyframes bbIn{from{opacity:0;transform:translateX(6px)}to{opacity:1;transform:none}}
 html.guiding .beta-tag.bb,html.bflowing .beta-tag.bb,body.szworrying .beta-tag.bb,html.leaving .beta-tag.bb,body:has(#vintro) .beta-tag.bb{opacity:0 !important;pointer-events:none}
@@ -16,7 +16,7 @@ body.railup #nav .logow .logo{transform:none}
 #szgHud .gh-x.nudge{animation:ghNudge .7s cubic-bezier(.22,1,.36,1)}
 @keyframes ghNudge{0%,100%{transform:none}25%{transform:scale(1.12)}50%{transform:scale(.96)}75%{transform:scale(1.05)}}
 html.guiding .shell,html.guiding #nav{cursor:not-allowed}
-/* SynthonIA dormida: la página baja el ritmo (animaciones en pausa) hasta que vuelvas */
+/* Sona dormida: la página baja el ritmo (animaciones en pausa) hasta que vuelvas */
 html.idle-sleep body *:not(#szBot):not(#szBot *):not(#szBotB):not(#szIdle *){animation-play-state:paused !important}
 html.idle-sleep #szBot{filter:saturate(.7) brightness(.85)}
 html.idle-sleep #szBot::after{content:"z z";position:absolute;right:-4px;top:-14px;font:600 11px var(--mono,monospace);color:#f3d79e;letter-spacing:.2em;animation:zzz 2.4s ease-in-out infinite}
@@ -26,13 +26,13 @@ html.idle-sleep #szBot::after{content:"z z";position:absolute;right:-4px;top:-14
 @keyframes tapr{to{transform:scale(4.2);opacity:0}}
 
 #portal.zooming .gS{filter:none !important;animation:none !important}
-/* ===== v1.4 · SynthonIA más visible y con caras suaves ===== */
+/* ===== v1.4 · Sona más visible y con caras suaves ===== */
 #szBot .bf{position:relative;width:40px;height:40px;display:block}
 #szBot.inhead .bf{width:30px;height:30px}
 #szBot .bf>*{position:absolute;inset:0;display:grid;place-items:center;transition:opacity .34s ease,transform .42s cubic-bezier(.34,1.56,.64,1),filter .34s ease}
 #szBot .bf>.in{opacity:0;transform:scale(.78) translateY(3px);filter:blur(2px)}
 #szBot .bf>.out{opacity:0;transform:scale(1.12);filter:blur(2.5px)}
-#szBot .pxface{border-radius:13px;background:#110c0e;box-shadow:inset 0 0 0 1.5px rgba(var(--gold-rgb),.4)}
+#szBot .pxface{border-radius:13px;background:#05050a;box-shadow:inset 0 0 0 1.5px rgba(168,102,255,.55),0 0 10px rgba(255,79,163,.3)}
 #szBot .pxface .pxg{grid-template-columns:repeat(8,3.4px);grid-auto-rows:3.4px;gap:.8px}
 #szBot.inhead .pxface .pxg{grid-template-columns:repeat(8,2.6px);grid-auto-rows:2.6px;gap:.5px}
 #szBot{transition:scale .55s cubic-bezier(.34,1.56,.64,1),opacity .4s,transform .5s}
@@ -111,7 +111,7 @@ html.glitch-red body{filter:hue-rotate(-40deg) saturate(1.8)}
 @keyframes gtBob{ 50%{ transform:translateY(-4px) rotate(-3deg) } }
 @media (max-width:520px){ #szGate .tcard{ max-height:calc(100dvh - 20px) } #szGate .tb h3{ font-size:23px } }
 
-/* v2.0 · Guía rápida con SynthonIA, «¡Descubriste algo nuevo!» y «Qué hay de nuevo» */
+/* v2.0 · Guía rápida con Sona, «¡Descubriste algo nuevo!» y «Qué hay de nuevo» */
 .tcard.gq{max-width:540px;max-height:calc(100dvh - 32px);overflow:auto}
 .gq-say{display:flex;align-items:center;gap:14px;margin-bottom:14px}
 .gq-f{flex:none;width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.2),rgba(255,255,255,.04) 60%);box-shadow:0 0 0 1px rgba(255,255,255,.14) inset,0 10px 30px rgba(120,80,255,.3)}

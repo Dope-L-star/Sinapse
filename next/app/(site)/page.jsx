@@ -10,7 +10,7 @@ export const metadata = {
 };
 
 /* 2026-11-09 · rediseño «Partitura»: la portada ya es React de verdad (next/componentes/portada/*).
-   index.js ya no se carga aquí: solo core.js (cuenta, mantenimiento, idioma, SynthonIA) y la capa de animaciones. */
+   index.js ya no se carga aquí: solo core.js (cuenta, mantenimiento, idioma, Sona) y la capa de animaciones. */
 export default function HomePage() {
   return (
     <>

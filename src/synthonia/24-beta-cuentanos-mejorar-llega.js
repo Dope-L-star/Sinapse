@@ -35,7 +35,7 @@ function betaTags(){
   const a = document.querySelector('#nav .logo'); if (!a || document.querySelector('#nav .beta-tag')) return;
   const w = document.createElement('div'); w.className = 'logow'; a.before(w); w.append(a, betaMk());
 }
-/* SynthFlow: el BETA va pegadito a la bolita de SynthonIA y la sigue si la mueves */
+/* SynthFlow: el BETA va pegadito al botón de Sona y la sigue si la mueves */
 function betaBot(){
   const b = BOT.el; if (!b || !isFlow()) return;
   let t = document.getElementById('betaBot');
@@ -47,7 +47,7 @@ function betaBot(){
       /* React owns both controls: keep BETA fixed to the avatar's real viewport box,
          even when the avatar sits beside the mobile logo. */
       t.style.position = 'fixed'; t.style.zIndex = '9599';
-      /* v3.7 · en la cabecera del celular va a la DERECHA de la bolita (a la izquierda tapaba el logo «SynthFlow») */
+      /* v3.7 · en la cabecera del celular va a la DERECHA del botón (a la izquierda tapaba el logo «SynthFlow») */
       const candidate = b.classList.contains('inhead') || r.left - w - 10 < 8 ? r.right + 10 : r.left - w - 10;
       const left = Math.max(8, Math.min(innerWidth - w - 8, candidate));
       const top = Math.max(8, Math.min(innerHeight - h - 8, r.top + r.height / 2 - h / 2));
@@ -70,12 +70,12 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 addEventListener('synthz-ready-bot', botMount);
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(botMount, 900)); else setTimeout(botMount, 900);
 const BOTAPI = { anchor:fn => { BOT.anchor = fn; }, open:botOpen, close:botClose, mount:botMount, unmount:botReactUnmount, activate:botAvatarClick, say:botSay, sync:botSync, team:botTeam, chatOpen, chatClose, match:q => { const f = botMatch(q); return f ? BOT_FAQ.indexOf(f) : -1; }, faq:i => BOT_FAQ[i] && BOT_FAQ[i].k, intent:q => { const s = sonaIntent(q); return s ? s.id : ''; }, task:sonaTask, get el(){ return BOT.el; } };
-/* ---------- Guía: elegir cómo aprender (Asistida con SynthonIA o Lectura) ---------- */
+/* ---------- Guía: elegir cómo aprender (Asistida con Sona o Lectura) ---------- */
 function guideChooser(o = {}){
   if ($('#szGch')) return;
   const w = document.createElement('div'); w.id = 'szGch'; w.className = 'szm';
   w.innerHTML = '<div class="tcard" role="dialog" aria-modal="true" aria-label="Guía"><div class="word">' + zWord('Synth') + '</div><div class="tn">GUÍA</div><div class="tb"><h3>¿Cómo quieres aprender?</h3><p>' + esc(o.lead || 'Te muestro ' + (isFlow() ? 'SynthFlow' : 'SymphorIA') + ' como prefieras. Puedes volver aquí cuando quieras con el botón «Guía».') + '</p></div>'
-    + '<div class="gch"><button type="button" class="gco a" data-g="a"><span class="gf">' + face('senalando', 54) + '</span><b>Asistida</b><small>SynthonIA te lo muestra con su manita, paso a paso: temas, IA recomendadas, comparar 2 y ' + (o.trial === false ? 'cómo conectar.' : 'tu primer chat con las IAs conectadas.') + '</small><em>Unos 2 minutos</em></button>'
+    + '<div class="gch"><button type="button" class="gco a" data-g="a"><span class="gf">' + face('senalando', 54) + '</span><b>Asistida</b><small>Sona te lo muestra con su puntero de luz, paso a paso: temas, IA recomendadas, comparar 2 y ' + (o.trial === false ? 'cómo conectar.' : 'tu primer chat con las IAs conectadas.') + '</small><em>Unos 2 minutos</em></button>'
     + '<button type="button" class="gco l" data-g="l"><span class="gf"><svg viewBox="0 0 48 48" width="54" height="54" aria-hidden="true"><path d="M8 11c6-2 12-1 16 3 4-4 10-5 16-3v26c-6-2-12-1-16 3-4-4-10-5-16-3z" fill="rgba(184,196,255,.12)" stroke="#b8c4ff" stroke-width="2" stroke-linejoin="round"/><path d="M24 14v26" stroke="#b8c4ff" stroke-width="2"/><path d="M12 18h7M12 23h7M29 18h7M29 23h7" stroke="#b8c4ff" stroke-opacity=".6" stroke-width="1.6" stroke-linecap="round"/></svg></span><b>Lectura</b><small>Una guía corta para leer a tu ritmo, con todo lo importante.</small><em>A tu ritmo</em></button></div>'
     + '<div class="tbtn" style="margin-top:14px"><button class="lnk" type="button" data-close>Ahora no</button></div></div>';
   document.body.appendChild(w); requestAnimationFrame(() => w.classList.add('on'));

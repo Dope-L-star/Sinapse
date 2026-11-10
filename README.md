@@ -54,17 +54,17 @@ Clarity permanece apagado en el build actual. La integración requiere consentim
 
 ### Corrección importante de SynthFlow
 
-El runtime React repone `data-brand="flow"` en `document.documentElement` antes de cargar los scripts del chat. Esto conserva la detección de SynthFlow usada por SynthonIA y por el botón BETA, y limpia la marca al abandonar la ruta. Hay una comprobación de regresión en `next/verificar-migracion.mjs`. Microsoft Clarity permanece desactivado; esta corrección no cambia su configuración.
+El runtime React repone `data-brand="flow"` en `document.documentElement` antes de cargar los scripts del chat. Esto conserva la detección de SynthFlow usada por Sona y por el botón BETA, y limpia la marca al abandonar la ruta. Hay una comprobación de regresión en `next/verificar-migracion.mjs`. Microsoft Clarity permanece desactivado; esta corrección no cambia su configuración.
 
 
-### Guía rápida y SynthonIA en React
+### Guía rápida y Sona en React
 
-`#guideTop` ya es el componente cliente `GuideButton`. La bolita `#szBot` y el botón BETA también se renderizan como nodos React; el motor existente conserva las expresiones, el audio, la manita y el panel mediante un adaptador para no romper la experiencia. Los clics tempranos en la guía quedan en cola hasta que los módulos estén listos. Consulta `next/GUIA-REACT-SYNTHONIA.md`. Ejecuta `npm run test:guide --prefix next` para las diez pruebas de regresión. Clarity sigue desactivado.
+`#guideTop` ya es el componente cliente `GuideButton`. La bolita `#szBot` y el botón BETA también se renderizan como nodos React; el motor existente conserva las expresiones, el audio, el puntero y el panel mediante un adaptador para no romper la experiencia. Los clics tempranos en la guía quedan en cola hasta que los módulos estén listos. Consulta `next/GUIA-REACT-SYNTHONIA.md`. Ejecuta `npm run test:guide --prefix next` para las diez pruebas de regresión. Clarity sigue desactivado.
 
 
-### Reparación Guide/SynthonIA React
+### Reparación Guide/Sona React
 
-- `next/GUIA-REACT-SYNTHONIA.md` documenta el botón Guía rápida, el selector original y los controles React de SynthonIA/BETA.
+- `next/GUIA-REACT-SYNTHONIA.md` documenta el botón Guía rápida, el selector original y los controles React de Sona/BETA.
 - Validación: `node next/verificar-migracion.mjs`, `npm run test:guide --prefix next` (11 pruebas), `npm run test:clarity --prefix next` (10 pruebas).
 - Clarity sigue desactivado; el build de Next y el E2E real requieren ejecutarse en un entorno con las dependencias instaladas y navegador disponible.
 

@@ -1,5 +1,5 @@
 /* ---------- comparar: las respuestas llegan en orden, sin cajas vacías, y puedes sumar IA después ---------- */
-/* «Esta tiene más Flow»: cada respuesta trae una carita buena de SynthonIA, distinta a las demás */
+/* «Esta tiene más Flow»: cada respuesta trae una carita buena de Sona, distinta a las demás */
 function flowBtn(C){ const f = SZ.randomGoodFace(C.faces); C.faces.add(f); return '<button class="flowb" type="button" title="Sigue la conversación con esta IA"><i aria-hidden="true">' + SZ.face(f, 24) + '</i>Esta tiene más Flow</button>'; }
 function flipAdd(grid, el){
   const kids = [...grid.children].filter(k => k.classList.contains('cmp-card')), before = kids.map(k => k.getBoundingClientRect());

@@ -1,4 +1,4 @@
-/* v3.8c · «SynthonIA te lo muestra en vivo» (en «Así de fácil») y «El laboratorio» (puertas falsas que miden interés). */
+/* v3.8c · «Sona te lo muestra en vivo» (en «Así de fácil») y «El laboratorio» (puertas falsas que miden interés). */
 
 /* ---------- B · la demo ---------- */
 .dm{position:relative;max-width:980px;margin:46px auto 0;padding:0 4px}
@@ -55,13 +55,13 @@
 .dm-col.mejor{transform:translateY(-6px);border-color:var(--c);box-shadow:0 24px 50px -22px var(--c)}
 .dm-col.mejor .dm-pick{background:var(--c);color:#0b0820;border-color:transparent}
 .dm-col.apagada{opacity:.45}
-/* la manita de SynthonIA */
+/* el puntero de Sona */
 .dm-mano{position:absolute;left:0;top:0;z-index:5;width:34px;height:34px;opacity:0;pointer-events:none;transition:transform .7s cubic-bezier(.45,.05,.25,1),opacity .4s;filter:drop-shadow(0 6px 12px rgba(0,0,0,.45))}
 .dm-mano.on{opacity:1}
-.dm-mano svg{width:34px;height:34px;transform:rotate(-14deg)}
+.dm-mano svg{width:34px;height:34px;filter:drop-shadow(0 0 5px rgba(255,79,163,.55))}
 .dm-mano .dm-cara{position:absolute;left:24px;top:-22px;width:30px;height:30px}
 .dm-mano.clic svg{animation:dmClic .26s ease}
-@keyframes dmClic{50%{transform:rotate(-14deg) scale(.82)}}
+@keyframes dmClic{50%{transform:scale(.8)}}
 
 /* ---------- C · el laboratorio ---------- */
 .lab{position:relative;overflow-x:clip;max-width:1100px;margin:0 auto;padding:110px clamp(16px,4vw,40px) 40px;text-align:center}

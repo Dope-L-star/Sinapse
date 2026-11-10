@@ -8,8 +8,8 @@ import { useFrase } from '../entrada/FraseCarga';
    v4.5 · la frase ya no es siempre «está pensando»: es una al azar (con tu nombre a veces) que cambia cada par de segundos (entrada/frases.js).
    Estilos: src/core-css/25-v38-efectos.css (prefijo .pm-). */
 const T = { es: ['Pensando', 'está pensando'], en: ['Thinking', 'is thinking'] };
-/* v3.8.1 · Sammuel: «sin tanta letra china, cosas referentes a la página y por ahí una carita de SynthonIA».
-   Caen palabras y símbolos del sitio; de vez en cuando cae la carita de SynthonIA. */
+/* v3.8.1 · Sammuel: «sin tanta letra china, cosas referentes a la página y por ahí una carita de Sona».
+   Caen palabras y símbolos del sitio; de vez en cuando cae la carita de Sona. */
 const PALABRAS = ['SYMPHORIA', 'SYNTHFLOW', 'A.L.I.A.S', 'ENERX', 'SYNTHONIA', 'PULSEM', 'IA', 'FLOW'];
 const SIMBOLOS = '✦⚡◆∿✧•';
 const Carita = () => (
@@ -21,7 +21,7 @@ export default function PensandoMatrix({ lang = 'es', ia, columnas = 16, alto = 
   const t = T[lang] || T.es;
   const f = useFrase('pensando', lang, { cada: 2600 });
   const cols = useMemo(() => Array.from({ length: columnas }, (_, i) => {
-    const cara = i % 6 === 3;                                       /* ~1 de cada 6 columnas: la carita de SynthonIA */
+    const cara = i % 6 === 3;                                       /* ~1 de cada 6 columnas: la carita de Sona */
     const w = PALABRAS[(i * 5) % PALABRAS.length], sym = SIMBOLOS[(i * 7) % SIMBOLOS.length];
     return { cara, s: i % 3 === 1 ? sym + ' ' + w.slice(0, 5) : w + ' ' + sym, d: ((i * 37) % 23) / 10, v: 2 + ((i * 53) % 17) / 10 };
   }), [columnas]);

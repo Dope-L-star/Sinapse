@@ -33,7 +33,7 @@
 .pm-rain span{writing-mode:vertical-rl;text-orientation:upright;font:600 11px/1.05 var(--mono,'IBM Plex Mono',monospace);letter-spacing:-.5px;
   background:linear-gradient(180deg,transparent,var(--sb-primary,#7b3ff2) 40%,var(--sb-light,#3de0ff) 92%,#fff);-webkit-background-clip:text;background-clip:text;color:transparent;
   opacity:.85;animation:pmFall var(--v,2s) linear infinite;animation-delay:calc(var(--d,0s) * -1)}
-/* v3.8.1 · la carita de SynthonIA que cae entre las palabras del sitio */
+/* v3.8.1 · la carita de Sona que cae entre las palabras del sitio */
 .pm-rain span.pm-face{writing-mode:horizontal-tb;background:none;color:var(--sb-light,#3de0ff);width:20px;opacity:1;filter:drop-shadow(0 0 4px rgba(61,224,255,.6))}
 .pm-face svg{display:block;width:20px;height:23px;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round}
 .pm-face svg .ey{fill:currentColor;stroke:none}

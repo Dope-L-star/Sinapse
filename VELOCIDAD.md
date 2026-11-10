@@ -11,12 +11,12 @@ La nota de partida, medida el 28 de octubre de 2026 con Lighthouse 12. Se midió
 | Ayuda (`ayuda.html`) | Celular | — | 100 | 96 | 100 | — | — | — |
 
 Notas:
-- Accesibilidad llegó a 100 después de cuatro arreglos: SynthonIA de la portada ya no está dentro de algo con `aria-hidden`, la burbujita del glosario no queda vacía, los botones de idioma y el logo del chat dicen lo mismo que se ve, y las pestañas Chats y Favoritos tienen su `tablist`.
+- Accesibilidad llegó a 100 después de cuatro arreglos: Sona de la portada ya no está dentro de algo con `aria-hidden`, la burbujita del glosario no queda vacía, los botones de idioma y el logo del chat dicen lo mismo que se ve, y las pestañas Chats y Favoritos tienen su `tablist`.
 - Buenas prácticas marca 96 solo porque en la prueba local se bloquea internet (fuentes, Puter): salen errores en la consola que en la página real no aparecen.
 
 ## Qué falta para el celular
 
-1. **La portada en el celular (41).** El hilo principal trabaja 13,5 s: 6,5 s de «otros» y 4 s de estilos y diseño. Eso viene de las animaciones que corren al mismo tiempo (fondo espacial, aurora, SynthonIA, escenas). `core.js` tarda 1 s en arrancar. Lo que más ayudaría: pausar lo que no se ve, arrancar las escenas después del primer dibujo y bajar la cantidad de capas animadas en celulares lentos.
+1. **La portada en el celular (41).** El hilo principal trabaja 13,5 s: 6,5 s de «otros» y 4 s de estilos y diseño. Eso viene de las animaciones que corren al mismo tiempo (fondo espacial, aurora, Sona, escenas). `core.js` tarda 1 s en arrancar. Lo que más ayudaría: pausar lo que no se ve, arrancar las escenas después del primer dibujo y bajar la cantidad de capas animadas en celulares lentos.
 2. **JavaScript sin usar.** Se podrían ahorrar 87 KB en la portada y 151 KB en el chat cargando aparte lo que no se usa al entrar (Pulsem, A.L.I.A.S., eventos).
 3. **La portada tiene 2.400 elementos.** Las escenas de abajo se podrían armar cuando la persona llega a ellas.
 

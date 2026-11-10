@@ -1,6 +1,6 @@
-/* 2026-11-10 · v4.6 · Sona (antes SynthonIA) como una COMPAÑERA, estilo la de Grok pero con la ropa de la portada.
-   Sammuel: «SynthonIA no se parece a la portada… hazlo como el de Grok, así súper parecido».
-   Arriba un escenario con ELLA grande (la misma bola de vidrio con ojos cian y manitas flotantes) sobre el pentagrama de la marca;
+/* 2026-11-10 · v4.6 · Sona como una COMPAÑERA, estilo la de Grok pero con la ropa de la portada.
+   Sammuel: «Sona no se parece a la portada… hazlo como el de Grok, así súper parecido».
+   Arriba un escenario con ELLA grande (el robotcito negro con neón, antena que late y ojos cian) sobre el pentagrama de la marca;
    debajo la charla en burbujas de vidrio, sugerencias que se deslizan y una píldora flotante para escribir (con micrófono).
    Se ve igual en todas las páginas (core.css). */
 #szBotP.comp{--bs-a:var(--sb-primary,#7b3ff2);--bs-b:var(--sb-secondary,#ff3d9a);--bs-c:var(--sb-warm,#ff7a45);--bs-d:var(--sb-light,#3de0ff);
@@ -27,7 +27,7 @@
 #szBotP .bs-base{position:absolute;left:50%;bottom:6px;width:56%;height:22px;translate:-50% 0;border-radius:50%;
   background:radial-gradient(closest-side,color-mix(in srgb,var(--bs-d) 38%,transparent),transparent);filter:blur(3px)}
 /* ella: grande y centrada; la parte de abajo se funde con la charla */
-#szBotP .bsc{position:absolute;left:50%;bottom:-14px;translate:-50% 0;--sz:170px;z-index:1;filter:drop-shadow(0 16px 26px rgba(0,0,0,.45))}
+#szBotP .bsc{position:absolute;left:50%;bottom:-14px;translate:-50% 0;--sz:200px;z-index:1;filter:drop-shadow(0 16px 26px rgba(0,0,0,.45))}
 #szBotP .bsc .szbody{margin:0 auto}
 #szBotP .bsc .syb-glow{opacity:.9}
 #szBotP[data-state=talk] .bs-bg{animation-duration:3.4s}
@@ -100,11 +100,11 @@
 /* ---------- celular: casi pantalla completa, con la píldora arriba del teclado ---------- */
 @media (max-width:760px){
   #szBotP .bstage{height:196px}
-  #szBotP .bsc{--sz:150px}
+  #szBotP .bsc{--sz:176px}
   #szBotP.comp .bin{margin-bottom:max(6px,env(safe-area-inset-bottom))}
   #szBotP.comp .bfoot{padding-bottom:max(12px,env(safe-area-inset-bottom))}
 }
-@media (max-height:560px){#szBotP .bstage{height:132px}#szBotP .bsc{--sz:104px;bottom:-8px}#szBotP.comp .bnm b{font-size:22px}}
+@media (max-height:560px){#szBotP .bstage{height:132px}#szBotP .bsc{--sz:120px;bottom:-8px}#szBotP.comp .bnm b{font-size:22px}}
 
 /* en el celular la ventanita tapa la barra de abajo: más oscura para que no se transparente (sin dejar de ser vidrio) */
 @media (max-width:760px){html:not(.simple) #szBotP.comp.sheet{background:radial-gradient(120% 50% at 0% 0%,rgba(255,255,255,.1),transparent 50%),linear-gradient(180deg,rgba(32,18,74,.9),rgba(12,8,30,.94)) !important}}

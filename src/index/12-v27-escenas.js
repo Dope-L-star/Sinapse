@@ -1,4 +1,4 @@
-/* ===== v2.7 · «SynthonIA es para ti»: las tres escenas, dibujadas en código (antes eran imágenes pegadas).
+/* ===== v2.7 · «Sona es para ti»: las tres escenas, dibujadas en código (antes eran imágenes pegadas).
    Cada escena es un escenario de 400 × 214 con sus cosas atrás, Sona (la misma de toda la página) y lo que va adelante.
    Todo se mueve en vivo: hojas que flotan, la página del libro que pasa, código que se escribe, errores que se arreglan,
    un documento que se arma solo. Cuando la escena no se ve, se queda quieta (cero trabajo de más). ===== */
@@ -22,7 +22,7 @@ const bug = (x, y, d) => '<g class="usc-bug" style="--d:' + d + 's" transform="t
 const star = (x, y, s, k, d) => '<path class="usc-star" style="--d:' + d + 's" transform="translate(' + x + ' ' + y + ') scale(' + s + ')" d="M0-10c1 7 3 9 10 10-7 1-9 3-10 10-1-7-3-9-10-10 7-1 9-3 10-10z" fill="url(#gi' + k + ')"/>';
 const dust = (cx, cy, n, k) => Array.from({ length:n }, (_, i) => '<circle class="usc-rise" style="--d:' + (-i * .7).toFixed(1) + 's" cx="' + (cx + ((i * 37) % 60) - 30) + '" cy="' + cy + '" r="' + (1 + (i % 3) * .5) + '" fill="url(#gi' + k + ')"/>').join('');
 const SCENES = {
-  /* estudia: SynthonIA lee un libro que brilla, con hojas flotando y pilas de libros a los lados */
+  /* estudia: Sona lee un libro que brilla, con hojas flotando y pilas de libros a los lados */
   study: { mood:'feliz', pose:'lee', bot:'--bx:50%;--bw:45%;--bb:-19%',
     back: sheet(56, 26, -14, 1, 'C', 0) + sheet(318, 20, 12, .95, 'V', -2.2) + sheet(300, 96, -8, .75, 'C', -3.6) + sheet(98, 104, 10, .7, 'P', -1.3)
       + book(28, 184, 72, 15, 'V') + book(36, 170, 62, 14, 'C') + book(30, 157, 58, 13, 'P') + book(302, 184, 70, 15, 'O') + book(310, 170, 56, 14, 'V')
@@ -32,7 +32,7 @@ const SCENES = {
       + '<path d="M160 200c11-3 23-3 33 0M160 206c11-3 23-3 33 0M207 200c11-3 23-3 33 0M207 206c9-2 17-2 24 0" stroke="#e8fbff" stroke-opacity=".7" stroke-width="1.3" stroke-linecap="round" fill="none"/>'
       + '<path class="usc-page" d="M200 196c15-6 33-7 49-3v21c-16-4-34-3-49 3z" fill="#dffaff" fill-opacity=".5" stroke="#fff" stroke-opacity=".8"/>'
       + dust(200, 188, 6, 'C') + '</g>' },
-  /* programa: SynthonIA escribe en su escritorio de vidrio; el código aparece en ventanas flotantes y los errores se vuelven vistos verdes */
+  /* programa: Sona escribe en su escritorio de vidrio; el código aparece en ventanas flotantes y los errores se vuelven vistos verdes */
   code: { mood:'analizando', pose:'escribe', bot:'--bx:50%;--bw:45%;--bb:-19%',
     back: win(24, 26, 108, 74, 'P', '<path d="M50 56l-10 10 10 10M80 56l10 10-10 10M70 52l-10 28" fill="none" stroke="url(#giP)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>' + code(98, 50, [[0, 22, 'C'], [4, 18, 'V'], [4, 24, 'Y'], [0, 14, 'C']]), 0)
       + win(272, 18, 110, 60, 'C', code(282, 40, [[0, 46, 'P'], [8, 62, 'C'], [8, 38, 'Y'], [0, 54, 'V'], [8, 30, 'G']]), -2)
@@ -45,7 +45,7 @@ const SCENES = {
       /* la taza de café, con su vapor */
       + '<path d="M318 172h20v14a5 5 0 0 1-5 5h-10a5 5 0 0 1-5-5z" ' + G('O', .3) + ' stroke-width="1.5"/><path d="M338 176h3a4 4 0 0 1 0 8h-3" fill="none" stroke="url(#giO)" stroke-width="1.5"/>'
       + '<path class="usc-steam" d="M324 166q-3-5 0-9t0-9M332 166q-3-5 0-9t0-9" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="1.5" stroke-linecap="round"/>' },
-  /* crea: un documento de luz se arma solo encima de su proyector; SynthonIA lo señala */
+  /* crea: un documento de luz se arma solo encima de su proyector; Sona lo señala */
   create: { mood:'creando', pose:'senalaL', bot:'--bx:74%;--bw:42%;--bb:-16%',
     back: '<ellipse cx="112" cy="200" rx="44" ry="9" ' + G('O', .25) + ' stroke-width="1.6"/><ellipse cx="112" cy="198" rx="26" ry="4.5" fill="#ffe1b0" fill-opacity=".7"/>'
       + '<path class="usc-beam" d="M74 198L58 160L172 146L150 198Z" fill="url(#uscBeam)"/>'

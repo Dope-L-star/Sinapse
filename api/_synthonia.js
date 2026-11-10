@@ -1,4 +1,4 @@
-/* SynthonIA · su personalidad (v3.7). Una sola fuente para la ayudante y para la charla del mantenimiento.
+/* Sona · su personalidad (v3.7). Una sola fuente para la ayudante y para la charla del mantenimiento.
    Cálida y encantadora, pero con filo: directa, con opiniones propias sobre tecnología, sin groserías
    y sin tolerar faltas de respeto (pone el límite con firmeza y elegancia, nunca insulta).
    No toma bando en política, religión ni temas sociales polémicos: lleva la charla a lo suyo (IA, agentes y la página).
@@ -38,7 +38,7 @@ export const LANG_HEAD = {
 export const LANG_TAIL = { es: '', en: ' REMEMBER: answer only in English.' };
 export const langOf = l => l === 'en' ? 'en' : 'es';
 
-/* faltas de respeto directas a SynthonIA o al equipo: se responde sin gastar IA, con un límite firme y elegante */
+/* faltas de respeto directas a Sona o al equipo: se responde sin gastar IA, con un límite firme y elegante */
 const RUDE = /\b(idiota|est[uú]pid[ao]|imb[eé]cil|pendej[ao]|malparid[ao]|gonorrea|hijueputa|hp|hdp|puta|put[oa]s|maric[oó]n|perra|zorra|careverga|carechimba|mierda|c[aá]llate|idiot|stupid|moron|bitch|fuck\w*|shit\w*|asshole|bastard|whore|slut|shut up|retard\w*)\b/i;
 /* palabras suaves que solo son falta de respeto dichas a ella («eres inútil»), no de un botón («el botón es inútil» no cuenta) */
 const RUDE_TO_HER = /\b(eres|sos|est[aá]s|you'?re|you are|u r)\s+(una?\s+|so\s+|re\s+|muy\s+|a\s+)?(tonta|bruta|in[uú]til|basura|fea|boba|dumb|useless|trash|ugly)\b/i;
@@ -69,7 +69,7 @@ export function cleanThoughts(t){
   return s.trim();
 }
 
-/* v3.7 · memoria de SynthonIA: recuerda solo lo que vale y PREGUNTA antes de guardar.
+/* v3.7 · memoria de Sona: recuerda solo lo que vale y PREGUNTA antes de guardar.
    El navegador manda solo lo que la persona ya aprobó (Ajustes › Memoria); si la persona cuenta algo que vale la pena
    recordar, la IA lo propone al final con [recordar: …] y la página le pregunta «¿Lo recuerdo?». Nada se guarda sin su sí. */
 export function memOf(list){

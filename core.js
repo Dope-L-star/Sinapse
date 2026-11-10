@@ -141,7 +141,7 @@ const onLang = f => langHooks.push(f);
 addEventListener('storage', e => { if (e.key === 'synthz:lang' && e.newValue && e.newValue !== LANG) setLang(e.newValue); });
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => i18nApply()); else setTimeout(() => i18nApply(), 0);
 /* ===== v3.0 · textos de la landing SymphorIA y de EnerX (español / inglés). Formato en 00b-idioma.js ===== */
-/* EnerX: el nombre de la batería vive solo aquí. Cambia ENERX y cambia en toda la página (landing, SynthFlow, Pulsem, SynthonIA), en español y en inglés */
+/* EnerX: el nombre de la batería vive solo aquí. Cambia ENERX y cambia en toda la página (landing, SynthFlow, Pulsem, Sona), en español y en inglés */
 const ENERX = 'EnerX';
 Object.assign(I18N.es, {
   'landing.nombre.eyebrow': 'Por qué se llama así',
@@ -526,7 +526,7 @@ Object.assign(I18N.en, {
  "ix.149": "Your chats are saved on this device. If you sign in, you also see them on your phone and on any computer."
 });
 
-/* textos que escribe el JS de la portada (src/index): recorrido, SynthonIA, pistas, Puter, glosario */
+/* textos que escribe el JS de la portada (src/index): recorrido, Sona, pistas, Puter, glosario */
 Object.assign(I18N.es, {
  "rb.como": "¡Así de fácil! Pregunta lo que sea.",
  "rb.modos": "Si no sabes cuál elegir, déjalo en Automático.",
@@ -953,8 +953,8 @@ function trOff(){
 }
 onLang(l => l === 'en' ? trOn() : trOff());
 if (LANG === 'en'){ trLoad(); if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', trOn); else setTimeout(trOn, 0); }
-/* ===== v3.4 · SynthonIA vive en su propio archivo: synthonia.js (piezas en src/synthonia/) =====
-   Antes estaba dentro de core.js (≈190 KB: su cara, su manita, sus sonidos, su ventanita, la guía, el mantenimiento…).
+/* ===== v3.4 · Sona vive en su propio archivo: synthonia.js (piezas en src/synthonia/) =====
+   Antes estaba dentro de core.js (≈190 KB: su cara, su puntero, sus sonidos, su ventanita, la guía, el mantenimiento…).
    Ahora core.js la carga aparte: en la portada enseguida (ella es la portada) y en Sonyx y Pulsem cuando la página ya cargó.
    Mientras llega, estos nombres son «de espera»: lo que se le pida a Sona se guarda y se hace apenas llegue
    (los sonidos de antes de que llegue simplemente no suenan, y su cara sale vacía). SZ.synReady avisa cuando ya está.
@@ -962,7 +962,7 @@ if (LANG === 'en'){ trLoad(); if (document.readyState === 'loading') document.ad
 let synOk = false, synDone;
 const synReady = new Promise(r => { synDone = r; });
 const synQ = [];
-/* una función de espera: si SynthonIA ya llegó llama a la de verdad; si no, la guarda y devuelve una promesa */
+/* una función de espera: si Sona ya llegó llama a la de verdad; si no, la guarda y devuelve una promesa */
 const synLater = name => (...a) => synOk ? SYNX[name](...a) : new Promise(ok => synQ.push(() => { try{ ok(SYNX[name](...a)); }catch(e){ ok(undefined); } }));
 /* un objeto de espera (SZ.BOT, SZ.HAND): sus métodos se guardan; los valores conocidos devuelven algo neutro */
 const synObj = (name, vals = {}) => new Proxy({}, { get:(t, k) => {
@@ -972,7 +972,7 @@ const synObj = (name, vals = {}) => new Proxy({}, { get:(t, k) => {
   return (...a) => new Promise(ok => synQ.push(() => { try{ const f = SYNX[name][k]; ok(typeof f === 'function' ? f(...a) : f); }catch(e){ ok(undefined); } }));
 } });
 const SYNX = {};
-let face = () => '', synBody = () => '', synSet = () => {}, lipSync = () => () => {}, ballFace = () => null, randomGoodFace = () => 'feliz', wasAway = () => false;
+let face = () => '', synBody = () => '', synSet = () => {}, lipSync = () => () => {}, botFaceEl = () => null, randomGoodFace = () => 'feliz', wasAway = () => false;
 let EV;   /* los eventos de 50, 100 y 500 visitas (el portal pregunta «typeof EV») */
 let FACE_GOOD = ['feliz', 'riendo', 'guino', 'encantada', 'celebrando', 'flow'], SPOSE = {}, GTOPICS = [];
 let botOpen = synLater('botOpen'), botTeam = synLater('botTeam'), feedbackModal = synLater('feedbackModal'), guideChooser = synLater('guideChooser'),
@@ -983,7 +983,7 @@ let HAND = synObj('HAND', { alive:false, pos:{ x:0, y:0 } }), BOTAPI = synObj('B
 function synArrive(x){
   if (synOk) return;
   Object.assign(SYNX, x);
-  ({ face, synBody, synSet, lipSync, ballFace, randomGoodFace, wasAway, FACE_GOOD, SPOSE, GTOPICS, botOpen, botTeam, feedbackModal, guideChooser, welcomeBack, guideAsk, whatsNew, SND, HAND, BOTAPI, EV } = x);
+  ({ face, synBody, synSet, lipSync, botFaceEl, randomGoodFace, wasAway, FACE_GOOD, SPOSE, GTOPICS, botOpen, botTeam, feedbackModal, guideChooser, welcomeBack, guideAsk, whatsNew, SND, HAND, BOTAPI, EV } = x);
   synOk = true;
   synQ.splice(0).forEach(f => f());
   synDone(true);
@@ -2196,7 +2196,7 @@ if (matchMedia('(pointer: fine)').matches && CFG.cursor){
   const cd = $('#cd'), ca = $('#ca'), cr = $('#cr'), cl = $('#cl'), cs = $('#cs');
   const TEXT = 'input:not([type=checkbox]):not([type=file]), textarea, [contenteditable=true]';
   const LINK = 'a[href], button, select, summary, label.ckb, input[type=checkbox], input[type=radio], .chip, [role=tab], [data-hover]';
-  /* en toda la web lo que se puede tocar muestra la manita; los switches van sin vidrio encima para que se vea su animación */
+  /* en toda la web lo que se puede tocar muestra el puntero; los switches van sin vidrio encima para que se vea su animación */
   const NOGLASS = '#curChip, #curChip *, .mchip, .mchip *, .cfgsw, .sxsw, [role=switch], .sfb, #szBot, .mi, .mi *, .rcard, .rcard *, input[type=checkbox], label.ckb, .cnv-b, .flowbtn, .flowbtn *';   /* v1.8: «Empezar a FlowIA’r» tiene su propio efecto (la copia de vidrio lo partía en dos y escondía la carita) */   /* v1.4: en la lista de IA el vidrio tapaba «Comparar» y la estrella */
   let px = -100, py = -100, ax = -100, ay = -100, rx = -100, ry = -100, rw = 34, rh = 34, rr = 17;
   let cm = 'idle', hov = null, lblEl = null, lx = 0, ly = 0, down = false, active = false, clT = 0;
@@ -3112,7 +3112,7 @@ function memAddCore(text){
   else m.items.unshift({ id:'m' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), t:Date.now(), text:t });
   m.items = m.items.slice(0, 40); memTouch(); return true;
 }
-/* v3.7 · lo que SynthonIA puede usar: solo lo aprobado y solo si la memoria está encendida */
+/* v3.7 · lo que Sona puede usar: solo lo aprobado y solo si la memoria está encendida */
 function memList(){ const m = memSt0(); return m.on ? m.items.slice(0, 12).map(x => x.text) : []; }
 /* la lista de «Lo que recuerdo de ti»: se ve, se agrega, se olvida */
 function memPanel(host){
@@ -4232,7 +4232,7 @@ const GI = {
   nube:   ['C', () => giP('M19 47a10 10 0 0 1-1.5-19.9A14 14 0 0 1 44 23a11 11 0 0 1 2 24z', 'C', .18) + giH('M20 30q2-8 10-9')
             + '<g class="gi-sync">' + giL('M25 35a7 7 0 0 1 12-4.5M39 38a7 7 0 0 1-12 4.5', 'V', 2.2) + giL('M37.5 26.5v4.5H33M26.5 47v-4.5H31', 'V', 2.2) + '</g>'],
   celular: ['V', () => giP('M23 6h18a6 6 0 0 1 6 6v40a6 6 0 0 1-6 6H23a6 6 0 0 1-6-6V12a6 6 0 0 1 6-6z', 'V', .14) + giL('M29 11h6M29 53h6', 'V', 2)
-            /* adentro, la carita de SynthonIA */
+            /* adentro, la carita de Sona */
             + giC(32, 28, 9.5, 'C', .18, 1.8) + '<ellipse cx="32" cy="29" rx="6.6" ry="5.2" fill="#0b0719" stroke="#ff7ad0" stroke-opacity=".8" stroke-width=".9"/>'
             + '<g class="gi-eyes"><rect x="28.6" y="26.5" width="2.2" height="5" rx="1.1" fill="#3de0ff"/><rect x="33.2" y="26.5" width="2.2" height="5" rx="1.1" fill="#3de0ff"/></g>'
             + giP('M27 40h10a4 4 0 0 1 4 4v2H23v-2a4 4 0 0 1 4-4z', 'C', .2, 1.6)],
@@ -4810,14 +4810,14 @@ onLang(() => pwrPrep());
 window.SZ = { I18N, LANGS, t, lang, setLang, onLang, i18nApply, root, $, $$, clamp, fmt, reduce, today, sleepRaw, esc, est, ICONS, ico, zWord, API, MANUAL, ALL, byId,
   get state(){ return state; }, set state(v){ state = v; normalize(); },
   normalize, cleanUsage, cleanChats, cleanStrMap, save, total, addUsage, resetUsage, estAll, todayEst, todayReq, providerBalance, balanceHtml, splitHtml, syncNote, helpGuide, smoothDetails, szPrompt, swapDir, swapDir, get face(){ return face; }, get FACE_GOOD(){ return FACE_GOOD; }, get randomGoodFace(){ return randomGoodFace; }, get welcomeBack(){ return welcomeBack; }, get wasAway(){ return wasAway; }, accSignOutAll, accClaim, ROLE_NAME, trialGet, trialSet, trialStart, legacyRow, cleanLedger, mergeLedger, DEV, hooks, toast, hydrateIcons, md, countTo,
-  BRAND, SPACE, AURORA, isFlow, flowWord, flowOrb, LOGO_Z, fileIco, gIcon, giFill, giFile, zMark, get synBody(){ return synBody; }, get synSet(){ return synSet; }, get SPOSE(){ return SPOSE; }, charify, typeIn, showAll, getJSON, parseModels, loadCatalog, fetchCatalog, vendorLabel, vendorColor, burst, friendly, netMsg, fetchModels, refreshModels, verify, ask, metaOf, history, S, mirrorType, thud, portalOut, portalBack, portalArrive, waterIn, ctxMenu, SXC, coins, ACC, accHooks, accStart, accPush, accSignOut, accName, accHandle, securityModal, recoveryPanel, MARK_HTML, expertOf, EXP_LABEL, surveyModal, surveyPicks, surveyScore, orGuide, profileModal, puterLogo, PUTER_LOGO, api, accConfig, accDelete, accLogout, accLogoutAll, accDeleteFlow, accClaimFlow, accTeam, cfgAcc, saveProfile, avatarHtml, myAvatar, grad, tint, TINTS, loadGsi, SESS_get:() => SESS, CFG, PERF, saveCfg, cfgModal, cfgChooser, applyCfg, smoothWheel, orbitBg, authBox, isBlocked, lowEnd, askStream, mkReveal, reveals, chatsReady, IDB, provOf, totalAll, todayAll, BRANDS, brandOf, glassIcon, PIXART, pixelRun, pixelGrid, workView, workSaved, mdLoad, MDLIB, SZ_P, SZQ, SZ_AUTO, szqSet, msgsLeft, msgsTotal, coinsOf, coinsLeft, coinsTotal, coinsFmt, coinsShort, coinNote, limTxt, limShort, limLvl, limPct, limRing, battPct, limBar, szCatalog, szHeaders, guestGate, guestFull, guestLeft, isGuestQ, setTurn, puterOut, puterOutNote, TEL, telEv, telBeat, DEVH, szConfirm, cfgPreset, CFG_KEYS, cfgClasses, get SND(){ return SND; }, get HAND(){ return HAND; }, get feedbackModal(){ return feedbackModal; }, get guideChooser(){ return guideChooser; }, DRIVE, isBad, markBad, markSick, markGood, modelGone, badReady, GROQ_P, get BOT(){ return BOTAPI; }, get EV(){ return EV; }, get lipSync(){ return lipSync; }, get ballFace(){ return ballFace; }, get guideAsk(){ return guideAsk; }, get GTOPICS(){ return GTOPICS; }, get whatsNew(){ return whatsNew; }, signedish, cfgLinks, memAddCore, memList, memPanel, menuOpen, menuClose, MICO, appInstall, appPromo, appStandalone, appWin, appPhone, plansModal, planOf, aliasOk };
+  BRAND, SPACE, AURORA, isFlow, flowWord, flowOrb, LOGO_Z, fileIco, gIcon, giFill, giFile, zMark, get synBody(){ return synBody; }, get synSet(){ return synSet; }, get SPOSE(){ return SPOSE; }, charify, typeIn, showAll, getJSON, parseModels, loadCatalog, fetchCatalog, vendorLabel, vendorColor, burst, friendly, netMsg, fetchModels, refreshModels, verify, ask, metaOf, history, S, mirrorType, thud, portalOut, portalBack, portalArrive, waterIn, ctxMenu, SXC, coins, ACC, accHooks, accStart, accPush, accSignOut, accName, accHandle, securityModal, recoveryPanel, MARK_HTML, expertOf, EXP_LABEL, surveyModal, surveyPicks, surveyScore, orGuide, profileModal, puterLogo, PUTER_LOGO, api, accConfig, accDelete, accLogout, accLogoutAll, accDeleteFlow, accClaimFlow, accTeam, cfgAcc, saveProfile, avatarHtml, myAvatar, grad, tint, TINTS, loadGsi, SESS_get:() => SESS, CFG, PERF, saveCfg, cfgModal, cfgChooser, applyCfg, smoothWheel, orbitBg, authBox, isBlocked, lowEnd, askStream, mkReveal, reveals, chatsReady, IDB, provOf, totalAll, todayAll, BRANDS, brandOf, glassIcon, PIXART, pixelRun, pixelGrid, workView, workSaved, mdLoad, MDLIB, SZ_P, SZQ, SZ_AUTO, szqSet, msgsLeft, msgsTotal, coinsOf, coinsLeft, coinsTotal, coinsFmt, coinsShort, coinNote, limTxt, limShort, limLvl, limPct, limRing, battPct, limBar, szCatalog, szHeaders, guestGate, guestFull, guestLeft, isGuestQ, setTurn, puterOut, puterOutNote, TEL, telEv, telBeat, DEVH, szConfirm, cfgPreset, CFG_KEYS, cfgClasses, get SND(){ return SND; }, get HAND(){ return HAND; }, get feedbackModal(){ return feedbackModal; }, get guideChooser(){ return guideChooser; }, DRIVE, isBad, markBad, markSick, markGood, modelGone, badReady, GROQ_P, get BOT(){ return BOTAPI; }, get EV(){ return EV; }, get lipSync(){ return lipSync; }, get botFaceEl(){ return botFaceEl; }, get guideAsk(){ return guideAsk; }, get GTOPICS(){ return GTOPICS; }, get whatsNew(){ return whatsNew; }, signedish, cfgLinks, memAddCore, memList, memPanel, menuOpen, menuClose, MICO, appInstall, appPromo, appStandalone, appWin, appPhone, plansModal, planOf, aliasOk };
 /* v3.4 · el «turno» del mensaje actual: la revisión de calidad viaja en el mismo turno (no cuenta como otro mensaje sin cuenta) */
-/* v3.4 · SynthonIA (synthonia.js): lo que necesita de core, y cuándo se carga */
+/* v3.4 · Sona (synthonia.js): lo que necesita de core, y cuándo se carga */
 window.SZ.synReady = synReady;
 window.SZ.portada = { get:portadaGet, set:portadaSet, known:portadaKnown };   /* v4.1 · portada solo para gente nueva */
 window.SZ.__syn = { root, $, $$, clamp, CFG, PERF, reduce, sleepRaw, esc, isFlow, BRAND, zWord, t, onLang, ENERX, trStr, ACC, accHooks, api, accName, toast, pixelGrid, pixelRun, typeIn, SZQ, szCatalog, telPage, telEv, burst, portalOut, portalLock, authBox, cfgModal, plansModal, memAddCore, memList,
   cfgFetch, get LANG(){ return LANG; }, get SESS(){ return SESS; }, ready:synArrive };
-/* la portada la trae con su propia etiqueta (SynthonIA es la portada); las demás páginas, cuando ya cargaron */
+/* la portada la trae con su propia etiqueta (Sona es la portada); las demás páginas, cuando ya cargaron */
 if (document.readyState === 'complete') setTimeout(synLoad, 300); else addEventListener('load', () => (window.requestIdleCallback || setTimeout)(synLoad, { timeout:1200 }), { once:true });
 window.SZ.turnNow = () => TURN && Date.now() - TURN.at < 600000 ? TURN.id : '';
 })();

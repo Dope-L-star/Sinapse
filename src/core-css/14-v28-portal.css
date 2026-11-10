@@ -1,4 +1,4 @@
-/* v2.8 · el portal nuevo (core 12): la Z se vuelve el orbe de SynthFlow, SynthonIA salta adentro y la cámara se zambulle */
+/* v2.8 · el portal nuevo (core 12): la Z se vuelve el orbe de SynthFlow, Sona salta adentro y la cámara se zambulle */
 #portal.p8{position:fixed;inset:0;z-index:9950;display:grid;place-items:center;overflow:hidden;background:transparent;opacity:1;pointer-events:auto;cursor:default}
 #portal.p8 .p8-bg{position:absolute;inset:0;opacity:0;pointer-events:none;
   background:radial-gradient(55% 45% at 50% 50%,rgba(123,63,242,.34),transparent 70%),radial-gradient(35% 35% at 72% 30%,rgba(255,61,154,.16),transparent 70%),radial-gradient(35% 35% at 28% 72%,rgba(61,224,255,.14),transparent 70%),#0b0820}
@@ -18,7 +18,7 @@
   transition:opacity .35s ease,transform .5s cubic-bezier(.34,1.56,.64,1),filter .35s ease;transition-delay:calc(var(--i) * 75ms + .22s)}
 .p8.flow .p8-fl i{opacity:1;transform:none;filter:none}
 .p8.start .p8-fl,.p8.start .p8-fl i,.p8.start .p8-zl{transition:none}
-/* SynthonIA aparece debajo del logo, saluda y salta al orbe */
+/* Sona aparece debajo del logo, saluda y salta al orbe */
   transition:opacity .35s ease,transform .6s cubic-bezier(.34,1.56,.64,1)}
 /* mientras se zambulle: sin sombras ni filtros, así va fluido */
 .p8.diving .p8-z,.p8.diving .sforb{filter:none !important;box-shadow:none !important}

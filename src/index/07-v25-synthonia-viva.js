@@ -1,4 +1,4 @@
-/* ===== v2.5 · SynthonIA viva: cuando sales de la portada te acompaña por toda la página.
+/* ===== v2.5 · Sona viva: cuando sales de la portada te acompaña por toda la página.
    Vuela de un lado al otro según la sección, cambia de cara y de pose, dice una frase corta,
    te mira con los ojos y, si la tocas, abre su ventanita para hablar contigo. ===== */
 (() => {
@@ -156,7 +156,7 @@ if (!reduce) setInterval(() => {
   SZ.synSet(fig, alt, S.pose, small() ? 96 : 132); posed = '';
   setTimeout(() => { if (cur === k) paint(k); }, 1400);
 }, 9000);
-/* v2.6: en la portada SynthonIA de cuerpo entero ES la ayudante: no hay bolita, y su ventanita sale de donde esté parada
+/* v2.6: en la portada Sona de cuerpo entero ES la ayudante: no hay botón, y su ventanita sale de donde esté parada
    (arriba en la portada, caminando por las secciones o celebrando al final) */
 document.documentElement.classList.add('szlive');
 const shown = n => { if (!n) return false; const r = n.getBoundingClientRect(); return r.width > 0 && r.bottom > 0 && r.top < innerHeight; };
