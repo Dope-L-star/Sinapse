@@ -17,7 +17,7 @@ function renderAlerts(){
   let b = $('#pAlert'); const L = P.alerts || [];
   if (!L.length){ if (b) b.remove(); return; }
   if (!b){ b = document.createElement('div'); b.id = 'pAlert'; b.className = 'card palert'; const m = $('main') || document.body; m.insertBefore(b, m.firstChild); }
-  b.innerHTML = '<b>⚠ Alerta de las IAs</b><p>' + L.map(a => '<strong>' + esc(a.name) + '</strong> pidió pago o cambió su plan gratis' + (a.t ? ' (' + ago(a.t) + ')' : '') + (a.msg ? ': «' + esc(a.msg) + '»' : '')).join('<br>') + '</p><p class="cnote">SymphorIA ya pausó esas llaves: nunca se paga nada. Revisa la cuenta del proveedor y pulsa «Probar» en la llave cuando lo arregles; si vuelve a funcionar, la alerta se quita sola.</p>';
+  b.innerHTML = '<b>⚠ Alerta de las IAs</b><p>' + L.map(a => '<strong>' + esc(a.name) + '</strong> pidió pago o cambió su plan gratis' + (a.t ? ' (' + ago(a.t) + ')' : '') + (a.msg ? ': «' + esc(a.msg) + '»' : '')).join('<br>') + '</p><p class="cnote">Sinapse ya pausó esas llaves: nunca se paga nada. Revisa la cuenta del proveedor y pulsa «Probar» en la llave cuando lo arregles; si vuelve a funcionar, la alerta se quita sola.</p>';
 }
 function render(){
   renderAlerts();

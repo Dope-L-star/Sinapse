@@ -1,7 +1,7 @@
 /* ===== v3.4 · SynthonIA vive en su propio archivo: synthonia.js (piezas en src/synthonia/) =====
    Antes estaba dentro de core.js (≈190 KB: su cara, su manita, sus sonidos, su ventanita, la guía, el mantenimiento…).
-   Ahora core.js la carga aparte: en la portada enseguida (ella es la portada) y en SynthFlow y Pulsem cuando la página ya cargó.
-   Mientras llega, estos nombres son «de espera»: lo que se le pida a SynthonIA se guarda y se hace apenas llegue
+   Ahora core.js la carga aparte: en la portada enseguida (ella es la portada) y en Sonyx y Pulsem cuando la página ya cargó.
+   Mientras llega, estos nombres son «de espera»: lo que se le pida a Sona se guarda y se hace apenas llegue
    (los sonidos de antes de que llegue simplemente no suenan, y su cara sale vacía). SZ.synReady avisa cuando ya está.
    synthonia.js recibe lo que necesita de core por SZ.__syn y devuelve lo suyo con SZ.__syn.ready({ … }). */
 let synOk = false, synDone;

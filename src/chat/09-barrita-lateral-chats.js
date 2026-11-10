@@ -73,7 +73,7 @@ SZ.onLang(() => { try{ renderList({ keep:true }); }catch(e){} });   /* v3.7 · l
 /* ---------- tutorial, mejor IA gratis y menú contextual ---------- */
 const APODEX_NAME = 'Automática';
 const TOUR = [
-  { t:'Bienvenido a SynthFlow', p:'Aquí chateas gratis con muchas IA. No tienes que configurar nada: escribe y listo.' },
+  { t:'Bienvenido a Sonyx', p:'Aquí chateas gratis con muchas IA. No tienes que configurar nada: escribe y listo.' },
   { t:'Tu Puter', p:'Cada día tienes un límite gratis para usar las IAs conectadas. A medianoche se vuelve a llenar. Si se te acaban, puedes seguir con Puter, que te da la versión pro de las IAs más usadas, como ChatGPT, Claude o Gemini. Es gratis, tiene un límite que se renueva cada mes y se conecta con un clic.', x:'conn' },
   { t:'¿Dónde quieres empezar?', p:'Elige y te dejo en su pestaña con su mejor IA. Si no eliges, empiezas con ' + APODEX_NAME + '.', x:'pick' },
   { t:'Tu límite de hoy', p:'Cada día tienes un límite gratis. El anillo de la barrita se va vaciando mientras chateas y se llena otra vez a medianoche. «Respuestas cortas» te ayuda a que te alcancen más.' },
@@ -98,7 +98,7 @@ function tourBox(box, kind){
     box.innerHTML = '<div class="tpicks">' + card('sz', 'IAs conectadas', 'Gratis · listas', bo ? bo.name : 'Automática') + card('pu', 'Puter', 'Tus IAs pro · un clic', bp ? bp.name : 'ChatGPT') + card('none', 'Ninguno', 'Por defecto', 'Automática') + '</div>';
     $$('.tpick', box).forEach(b => b.addEventListener('click', () => { tourPick = b.dataset.k; tourBox(box, 'pick'); }));
   } else if (kind === 'done'){
-    const id = pickTarget(), where = tourPick === 'pu' ? 'Puter' : tourPick === 'sz' ? 'SymphorIA' : 'Todos';
+    const id = pickTarget(), where = tourPick === 'pu' ? 'Puter' : tourPick === 'sz' ? 'Sinapse' : 'Todos';
     box.innerHTML = '<div class="tsum">Empiezas con <b>' + esc(info(id).name) + '</b> en la pestaña <b>' + where + '</b>.' + (connected(id) ? '' : /^pu:/.test(id) ? ' Te pediré entrar a Puter cuando escribas tu primer mensaje.' : '') + '</div>';
   } else box.innerHTML = '';
 }

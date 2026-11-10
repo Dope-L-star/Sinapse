@@ -1,20 +1,20 @@
 /* ---------- 2026-11-09 · rediseño «Partitura»: el selector de 4 modos en la caja de escribir ----------
-   Sammuel: «hay muchas IAs, el modo auto, comparar y A.L.I.A.S.: ¿cómo se va a elegir?». Respuesta concreta, siempre a la vista:
-     Auto      SymphorIA elige la IA para cada pedido (y dice cuál usó).            → applyMode('auto')
+   Sammuel: «hay muchas IAs, el modo auto, comparar y Quoryn: ¿cómo se va a elegir?». Respuesta concreta, siempre a la vista:
+     Auto      Sinapse elige la IA para cada pedido (y dice cuál usó).            → applyMode('auto')
      Una IA    tú eliges de la lista con buscador; abajo se ve cuál tienes.          → applyMode('chat') + abre la lista
      Comparar  2 a 3 IAs lado a lado; te quedas con la mejor.                         → cmpOpen()
-     Agente    A.L.I.A.S.: arma un plan, lo apruebas una vez y trabaja solo.          → abre alias.html con lo escrito
+     Agente    Quoryn: arma un plan, lo apruebas una vez y trabaja solo.          → abre alias.html con lo escrito
                v4.5: solo para el equipo (SZ.aliasOk()); los demás ven 3 modos. Se repinta si cambia (evento synthz-alias).
-   Y el esfuerzo, al lado: Auto · Veloz · Profundo · Creativo (los niveles de v4.3, Profundo pide cuenta) · SuperiorSynth (el agente de SynthFlow elige la IA y mejora tu pedido).
+   Y el esfuerzo, al lado: Auto · Veloz · Profundo · Creativo (los niveles de v4.3, Profundo pide cuenta) · Apex (el agente de Sonyx elige la IA y mejora tu pedido).
    Reemplaza a los botones «Modo», «Esfuerzo» y «Comparar con otra IA», que se esconden con CSS (siguen en el DOM para el motor). */
 (function partituraSelector(){
   const row = $('#cPickRow'); if (!row || $('#ptModos')) return;
   const en = () => SZ.lang && SZ.lang() === 'en';
   const T = () => en()
-    ? { modos:{ auto:'Auto', una:'One AI', cmp:'Compare', agente:'Agent' }, esf:['Auto', 'Fast', 'Deep', 'Creative', 'SuperiorSynth'], modo:'Mode', esfuerzo:'Effort',
-        ayuda:{ auto:'SymphorIA picks the AI for each request and tells you which one.', una:'You pick the AI from the list.', cmp:'Several AIs answer side by side. Keep the best one.', agente:'A.L.I.A.S. makes a plan, you approve it once and it works on its own.' } }
-    : { modos:{ auto:'Auto', una:'Una IA', cmp:'Comparar', agente:'Agente' }, esf:['Auto', 'Veloz', 'Profundo', 'Creativo', 'SuperiorSynth'], modo:'Modo', esfuerzo:'Esfuerzo',
-        ayuda:{ auto:'SymphorIA elige la IA para cada pedido y te dice cuál usó.', una:'Tú eliges la IA de la lista.', cmp:'Varias IAs responden lado a lado. Te quedas con la mejor.', agente:'A.L.I.A.S. arma un plan, lo apruebas una vez y trabaja solo.' } };
+    ? { modos:{ auto:'Relay', una:'One AI', cmp:'Compare', agente:'Agent' }, esf:['Flow', 'Fragment', 'Focus', 'Horizon', 'Apex'], modo:'Mode', esfuerzo:'Effort',
+        ayuda:{ auto:'Sinapse picks the AI for each request and tells you which one.', una:'You pick the AI from the list.', cmp:'Several AIs answer side by side. Keep the best one.', agente:'Quoryn makes a plan, you approve it once and it works on its own.' } }
+    : { modos:{ auto:'Relay', una:'Una IA', cmp:'Comparar', agente:'Agente' }, esf:['Flow', 'Fragment', 'Focus', 'Horizon', 'Apex'], modo:'Modo', esfuerzo:'Esfuerzo',
+        ayuda:{ auto:'Sinapse elige la IA para cada pedido y te dice cuál usó.', una:'Tú eliges la IA de la lista.', cmp:'Varias IAs responden lado a lado. Te quedas con la mejor.', agente:'Quoryn arma un plan, lo apruebas una vez y trabaja solo.' } };
   const MODOS_TODOS = ['auto', 'una', 'cmp', 'agente'];
   const modos = () => MODOS_TODOS.filter(k => k !== 'agente' || (SZ.aliasOk && SZ.aliasOk()));
   const actual = () => mode === 'cmp' ? 'cmp' : selId() === 'sz:auto' && !agentOn() ? 'auto' : 'una';
@@ -59,10 +59,10 @@
   const TT = () => en()
     ? { raiz:'Personal space', nuevo:'New chat', esf:'Effort', ia:'Choose the AI', mas:'New chat', migas:'You are here',
         desc:['The AI decides how much to think.', 'Quick, short answers for everyday things.', 'Thinks it through and double-checks. Uses the most EnerX.', 'Original ideas and writing with spark.', 'The agent picks the AI and improves your request.'],
-        n:['Auto', 'Fast', 'Deep', 'Creative', 'SuperiorSynth'], cuenta:'Needs an account', cmp:'Comparing', pen:'Deep effort needs an account (signing in is free).' }
+        n:['Flow', 'Fragment', 'Focus', 'Horizon', 'Apex'], cuenta:'Needs an account', cmp:'Comparing', pen:'Focus effort needs an account (signing in is free).' }
     : { raiz:'Espacio personal', nuevo:'Chat nuevo', esf:'Esfuerzo', ia:'Elegir la IA', mas:'Nuevo chat', migas:'Estás aquí',
         desc:['La IA decide cuánto pensar según tu pregunta.', 'Respuestas rápidas y cortas, para lo del día a día.', 'Piensa a fondo y revisa su respuesta. Es el que más EnerX gasta.', 'Ideas originales y textos con chispa, para crear.', 'El agente elige la IA y mejora tu pedido.'],
-        n:['Auto', 'Veloz', 'Profundo', 'Creativo', 'SuperiorSynth'], cuenta:'Con cuenta', cmp:'Comparando', pen:'El esfuerzo Profundo es para cuentas (entrar es gratis).' };
+        n:['Flow', 'Fragment', 'Focus', 'Horizon', 'Apex'], cuenta:'Con cuenta', cmp:'Comparando', pen:'El esfuerzo Focus es para cuentas (entrar es gratis).' };
   const crumbs = document.createElement('nav'); crumbs.className = 'tb-crumbs'; crumbs.id = 'tbCrumbs';
   crumbs.innerHTML = '<span class="tb-root"></span><i aria-hidden="true">/</i><b class="tb-now" aria-current="page"></b>';
   const grp = document.createElement('div'); grp.className = 'tb-sel'; grp.id = 'tbSel';

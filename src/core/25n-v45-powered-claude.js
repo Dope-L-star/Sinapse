@@ -1,5 +1,5 @@
 /* ---------- v4.5 · «Powered by Claude» en la chispa de la esquina ----------
-   La chispita naranja de abajo a la derecha (.corner en SynthFlow y la portada, #pCorner en Pulsem) es la de Claude.
+   La chispita naranja de abajo a la derecha (.corner en Sonyx y la portada, #pCorner en Pulsem) es la de Claude.
    Al pasar el mouse, al enfocarla con el teclado o al tocarla en el celular, muestra un letrerito «Powered by Claude»
    (en español: «Impulsado por Claude»). Se engancha por delegación de eventos: sirve aunque React vuelva a pintar la esquina. */
 Object.assign(I18N.es, { 'pwr.claude':'Impulsado por <b>Claude</b>' });

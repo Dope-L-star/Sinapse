@@ -66,7 +66,7 @@ function placeSide(){}
 let sideOpener = null; side.inert = !side.classList.contains('open');
 function openSide(kind, anchor){
   if (isLocked()){ lockNudge(); toast('Primero conecta Puter: es gratis y con un clic.'); return; }
-  if (agentOn() && mode === 'solo' && kind !== 'add' && kind !== 'cmp'){ toast('Con SuperiorSynth la IA la elige él. Si quieres elegirla tú, vuelve a «Chats».'); return; }
+  if (agentOn() && mode === 'solo' && kind !== 'add' && kind !== 'cmp'){ toast('Con Apex la IA la elige él. Si quieres elegirla tú, vuelve a «Chats».'); return; }
   pickMode = kind === 'add' || mode === 'cmp' ? 'add' : 'set';
   pickCmp = kind === 'cmp' && mode !== 'cmp'; if (!pickCmp) pickSel.clear();
   side.classList.toggle('pcmp', pickCmp);

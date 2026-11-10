@@ -94,7 +94,7 @@ function renderCards(){
       <div class="actions">
         <button class="btn sm" data-add>Sumar al consumo</button>
         <a class="lnk" href="${p.site}" target="_blank" rel="noopener noreferrer">Abrir ${p.siteName}</a>
-        ${p.id === 'chatgpt' ? '<button class="btn sm ghost" data-oss>Probar gpt-oss en SynthFlow</button>' : ''}
+        ${p.id === 'chatgpt' ? '<button class="btn sm ghost" data-oss>Probar gpt-oss en Sonyx</button>' : ''}
       </div>
     </article>`).join('');
   $$('.card', ext).forEach(card => {

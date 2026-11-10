@@ -6,17 +6,17 @@ const TOPIC_STEPS = {
     const ex = gT('#hexR', '#hexR'); if (ex) await gPoint(ex, 'Si no sabes qué pedir, toca una de estas ideas: se escribe sola y tú decides cuándo enviarla.');
   },
   ia:async () => {
-    if (agentOn()){ await gPoint(gT('#ssTop', '#ssTop'), 'Ahora estás con SuperiorSynth: él elige la IA por ti. Si quieres elegirla tú, toca aquí y «Elegir yo la IA».'); return; }
+    if (agentOn()){ await gPoint(gT('#ssTop', '#ssTop'), 'Ahora estás con Apex: él elige la IA por ti. Si quieres elegirla tú, toca aquí y «Elegir yo la IA».'); return; }
     await gPoint(gAny('#cPick', '#curChip'), 'Aquí eliges con qué IA hablas. Tócalo y se abre su ventana con temas, buscador y filtros.');
     const tc = gT('.tchip[data-topic]', '.tchip[data-topic]'); if (tc) await gPoint(tc, 'Cada tema te recomienda las IA que mejor lo hacen. Por ejemplo, «Código» te muestra las expertas en programar.');
   },
   comparar:async () => {
-    if (agentOn()){ await gPoint(null, 'Comparar se usa sin SuperiorSynth: vuelve a «Chats» y verás el botón «Comparar con otra IA» abajo.'); return; }
+    if (agentOn()){ await gPoint(null, 'Comparar se usa sin Apex: vuelve a «Chats» y verás el botón «Comparar con otra IA» abajo.'); return; }
     await gPoint(gAny('#sNav [data-sn="cmp"]', '#pickRow [data-add]'), 'Aquí, aparte, comparas IAs: eliges hasta 4. Todas responden la misma pregunta y aparecen lado a lado, en el orden en que llegan. Ojo: cada una gasta lo suyo.');
   },
   agente:async () => {
-    await gPoint(gT('#cMode', '#cMode'), 'SuperiorSynth se elige aquí, en el botón de modo junto a la caja de escribir.');
-    await gPoint(null, 'Con SuperiorSynth no eliges IA: tú escribes, él entiende tu pedido, lo mejora, elige la IA que más sabe de eso y te muestra cada paso. Al final decides si te quedas con esa IA o sigues con SuperiorSynth.', { mood:'guino' });
+    await gPoint(gT('#cMode', '#cMode'), 'Apex se elige aquí, en el botón de modo junto a la caja de escribir.');
+    await gPoint(null, 'Con Apex no eliges IA: tú escribes, él entiende tu pedido, lo mejora, elige la IA que más sabe de eso y te muestra cada paso. Al final decides si te quedas con esa IA o sigues con Apex.', { mood:'guino' });
   },
   archivos:async () => {
     await gPoint(gT('#attachBtn', '#attachBtn'), 'Con el «+» le das a la IA fotos, PDF o archivos de texto. Ahí mismo creas imágenes, buscas en internet o pides respuestas cortas.');

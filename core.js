@@ -9,13 +9,13 @@ const NF = new Intl.NumberFormat('es-CO'), fmt = n => NF.format(Math.round(n || 
 /* configuración de la página: visuales SynthZ-Style o rendimiento para PCs modestos */
 const CFG_KEYS = ['cursor', 'smooth', 'favAnim', 'bg', 'glass', 'anim'];
 /* v2.3 · temas de color de SynthFlow: [id, nombre, color 1, bloqueado (llega con Syntonia)] */
-const THEMES = [['synthz', 'SymphorIA', '#e6b65f', 0, '#c9566c'], ['oceano', 'Océano', '#7cc9e3', 0, '#5a7bd6'], ['bosque', 'Bosque', '#9bd68f', 0, '#3fa58a'], ['lavanda', 'Lavanda', '#bfa9f2', 0, '#d46fb0'], ['aurora', 'Aurora', '#9fffd6', 1, '#a46bff'], ['oro', 'Oro negro', '#ffd27a', 1, '#2b2b2b']];
+const THEMES = [['synthz', 'Sinapse', '#e6b65f', 0, '#c9566c'], ['oceano', 'Océano', '#7cc9e3', 0, '#5a7bd6'], ['bosque', 'Bosque', '#9bd68f', 0, '#3fa58a'], ['lavanda', 'Lavanda', '#bfa9f2', 0, '#d46fb0'], ['aurora', 'Aurora', '#9fffd6', 1, '#a46bff'], ['oro', 'Oro negro', '#ffd27a', 1, '#2b2b2b']];
 const cfgPreset = perf => CFG_KEYS.reduce((o, k) => (o[k] = perf !== 'speed', o), {});
 const CFG = (() => {
   let c = {}; try{ c = JSON.parse(localStorage.getItem('synthz:cfg')) || {}; }catch(e){}
   if (c.v !== 2) c = Object.assign(cfgPreset(c.perf), { perf:c.perf || 'visual' });   /* migración: los ajustes concuerdan con el modo */
   /* v2.3 · en el celular lo que más pesa es el vidrio (desenfoque detrás de cada panel) y el fondo animado.
-     Primera visita: modo rápido. Quien ya tenía SymphorIA: se le apagan solo esas dos cosas una vez (las vuelve a encender en Ajustes). */
+     Primera visita: modo rápido. Quien ya tenía Sinapse: se le apagan solo esas dos cosas una vez (las vuelve a encender en Ajustes). */
   let fresh = false; try{ fresh = localStorage.getItem('synthz:cfg') === null; }catch(e){}
   const phone = (() => { try{ return matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) <= 820; }catch(e){ return false; } })();
   /* v3.1 · Sammuel (28 oct): la página se ve completa también en el celular (vidrio, fondo animado y animaciones); si va lenta,
@@ -68,18 +68,18 @@ const puterLogo = cls => '<span class="pu-logo ' + (cls || '') + '"><img src="' 
 const ico = p => (typeof BRANDS !== 'undefined' && BRANDS[p.id === 'mistral' ? 'mistralai' : p.id]) ? glassIcon({ id:p.id, vendor:p.id === 'mistral' ? 'mistralai' : p.id }, 'lgi') : `<i class="lg" aria-hidden="true"><svg viewBox="0 0 24 24">${ICONS[p.id](p.c, p.d)}</svg></i>`;
 /* marca: en SynthFlow (html[data-brand=flow]) el logotipo es «SynthFlow» con destellos; en el resto, «Symphor» + «IA» en degradado (v3.0: la página se llama SymphorIA) */
 const isFlow = () => document.documentElement.dataset.brand === 'flow';
-const BRAND = () => isFlow() ? 'SynthFlow' : 'SymphorIA';
+const BRAND = () => isFlow() ? 'Sonyx' : 'Sinapse';
 const SPARKS = '<i class="sp s1" aria-hidden="true"></i><i class="sp s2" aria-hidden="true"></i><i class="sp s3" aria-hidden="true"></i>';
 const GS = '<span class="gS">S</span>ynth';
 /* v2.8: el degradado de la onda del orbe vive en los íconos (core 25g), siempre visible: antes cada orbe traía uno con el mismo id
-   y, si el primero de la página estaba escondido, las ondas de todos los logos de SynthFlow desaparecían */
+   y, si el primero de la página estaba escondido, las ondas de todos los logos de Sonyx desaparecían */
 /* logos de la marca: SymphorIA = la S de vidrio con su órbita + «Symphor» blanco con «IA» en degradado; SynthFlow = la F de corriente */
 const LOGO_Z = '<img class="lgz" src="media/v30/symphoria.svg" alt="" draggable="false">';
 /* v4.4 · SynthFlow: la F de corriente en vidrio líquido (misma familia que la S de SymphorIA) */
 const flowOrb = cls => '<span class="sforb' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><img src="media/v44/synthflow.svg" alt="" draggable="false"></span>';
 /* íconos de archivo: se dibujan en código (giFile, en core 25g); si no hay uno para esa extensión, null */
 const fileIco = ext => giFile(ext);
-const flowWord = () => '<span class="flw-w">' + flowOrb() + '<span class="fw-t">SynthFlow</span></span>';
+const flowWord = () => '<span class="flw-w">' + flowOrb() + '<span class="fw-t">Sonyx</span></span>';
 const zMark = (txt = 'Synth') => '<span class="zw">' + (txt === 'Synth' ? 'Symphor' : txt) + '<span class="zt">IA</span></span>';
 const zWord = (txt = 'Synth') => isFlow() && txt === 'Synth' ? flowWord() : zMark(txt);
 
@@ -145,7 +145,7 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 const ENERX = 'EnerX';
 Object.assign(I18N.es, {
   'landing.nombre.eyebrow': 'Por qué se llama así',
-  'landing.nombre.t1': 'SymphorIA:',
+  'landing.nombre.t1': 'Sinapse:',
   'landing.nombre.t2': 'el portador de la armonía',
   'landing.nombre.lead': 'Un nombre hecho con dos raíces griegas. Juntas dicen lo que hace la página: tomar muchas IAs y muchos datos y llevarlos a una sola respuesta clara.',
   'landing.nombre.sym': 'Junto, con, en sintonía. La misma raíz de <b>sinfonía</b>, <b>sinergia</b> y <b>simbiosis</b>.',
@@ -154,7 +154,7 @@ Object.assign(I18N.es, {
   'landing.langAria': 'EN: cambiar el idioma a inglés',
   'landing.langMenu': 'English',
   'ix.hold': 'Pregúntale lo que sea…',
-  'ix.meet': 'Conoce a SynthonIA',
+  'ix.meet': 'Conoce a Sona',
   'enerx.name': '{enerx}',
   'enerx.today': '{enerx} de hoy',
   'enerx.left': 'Te queda {n} % de {enerx}',
@@ -184,7 +184,7 @@ Object.assign(I18N.es, {
 });
 Object.assign(I18N.en, {
   'landing.nombre.eyebrow': 'Why the name',
-  'landing.nombre.t1': 'SymphorIA:',
+  'landing.nombre.t1': 'Sinapse:',
   'landing.nombre.t2': 'the bearer of harmony',
   'landing.nombre.lead': 'A name built from two Greek roots. Together they say what the site does: take many AIs and lots of data and carry them into one clear answer.',
   'landing.nombre.sym': 'Together, with, in tune. The same root as <b>symphony</b>, <b>synergy</b> and <b>symbiosis</b>.',
@@ -193,7 +193,7 @@ Object.assign(I18N.en, {
   'landing.langAria': 'ES: switch the language to Spanish',
   'landing.langMenu': 'Español',
   'ix.hold': 'Ask it anything…',
-  'ix.meet': 'Meet SynthonIA',
+  'ix.meet': 'Meet Sona',
   'enerx.name': '{enerx}',
   'enerx.today': "Today's {enerx}",
   'enerx.left': '{n} % {enerx} left',
@@ -232,7 +232,7 @@ Object.assign(I18N.es, {
  "ix.006": "Modos",
  "ix.007": "Para ti",
  "ix.008": "Preguntas",
- "ix.009": "SynthFlow",
+ "ix.009": "Sonyx",
  "ix.010": "Mis IA",
  "ix.011": "Tu uso",
  "ix.012": "Mi cuenta",
@@ -255,33 +255,33 @@ Object.assign(I18N.es, {
  "ix.029": "IA 1",
  "ix.030": "IA 2",
  "ix.031": "La que tenga más Flow",
- "ix.032": "<b>SynthonIA</b> te acompaña",
+ "ix.032": "<b>Sona</b> te acompaña",
  "ix.033": "¿Qué es estar <span class=\"gt\">synthonized</span>?",
  "ix.034": "Que la IA y tú se entiendan a la primera, como sintonizar tu canción favorita.",
  "ix.035": "Tú decides cómo trabajar",
  "ix.036": "Tu pregunta",
  "ix.037": "<b>?</b>¿Qué tan difícil es?",
  "ix.038": "<b>Sencilla</b>una IA que sabe de eso",
- "ix.039": "<b>Difícil</b>SuperiorSynth",
+ "ix.039": "<b>Difícil</b>Apex",
  "ix.040": "Por defecto",
  "ix.041": "Automático",
- "ix.042": "Elige solo: si tu pregunta es sencilla, la pasa a una IA que sabe de eso; si es difícil, llama a SuperiorSynth.",
+ "ix.042": "Elige solo: si tu pregunta es sencilla, la pasa a una IA que sabe de eso; si es difícil, llama a Apex.",
  "ix.043": "Tú mandas",
  "ix.044": "Chat",
  "ix.045": "Tú eliges la IA y conversas.",
  "ix.046": "Gratis",
- "ix.047": "SuperiorSynth",
+ "ix.047": "Apex",
  "ix.048": "El agente rápido: entiende tu pedido, lo mejora y se lo pasa a la IA que más sabe.",
- "ix.049": "SynthonIA es para ti",
+ "ix.049": "Sona es para ti",
  "ix.050": "Estudia y entiende",
  "ix.051": "«Explícame este tema paso a paso»",
- "ix.052": "Probar en SynthFlow →",
+ "ix.052": "Probar en Sonyx →",
  "ix.053": "Programa y resuelve",
  "ix.054": "«Encuentra el error en mi código»",
- "ix.055": "Probar en SynthFlow →",
+ "ix.055": "Probar en Sonyx →",
  "ix.056": "Crea y desarrolla ideas",
  "ix.057": "«Resume este documento»",
- "ix.058": "Probar en SynthFlow →",
+ "ix.058": "Probar en Sonyx →",
  "ix.059": "Todo esto es gratis",
  "ix.060": "Todas las IAs. Un solo lugar.",
  "ix.061": "Escribe, compara y quédate con la mejor respuesta.",
@@ -316,10 +316,10 @@ Object.assign(I18N.es, {
  "ix.090": "¿No quieres elegir? El modo <b>Automático</b> manda cada pregunta a la IA que más sabe de eso. Las IAs cambian seguido, así que esta guía es general.",
  "ix.091": "Tu IA ya está lista",
  "ix.092": "Ya puedes chatear gratis, sin tarjetas ni configurar nada. Si quieres más, conecta Puter y usa la versión pro de las IAs más usadas.",
- "ix.093": "Todo es gratis. Cada persona tiene un límite gratis al día que se llena otra vez a medianoche. SymphorIA nunca te cobra.",
- "ix.094": "Pregunta en SynthFlow",
- "ix.095": "SynthFlow es donde conversas con la IA. Elige con quién hablar, escribe tu pregunta y SynthFlow se abre en grande para que sigas ahí.",
- "ix.096": "Si no escribes nada, SynthFlow se abre vacío para que empieces allí.",
+ "ix.093": "Todo es gratis. Cada persona tiene un límite gratis al día que se llena otra vez a medianoche. Sinapse nunca te cobra.",
+ "ix.094": "Pregunta en Sonyx",
+ "ix.095": "Sonyx es donde conversas con la IA. Elige con quién hablar, escribe tu pregunta y Sonyx se abre en grande para que sigas ahí.",
+ "ix.096": "Si no escribes nada, Sonyx se abre vacío para que empieces allí.",
  "ix.097": "Siempre sabes cuánta {enerx} tienes",
  "ix.098": "{enerx} es tu batería del día: baja con cada mensaje y se carga a medianoche. Aquí ves cuánta te queda, lo que llevas chateado y tu día más activo.",
  "ix.099": "de {enerx} hoy · se carga a medianoche",
@@ -327,25 +327,25 @@ Object.assign(I18N.es, {
  "ix.101": "¿Cuánto gasta cada cosa?",
  "ix.102": "<b>Pregunta normal</b> · un poquito de {enerx}, según lo largo de la respuesta",
  "ix.103": "<b>Comparar IAs</b> · cada IA gasta su parte de {enerx}",
- "ix.104": "<b>SuperiorSynth</b> · su plan y la respuesta",
+ "ix.104": "<b>Apex</b> · su plan y la respuesta",
  "ix.105": "<b>Crear una imagen</b> · 1 imagen de las de hoy",
  "ix.106": "<b>Buscar en internet</b> · 1 búsqueda (30 al día con tu cuenta)",
- "ix.107": "<b>Una misión de A.L.I.A.S.</b> · 1 misión y sus pasos",
+ "ix.107": "<b>Una misión de Quoryn</b> · 1 misión y sus pasos",
  "ix.108": "Mensajes por día · últimos 14 días",
  "ix.109": "Preguntas frecuentes",
  "ix.110": "¿Necesito saber de tecnología?",
- "ix.111": "Para nada. Escribes como hablas y SynthonIA te entiende.",
+ "ix.111": "Para nada. Escribes como hablas y Sona te entiende.",
  "ix.112": "¿Puede navegar por internet o publicar mi app?",
  "ix.113": "Busca en internet y te da las fuentes, pero no abre un navegador completo ni publica apps.",
  "ix.114": "¿Es gratis de verdad?",
- "ix.115": "Sí. Cada persona tiene un límite gratis al día que se llena otra vez a medianoche. SymphorIA nunca te cobra.",
+ "ix.115": "Sí. Cada persona tiene un límite gratis al día que se llena otra vez a medianoche. Sinapse nunca te cobra.",
  "ix.116": "¿Qué pasa si se me acaba el límite?",
  "ix.117": "Esperas a la medianoche, o conectas tu cuenta gratis de Puter para seguir con las IAs más famosas.",
  "ix.118": "¿Cuánto gasta cada cosa?",
  "ix.119": "Lo ves antes de enviar, junto a la caja de escribir, y en «Tu uso» siempre sabes cuánto te queda.",
  "ix.120": "¿Mis chats están seguros?",
  "ix.121": "Se guardan en tu equipo. Si entras a tu cuenta, también los ves en tu celular y en cualquier computador. Para responderte, tu mensaje viaja a la IA que elijas. Más detalles en <a href=\"privacidad.html\">Privacidad</a>.",
- "ix.122": "¿Qué es A.L.I.A.S.?",
+ "ix.122": "¿Qué es Quoryn?",
  "ix.123": "Un agente aparte: le cuentas un objetivo, te muestra el plan en pasos y los cumple uno a uno. Tú puedes pausar, aprobar o rehacer cada paso.",
  "ix.124": "¿Funciona en el celular?",
  "ix.125": "Sí. La página se acomoda a cualquier pantalla, del celular más pequeño al computador.",
@@ -362,9 +362,9 @@ Object.assign(I18N.es, {
  "ix.137": "En sintonía con la IA.",
  "ix.138": "Gratis y sin tiendas: en Android y computador se instala con un toque; en iPhone te mostramos los pasos.",
  "ix.139": "Producto",
- "ix.140": "SynthFlow",
- "ix.141": "SuperiorSynth",
- "ix.142": "SynthonIA",
+ "ix.140": "Sonyx",
+ "ix.141": "Apex",
+ "ix.142": "Sona",
  "ix.143": "Ayuda",
  "ix.144": "Preguntas",
  "ix.145": "Tu uso",
@@ -383,7 +383,7 @@ Object.assign(I18N.en, {
  "ix.006": "Modes",
  "ix.007": "For you",
  "ix.008": "FAQ",
- "ix.009": "SynthFlow",
+ "ix.009": "Sonyx",
  "ix.010": "My AIs",
  "ix.011": "Your usage",
  "ix.012": "My account",
@@ -406,33 +406,33 @@ Object.assign(I18N.en, {
  "ix.029": "AI 1",
  "ix.030": "AI 2",
  "ix.031": "The one with more Flow",
- "ix.032": "<b>SynthonIA</b> is with you",
+ "ix.032": "<b>Sona</b> is with you",
  "ix.033": "What does it mean to be <span class=\"gt\">synthonized</span>?",
  "ix.034": "That you and the AI understand each other right away, like tuning in to your favorite song.",
  "ix.035": "You decide how to work",
  "ix.036": "Your question",
  "ix.037": "<b>?</b>How hard is it?",
  "ix.038": "<b>Simple</b>an AI that knows the topic",
- "ix.039": "<b>Hard</b>SuperiorSynth",
+ "ix.039": "<b>Hard</b>Apex",
  "ix.040": "Default",
  "ix.041": "Automatic",
- "ix.042": "It chooses for you: a simple question goes to an AI that knows the topic; a hard one goes to SuperiorSynth.",
+ "ix.042": "It chooses for you: a simple question goes to an AI that knows the topic; a hard one goes to Apex.",
  "ix.043": "You're in charge",
  "ix.044": "Chat",
  "ix.045": "You pick the AI and talk.",
  "ix.046": "Free",
- "ix.047": "SuperiorSynth",
+ "ix.047": "Apex",
  "ix.048": "The fast agent: it understands your request, improves it and hands it to the AI that knows the most.",
- "ix.049": "SynthonIA is for you",
+ "ix.049": "Sona is for you",
  "ix.050": "Study and understand",
  "ix.051": "“Explain this topic step by step”",
- "ix.052": "Try it in SynthFlow →",
+ "ix.052": "Try it in Sonyx →",
  "ix.053": "Code and solve",
  "ix.054": "“Find the bug in my code”",
- "ix.055": "Try it in SynthFlow →",
+ "ix.055": "Try it in Sonyx →",
  "ix.056": "Create and grow ideas",
  "ix.057": "“Summarize this document”",
- "ix.058": "Try it in SynthFlow →",
+ "ix.058": "Try it in Sonyx →",
  "ix.059": "All of this is free",
  "ix.060": "Every AI. One place.",
  "ix.061": "Write, compare and keep the best answer.",
@@ -467,10 +467,10 @@ Object.assign(I18N.en, {
  "ix.090": "Don't want to choose? <b>Automatic</b> mode sends each question to the AI that knows the most about it. AIs change often, so this guide is general.",
  "ix.091": "Your AI is ready",
  "ix.092": "You can chat for free right now, no cards and no setup. If you want more, connect Puter and use the pro version of the most popular AIs.",
- "ix.093": "Everything is free. Each person has a free daily limit that refills at midnight. SymphorIA never charges you.",
- "ix.094": "Ask in SynthFlow",
- "ix.095": "SynthFlow is where you talk with the AI. Choose who to talk to, type your question and SynthFlow opens full size so you can keep going there.",
- "ix.096": "If you don't type anything, SynthFlow opens empty so you can start there.",
+ "ix.093": "Everything is free. Each person has a free daily limit that refills at midnight. Sinapse never charges you.",
+ "ix.094": "Ask in Sonyx",
+ "ix.095": "Sonyx is where you talk with the AI. Choose who to talk to, type your question and Sonyx opens full size so you can keep going there.",
+ "ix.096": "If you don't type anything, Sonyx opens empty so you can start there.",
  "ix.097": "You always know how much {enerx} you have",
  "ix.098": "{enerx} is your daily battery: it drops with each message and recharges at midnight. Here you see how much is left, how much you've chatted and your busiest day.",
  "ix.099": "{enerx} today · recharges at midnight",
@@ -478,25 +478,25 @@ Object.assign(I18N.en, {
  "ix.101": "How much does each thing use?",
  "ix.102": "<b>Regular question</b> · a little {enerx}, depending on the answer's length",
  "ix.103": "<b>Compare AIs</b> · each AI uses its share of {enerx}",
- "ix.104": "<b>SuperiorSynth</b> · its plan and the answer",
+ "ix.104": "<b>Apex</b> · its plan and the answer",
  "ix.105": "<b>Create an image</b> · 1 of today's images",
  "ix.106": "<b>Search the web</b> · 1 search (30 a day with your account)",
- "ix.107": "<b>An A.L.I.A.S. mission</b> · 1 mission and its steps",
+ "ix.107": "<b>An Quoryn mission</b> · 1 mission and its steps",
  "ix.108": "Messages per day · last 14 days",
  "ix.109": "Frequently asked questions",
  "ix.110": "Do I need to know about technology?",
- "ix.111": "Not at all. You write the way you talk and SynthonIA understands you.",
+ "ix.111": "Not at all. You write the way you talk and Sona understands you.",
  "ix.112": "Can it browse the web or publish my app?",
  "ix.113": "It searches the web and gives you the sources, but it doesn't open a full browser or publish apps.",
  "ix.114": "Is it really free?",
- "ix.115": "Yes. Each person has a free daily limit that refills at midnight. SymphorIA never charges you.",
+ "ix.115": "Yes. Each person has a free daily limit that refills at midnight. Sinapse never charges you.",
  "ix.116": "What happens if I run out?",
  "ix.117": "Wait until midnight, or connect your free Puter account to keep going with the most famous AIs.",
  "ix.118": "How much does each thing use?",
  "ix.119": "You see it before sending, next to the text box, and in “Your usage” you always know how much is left.",
  "ix.120": "Are my chats safe?",
  "ix.121": "They're saved on your device. If you sign in, you also see them on your phone and on any computer. To answer you, your message travels to the AI you choose. More details in <a href=\"privacidad.html\">Privacy</a>.",
- "ix.122": "What is A.L.I.A.S.?",
+ "ix.122": "What is Quoryn?",
  "ix.123": "A separate agent: you tell it a goal, it shows you the plan in steps and completes them one by one. You can pause, approve or redo each step.",
  "ix.124": "Does it work on my phone?",
  "ix.125": "Yes. The site fits any screen, from the smallest phone to a computer.",
@@ -513,9 +513,9 @@ Object.assign(I18N.en, {
  "ix.137": "In tune with AI.",
  "ix.138": "Free and with no app stores: on Android and computers it installs with one tap; on iPhone we show you the steps.",
  "ix.139": "Product",
- "ix.140": "SynthFlow",
- "ix.141": "SuperiorSynth",
- "ix.142": "SynthonIA",
+ "ix.140": "Sonyx",
+ "ix.141": "Apex",
+ "ix.142": "Sona",
  "ix.143": "Help",
  "ix.144": "FAQ",
  "ix.145": "Your usage",
@@ -533,18 +533,18 @@ Object.assign(I18N.es, {
  "rb.usos": "Estudia, programa o crea ideas conmigo.",
  "rb.comparar": "¿Cuál tiene más Flow? Tú decides.",
  "rb.conectar": "Tu IA ya está lista, sin configurar nada.",
- "rb.chat": "Escribe aquí y te llevo a SynthFlow.",
+ "rb.chat": "Escribe aquí y te llevo a Sonyx.",
  "rb.consumo": "Aquí ves cuánto te queda hoy.",
  "rb.faq": "¿Tienes dudas? Tócame y pregúntame.",
- "rb.aria": "SynthonIA: tócala para hablar con ella",
- "ix.blindPick": "¡Elegiste a la IA de ejemplo {n}! En SynthFlow lo haces con IAs de verdad.",
+ "rb.aria": "Sona: tócala para hablar con ella",
+ "ix.blindPick": "¡Elegiste a la IA de ejemplo {n}! En Sonyx lo haces con IAs de verdad.",
  "ix.sug1": "Explícame la fotosíntesis paso a paso",
  "ix.sug2": "Dame 5 ideas para un regalo barato",
  "ix.sug3": "¿Cómo hago mi primera página web?",
  "ix.sugAria": "Preguntas de ejemplo",
  "ix.sugT": "Prueba con una de estas",
  "ix.demo": "Cómo funciona",
- "ix.goAria": "Empezar gratis en SynthFlow",
+ "ix.goAria": "Empezar gratis en Sonyx",
  "ix.ready": "Listo para chatear",
  "ix.resting": "Las IAs están descansando",
  "ix.back": "vuelve en un momento",
@@ -567,7 +567,7 @@ Object.assign(I18N.es, {
  "ix.hintOn": "Lista para chatear, gratis.",
  "ix.hintPu": "Lista: puedes chatear con tu cuenta de Puter.",
  "ix.hintOff": "Las IAs gratis están descansando un rato. Conecta Puter para seguir ya.",
- "ix.qOpen": "Abrir SynthFlow",
+ "ix.qOpen": "Abrir Sonyx",
  "ix.qUse": "Ver mi consumo",
  "ix.qUp": "Volver arriba",
  "ix.qCfg": "Ajustes",
@@ -580,40 +580,40 @@ Object.assign(I18N.es, {
  "ix.opening": "Abriendo",
  "ix.signin": "Entrar",
  "ix.puDesc": "Opcional. Con Puter usas la versión pro de las IAs más usadas, como ChatGPT, Claude o Gemini. Es gratis, tiene un límite que se renueva cada mes y se conecta con un clic.",
- "gl.0": "El chat de SymphorIA: ahí hablas con las IAs.",
+ "gl.0": "El chat de Sinapse: ahí hablas con las IAs.",
  "gl.1": "El modo que piensa mejor tu pedido y elige la IA que más sabe.",
- "gl.2": "Tu ayudante: la robot que te guía por SymphorIA.",
+ "gl.2": "Tu ayudante: la robot que te guía por Sinapse.",
  "gl.3": "Tu energía gratis del día, como una batería: baja un poco con cada mensaje y se carga al 100 % a medianoche.",
  "gl.4": "Un agente que cumple un objetivo paso a paso, y tú apruebas cada paso.",
  "gl.5": "Un servicio gratis: con tu cuenta usas ChatGPT, Claude y Gemini.",
  "gl.6": "IAs gratis que ya vienen listas, sin cuenta ni tarjeta.",
- "tour.logo.t": "Este es SymphorIA",
+ "tour.logo.t": "Este es Sinapse",
  "tour.logo.p": "El lugar para usar muchas IA gratis, desde un solo sitio. Toca el logo cuando quieras volver arriba.",
  "tour.menu.t": "El menú",
- "tour.menu.p": "Desde aquí vas a tus IA, al chat (SynthFlow) o a ver cuánto has usado, en un toque.",
+ "tour.menu.p": "Desde aquí vas a tus IA, al chat (Sonyx) o a ver cuánto has usado, en un toque.",
  "tour.lim.t": "Tu {enerx} de hoy",
  "tour.lim.p": "Cada día tienes {enerx}, una batería gratis para usar las IAs conectadas. Baja mientras chateas y a medianoche se carga al 100 %.",
  "tour.acc.t": "Tu cuenta",
- "tour.acc.p": "Entra a tu cuenta de SymphorIA: tus chats quedan guardados y los ves en cualquier celular o computador, personalizas tu perfil y hablas con el equipo si necesitas ayuda.",
+ "tour.acc.p": "Entra a tu cuenta de Sinapse: tus chats quedan guardados y los ves en cualquier celular o computador, personalizas tu perfil y hablas con el equipo si necesitas ayuda.",
  "tour.cfg.t": "Configuración",
  "tour.cfg.p": "¿Lo quieres más bonito o más rápido? Elige y mira abajo cómo se verá. Puedes cambiarlo cuando quieras desde este botón.",
  "tour.como.t": "Así de fácil",
- "tour.como.p": "Preguntas, comparas y SynthonIA te acompaña. Baja despacio y mira cómo se animan.",
+ "tour.como.p": "Preguntas, comparas y Sona te acompaña. Baja despacio y mira cómo se animan.",
  "tour.con.t": "Tu IA ya está lista",
  "tour.con.p": "Ya puedes chatear gratis. Con Puter usas la versión pro de las IAs más usadas, como ChatGPT, Claude o Gemini. Es gratis, tiene un límite que se renueva cada mes y se conecta con un clic.",
  "tour.chat.t": "Pregunta desde aquí",
- "tour.chat.p": "Escribe tu pregunta aquí y te llevo al chat (SynthFlow) con tu pregunta lista.",
+ "tour.chat.p": "Escribe tu pregunta aquí y te llevo al chat (Sonyx) con tu pregunta lista.",
  "tour.uso.t": "Tu uso",
  "tour.uso.p": "Cómo va tu {enerx} de hoy y cuánto chateaste estos días.",
  "tour.fin.t": "¡Todo listo!",
- "tour.fin.p": "Ya sabes qué es SymphorIA y por dónde empezar: escribe tu pregunta o abre SynthFlow. Inicia sesión para tener más {enerx}.",
- "tour.aria": "Recorrido por SymphorIA",
+ "tour.fin.p": "Ya sabes qué es Sinapse y por dónde empezar: escribe tu pregunta o abre Sonyx. Inicia sesión para tener más {enerx}.",
+ "tour.aria": "Recorrido por Sinapse",
  "tour.skip": "Saltar",
  "tour.back": "Atrás",
  "tour.next": "Siguiente",
  "tour.start": "Empezar",
  "tour.signin": "Iniciar sesión",
- "tour.enjoy": "¡A disfrutar SymphorIA!"
+ "tour.enjoy": "¡A disfrutar Sinapse!"
 });
 Object.assign(I18N.en, {
  "rb.como": "That easy! Ask anything.",
@@ -621,18 +621,18 @@ Object.assign(I18N.en, {
  "rb.usos": "Study, code or create ideas with me.",
  "rb.comparar": "Which one has more Flow? You decide.",
  "rb.conectar": "Your AI is ready, no setup needed.",
- "rb.chat": "Type here and I'll take you to SynthFlow.",
+ "rb.chat": "Type here and I'll take you to Sonyx.",
  "rb.consumo": "Here you see how much {enerx} you have left today.",
  "rb.faq": "Questions? Tap me and ask.",
- "rb.aria": "SynthonIA: tap her to talk",
- "ix.blindPick": "You picked example AI {n}! In SynthFlow you do it with real AIs.",
+ "rb.aria": "Sona: tap her to talk",
+ "ix.blindPick": "You picked example AI {n}! In Sonyx you do it with real AIs.",
  "ix.sug1": "Explain photosynthesis step by step",
  "ix.sug2": "Give me 5 ideas for a cheap gift",
  "ix.sug3": "How do I make my first website?",
  "ix.sugAria": "Example questions",
  "ix.sugT": "Try one of these",
  "ix.demo": "How it works",
- "ix.goAria": "Start free in SynthFlow",
+ "ix.goAria": "Start free in Sonyx",
  "ix.ready": "Ready to chat",
  "ix.resting": "The AIs are resting",
  "ix.back": "come back in a moment",
@@ -655,7 +655,7 @@ Object.assign(I18N.en, {
  "ix.hintOn": "Ready to chat, free.",
  "ix.hintPu": "Ready: you can chat with your Puter account.",
  "ix.hintOff": "The free AIs are resting for a bit. Connect Puter to keep going now.",
- "ix.qOpen": "Open SynthFlow",
+ "ix.qOpen": "Open Sonyx",
  "ix.qUse": "See my usage",
  "ix.qUp": "Back to top",
  "ix.qCfg": "Settings",
@@ -668,46 +668,46 @@ Object.assign(I18N.en, {
  "ix.opening": "Opening",
  "ix.signin": "Sign in",
  "ix.puDesc": "Optional. With Puter you use the pro version of the most popular AIs, like ChatGPT, Claude or Gemini. It is free, has a limit that renews every month and connects in one click.",
- "gl.0": "The SymphorIA chat: where you talk with the AIs.",
+ "gl.0": "The Sinapse chat: where you talk with the AIs.",
  "gl.1": "The mode that thinks your request through and picks the AI that knows most.",
- "gl.2": "Your helper: the robot that guides you through SymphorIA.",
+ "gl.2": "Your helper: the robot that guides you through Sinapse.",
  "gl.3": "Your free daily energy, like a battery: it drops a little with each message and recharges to 100 % at midnight.",
  "gl.4": "An agent that reaches a goal step by step, and you approve each step.",
  "gl.5": "A free service: with your account you use ChatGPT, Claude and Gemini.",
  "gl.6": "Free AIs that come ready, no account or card.",
- "tour.logo.t": "This is SymphorIA",
+ "tour.logo.t": "This is Sinapse",
  "tour.logo.p": "The place to use many AIs for free, from one site. Tap the logo whenever you want to go back to the top.",
  "tour.menu.t": "The menu",
- "tour.menu.p": "From here you go to your AIs, to the chat (SynthFlow) or to see how much you've used, in one tap.",
+ "tour.menu.p": "From here you go to your AIs, to the chat (Sonyx) or to see how much you've used, in one tap.",
  "tour.lim.t": "Today's {enerx}",
  "tour.lim.p": "Every day you get {enerx}, a free battery to use the connected AIs. It drops as you chat and recharges to 100 % at midnight.",
  "tour.acc.t": "Your account",
- "tour.acc.p": "Sign in to your SymphorIA account: your chats are saved and you see them on any phone or computer, you personalize your profile and you can talk to the team if you need help.",
+ "tour.acc.p": "Sign in to your Sinapse account: your chats are saved and you see them on any phone or computer, you personalize your profile and you can talk to the team if you need help.",
  "tour.cfg.t": "Settings",
  "tour.cfg.p": "Want it prettier or faster? Choose and see below how it will look. You can change it anytime from this button.",
  "tour.como.t": "That easy",
- "tour.como.p": "You ask, you compare and SynthonIA is with you. Scroll slowly and watch them come alive.",
+ "tour.como.p": "You ask, you compare and Sona is with you. Scroll slowly and watch them come alive.",
  "tour.con.t": "Your AI is ready",
  "tour.con.p": "You can chat for free right now. With Puter you use the pro version of the most popular AIs, like ChatGPT, Claude or Gemini. It is free, has a limit that renews every month and connects in one click.",
  "tour.chat.t": "Ask from here",
- "tour.chat.p": "Type your question here and I'll take you to the chat (SynthFlow) with your question ready.",
+ "tour.chat.p": "Type your question here and I'll take you to the chat (Sonyx) with your question ready.",
  "tour.uso.t": "Your usage",
  "tour.uso.p": "How your {enerx} is doing today and how much you've chatted these days.",
  "tour.fin.t": "All set!",
- "tour.fin.p": "Now you know what SymphorIA is and where to start: type your question or open SynthFlow. Sign in so you get more {enerx}.",
- "tour.aria": "SymphorIA tour",
+ "tour.fin.p": "Now you know what Sinapse is and where to start: type your question or open Sonyx. Sign in so you get more {enerx}.",
+ "tour.aria": "Sinapse tour",
  "tour.skip": "Skip",
  "tour.back": "Back",
  "tour.next": "Next",
  "tour.start": "Start",
  "tour.signin": "Sign in",
- "tour.enjoy": "Enjoy SymphorIA!"
+ "tour.enjoy": "Enjoy Sinapse!"
 });
 /* v3.0: textos y atributos que quedaban en español en la landing */
 Object.assign(I18N.es,{
- "ix.fromFlow":"De SynthFlow",
- "ix.fromSup":"De SuperiorSynth",
- "ix.fromAlias":"De A.L.I.A.S.",
+ "ix.fromFlow":"De Sonyx",
+ "ix.fromSup":"De Apex",
+ "ix.fromAlias":"De Quoryn",
  "ix.sdb":"¿Te muestro dónde están tus chats?",
  "ix.ft0":"Internet con fuentes",
  "ix.ft1":"Archivos con vista previa",
@@ -721,7 +721,7 @@ Object.assign(I18N.es,{
  "ix.wipe":"Borrar mis datos de este equipo",
  "ix.app1":"Sí, gratis y sin tiendas. Toca",
  "ix.app2":": en Android y computador se instala con un toque; en iPhone te mostramos los 3 pasos (Compartir › Agregar a inicio).",
- "ixa.symphoriainicio":"SymphorIA, inicio",
+ "ixa.symphoriainicio":"Sinapse, inicio",
  "ixa.tulmitedehoy":"Tu límite de hoy",
  "ixa.ayudaguarpida":"Ayuda: guía rápida",
  "ixa.guarpida":"Guía rápida",
@@ -729,23 +729,23 @@ Object.assign(I18N.es,{
  "ixa.tucuenta":"Tu cuenta",
  "ixa.abrirelmen":"Abrir el menú",
  "ixa.pregntalealaia":"Pregúntale a la IA",
- "ixa.preguntarensynthfl":"Preguntar en SynthFlow",
+ "ixa.preguntarensynthfl":"Preguntar en Sonyx",
  "ixa.cmofunciona":"Cómo funciona",
  "ixa.modos":"Modos",
- "ixa.paraqusirvesymphor":"Para qué sirve SymphorIA",
+ "ixa.paraqusirvesymphor":"Para qué sirve Sinapse",
  "ixa.compralasaciegas":"Compáralas a ciegas",
  "ixa.conquinhablar":"Con quién hablar",
  "ixa.escribetuprimermen":"Escribe tu primer mensaje (opcional) y pulsa Enter…",
- "ixa.abrirsynthflow":"Abrir SynthFlow",
+ "ixa.abrirsynthflow":"Abrir Sonyx",
  "ixa.preguntasfrecuente":"Preguntas frecuentes",
  "ixa.producto":"Producto",
  "ixa.ayuda":"Ayuda"
 });
 
 Object.assign(I18N.en,{
- "ix.fromFlow":"From SynthFlow",
- "ix.fromSup":"From SuperiorSynth",
- "ix.fromAlias":"From A.L.I.A.S.",
+ "ix.fromFlow":"From Sonyx",
+ "ix.fromSup":"From Apex",
+ "ix.fromAlias":"From Quoryn",
  "ix.sdb":"Want me to show you where your chats are?",
  "ix.ft0":"The web, with sources",
  "ix.ft1":"Files with preview",
@@ -759,7 +759,7 @@ Object.assign(I18N.en,{
  "ix.wipe":"Delete my data from this device",
  "ix.app1":"Yes, free and with no app stores. Tap",
  "ix.app2":": on Android and computers it installs with one tap; on iPhone we show you the 3 steps (Share › Add to Home Screen).",
- "ixa.symphoriainicio":"SymphorIA, home",
+ "ixa.symphoriainicio":"Sinapse, home",
  "ixa.tulmitedehoy":"Today's {enerx}",
  "ixa.ayudaguarpida":"Help: quick guide",
  "ixa.guarpida":"Quick guide",
@@ -767,14 +767,14 @@ Object.assign(I18N.en,{
  "ixa.tucuenta":"Your account",
  "ixa.abrirelmen":"Open the menu",
  "ixa.pregntalealaia":"Ask the AI",
- "ixa.preguntarensynthfl":"Ask in SynthFlow",
+ "ixa.preguntarensynthfl":"Ask in Sonyx",
  "ixa.cmofunciona":"How it works",
  "ixa.modos":"Modes",
- "ixa.paraqusirvesymphor":"What SymphorIA is for",
+ "ixa.paraqusirvesymphor":"What Sinapse is for",
  "ixa.compralasaciegas":"Compare them blind",
  "ixa.conquinhablar":"Who to talk to",
  "ixa.escribetuprimermen":"Type your first message (optional) and press Enter…",
- "ixa.abrirsynthflow":"Open SynthFlow",
+ "ixa.abrirsynthflow":"Open Sonyx",
  "ixa.preguntasfrecuente":"Frequently asked questions",
  "ixa.producto":"Product",
  "ixa.ayuda":"Help"
@@ -783,29 +783,29 @@ Object.assign(I18N.en,{
 Object.assign(I18N.es,{
  "ix.stOn":"Listas",
  "ix.stOff":"Descansando",
- "ix.connDesc":"Las IAs conectadas son IAs gratis que ya vienen listas en SymphorIA. No tienes que configurar nada ni dar tarjeta: solo escribes. Sin cuenta pruebas con una EnerX de prueba cada día; con tu cuenta gratis dura mucho más. Si una está llena, pasa sola a otra.",
+ "ix.connDesc":"Las IAs conectadas son IAs gratis que ya vienen listas en Sinapse. No tienes que configurar nada ni dar tarjeta: solo escribes. Sin cuenta pruebas con una EnerX de prueba cada día; con tu cuenta gratis dura mucho más. Si una está llena, pasa sola a otra.",
  "ix.today":"hoy",
  "ix.in14":"en 14 días",
  "ix.topDay":"tu día más activo",
  "ix.noTop":"Aún sin día más activo",
  "ix.msg1":"mensaje",
  "ix.msgN":"mensajes",
- "ix.totalNote":"Mensajes en total desde que usas SymphorIA.",
+ "ix.totalNote":"Mensajes en total desde que usas Sinapse.",
  "ix.chEmpty":"Aún no has chateado. Cuando escribas tu primer mensaje, aquí verás cuántos mandas cada día.",
  "ix.wipeQ":"¿Borrar todo de este navegador?",
- "ix.wipeP":"Se borran tus chats y ajustes de este equipo. Lo que está guardado en tu cuenta de SymphorIA no se toca.",
+ "ix.wipeP":"Se borran tus chats y ajustes de este equipo. Lo que está guardado en tu cuenta de Sinapse no se toca.",
  "ix.wipeOk":"Borrar todo",
  "ix.wiped":"Todo borrado.",
- "ix.instFlow":"Instalar la app SynthFlow",
+ "ix.instFlow":"Instalar la app Sonyx",
  "ix.lk1":"Elegir mis IA ideales",
  "ix.lk1d":"3 preguntas y te digo cuáles te sirven más",
  "ix.lk2":"Conectar Puter u otra IA",
  "ix.lk2d":"Tu versión pro de las IAs más usadas, gratis",
  "ix.lk3d":"El chat con todas las IAs",
- "ix.lk4":"Descargar la app SynthFlow",
+ "ix.lk4":"Descargar la app Sonyx",
  "ix.lk4d":"Se instala desde aquí: pantalla completa y a un toque",
- "ix.title":"SymphorIA · Diseña a la velocidad del pensamiento. En sintonía con la IA.",
- "ix.metaDesc":"SymphorIA: tu espacio para explorar la IA. Pregunta, crea, programa y compara modelos desde un solo lugar. Totalmente gratis.",
+ "ix.title":"Sinapse · Diseña a la velocidad del pensamiento. En sintonía con la IA.",
+ "ix.metaDesc":"Sinapse: tu espacio para explorar la IA. Pregunta, crea, programa y compara modelos desde un solo lugar. Totalmente gratis.",
  "beta.title":"Estamos en alfa: cuéntanos qué mejorar",
  "beta.tag":"ALFA",
  "beta.tip":"Cuéntanos qué mejorar",
@@ -824,29 +824,29 @@ Object.assign(I18N.es,{
 Object.assign(I18N.en,{
  "ix.stOn":"Ready",
  "ix.stOff":"Resting",
- "ix.connDesc":"Connected AIs are free AIs that come ready in SymphorIA. Nothing to set up and no card needed: just type. Without an account you get 5 messages a day to try it; with your free account, much more. If one is full, it switches to another on its own.",
+ "ix.connDesc":"Connected AIs are free AIs that come ready in Sinapse. Nothing to set up and no card needed: just type. Without an account you get 5 messages a day to try it; with your free account, much more. If one is full, it switches to another on its own.",
  "ix.today":"today",
  "ix.in14":"in 14 days",
  "ix.topDay":"your most active day",
  "ix.noTop":"No most active day yet",
  "ix.msg1":"message",
  "ix.msgN":"messages",
- "ix.totalNote":"Total messages since you started using SymphorIA.",
+ "ix.totalNote":"Total messages since you started using Sinapse.",
  "ix.chEmpty":"You haven't chatted yet. Once you send your first message, you'll see how many you send each day here.",
  "ix.wipeQ":"Delete everything from this browser?",
- "ix.wipeP":"Your chats and settings on this device are deleted. What's saved in your SymphorIA account stays untouched.",
+ "ix.wipeP":"Your chats and settings on this device are deleted. What's saved in your Sinapse account stays untouched.",
  "ix.wipeOk":"Delete everything",
  "ix.wiped":"Everything deleted.",
- "ix.instFlow":"Install the SynthFlow app",
+ "ix.instFlow":"Install the Sonyx app",
  "ix.lk1":"Pick my ideal AIs",
  "ix.lk1d":"3 questions and I'll tell you which ones suit you best",
  "ix.lk2":"Connect Puter or another AI",
  "ix.lk2d":"The pro version of the most popular AIs, free",
  "ix.lk3d":"The chat with every AI",
- "ix.lk4":"Download the SynthFlow app",
+ "ix.lk4":"Download the Sonyx app",
  "ix.lk4d":"Installs from here: full screen, one tap away",
- "ix.title":"SymphorIA · Design at the speed of thought. In tune with AI.",
- "ix.metaDesc":"SymphorIA: your space to explore AI. Ask, create, code and compare models from one place. Completely free.",
+ "ix.title":"Sinapse · Design at the speed of thought. In tune with AI.",
+ "ix.metaDesc":"Sinapse: your space to explore AI. Ask, create, code and compare models from one place. Completely free.",
  "beta.title":"We're in alpha: tell us what to improve",
  "beta.tag":"ALPHA",
  "beta.tip":"Tell us what to improve",
@@ -870,7 +870,7 @@ Object.assign(I18N.en, { 'pm.test':'Test', 'pm.del':'Remove', 'pm.deling':'Remov
 Object.assign(I18N.es, { 'enerx.guest':'Sin cuenta tienes una {enerx} de prueba. Con tu cuenta gratis tienes mucha más.', 'enerx.puter':'Si se acaba, puedes seguir con Puter, que te da la versión pro de las IAs más usadas.' });
 Object.assign(I18N.en, { 'enerx.guest':'Without an account you get a trial {enerx}. With your free account you get much more.', 'enerx.puter':'If it runs out, you can keep going with Puter, which gives you the pro version of the most popular AIs.' });
 /* ===== v3.0 · SynthFlow y las ventanas de core en inglés =====
-   SynthFlow arma sus textos en JS (miles de trozos). En vez de cambiar cada uno por t(), cuando el idioma es inglés
+   Sonyx arma sus textos en JS (miles de trozos). En vez de cambiar cada uno por t(), cuando el idioma es inglés
    se trae idioma-en.json (español → inglés, solo si hace falta) y se traduce lo que aparece en pantalla:
    · un texto igual a una entrada se cambia entero; un trozo largo (6+ letras, con espacio) se cambia dentro del texto;
    · también title, placeholder, aria-label, data-tip y alt;
@@ -955,8 +955,8 @@ onLang(l => l === 'en' ? trOn() : trOff());
 if (LANG === 'en'){ trLoad(); if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', trOn); else setTimeout(trOn, 0); }
 /* ===== v3.4 · SynthonIA vive en su propio archivo: synthonia.js (piezas en src/synthonia/) =====
    Antes estaba dentro de core.js (≈190 KB: su cara, su manita, sus sonidos, su ventanita, la guía, el mantenimiento…).
-   Ahora core.js la carga aparte: en la portada enseguida (ella es la portada) y en SynthFlow y Pulsem cuando la página ya cargó.
-   Mientras llega, estos nombres son «de espera»: lo que se le pida a SynthonIA se guarda y se hace apenas llegue
+   Ahora core.js la carga aparte: en la portada enseguida (ella es la portada) y en Sonyx y Pulsem cuando la página ya cargó.
+   Mientras llega, estos nombres son «de espera»: lo que se le pida a Sona se guarda y se hace apenas llegue
    (los sonidos de antes de que llegue simplemente no suenan, y su cara sale vacía). SZ.synReady avisa cuando ya está.
    synthonia.js recibe lo que necesita de core por SZ.__syn y devuelve lo suyo con SZ.__syn.ready({ … }). */
 let synOk = false, synDone;
@@ -1203,7 +1203,7 @@ function projSlim(){
 }
 const pjStr = (v, n) => typeof v === 'string' ? v.slice(0, n) : '';
 function cleanProj(r){
-  return { id:pjStr(r.id, 40), name:pjStr(r.name, 60) || 'Proyecto', desc:pjStr(r.desc, 300), instr:pjStr(r.instr, 8000), star:!!r.star, arch:!!r.arch, c:+r.c || 0, c0:+r.c0 || 0, t:+r.t || 0, u:+r.u || 0,
+  return { id:pjStr(r.id, 40), name:pjStr(r.name, 60) || 'Espacio', desc:pjStr(r.desc, 300), instr:pjStr(r.instr, 8000), star:!!r.star, arch:!!r.arch, c:+r.c || 0, c0:+r.c0 || 0, t:+r.t || 0, u:+r.u || 0,
     files:(Array.isArray(r.files) ? r.files : []).filter(f => f && typeof f.id === 'string').slice(0, 60).map(f => Object.assign({ id:pjStr(f.id, 40), name:pjStr(f.name, 120) || 'archivo' }, typeof f.text === 'string' ? { text:f.text.slice(0, 200000) } : {})) };
 }
 function mergeProjects(p){
@@ -1246,8 +1246,8 @@ function mergeIn(p, chats){
   Object.keys(chats || {}).forEach(k => { const r = chats[k], l = state.chats[k]; if (Array.isArray(r) && /^openrouter::./.test(k) && (!Array.isArray(l) || r.length > l.length)) state.chats[k] = r.filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string'); });
 }
 /* ---------- Google Drive (opcional): una copia de tus chats en TU Drive, en la carpeta privada de la app ----------
-   · Solo pide permiso para la carpeta oculta de SynthFlow (drive.appdata): no puede ver ni tocar tus otros archivos.
-   · El permiso dura ~1 hora y vive solo en memoria; nunca se guarda ni se envía a SymphorIA.
+   · Solo pide permiso para la carpeta oculta de Sonyx (drive.appdata): no puede ver ni tocar tus otros archivos.
+   · El permiso dura ~1 hora y vive solo en memoria; nunca se guarda ni se envía a Sinapse.
    · Al traer la copia se MEZCLA con lo que tienes: nunca se borra un chat. Tus llaves no van en la copia. */
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata', DRIVE_FILE = 'synthflow-chats.json', DRIVE_API = 'https://www.googleapis.com';
 const DRV = { tok:'', exp:0, fileId:'', busy:false, t:0, tc:null, cid:'' };
@@ -1260,7 +1260,7 @@ function driveToken(prompt){
   return new Promise((ok, no) => {
     if (!window.google || !google.accounts || !google.accounts.oauth2) return no(Object.assign(new Error('No pude abrir el botón de Google. Revisa tu internet o tu bloqueador de anuncios.'), { gsi:true }));
     DRV.tc = google.accounts.oauth2.initTokenClient({ client_id:DRV.cid, scope:DRIVE_SCOPE, include_granted_scopes:false,
-      callback:r => { if (r && r.access_token && google.accounts.oauth2.hasGrantedAllScopes(r, DRIVE_SCOPE)){ DRV.tok = r.access_token; DRV.exp = Date.now() + (+r.expires_in || 3600) * 1000; ok(true); } else no(new Error('No diste permiso para la carpeta de SynthFlow en tu Drive.')); },
+      callback:r => { if (r && r.access_token && google.accounts.oauth2.hasGrantedAllScopes(r, DRIVE_SCOPE)){ DRV.tok = r.access_token; DRV.exp = Date.now() + (+r.expires_in || 3600) * 1000; ok(true); } else no(new Error('No diste permiso para la carpeta de Sonyx en tu Drive.')); },
       error_callback:e => no(new Error(e && e.type === 'popup_closed' ? 'Cerraste la ventana de Google antes de terminar.' : e && e.type === 'popup_failed_to_open' ? 'Tu navegador no dejó abrir la ventanita de Google. Permite las ventanitas de este sitio.' : 'Google no completó el permiso.')) });
     DRV.tc.requestAccessToken({ prompt:prompt == null ? '' : prompt });
   });
@@ -1269,7 +1269,7 @@ async function dfetch(path, o = {}){
   const r = await fetch(DRIVE_API + path, Object.assign({}, o, { headers:Object.assign({ Authorization:'Bearer ' + DRV.tok }, o.headers || {}) })).catch(() => null);
   if (!r) throw new Error('No pude hablar con Google Drive. Revisa tu conexión.');
   if (r.status === 401){ DRV.tok = ''; throw Object.assign(new Error('El permiso de Drive venció. Toca «Sincronizar» otra vez.'), { expired:true }); }
-  if (r.status === 403){ const t = await r.text().catch(() => ''); throw new Error(/storageQuota|quota/i.test(t) ? 'Tu Google Drive está lleno.' : /accessNotConfigured|has not been used|disabled/i.test(t) ? 'Falta activar la «Google Drive API» en el proyecto de Google de SymphorIA (lo hace Prime una sola vez).' : 'Google Drive no dio permiso para guardar.'); }
+  if (r.status === 403){ const t = await r.text().catch(() => ''); throw new Error(/storageQuota|quota/i.test(t) ? 'Tu Google Drive está lleno.' : /accessNotConfigured|has not been used|disabled/i.test(t) ? 'Falta activar la «Google Drive API» en el espacio de Google de Sinapse (lo hace Prime una sola vez).' : 'Google Drive no dio permiso para guardar.'); }
   if (!r.ok) throw new Error('Google Drive respondió con un error (' + r.status + '). Intenta más tarde.');
   return r;
 }
@@ -1282,7 +1282,7 @@ async function driveFind(){
 async function drivePull(){
   const id = await driveFind(); if (!id) return 0;
   const d = await (await dfetch('/drive/v3/files/' + id + '?alt=media')).json().catch(() => null);
-  if (!d || d.app !== 'SynthFlow' || typeof d.chats !== 'object') return 0;
+  if (!d || d.app !== 'Sonyx' || typeof d.chats !== 'object') return 0;
   const before = Object.keys(state.chats).length;
   mergeIn(d.prefs || null, d.chats || {}); save();
   try{ hooks.chats(); }catch(e){}
@@ -1291,7 +1291,7 @@ async function drivePull(){
 async function drivePush(){
   const chats = {}; Object.keys(state.chats).forEach(k => { const a = state.chats[k]; if (Array.isArray(a) && a.length) chats[k] = a.map(m => ({ role:m.role, content:m.content, meta:m.meta, model:m.model, star:m.star || undefined, files:Array.isArray(m.files) ? m.files.map(f => ({ name:f.name, kind:f.kind })) : undefined })); });
   const prefs = prefsOut(); delete prefs.cfg;
-  const body = JSON.stringify({ app:'SynthFlow', v:1, t:Date.now(), prefs, chats });
+  const body = JSON.stringify({ app:'Sonyx', v:1, t:Date.now(), prefs, chats });
   const id = await driveFind();
   if (id) await dfetch('/upload/drive/v3/files/' + id + '?uploadType=media', { method:'PATCH', headers:{ 'Content-Type':'application/json' }, body });
   else {
@@ -1452,7 +1452,7 @@ accHooks.push(paintPulse);
   let last = 0;
   let on = false;
   /* v2.9: solo la esfera de SynthFlow se mueve, y a ~8 cuadros por segundo (cada cuadro es una imagen PNG nueva: a 20 por
-     segundo pesaba). La Z de SymphorIA es quieta: se pone una vez y el ciclo no corre */
+     segundo pesaba). La Z de Sinapse es quieta: se pone una vez y el ciclo no corre */
   const tick = now => { if (!CFG.favAnim || !isFlow()){ on = false; draw(0); return; } if (now - last > 120){ last = now; draw(now); } requestAnimationFrame(tick); };
   window.__favStart = () => { if (!on){ on = true; requestAnimationFrame(tick); } };
   window.__favStart();
@@ -1596,7 +1596,7 @@ const BRANDS = {
   ibm:['ibm', 'IBM Granite', '#4589ff', '#a6c8ff'], minimax:['minimax-color', 'MiniMax', '#f23f5d', '#ff9e7a'], inception:['inception', 'Inception', '#a3a3ff', '#d6d6ff'], liquid:['liquid', 'Liquid', '#5b8cff', '#9fd0ff'],
   baidu:['baidu-color', 'Baidu', '#2932e1', '#7a82ff'], tencent:['tencent-color', 'Tencent', '#0052d9', '#6fa0ff'], bytedance:['bytedance-color', 'ByteDance', '#3c8cff', '#00c8d2'], 'stepfun-ai':['stepfun-color', 'StepFun', '#22c1c3', '#8ff0e6'],
   perplexity:['perplexity-color', 'Perplexity', '#20b8cd', '#9ff0f6'], allenai:['ai2-color', 'Ai2', '#f0529c', '#ff9fc8'], groq:['groq', 'Groq', '#f55036', '#ffb36b'], cloudflare:['cloudflare-color', 'Cloudflare', '#f6821f', '#ffc46b'],
-  openrouter:['openrouter', 'OpenRouter', '#6467f2', '#a5a7ff'], synthz:['', 'SymphorIA', '#7b3ff2', '#ff3d9a'], puter:['', 'Puter', '#3b82f6', '#6fd3d6']
+  openrouter:['openrouter', 'OpenRouter', '#6467f2', '#a5a7ff'], synthz:['', 'Sinapse', '#7b3ff2', '#ff3d9a'], puter:['', 'Puter', '#3b82f6', '#6fd3d6']
 };
 const BALIAS = { meta:'meta-llama', llama:'meta-llama', mistral:'mistralai', claude:'anthropic', xai:'x-ai', grok:'x-ai', moonshot:'moonshotai', kimi:'moonshotai', zhipu:'z-ai', thudm:'z-ai', glm:'z-ai', stepfun:'stepfun-ai', ai2:'allenai', gemini:'google', 'openai-completion':'openai', 'ibm-granite':'ibm', 'nous':'nousresearch' };
 function brandOf(m){
@@ -1632,7 +1632,7 @@ const PIXART = [
   ['Llave', '.111....|1...1...|1...1...|.111....|...2....|...22...|...2....|...22...'],
   ['Hongo', '..1111..|.1.22.1.|1.2..2.1|11111111|..1..1..|..1..1..|..1111..|........'],
   ['Poción', '...22...|...11...|..1..1..|.1....1.|1.2222.1|1.2222.1|.1....1.|..1111..'],
-  ['SynthonIA', '....2...|....1...|.111111.|1......1|1.2..2.1|1......1|.111111.|........'],
+  ['Sona', '....2...|....1...|.111111.|1......1|1.2..2.1|1......1|.111111.|........'],
   ['Cohete', '...11...|..1..1..|..1.21..|..1..1..|.11..11.|1.1..1.1|..2..2..|...22...'],
   ['Gatito', '1.....1.|11...11.|1.111.1.|1.....1.|1.2.2.1.|1..1..1.|.11111..|........'],
   ['Diamante', '........|..1111..|.1.22.1.|11111111|.1....1.|..1..1..|...11...|........'],
@@ -1943,7 +1943,7 @@ function history(chat){
 }
 
 /* ---------- IA que no funcionan: se esconden para que nadie choque con ellas ----------
-   Cada navegador recuerda las que fallaron por culpa del modelo (no de tu llave) y las comparte con SymphorIA.
+   Cada navegador recuerda las que fallaron por culpa del modelo (no de tu llave) y las comparte con Sinapse.
    Si varias personas reportan la misma, se esconde para todos unas horas; si vuelve a responder, reaparece. */
 const BAD_KEY = 'synthz:bad', BAD_MS = 12 * 3600e3;
 let BAD = {}; try{ BAD = JSON.parse(localStorage.getItem(BAD_KEY)) || {}; }catch(e){ BAD = {}; }
@@ -2043,7 +2043,7 @@ async function szCatalog(){
   if (!arr.length) return [];
   const out = arr.filter(m => m && typeof m.id === 'string' && /^sz:/.test(m.id) && !/allam|infron|openrouter\/(free|auto)|models?[-_ ]router/i.test(m.id) && !/free models router|router/i.test(String(m.name || ''))).map(m => {
     const mid = m.id.split(':').slice(2).join(':'), vendor = szVendor(mid, m.prov);
-    return { id:m.id, name:String(m.name || mid).replace(/\s*\(free\)\s*$/i, ''), vendor, vlabel:vendorLabel(vendor) + ' · SymphorIA', ctx:num(m.ctx), free:true, created:0, vision:['google', 'groq', 'mistral', 'openrouter'].includes(m.prov) && SZ_VISION.test(mid),
+    return { id:m.id, name:String(m.name || mid).replace(/\s*\(free\)\s*$/i, ''), vendor, vlabel:vendorLabel(vendor) + ' · Sinapse', ctx:num(m.ctx), free:true, created:0, vision:['google', 'groq', 'mistral', 'openrouter'].includes(m.prov) && SZ_VISION.test(mid),
       reasoning:/gpt-oss|qwen3|qwq|r1|reason|think|magistral|kimi|deepseek/i.test(mid), tools:false, desc:'Gratis: no necesitas cuenta ni nada.' };
   });
   return [SZ_AUTO, ...out];
@@ -2220,7 +2220,7 @@ if (matchMedia('(pointer: fine)').matches && CFG.cursor){
     const cs = getComputedStyle(o);
     PROPS.forEach(k => { c.style[k] = cs[k]; });
     /* solo la raíz se pone en su sitio dentro del vidrio; las piezas de adentro guardan su posición y márgenes
-       (antes todo quedaba «static»: en las tarjetas de usos la SynthonIA se caía fuera de la escena y desaparecía) */
+       (antes todo quedaba «static»: en las tarjetas de usos la Sona se caía fuera de la escena y desaparecía) */
     if (isRoot){ c.style.margin = '0'; c.style.position = 'static'; c.style.transform = 'none'; }
     else ['position','top','right','bottom','left','zIndex','marginTop','marginRight','marginBottom','marginLeft','transform','transformOrigin'].forEach(k => { c.style[k] = cs[k]; });
     c.style.transition = 'none';
@@ -2467,11 +2467,11 @@ function thud(x, y){
   r.animate([{ transform:'scale(.3)', opacity:0 }, { transform:'scale(1.2)', opacity:1, offset:.15 }, { transform:'scale(4.2)', opacity:0 }], { duration:1300, easing:'cubic-bezier(.16,.8,.3,1)', fill:'both' }).onfinish = () => r.remove();
 }
 /* v2.8 · el portal nuevo, con los logos de ahora (pedido de Sammuel: «sorpréndeme»):
-   ida:    «SymphorIA» sale de su esquina y llega al centro → la S de vidrio gira y se vuelve el orbe de SynthFlow,
+   ida:    «Sinapse» sale de su esquina y llega al centro → la S de vidrio gira y se vuelve el orbe de Sonyx,
            «mphorIA» se borra y aparece «nthFlow» letra por letra (v3.0: Sy-mphorIA → Sy-nthFlow) → la «o» de «Flow» late y la cámara entra por su hueco
            (y en el chat se abre en círculo)
-   vuelta: sales por la «o», el orbe vuelve a ser la S y «SymphorIA» vuelve a su esquina.
-   v2.9: sin SynthonIA (Sammuel: el portal queda mejor solo con los logos).
+   vuelta: sales por la «o», el orbe vuelve a ser la S y «Sinapse» vuelve a su esquina.
+   v2.9: sin Sona (Sammuel: el portal queda mejor solo con los logos).
    Todo es transform y opacidad (va fluido en celulares); mientras dura, la página no se puede tocar. */
 let lockOff = null;
 function portalLock(on){
@@ -2507,7 +2507,7 @@ function fitBox(img){
   return { x:r.left + r.width / 2, y:r.top + r.height / 2, w:nw * k, h:nh * k };
 }
 /* dónde está el logo de la esquina y cómo es: tamaño de la Z, de la letra y el espacio entre ambas
-   (el portal copia esas medidas para que el «SymphorIA» que viaja calce justo encima del de la esquina) */
+   (el portal copia esas medidas para que el «Sinapse» que viaja calce justo encima del de la esquina) */
 function logoRect(){
   const n = document.querySelector('#nav .logo');
   if (n && n.getClientRects().length){
@@ -2901,7 +2901,7 @@ function recoveryPanel(box, code, user, onOk, again){
   chk.addEventListener('change', () => { go.disabled = !chk.checked; });
   $('[data-cp]', box).addEventListener('click', e => { (navigator.clipboard ? navigator.clipboard.writeText(code) : Promise.reject()).then(() => { e.target.textContent = '¡Copiado!'; }).catch(() => { const r = document.createRange(); r.selectNodeContents($('.rccode', box)); getSelection().removeAllRanges(); getSelection().addRange(r); toast('Selecciónalo y cópialo con Ctrl+C.'); }); });
   $('[data-dl]', box).addEventListener('click', () => {
-    const txt = 'SymphorIA · código de recuperación\r\n\r\nUsuario: @' + user + '\r\nCódigo: ' + code + '\r\n\r\nÚsalo en «¿Olvidaste tu contraseña?» si no recuerdas tu contraseña.\r\nNo se lo compartas a nadie.\r\n';
+    const txt = 'Sinapse · código de recuperación\r\n\r\nUsuario: @' + user + '\r\nCódigo: ' + code + '\r\n\r\nÚsalo en «¿Olvidaste tu contraseña?» si no recuerdas tu contraseña.\r\nNo se lo compartas a nadie.\r\n';
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type:'text/plain' })); a.download = 'synthz-recuperacion-' + user + '.txt'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
   });
   go.addEventListener('click', onOk);
@@ -2960,7 +2960,7 @@ function authBox(box, done, onBlocked, start){
       }catch(x){
         go.disabled = false; go.textContent = label;
         if (x.data && x.data.code === 'reserved' && !f.elements.setup){
-          const l = document.createElement('label'); l.innerHTML = 'Código de configuración<span class="lin"><input name="setup" type="text" data-sec="1" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other" spellcheck="false" placeholder="Solo para el equipo de SymphorIA"></span>';
+          const l = document.createElement('label'); l.innerHTML = 'Código de configuración<span class="lin"><input name="setup" type="text" data-sec="1" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other" spellcheck="false" placeholder="Solo para el equipo de Sinapse"></span>';
           f.insertBefore(l, err); l.animate([{ opacity:0, transform:'translateY(-6px)' }, { opacity:1, transform:'none' }], { duration:400, easing:'cubic-bezier(.22,1,.36,1)' }); l.querySelector('input').focus();
         }
         err.textContent = x.net ? 'No pude conectar con ' + BRAND() + '. Revisa tu internet.' : (x.message || 'Algo falló. Intenta de nuevo.');
@@ -3086,7 +3086,7 @@ function cfgChooser(box, cur, onPick){
   };
   paint(cur);
 }
-const CFG_ROWS = [['cursor', 'Cursor ' + BRAND(), 'El cursor de vidrio con viento.'], ['smooth', 'Desplazamiento suave', 'La ruedita baja la página sin saltos.'], ['bg', 'Fondo animado', 'Los colores se mueven y giran al bajar.'], ['glass', 'Efecto vidrio', 'Ventanas y paneles que parecen de vidrio.'], ['anim', 'Animaciones', 'Escritura letra por letra, golpe de cristal y agua.'], ['favAnim', 'Icono animado', 'El péndulo (o el destello de Flow) en el icono de la pestaña.'], ['sound', 'Sonidos', 'La voz de SynthonIA, las teclas, las transiciones y los avisos. Apágalos si te molestan.'], ['beginner', 'Modo principiante', 'Las IA te responden con palabras sencillas, paso a paso y con ejemplos.']];
+const CFG_ROWS = [['cursor', 'Cursor ' + BRAND(), 'El cursor de vidrio con viento.'], ['smooth', 'Desplazamiento suave', 'La ruedita baja la página sin saltos.'], ['bg', 'Fondo animado', 'Los colores se mueven y giran al bajar.'], ['glass', 'Efecto vidrio', 'Ventanas y paneles que parecen de vidrio.'], ['anim', 'Animaciones', 'Escritura letra por letra, golpe de cristal y agua.'], ['favAnim', 'Icono animado', 'El péndulo (o el destello de Flow) en el icono de la pestaña.'], ['sound', 'Sonidos', 'La voz de Sona, las teclas, las transiciones y los avisos. Apágalos si te molestan.'], ['beginner', 'Modo principiante', 'Las IA te responden con palabras sencillas, paso a paso y con ejemplos.']];
 /* v2.2 · Ajustes con 2 pestañas: «Página» (cómo se ve y se siente) e «IAs y memoria» (cómo te responden y qué recuerdan de ti) */
 const CFG_PAGE = CFG_ROWS.filter(r => r[0] !== 'beginner');
 const CFG_IA = [['beginner', 'Modo principiante', 'Te responden con palabras sencillas, paso a paso y con ejemplos.'], ['autoWeb', 'Buscar en internet cuando haga falta', 'Si preguntas por algo de hoy (precios, noticias, el clima…), la IA busca sola y te muestra sus fuentes.'], ['saver', 'Respuestas cortas', 'Respuestas más breves: gastas menos de tu límite de hoy.'], ['review', 'Revisión de calidad', 'Otra IA revisa la lógica de cada respuesta y la corrige si encuentra errores. Tarda unos segundos más.']];
@@ -3147,18 +3147,18 @@ function cfgModal(tab){
     + '<div class="cfgbody">'
     + '<section class="cfgpane" data-pane="page"' + (ia ? ' hidden' : '') + '>'
     + '<div class="cfglbl">Cómo se ve</div><div id="cfgCh"></div>'
-    + '<div class="cfglbl">Estilo de SynthFlow</div><div class="cfgseg" id="cfgUi"><button type="button" data-ui="full" aria-pressed="' + (draft.ui !== 'simple') + '">SynthFlow</button><button type="button" data-ui="simple" aria-pressed="' + (draft.ui === 'simple') + '">Simple</button></div><p class="cnote">Simple: solo tus chats, la caja de escribir y las respuestas, con un diseño tranquilo y sin efectos.</p>'
+    + '<div class="cfglbl">Estilo de Sonyx</div><div class="cfgseg" id="cfgUi"><button type="button" data-ui="full" aria-pressed="' + (draft.ui !== 'simple') + '">Sonyx</button><button type="button" data-ui="simple" aria-pressed="' + (draft.ui === 'simple') + '">Simple</button></div><p class="cnote">Simple: solo tus chats, la caja de escribir y las respuestas, con un diseño tranquilo y sin efectos.</p>'
     + '<div class="cfglbl">Idioma · Language</div><div class="cfgseg notr" id="cfgLang">' + LANGS.map(([id, nm]) => '<button type="button" data-lang="' + id + '" lang="' + id + '" aria-pressed="' + (lang() === id) + '">' + nm + '</button>').join('') + '</div>'
-    + '<div class="cfglbl">Tamaño de SynthFlow</div><div class="cfgseg" id="cfgSz"><button type="button" data-sz="compact" aria-pressed="' + (draft.size !== 'normal') + '">Compacto</button><button type="button" data-sz="normal" aria-pressed="' + (draft.size === 'normal') + '">Normal</button></div><p class="cnote">Compacto: todo un poco más pequeño, para ver más chat en la pantalla. Normal: el tamaño grande de antes.</p>'
+    + '<div class="cfglbl">Tamaño de Sonyx</div><div class="cfgseg" id="cfgSz"><button type="button" data-sz="compact" aria-pressed="' + (draft.size !== 'normal') + '">Compacto</button><button type="button" data-sz="normal" aria-pressed="' + (draft.size === 'normal') + '">Normal</button></div><p class="cnote">Compacto: todo un poco más pequeño, para ver más chat en la pantalla. Normal: el tamaño grande de antes.</p>'
     /* v3.7 · «Atajos en tus chats» salió: la barra nueva siempre muestra Crear, Proyectos y Sintéticos arriba de tus chats */
-    + '<div class="cfglbl">Color de SynthFlow</div><div class="cfgth" id="cfgTh">' + THEMES.map(([id, nm, c1, lock, c2]) => '<button type="button" data-th="' + id + '" aria-pressed="' + ((draft.theme || 'synthz') === id) + '"' + (lock ? ' aria-disabled="true" data-lock="1"' : '') + ' style="--t1:' + c1 + ';--t2:' + c2 + '"><i></i><span>' + esc(nm) + '</span>' + (lock ? '<em>Pronto</em>' : '') + '</button>').join('') + '</div><p class="cnote" id="cfgThN"></p>'
+    + '<div class="cfglbl">Color de Sonyx</div><div class="cfgth" id="cfgTh">' + THEMES.map(([id, nm, c1, lock, c2]) => '<button type="button" data-th="' + id + '" aria-pressed="' + ((draft.theme || 'synthz') === id) + '"' + (lock ? ' aria-disabled="true" data-lock="1"' : '') + ' style="--t1:' + c1 + ';--t2:' + c2 + '"><i></i><span>' + esc(nm) + '</span>' + (lock ? '<em>Pronto</em>' : '') + '</button>').join('') + '</div><p class="cnote" id="cfgThN"></p>'
     + (matchMedia('(pointer:coarse), (max-width:820px)').matches ? '<div class="cfglbl">Barra del celular</div><div class="cfgseg" id="cfgNav"><button type="button" data-nav="bottom" aria-pressed="' + (draft.nav !== 'left') + '">Abajo</button><button type="button" data-nav="left" aria-pressed="' + (draft.nav === 'left') + '">A la izquierda</button></div><p class="cnote">A la izquierda: la barra se esconde y la abres con el botón ☰ de arriba.</p>' : '')
     + '<div class="cfglbl">Detalles</div><div id="cfgRows">' + CFG_PAGE.map(row).join('') + '</div>'
     + '<div class="cfglbl">Intro de la página</div><div class="cfgseg" id="cfgIn">' + IN.map(([v, l]) => '<button type="button" data-in="' + v + '" aria-pressed="' + (draft.intro === v) + '">' + l + '</button>').join('') + '</div><p class="cnote">La animación al entrar al chat siempre se ve.</p>'
     + '</section>'
     + '<section class="cfgpane" data-pane="ia"' + (ia ? '' : ' hidden') + '>'
     + '<div class="cfglbl">Cómo te responden</div>' + CFG_IA.map(row).join('')
-    + (document.getElementById('composer') ? '<div class="cfglbl">Dictado por voz</div><p class="cnote">Siempre disponible: toca el micrófono de la caja (o Ctrl+Mayús+Espacio). Funciona en Chrome, Edge y Safari. El micrófono solo se usa cuando tocas el botón. La voz la pasa a texto tu navegador: SymphorIA no la recibe ni la guarda.</p>' : '')
+    + (document.getElementById('composer') ? '<div class="cfglbl">Dictado por voz</div><p class="cnote">Siempre disponible: toca el micrófono de la caja (o Ctrl+Mayús+Espacio). Funciona en Chrome, Edge y Safari. El micrófono solo se usa cuando tocas el botón. La voz la pasa a texto tu navegador: Sinapse no la recibe ni la guarda.</p>' : '')
     + '<div class="cfglbl" id="cfgMemL">Lo que recuerdo de ti</div><div id="szMem" class="cfgmem"></div>'
     + (cfgLinks.length ? '<div class="cfglbl">Tus IAs</div><div class="cfglinks">' + cfgLinks.map(([l, , d], i) => '<button type="button" class="cfglk" data-lk="' + i + '"><b>' + esc(l) + '</b><small>' + esc(d || '') + '</small><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>').join('') + '</div>' : '')
     + '</section></div>'
@@ -3170,7 +3170,7 @@ function cfgModal(tab){
   memPanel($('#szMem', o));
   $$('.cfgsw[data-k]', o).forEach(b => b.addEventListener('click', () => { draft[b.dataset.k] = !draft[b.dataset.k]; paintRows(); }));
   $$('[data-in]', o).forEach(b => b.addEventListener('click', () => { draft.intro = b.dataset.in; $$('[data-in]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
-  const thNote = () => { const n = $('#cfgThN', o); if (n) n.textContent = draft.ui === 'simple' ? 'El estilo Simple usa sus propios colores: el color se ve en el estilo SynthFlow.' : (szTeam ? 'Cambia el dorado y el rosado de SynthFlow. Aurora y Oro negro ya son tuyos por ser del equipo (plan Orquesta).' : 'Cambia el dorado y el rosado de SynthFlow. Aurora y Oro negro llegan con Syntonia.'); };
+  const thNote = () => { const n = $('#cfgThN', o); if (n) n.textContent = draft.ui === 'simple' ? 'El estilo Simple usa sus propios colores: el color se ve en el estilo Sonyx.' : (szTeam ? 'Cambia el dorado y el rosado de Sonyx. Aurora y Oro negro ya son tuyos por ser del equipo (plan Orquesta).' : 'Cambia el dorado y el rosado de Sonyx. Aurora y Oro negro llegan con Syntonia.'); };
   thNote();
   $$('[data-ui]', o).forEach(b => b.addEventListener('click', () => { draft.ui = b.dataset.ui; $$('[data-ui]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); thNote(); }));
   $$('[data-lang]', o).forEach(b => b.addEventListener('click', () => { setLang(b.dataset.lang); $$('[data-lang]', o).forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));   /* el idioma cambia al instante, sin «Guardar» */
@@ -3272,9 +3272,9 @@ function cfgSideMenu(o){
   setTimeout(follow, 80);
 }
 /* ===== v3.8 · Vista previa de temas en Ajustes
-   Antes de tocar «Guardar» ya ves cómo queda: una ventanita de SynthFlow (componente React VistaTemas, montado por
+   Antes de tocar «Guardar» ya ves cómo queda: una ventanita de Sonyx (componente React VistaTemas, montado por
    next/componentes/ajustes/PuenteVistaTemas.jsx) pintada con el tema que señalas o eliges, con tu estilo y tamaño.
-   En SynthFlow, además, la página de atrás cambia de color al instante; si cierras sin guardar, vuelve como estaba.
+   En Sonyx, además, la página de atrás cambia de color al instante; si cierras sin guardar, vuelve como estaba.
    Los temas «Pronto» (Aurora y Oro negro) se pueden mirar, pero no elegir. ===== */
 let vtCur = null;
 function vtSend(){
@@ -3568,7 +3568,7 @@ function balanceHtml(b, extra){
   const orMain = or && !or.err
     ? 'Modelos gratis: <em>' + fmt(fr) + '</em> de ' + (or.freeTier ? '50' : '50 (o 1.000 si compraste 10 créditos o más)') + ' mensajes hoy'
     : or && or.err === 401 ? 'OpenRouter dice que tu llave no es válida.' : or && or.err ? 'OpenRouter no respondió con tu saldo.' : state.useTeam ? 'Usas el OpenRouter de tu equipo (mira el límite abajo).' : 'Pega tu llave de OpenRouter para ver tus límites.';
-  const orSub = or && !or.err ? (or.limit != null && or.left != null ? 'Crédito de tu llave: quedan $' + or.left.toFixed(2) + ' de $' + or.limit.toFixed(2) + ' · ' : 'Tu llave no tiene tope de crédito · ') + 'los mensajes de hoy los cuenta SymphorIA en tus dispositivos' : '';
+  const orSub = or && !or.err ? (or.limit != null && or.left != null ? 'Crédito de tu llave: quedan $' + or.left.toFixed(2) + ' de $' + or.limit.toFixed(2) + ' · ' : 'Tu llave no tiene tope de crédito · ') + 'los mensajes de hoy los cuenta Sinapse en tus dispositivos' : '';
   void orMain; void orSub;
   if (extra) h += extra;
   return '<div class="bl">' + h + '</div>';
@@ -3606,18 +3606,18 @@ function helpGuide(opts){
   const old = $('#szHelp'); if (old){ old.classList.remove('on'); setTimeout(() => old.remove(), 380); return; }
   const back = document.activeElement;
   const S = [
-    ['¿Qué es SymphorIA?', 'Un lugar para hablar con muchas IA, gratis. Escribes lo que necesitas y una IA te responde. No tienes que configurar nada.'],
-    ['¿Cómo lo uso?', 'Entra a SynthFlow, escribe tu pregunta abajo y pulsa Enter. Si no sabes qué pedir, toca un ejemplo. Tus chats quedan en la barrita de la izquierda (en el celular, abajo).'],
-    ['¿Qué son las IAs conectadas?', 'Las IAs conectadas son IAs gratis que ya vienen listas en SymphorIA. No tienes que configurar nada ni dar tarjeta: solo escribes. Sin cuenta pruebas con una EnerX de prueba cada día; con tu cuenta gratis dura mucho más.'],
+    ['¿Qué es Sinapse?', 'Un lugar para hablar con muchas IA, gratis. Escribes lo que necesitas y una IA te responde. No tienes que configurar nada.'],
+    ['¿Cómo lo uso?', 'Entra a Sonyx, escribe tu pregunta abajo y pulsa Enter. Si no sabes qué pedir, toca un ejemplo. Tus chats quedan en la barrita de la izquierda (en el celular, abajo).'],
+    ['¿Qué son las IAs conectadas?', 'Las IAs conectadas son IAs gratis que ya vienen listas en Sinapse. No tienes que configurar nada ni dar tarjeta: solo escribes. Sin cuenta pruebas con una EnerX de prueba cada día; con tu cuenta gratis dura mucho más.'],
     ['¿Qué es el límite de hoy?', 'Cada día tienes un límite gratis para usar las IAs conectadas. A medianoche se vuelve a llenar. El anillo se va vaciando mientras chateas.'],
     ['¿Qué es Puter y cómo lo conecto?', 'Con Puter usas la versión pro de las IAs más usadas, como ChatGPT, Claude o Gemini. Es gratis y tiene un saldo que se renueva cada mes. Se conecta en Ajustes › IAs y memoria › «Conectar Puter u otra IA» › «Conectar con Puter».'],
     ['Varias IA a la vez', 'Con «+» sumas otra IA (hasta 4). Todas responden lo mismo y tú eliges la que más te gusta con «Esta tiene más Flow».'],
     ['Archivos', 'Con el «+» agregas un archivo, un PDF o una foto (hasta 6 por mensaje). Todas las IA leen textos y PDF; las fotos solo las entienden las IA que «ven fotos». También puedes arrastrarlos o pegarlos.'],
     ['Modo principiante', 'En Ajustes puedes activar el modo principiante: las IA te responden con palabras sencillas, paso a paso y con ejemplos.'],
-    ['SuperiorSynth', 'Arriba de tus chats, «SuperiorSynth»: una IA entiende lo que escribiste, lo mejora y se lo pasa a la IA que más sabe de ese tema. Luego decides si te quedas con esa IA. Esos chats se guardan aparte.'],
+    ['Apex', 'Arriba de tus chats, «Apex»: una IA entiende lo que escribiste, lo mejora y se lo pasa a la IA que más sabe de ese tema. Luego decides si te quedas con esa IA. Esos chats se guardan aparte.'],
     ['Configuración', 'En Ajustes eliges si lo quieres «Más bonito» o «Más rápido», y enciendes o apagas cada detalle: cursor, fondo, vidrio, animaciones, sonidos e intro.']
   ];
-  const o = document.createElement('aside'); o.id = 'szHelp'; o.setAttribute('aria-label', 'Guía rápida de SymphorIA');
+  const o = document.createElement('aside'); o.id = 'szHelp'; o.setAttribute('aria-label', 'Guía rápida de Sinapse');
   o.innerHTML = '<div class="hh"><b>Guía rápida</b><button type="button" class="hx" data-hclose aria-label="Cerrar la guía">✕</button></div>'
     + '<div class="hb">' + S.map(([q, a], i) => '<details' + (i === (opts.open || 0) ? ' open' : '') + '><summary>' + q + '</summary><p>' + a + '</p></details>').join('')
     + (opts.extra ? '<div class="hx2">' + opts.extra.map(([l], i) => '<button type="button" class="btn sm ghost" data-hx="' + i + '">' + l + '</button>').join('') + '</div>' : '')
@@ -3808,7 +3808,7 @@ function orGuide(onKey){
   const step = (n, t, d, art) => '<div class="ogs"><i class="ogn">' + n + '</i><div><b>' + t + '</b><p>' + d + '</p>' + (art || '') + '</div></div>';
   o.innerHTML = '<div class="tcard og" role="dialog" aria-modal="true" aria-label="Cómo conectar OpenRouter"><div class="word">' + zWord('Synth') + '</div><div class="tn">OPENROUTER · 3 MINUTOS</div><div class="tb"><h3>Desbloquea OpenRouter</h3><p>OpenRouter te da cientos de IA gratis con una llave personal. Así la consigues:</p></div>'
     + step(1, 'Crea tu cuenta gratis', 'Entra a openrouter.ai y regístrate (puedes usar Google).', '<a class="lnk" href="https://openrouter.ai" target="_blank" rel="noopener noreferrer">Abrir openrouter.ai ↗</a>')
-    + step(2, 'Crea una llave', 'Ve a <b>Keys</b> y pulsa <b>Create Key</b>. Ponle de nombre «SymphorIA» y, si quieres, un límite de crédito de 0.', '<div class="ogk"><span>Keys</span><span class="pr">+ Create Key</span></div>')
+    + step(2, 'Crea una llave', 'Ve a <b>Keys</b> y pulsa <b>Create Key</b>. Ponle de nombre «Sinapse» y, si quieres, un límite de crédito de 0.', '<div class="ogk"><span>Keys</span><span class="pr">+ Create Key</span></div>')
     + step(3, 'Cópiala y pégala aquí', 'Empieza por <code>sk-or-</code>. Solo se muestra una vez, guárdala.', '<div class="cbox"><input id="ogKey" type="text" data-sec="1" placeholder="sk-or-…" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other" spellcheck="false"><button class="btn sm" id="ogGo" type="button">Conectar</button></div>')
     + '<p class="cnote">Tu llave se guarda en este navegador y solo viaja a OpenRouter. ¿No quieres crear una? Pídele a alguien de tu equipo que te comparta su OpenRouter desde «Tu cuenta».</p>'
     + '<div class="tbtn" style="margin-top:14px"><button class="lnk" type="button" data-close>Ahora no</button><a class="btn sm ghost" href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer">Ir a mis llaves ↗</a></div></div>';
@@ -3889,7 +3889,7 @@ function profileModal(onSave){
 })();
 /* ---------- v2.3 · SynthFlow como app: se instala desde el navegador (sin tiendas) ----------
    - El «trabajador» (sw.js) no guarda la página: todo llega siempre fresco de internet. Solo guarda la pantalla de «sin conexión».
-   - En el celular, una vez cada 7 días, sale «Descarga nuestra app SynthFlow».
+   - En el celular, una vez cada 7 días, sale «Descarga nuestra app Sonyx».
    - v2.9: la ventana es de vidrio, con un celular dibujado en código (sin el video viejo). Cuando haya video nuevo,
      basta con poner su ruta en APP_VIDEO y se ve dentro de la pantalla del celular.
    - v3.0: ya está el video de Sammuel (20 s, 768 × 432, sin sonido, 1,4 MB). Es horizontal, así que la ventana lo muestra
@@ -3925,7 +3925,7 @@ try{
   if (window.caches) caches.keys().then(ks => ks.filter(k => /^synthz-/.test(k)).forEach(k => caches.delete(k))).catch(() => {});   /* restos de la versión vieja */
 }catch(e){}
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); APP.evt = e; });
-addEventListener('appinstalled', () => { APP.done = true; APP.evt = null; try{ localStorage.setItem('synthz:appok', '1'); }catch(e){} const o = document.getElementById('appPromo'); if (o && o._close) o._close(); toast('¡Listo! SynthFlow quedó en tu pantalla de inicio.'); });
+addEventListener('appinstalled', () => { APP.done = true; APP.evt = null; try{ localStorage.setItem('synthz:appok', '1'); }catch(e){} const o = document.getElementById('appPromo'); if (o && o._close) o._close(); toast('¡Listo! Sonyx quedó en tu pantalla de inicio.'); });
 if (appStandalone()) root.classList.add('isapp');
 
 function appSteps(box){
@@ -3933,11 +3933,11 @@ function appSteps(box){
   const share = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>';
   const dots = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="12" cy="5" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="12" cy="19" r="1.9"/></svg>';
   box.innerHTML = '<ol class="ap-steps">' + (ios
-    ? '<li><span class="ap-n">1</span><span>Toca <b>Compartir</b> <i class="ap-k">' + share + '</i> abajo en Safari.</span></li><li><span class="ap-n">2</span><span>Baja y toca <b>Agregar a inicio</b>.</span></li><li><span class="ap-n">3</span><span>Toca <b>Agregar</b>. SynthFlow aparece junto a tus apps.</span></li>'
-    : '<li><span class="ap-n">1</span><span>Toca el menú <i class="ap-k">' + dots + '</i> de tu navegador (arriba a la derecha).</span></li><li><span class="ap-n">2</span><span>Toca <b>Instalar app</b> o <b>Agregar a la pantalla principal</b>.</span></li><li><span class="ap-n">3</span><span>Confirma. SynthFlow aparece junto a tus apps.</span></li>') + '</ol>';
+    ? '<li><span class="ap-n">1</span><span>Toca <b>Compartir</b> <i class="ap-k">' + share + '</i> abajo en Safari.</span></li><li><span class="ap-n">2</span><span>Baja y toca <b>Agregar a inicio</b>.</span></li><li><span class="ap-n">3</span><span>Toca <b>Agregar</b>. Sonyx aparece junto a tus apps.</span></li>'
+    : '<li><span class="ap-n">1</span><span>Toca el menú <i class="ap-k">' + dots + '</i> de tu navegador (arriba a la derecha).</span></li><li><span class="ap-n">2</span><span>Toca <b>Instalar app</b> o <b>Agregar a la pantalla principal</b>.</span></li><li><span class="ap-n">3</span><span>Confirma. Sonyx aparece junto a tus apps.</span></li>') + '</ol>';
 }
 async function appInstall(fromBox){
-  if (appStandalone()){ toast('Ya estás usando la app SynthFlow.'); return true; }
+  if (appStandalone()){ toast('Ya estás usando la app Sonyx.'); return true; }
   if (APP.evt){
     const e = APP.evt; APP.evt = null;
     try{ e.prompt(); const r = await e.userChoice; if (r && r.outcome === 'accepted') return true; toast('Cuando quieras, la instalas desde aquí.'); return false; }catch(x){}
@@ -3959,22 +3959,22 @@ function appPromo(force){
   const I = d => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>';
   /* v2.9.1 · el video no se baja hasta que se abre esta ventana; con «ahorro de datos» o movimiento reducido no arranca solo */
   const lite = reduce || !!(navigator.connection && navigator.connection.saveData);
-  const scr = APP_VIDEO ? '<video muted playsinline loop' + (lite ? ' controls' : ' autoplay') + ' preload="none" poster="' + APP_POSTER + '" width="768" height="432" aria-label="SynthFlow en acción"><source src="' + APP_VIDEO + '" type="video/mp4"></video>'
+  const scr = APP_VIDEO ? '<video muted playsinline loop' + (lite ? ' controls' : ' autoplay') + ' preload="none" poster="' + APP_POSTER + '" width="768" height="432" aria-label="Sonyx en acción"><source src="' + APP_VIDEO + '" type="video/mp4"></video>'
     /* v2.9: la pantalla es la SynthFlow de hoy en el celular: esfera, plan, la pregunta, el cuadro con «Automática» y la barra de abajo */
-    : '<span class="ap-top">' + flowOrb() + '<b>SynthFlow</b><i class="ap-dots"></i></span><span class="ap-chip"><i></i>Gratis · EnerX 100 %</span>'
+    : '<span class="ap-top">' + flowOrb() + '<b>Sonyx</b><i class="ap-dots"></i></span><span class="ap-chip"><i></i>Gratis · EnerX 100 %</span>'
       + '<span class="ap-q">¿Qué quieres<br><em>FlowIA’r</em> hoy?</span>'
       + '<span class="ap-m me"></span><span class="ap-m ai"><i></i><i></i><i></i></span>'
       + '<span class="ap-in"><span class="ap-auto">Automática</span><i></i></span>'
       + '<span class="ap-tabs"><i></i><i></i><i class="ring"></i><i></i><i></i></span>';
-  o.innerHTML = '<div class="ap-card" role="dialog" aria-modal="true" aria-label="Descarga la app SynthFlow">'
+  o.innerHTML = '<div class="ap-card" role="dialog" aria-modal="true" aria-label="Descarga la app Sonyx">'
     + '<div class="ap-hero' + (APP_VIDEO ? ' vid' : '') + '" aria-hidden="true"><i class="ap-glow"></i>' + (APP_VIDEO ? '<div class="ap-tv">' + scr + '</div>' : '<div class="ap-phone"><div class="ap-scr">' + scr + '</div></div>')
     + '<span class="ap-ico"><img src="/media/app/sf-192.png?v=44" alt="" width="54" height="54"></span><i class="ap-sp s1"></i><i class="ap-sp s2"></i><i class="ap-sp s3"></i></div>'
-    + '<div class="ap-body"><span class="ap-kick">App gratis · sin tiendas</span><h3>Descarga nuestra app <em>SynthFlow</em></h3>'
+    + '<div class="ap-body"><span class="ap-kick">App gratis · sin tiendas</span><h3>Descarga nuestra app <em>Sonyx</em></h3>'
     + '<ul class="ap-why"><li><i>' + I('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>') + '</i><span><b>Va más fluida</b>: a pantalla completa, sin pestañas ni barra del navegador.</span></li>'
-    + '<li><i>' + I('<path d="M2 12c2.5-4 5-4 7.5 0s5 4 7.5 0 3.5-3 5-1"/><path d="M2 18c2.5-4 5-4 7.5 0s5 4 7.5 0 3.5-3 5-1" opacity=".5"/>') + '</i><span><b>Más Flow</b>: tus chats y SuperiorSynth a un toque, desde tu pantalla de inicio.</span></li>'
+    + '<li><i>' + I('<path d="M2 12c2.5-4 5-4 7.5 0s5 4 7.5 0 3.5-3 5-1"/><path d="M2 18c2.5-4 5-4 7.5 0s5 4 7.5 0 3.5-3 5-1" opacity=".5"/>') + '</i><span><b>Más Flow</b>: tus chats y Apex a un toque, desde tu pantalla de inicio.</span></li>'
     + '<li><i>' + I('<path d="M20 4C10 4 5 10 4 20"/><path d="M20 4c0 8-5 12-12 12"/>') + '</i><span><b>Pesa casi nada</b> y siempre está al día: se instala desde aquí mismo.</span></li></ul>'
     + '<div class="ap-how"></div>'
-    + '<div class="ap-acts"><button type="button" class="lnk" data-ap="no">Ahora no</button><button type="button" class="btn ap-go" data-ap="go">' + (canPrompt ? 'Instalar SynthFlow' : ios ? 'Ver cómo instalarla' : 'Instalar SynthFlow') + '</button></div></div></div>';
+    + '<div class="ap-acts"><button type="button" class="lnk" data-ap="no">Ahora no</button><button type="button" class="btn ap-go" data-ap="go">' + (canPrompt ? 'Instalar Sonyx' : ios ? 'Ver cómo instalarla' : 'Instalar Sonyx') + '</button></div></div></div>';
   if (appWin()){
     const how = $('.ap-how', o); how.before(winBox(o));
     const g = $('[data-ap="go"]', o); g.classList.add('ap-go-alt'); g.textContent = 'Desde el navegador';
@@ -4217,11 +4217,11 @@ giFill();
 /* ===== v2.8 · cielo en vivo: los fondos que mandó Sammuel, hechos en código (ninguno es una imagen) =====
    Cinco escenas que se dibujan y se mueven en tiempo real:
    · «fondo»     aurora rosa y cian arriba a la derecha, «V» violeta a la izquierda, brillo turquesa abajo (la portada).
-   · «seda»      una cinta ancha en diagonal: rosa arriba, lavanda al medio, verde agua abajo (SynthFlow sin mensajes).
+   · «seda»      una cinta ancha en diagonal: rosa arriba, lavanda al medio, verde agua abajo (Sonyx sin mensajes).
    · «nebulosa»  nube violeta y magenta cruzando el cielo con hilos cian, una galaxia y cúmulos de estrellas.
    · «planeta»   nube de colores arriba a la izquierda, velos lavanda abajo, la galaxia y un planeta con anillos.
-   · «calma»     un arco tenue y oscuro (SynthFlow con mensajes: se lee mejor).
-   En la portada el cielo pasa de una escena a la otra mientras bajas. En SynthFlow, apenas hay mensajes, la «seda»
+   · «calma»     un arco tenue y oscuro (Sonyx con mensajes: se lee mejor).
+   En la portada el cielo pasa de una escena a la otra mientras bajas. En Sonyx, apenas hay mensajes, la «seda»
    se apaga en «calma» y sube una ola de noche desde la caja de escribir.
    Cómo es tan liviano: las nubes se pintan en un lienzo chiquito (~36 000 píxeles) y la pantalla lo estira; ese estirado
    ES el desenfoque. Estrellas, galaxia y planeta se dibujan una sola vez y solo se mueven con la tarjeta gráfica.
@@ -4533,8 +4533,8 @@ const AURORA = (() => {
   return { el, setCalm, repaint:() => { recolor(); go(); } };
 })();
 /* ---------- v3.0 · enlaces de la página de Ayuda (ayuda.html) ----------
-   ?ayuda=equipo abre «Hablar con el equipo», ?ayuda=mejorar abre «Cuéntanos qué mejorar» y ?ayuda=synthonia abre a SynthonIA.
-   Espera un poco a que la cuenta y SynthonIA estén listas; después borra el parámetro para que no se repita al recargar (window.history: en core, history() es otra función). */
+   ?ayuda=equipo abre «Hablar con el equipo», ?ayuda=mejorar abre «Cuéntanos qué mejorar» y ?ayuda=synthonia abre a Sona.
+   Espera un poco a que la cuenta y Sona estén listas; después borra el parámetro para que no se repita al recargar (window.history: en core, history() es otra función). */
 try{
   const AY = new URLSearchParams(location.search).get('ayuda');
   if (AY && ['equipo', 'mejorar', 'synthonia'].includes(AY)) setTimeout(() => {
@@ -4549,11 +4549,11 @@ try{
    y el equipo (Prime, ZFlow y Symmetrix) en Orquesta: sin límite de EnerX, búsquedas ni imágenes, y con los colores Aurora y Oro negro.
    El servidor es quien decide el límite (api/_pool.js › free); aquí solo se muestra. */
 const PLANS = [
-  { id:'chispa', n:'Chispa', p:'Gratis', c:'#e6b65f', L:['Las IAs gratis de hoy: Groq, Gemini Flash, Mistral y más', 'Tu EnerX diaria, que se carga a medianoche', 'Imágenes con límite, internet y memoria', 'Proyectos y Sintéticos'] },
+  { id:'chispa', n:'Chispa', p:'Gratis', c:'#e6b65f', L:['Las IAs gratis de hoy: Groq, Gemini Flash, Mistral y más', 'Tu EnerX diaria, que se carga a medianoche', 'Imágenes con límite, internet y memoria', 'Espacios y Sintéticos'] },
   { id:'chispaplus', n:'Chispa+', p:'US$4,99 al mes', c:'#ffb36b', L:['Todo lo de Chispa con 5 veces más EnerX', 'Cientos de IAs premium: Claude, ChatGPT, Gemini Pro y más', 'Un crédito premium cada mes; las premium gastan más EnerX', 'Si se acaba el crédito, sigues con las gratis'] },
   { id:'syntonia', n:'Syntonia', p:'US$7,99 al mes', c:'#9fffd6', L:['Todo lo de Chispa con un límite mucho más amplio', 'EnerX extra cada mes para las IAs pro (GPT, Claude, Grok, Gemini Pro)', '30 imágenes pro', 'Los colores Aurora y Oro negro'] },
-  { id:'timeless', n:'Timeless', p:'US$17,99 al mes', c:'#a98bff', L:['Todo lo de Syntonia', 'Mucha más EnerX para las IAs pro y lo más potente', '80 imágenes y 2 videos cortos', 'SynthFlow en WhatsApp y Telegram'] },
-  { id:'orquesta', n:'Orquesta', p:'US$8,99 por persona', c:'#ffd27a', L:['Para equipos (desde 3 personas)', 'Lo de Syntonia para cada persona', 'Chats y panel de equipo', 'A.L.I.A.S. con 100 veces más pasos y búsquedas', 'Hoy lo usan Prime, ZFlow y Symmetrix, sin límites, para probar todo'] }
+  { id:'timeless', n:'Timeless', p:'US$17,99 al mes', c:'#a98bff', L:['Todo lo de Syntonia', 'Mucha más EnerX para las IAs pro y lo más potente', '80 imágenes y 2 videos cortos', 'Sonyx en WhatsApp y Telegram'] },
+  { id:'orquesta', n:'Orquesta', p:'US$8,99 por persona', c:'#ffd27a', L:['Para equipos (desde 3 personas)', 'Lo de Syntonia para cada persona', 'Chats y panel de equipo', 'Quoryn con 100 veces más pasos y búsquedas', 'Hoy lo usan Prime, ZFlow y Symmetrix, sin límites, para probar todo'] }
 ];
 let szTeam = false; try{ szTeam = localStorage.getItem('synthz:team') === '1'; }catch(e){}
 const planOf = () => szTeam ? 'orquesta' : 'chispa';
@@ -4582,12 +4582,12 @@ addEventListener('synthz-szq', e => {
 function plansModal(){
   if ($('#szPlans')) return;
   const me = planOf(), o = document.createElement('div'); o.id = 'szPlans'; o.className = 'szm';
-  o.innerHTML = '<div class="tcard plans" role="dialog" aria-modal="true" aria-label="Planes de SymphorIA"><div class="word">' + zWord('Synth') + '</div><div class="tn">PLANES</div><div class="tb">'
+  o.innerHTML = '<div class="tcard plans" role="dialog" aria-modal="true" aria-label="Planes de Sinapse"><div class="word">' + zWord('Synth') + '</div><div class="tn">PLANES</div><div class="tb">'
     + '<h3>Elige cómo FlowIAr</h3><p>Las IAs gratis siempre van a estar. Los planes de pago llegan pronto: hoy nadie puede pagar y no se cobra nada. Toca «Me interesa» en el que quieras y sabremos cuál abrir primero.</p>'
     + '<div class="pl-grid">' + PLANS.map((P, i) => '<article class="pl-card' + (P.id === me ? ' me' : '') + '" style="--pc:' + P.c + ';--i:' + i + '"><header><b>' + esc(P.n) + '</b>' + (P.id === me ? '<em>Tu plan</em>' : '') + '</header><span class="pl-p">' + esc(P.p) + '</span><ul>' + P.L.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>'
       + (P.id === me ? '<span class="pl-on">Activo</span>' : P.id === 'chispa' ? '' : '<button type="button" class="pl-quiero" data-plan="' + P.id + '"></button><small class="pl-n" data-plan="' + P.id + '"></small>') + '</article>').join('') + '</div>'
     + '<form class="pl-correo" hidden novalidate><label for="plMail"></label><div><input id="plMail" type="email" autocomplete="email" inputmode="email" placeholder="Tu correo"><button type="submit" class="btn sm">Avísame</button></div><p class="pl-aviso" role="status"></p></form>'
-    + '<p class="cnote">' + (me === 'orquesta' ? 'Eres del equipo: tienes todo como en Orquesta para probar la página: sin límite de EnerX, imágenes y búsquedas sin tope propio, A.L.I.A.S. (menú «⋯») y los colores Aurora y Oro negro.' : 'Cuando lleguen los pagos verás aquí cuánto te queda de cada cosa, y podrás cancelar con un clic.') + '</p>'
+    + '<p class="cnote">' + (me === 'orquesta' ? 'Eres del equipo: tienes todo como en Orquesta para probar la página: sin límite de EnerX, imágenes y búsquedas sin tope propio, Quoryn (menú «⋯») y los colores Aurora y Oro negro.' : 'Cuando lleguen los pagos verás aquí cuánto te queda de cada cosa, y podrás cancelar con un clic.') + '</p>'
     + '<div class="tbtn"><button class="btn sm" type="button" data-close>Listo</button></div></div></div>';
   document.body.appendChild(o); requestAnimationFrame(() => o.classList.add('on'));
   const close = () => { o.classList.remove('on'); setTimeout(() => o.remove(), 420); };
@@ -4655,7 +4655,7 @@ addEventListener('pointerout', e => { if (chispaUlt && !chispaUlt.contains(e.rel
 addEventListener('click', e => { const b = e.target.closest && e.target.closest(CHISPA_SEL); if (b) chispas(b, 10); }, true);
 addEventListener('focusin', e => { const b = e.target.closest && e.target.closest(CHISPA_SEL); if (b && b.matches(':focus-visible')) chispas(b, 5); });
 /* ---------- v4.1 · la portada (index.html) es solo para gente nueva ----------
-   Quien ya tiene cuenta o ya entró antes va directo a SynthFlow (eso lo hace el guardián que está
+   Quien ya tiene cuenta o ya entró antes va directo a Sonyx (eso lo hace el guardián que está
    en el <head> de index.html, antes de pintar nada). La única forma de volver a ver la portada es la
    pantallita «Ya tengo el Flow / Soy nuevo»: «Soy nuevo» la abre, «Ya tengo el Flow» entra directo.
    La decisión vive en este dispositivo (synthz:portada = { v:'app'|'nuevo', t }) y viaja con la cuenta
@@ -4685,7 +4685,7 @@ function portadaKnown(){
   try{ return !!(localStorage.getItem('synthz:sess') || localStorage.getItem('synthz:entro')); }catch(e){ return false; }
 }
 /* ---------- v4.5 · «Powered by Claude» en la chispa de la esquina ----------
-   La chispita naranja de abajo a la derecha (.corner en SynthFlow y la portada, #pCorner en Pulsem) es la de Claude.
+   La chispita naranja de abajo a la derecha (.corner en Sonyx y la portada, #pCorner en Pulsem) es la de Claude.
    Al pasar el mouse, al enfocarla con el teclado o al tocarla en el celular, muestra un letrerito «Powered by Claude»
    (en español: «Impulsado por Claude»). Se engancha por delegación de eventos: sirve aunque React vuelva a pintar la esquina. */
 Object.assign(I18N.es, { 'pwr.claude':'Impulsado por <b>Claude</b>' });

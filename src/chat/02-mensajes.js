@@ -133,7 +133,7 @@ function openCanvas(M, sibs, tab){
   closeCanvas(true);
   const pv = canPreview(M);
   const o = document.createElement('div'); o.className = 'cvp'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-label', M.name);
-  o.innerHTML = '<div class="cvp-in"><div class="cvp-h">' + fcIc(M.ext) + '<span class="cnv-t"><b>' + esc(M.name) + '</b><small>' + (pv ? '<span class="cvp-syn" title="Sintético (en inglés, Synthetic): corre aparte y aislado, como en Claude">Sintético</span> · ' : '') + esc(M.label) + ' · ' + M.lines + ' líneas</small></span>'
+  o.innerHTML = '<div class="cvp-in"><div class="cvp-h">' + fcIc(M.ext) + '<span class="cnv-t"><b>' + esc(M.name) + '</b><small>' + (pv ? '<span class="cvp-syn" title="Obra (en inglés, Work): corre aparte y aislada, como en Claude">Sintético</span> · ' : '') + esc(M.label) + ' · ' + M.lines + ' líneas</small></span>'
     + '<button type="button" class="cnv-b" data-cv="copy">' + CNV_ICO.copy + '<span>Copiar</span></button><button type="button" class="cnv-b" data-cv="down">' + CNV_ICO.down + '<span>Descargar</span></button><button type="button" class="cnv-b ic" data-cx aria-label="Cerrar">✕</button></div>'
     + (pv ? '<div class="cvp-tabs" role="tablist"><button type="button" role="tab" data-tab="code">Código</button><button type="button" role="tab" data-tab="prev">Vista previa</button></div>' : '')
     + '<div class="cvp-b"><pre class="cvp-code"><code></code></pre>' + (pv ? '<div class="cvp-prev" hidden></div>' : '') + '</div></div>';
@@ -148,7 +148,7 @@ function openCanvas(M, sibs, tab){
       if (M.ext === 'md'){ const d = document.createElement('div'); d.className = 'cvp-md'; d.innerHTML = md(M.text); box.appendChild(d); }
       else {
         /* la vista previa corre aislada: sin acceso a tu cuenta, tus chats ni esta página */
-        const f = document.createElement('iframe'); f.title = 'Sintético: vista previa de ' + M.name; f.setAttribute('sandbox', 'allow-scripts allow-modals allow-forms allow-pointer-lock'); f.setAttribute('referrerpolicy', 'no-referrer');
+        const f = document.createElement('iframe'); f.title = 'Obra: vista previa de ' + M.name; f.setAttribute('sandbox', 'allow-scripts allow-modals allow-forms allow-pointer-lock'); f.setAttribute('referrerpolicy', 'no-referrer');
         box.appendChild(f);
         if (M.ext === 'svg') synLoad(f, previewDoc(M, sibs)); else cvTools(o, box, M, sibs).load();   /* v2.4 · consola, tamaños de pantalla y volver a cargar */
       }

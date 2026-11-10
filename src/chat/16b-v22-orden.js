@@ -5,7 +5,7 @@ SZ.cfgLinks.push(
   ['Conectar Puter u otra IA', () => openConnect(), 'Tu versión pro de las IAs más usadas, gratis'],
   ['Google Drive', () => driveModal(), 'Guarda una copia de tus chats en tu Drive'],
   ['Tu ranking (a ciegas)', () => rankModal(), 'Las IAs que más te gustan según tus votos']);
-if (!SZ.appStandalone()) SZ.cfgLinks.push(['Descargar la app SynthFlow', () => SZ.appPromo(true), 'Se instala desde aquí: pantalla completa y a un toque']);
+if (!SZ.appStandalone()) SZ.cfgLinks.push(['Descargar la app Sonyx', () => SZ.appPromo(true), 'Se instala desde aquí: pantalla completa y a un toque']);
 /* «Respuestas cortas» desde Ajustes también pinta su botón */
 addEventListener('synthz-saver', () => { $$('#sxSw, #saverBtn').forEach(x => x.setAttribute('aria-pressed', String(!!st().sx.saver))); updateHint(); });
 /* el «+» trae todo: archivos, crear imagen, buscar en internet y respuestas cortas */

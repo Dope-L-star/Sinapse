@@ -19,7 +19,7 @@
   let last = 0;
   let on = false;
   /* v2.9: solo la esfera de SynthFlow se mueve, y a ~8 cuadros por segundo (cada cuadro es una imagen PNG nueva: a 20 por
-     segundo pesaba). La Z de SymphorIA es quieta: se pone una vez y el ciclo no corre */
+     segundo pesaba). La Z de Sinapse es quieta: se pone una vez y el ciclo no corre */
   const tick = now => { if (!CFG.favAnim || !isFlow()){ on = false; draw(0); return; } if (now - last > 120){ last = now; draw(now); } requestAnimationFrame(tick); };
   window.__favStart = () => { if (!on){ on = true; requestAnimationFrame(tick); } };
   window.__favStart();

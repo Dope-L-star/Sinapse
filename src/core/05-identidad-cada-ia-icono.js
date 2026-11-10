@@ -10,7 +10,7 @@ const BRANDS = {
   ibm:['ibm', 'IBM Granite', '#4589ff', '#a6c8ff'], minimax:['minimax-color', 'MiniMax', '#f23f5d', '#ff9e7a'], inception:['inception', 'Inception', '#a3a3ff', '#d6d6ff'], liquid:['liquid', 'Liquid', '#5b8cff', '#9fd0ff'],
   baidu:['baidu-color', 'Baidu', '#2932e1', '#7a82ff'], tencent:['tencent-color', 'Tencent', '#0052d9', '#6fa0ff'], bytedance:['bytedance-color', 'ByteDance', '#3c8cff', '#00c8d2'], 'stepfun-ai':['stepfun-color', 'StepFun', '#22c1c3', '#8ff0e6'],
   perplexity:['perplexity-color', 'Perplexity', '#20b8cd', '#9ff0f6'], allenai:['ai2-color', 'Ai2', '#f0529c', '#ff9fc8'], groq:['groq', 'Groq', '#f55036', '#ffb36b'], cloudflare:['cloudflare-color', 'Cloudflare', '#f6821f', '#ffc46b'],
-  openrouter:['openrouter', 'OpenRouter', '#6467f2', '#a5a7ff'], synthz:['', 'SymphorIA', '#7b3ff2', '#ff3d9a'], puter:['', 'Puter', '#3b82f6', '#6fd3d6']
+  openrouter:['openrouter', 'OpenRouter', '#6467f2', '#a5a7ff'], synthz:['', 'Sinapse', '#7b3ff2', '#ff3d9a'], puter:['', 'Puter', '#3b82f6', '#6fd3d6']
 };
 const BALIAS = { meta:'meta-llama', llama:'meta-llama', mistral:'mistralai', claude:'anthropic', xai:'x-ai', grok:'x-ai', moonshot:'moonshotai', kimi:'moonshotai', zhipu:'z-ai', thudm:'z-ai', glm:'z-ai', stepfun:'stepfun-ai', ai2:'allenai', gemini:'google', 'openai-completion':'openai', 'ibm-granite':'ibm', 'nous':'nousresearch' };
 function brandOf(m){
@@ -46,7 +46,7 @@ const PIXART = [
   ['Llave', '.111....|1...1...|1...1...|.111....|...2....|...22...|...2....|...22...'],
   ['Hongo', '..1111..|.1.22.1.|1.2..2.1|11111111|..1..1..|..1..1..|..1111..|........'],
   ['Poción', '...22...|...11...|..1..1..|.1....1.|1.2222.1|1.2222.1|.1....1.|..1111..'],
-  ['SynthonIA', '....2...|....1...|.111111.|1......1|1.2..2.1|1......1|.111111.|........'],
+  ['Sona', '....2...|....1...|.111111.|1......1|1.2..2.1|1......1|.111111.|........'],
   ['Cohete', '...11...|..1..1..|..1.21..|..1..1..|.11..11.|1.1..1.1|..2..2..|...22...'],
   ['Gatito', '1.....1.|11...11.|1.111.1.|1.....1.|1.2.2.1.|1..1..1.|.11111..|........'],
   ['Diamante', '........|..1111..|.1.22.1.|11111111|.1....1.|..1..1..|...11...|........'],

@@ -9,13 +9,13 @@ const NF = new Intl.NumberFormat('es-CO'), fmt = n => NF.format(Math.round(n || 
 /* configuración de la página: visuales SynthZ-Style o rendimiento para PCs modestos */
 const CFG_KEYS = ['cursor', 'smooth', 'favAnim', 'bg', 'glass', 'anim'];
 /* v2.3 · temas de color de SynthFlow: [id, nombre, color 1, bloqueado (llega con Syntonia)] */
-const THEMES = [['synthz', 'SymphorIA', '#e6b65f', 0, '#c9566c'], ['oceano', 'Océano', '#7cc9e3', 0, '#5a7bd6'], ['bosque', 'Bosque', '#9bd68f', 0, '#3fa58a'], ['lavanda', 'Lavanda', '#bfa9f2', 0, '#d46fb0'], ['aurora', 'Aurora', '#9fffd6', 1, '#a46bff'], ['oro', 'Oro negro', '#ffd27a', 1, '#2b2b2b']];
+const THEMES = [['synthz', 'Sinapse', '#e6b65f', 0, '#c9566c'], ['oceano', 'Océano', '#7cc9e3', 0, '#5a7bd6'], ['bosque', 'Bosque', '#9bd68f', 0, '#3fa58a'], ['lavanda', 'Lavanda', '#bfa9f2', 0, '#d46fb0'], ['aurora', 'Aurora', '#9fffd6', 1, '#a46bff'], ['oro', 'Oro negro', '#ffd27a', 1, '#2b2b2b']];
 const cfgPreset = perf => CFG_KEYS.reduce((o, k) => (o[k] = perf !== 'speed', o), {});
 const CFG = (() => {
   let c = {}; try{ c = JSON.parse(localStorage.getItem('synthz:cfg')) || {}; }catch(e){}
   if (c.v !== 2) c = Object.assign(cfgPreset(c.perf), { perf:c.perf || 'visual' });   /* migración: los ajustes concuerdan con el modo */
   /* v2.3 · en el celular lo que más pesa es el vidrio (desenfoque detrás de cada panel) y el fondo animado.
-     Primera visita: modo rápido. Quien ya tenía SymphorIA: se le apagan solo esas dos cosas una vez (las vuelve a encender en Ajustes). */
+     Primera visita: modo rápido. Quien ya tenía Sinapse: se le apagan solo esas dos cosas una vez (las vuelve a encender en Ajustes). */
   let fresh = false; try{ fresh = localStorage.getItem('synthz:cfg') === null; }catch(e){}
   const phone = (() => { try{ return matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) <= 820; }catch(e){ return false; } })();
   /* v3.1 · Sammuel (28 oct): la página se ve completa también en el celular (vidrio, fondo animado y animaciones); si va lenta,
@@ -68,18 +68,18 @@ const puterLogo = cls => '<span class="pu-logo ' + (cls || '') + '"><img src="' 
 const ico = p => (typeof BRANDS !== 'undefined' && BRANDS[p.id === 'mistral' ? 'mistralai' : p.id]) ? glassIcon({ id:p.id, vendor:p.id === 'mistral' ? 'mistralai' : p.id }, 'lgi') : `<i class="lg" aria-hidden="true"><svg viewBox="0 0 24 24">${ICONS[p.id](p.c, p.d)}</svg></i>`;
 /* marca: en SynthFlow (html[data-brand=flow]) el logotipo es «SynthFlow» con destellos; en el resto, «Symphor» + «IA» en degradado (v3.0: la página se llama SymphorIA) */
 const isFlow = () => document.documentElement.dataset.brand === 'flow';
-const BRAND = () => isFlow() ? 'SynthFlow' : 'SymphorIA';
+const BRAND = () => isFlow() ? 'Sonyx' : 'Sinapse';
 const SPARKS = '<i class="sp s1" aria-hidden="true"></i><i class="sp s2" aria-hidden="true"></i><i class="sp s3" aria-hidden="true"></i>';
 const GS = '<span class="gS">S</span>ynth';
 /* v2.8: el degradado de la onda del orbe vive en los íconos (core 25g), siempre visible: antes cada orbe traía uno con el mismo id
-   y, si el primero de la página estaba escondido, las ondas de todos los logos de SynthFlow desaparecían */
+   y, si el primero de la página estaba escondido, las ondas de todos los logos de Sonyx desaparecían */
 /* logos de la marca: SymphorIA = la S de vidrio con su órbita + «Symphor» blanco con «IA» en degradado; SynthFlow = la F de corriente */
 const LOGO_Z = '<img class="lgz" src="media/v30/symphoria.svg" alt="" draggable="false">';
 /* v4.4 · SynthFlow: la F de corriente en vidrio líquido (misma familia que la S de SymphorIA) */
 const flowOrb = cls => '<span class="sforb' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><img src="media/v44/synthflow.svg" alt="" draggable="false"></span>';
 /* íconos de archivo: se dibujan en código (giFile, en core 25g); si no hay uno para esa extensión, null */
 const fileIco = ext => giFile(ext);
-const flowWord = () => '<span class="flw-w">' + flowOrb() + '<span class="fw-t">SynthFlow</span></span>';
+const flowWord = () => '<span class="flw-w">' + flowOrb() + '<span class="fw-t">Sonyx</span></span>';
 const zMark = (txt = 'Synth') => '<span class="zw">' + (txt === 'Synth' ? 'Symphor' : txt) + '<span class="zt">IA</span></span>';
 const zWord = (txt = 'Synth') => isFlow() && txt === 'Synth' ? flowWord() : zMark(txt);
 

@@ -1,7 +1,7 @@
 /* v3.8 · el cuadro de la portada, ahora al centro (ver src/index-css/11-v38-caja-centro.css):
    - la luz que lo rodea acelera mientras escribes
    - la tecla «/» te lleva al cuadro (como en los buscadores), salvo si ya estás escribiendo en otro lado
-   - al enviar, la flecha despega como avión de papel mientras el cuadro se abre hacia SynthFlow */
+   - al enviar, la flecha despega como avión de papel mientras el cuadro se abre hacia Sonyx */
 (() => {
 const form = document.getElementById('heroAsk'), inp = document.getElementById('heroInp');
 if (!form || !inp) return;
