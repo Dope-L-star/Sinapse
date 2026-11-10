@@ -90,7 +90,7 @@ El workflow arma el .exe y crea el *release* con el .exe y su `.sha256`. El enla
 última versión es:
 
 ```
-https://github.com/Dope-L-star/SynthZ-Style/releases/latest/download/SymphorIA-Obertura.exe
+https://github.com/Dope-L-star/Sinapse/releases/latest/download/SymphorIA-Obertura.exe
 ```
 
 (funciona mientras el último release del repo sea uno de Obertura).

@@ -1,0 +1,7 @@
+/* ---------- 2026-11-10 · accesibilidad: zonas táctiles de al menos 44×44 px en Enviar y Dictar (pantallas táctiles) ----------
+   Se agranda el área que responde al dedo sin mover el diseño: el dibujo queda igual y el círculo/cuadro crece solo lo justo. */
+@media (pointer:coarse){
+  .composer .send,.composer .dic-mic{min-width:44px;min-height:44px}
+  .composer .send{width:44px;height:44px}
+  .composer .dic-mic{width:44px;height:44px}
+}
