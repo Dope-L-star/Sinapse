@@ -8,12 +8,15 @@
      · lo apruebas UNA vez y trabaja solo (voy a continuar con…); si un paso falla lo reintenta solo con otra IA;
      · lo que escribas mientras trabaja se suma encima sin pararlo (action 'ajustar'); Detener entrega lo que alcanzó a hacer;
      · el resultado queda como un mensaje más del chat (texto, archivos y fuentes) y la conversación sigue normal.
-   El motor (plan, paso, ajustar) es window.ALIAS (16p–16u). La pantalla de misiones, el historial y «Agentes» de la página vieja se quitaron. */
+   El motor (plan, paso, ajustar) es window.ALIAS (16p–16u). Quoryn NO tiene interfaz propia (2026-11-10, «alias ya no debe tener su propio UI»): usa solo lo normal del chat
+   (la tarjeta de agente .agrun con su ícono de píxeles, los botones .btn, la nota .agkeep y los mensajes del chat); aquí solo se marcan con data-quoryn para poder encontrarlos. */
 var AL = null, alPass = null, alDict = null;           /* var: renderMsgs los mira antes de que esta pieza corra */
 /* function y var (no const): renderMsgs puede pintar un chat guardado antes de que esta pieza termine de correr */
 function alEn(){ return !!(SZ.lang && SZ.lang() === 'en'); }
 function alOn(){ return !!st().alias && !!(SZ.aliasOk && SZ.aliasOk()) && !trialOn; }
 var AL_TOTAL = 9;
+/* solo una marca para saber si el modo está puesto (sin estilos): body[data-quoryn="on"] */
+function alMark(){ if (alOn()) document.body.dataset.quoryn = 'on'; else delete document.body.dataset.quoryn; }
 var AT = {
   es: { ph:'Quoryn: dime la meta y armo el plan…', activado:'Modo Quoryn: dime la meta; si es un pedido de verdad armo el plan y trabajo solo.', apagado:'Modo Quoryn apagado.',
     planListo:'Plan listo: revísalo y apruébalo una sola vez', empiezo:'Voy a empezar con:', sigo:'Voy a continuar con:', reint:'Este paso falló; lo intento otra vez con otra IA…',
@@ -64,18 +67,18 @@ function setAlias(on){
   if (!!st().alias === on) return;
   if (on){ if (agentOn()) setAgent(false); if (imgMode) setImgMode(false); if (mode !== 'solo') setMode('solo'); alEngine(); }
   st().alias = on; save();
-  document.body.classList.toggle('aliasing', on);
+  alMark();
   try{ inp.placeholder = on ? alT('ph') : 'Escribe tu mensaje…'; }catch(e){}
   toast(alT(on ? 'activado' : 'apagado'));
   if (on) setTimeout(() => { try{ inp.focus(); }catch(e){} }, 50);
   else alDrop(false);
 }
-document.body.classList.toggle('aliasing', alOn());
+alMark();
 /* desde la portada (modo Agente) y desde los enlaces viejos de /alias: ?quoryn=1 (o ?alias=1) deja puesto el modo, y ?q= lo manda.
    Si la llave del equipo (synthz:alias) todavía no se conoce en este aparato, se espera a que el servidor la confirme. */
 var alQuiere = params.get('quoryn') === '1' || params.get('alias') === '1';
 function alQuiero(){ if (!alQuiere || !(SZ.aliasOk && SZ.aliasOk()) || trialOn) return; alQuiere = false; try{ setAlias(true); }catch(e){} }
-addEventListener('synthz-alias', () => { document.body.classList.toggle('aliasing', alOn()); setTimeout(alQuiero, 0); });
+addEventListener('synthz-alias', () => { alMark(); setTimeout(alQuiero, 0); });
 setTimeout(alQuiero, 0);
 
 /* ---------- lo que escribes en modo Agente ---------- */
@@ -101,7 +104,7 @@ async function alMission(text, o){
     inp.value = ''; autoGrow(); updateHint(); touchThread(); save(); renderMsgs();
   }
   const S = AL = { goal:text, chat, msg, phase:'planning', plan:null, status:{}, results:{}, errors:{}, skipped:{}, retried:{}, notes:[], log:[], run:0, t0:0, adjusting:null, cur:null, retrying:null, say:'' };
-  S.el = document.createElement('div'); S.el.className = 'agrun alrun'; S.el.dataset.quoryn = 'card'; S.el.setAttribute('aria-live', 'polite');
+  S.el = document.createElement('div'); S.el.className = 'agrun'; S.el.dataset.quoryn = 'card'; S.el.setAttribute('aria-live', 'polite');
   const fr = () => { try{ return (window.SZFrases && window.SZFrases.frase('agente', alEn() ? 'en' : 'es')) || ''; }catch(e){ return ''; } };
   S.say = fr(); S.tm = setInterval(() => { if (AL !== S || S.phase !== 'planning'){ clearInterval(S.tm); return; } S.say = fr(); const sm = $('.ag-t small', S.el); if (sm) sm.textContent = S.say + '…'; }, 2800);
   if (chat === chatArr()) lane.appendChild(S.el);
@@ -135,14 +138,14 @@ function alHandoff(S, r, text){
 }
 /* el chip que queda debajo de lo que escribiste: qué IA lo respondió y cómo hacerlo con Quoryn igual */
 function alHandEl(m){
-  const el = document.createElement('div'); el.className = 'agsum alhand'; el._q = m.content;
-  el.innerHTML = '<div class="al-hand"><span></span><button type="button" class="lnk" data-alforce="1"></button></div>';
+  const el = document.createElement('div'); el.className = 'agkeep'; el.dataset.quoryn = 'hand'; el._q = m.content;
+  el.innerHTML = '<span></span><div class="agk-b"><button type="button" class="btn sm ghost" data-alforce="1"></button></div>';
   $('span', el).textContent = alT(m.alHand === 'superior' ? 'handApex' : 'handRelay'); $('button', el).textContent = alT('hacerlo');
   return el;
 }
 function alWho(b, m){
   const n = $('.who b', b), md = $('.who .md', b); if (n) n.textContent = 'Quoryn'; if (md) md.textContent = alT('mision', { n:(m.alias && m.alias.n) || '' });
-  b.classList.add('alias-msg');
+  b.dataset.quoryn = 'msg';
 }
 const alPlace = () => { try{ if (alOn()) inp.placeholder = alT('ph'); }catch(e){} };
 function alClear(S){ clearInterval(S.tm); S.run++; if (S.el) S.el.remove(); if (AL === S) AL = null; alPlace(); }
@@ -164,28 +167,28 @@ function alPaint(S){
   else if (p === 'run') say = S.retrying != null ? alT('reint') : S.adjusting ? alT('ajustando') : cur ? alT(done ? 'sigo' : 'empiezo') + ' ' + cur.title : '';
   else if (p === 'error') say = alT('fallo');
   else if (p === 'limit') say = alT('limite');
-  let h = '<div class="ag-h"><span class="al-ico" aria-hidden="true"><svg viewBox="0 0 40 20"><path d="M20 10C17 5 13 3 9 3a7 7 0 000 14c4 0 8-2 11-7s7-7 11-7a7 7 0 010 14c-4 0-8-2-11-7z" fill="none" stroke="currentColor" stroke-width="2.4"/></svg></span>'
-    + '<span class="ag-t"><b>Quoryn</b><small>' + esc(say) + '</small></span>'
-    + (p === 'run' || p === 'error' || p === 'limit' ? '<button type="button" class="btn sm ghost al-x" data-al="stop">' + esc(alT('stop')) + '</button>' : '') + '</div>';
+  /* misma tarjeta que Apex: ícono de píxeles, título, lista de pasos y botones normales */
+  let h = '<div class="ag-h"><span class="pxw" aria-hidden="true">' + SZ.pixelGrid() + '</span><span class="ag-t"><b>Quoryn</b><small>' + esc(say) + '</small></span></div>';
   if (steps.length){
-    h += '<ol class="ag-s al-s">' + steps.map((s, i) => {
+    h += '<ol class="ag-s">' + steps.map(s => {
       const r = S.results[s.id], cls = S.skipped[s.id] ? 'done skip' : S.status[s.id] === 'done' ? 'done' : S.status[s.id] === 'running' ? 'on' : S.status[s.id] === 'error' ? 'bad' : '';
       const who = r && r.route ? (r.route.why === 'synth' && r.route.voices && r.route.voices.length ? r.route.voices.join(', ') : r.route.name) : '';
-      return '<li class="' + cls + '"><i aria-hidden="true"></i><span class="al-t">' + esc(s.title) + '</span><em>' + esc(alT('tool')[s.tool] || s.tool) + '</em>' + (who ? '<small>' + esc(alT('con', { n:who })) + '</small>' : '') + '</li>';
+      return '<li class="' + cls + '"><i aria-hidden="true"></i><span>' + esc(s.title) + ' <small>· ' + esc(alT('tool')[s.tool] || s.tool) + (who ? ' · ' + esc(alT('con', { n:who })) : '') + '</small></span></li>';
     }).join('') + '</ol>';
-    if (p !== 'plan') h += '<span class="al-bar" aria-hidden="true"><i style="width:' + Math.round(done / Math.max(1, total) * 100) + '%"></i></span>';
   }
-  if (S.log.length) h += '<div class="al-log">' + S.log.slice(-4).map(x => '<p class="' + x.k + '">' + (x.k === 'me' ? '<b>' + esc(alT('tu')) + ':</b> ' : '') + esc(x.text) + '</p>').join('') + '</div>';
-  if (p === 'error') h += '<div class="al-b"><button type="button" class="btn sm" data-al="retry">' + esc(alT('retry')) + '</button><button type="button" class="btn sm ghost" data-al="skip">' + esc(alT('skip')) + '</button></div>' + (S.errors[S.cur] ? '<small class="al-h">' + esc(S.errors[S.cur]) + '</small>' : '');
-  if (p === 'plan') h += '<div class="al-b"><button type="button" class="btn sm" data-al="go">' + esc(alT('go')) + '</button><button type="button" class="btn sm ghost" data-al="no">' + esc(alT('no')) + '</button></div><small class="al-h">' + esc(alT('ayudaPlan')) + '</small>';
-  if (p === 'run') h += '<small class="al-h">' + esc(alT('ayudaRun')) + '</small>';
+  if (S.log.length) h += '<div data-quoryn="log">' + S.log.slice(-4).map(x => '<p>' + (x.k === 'me' ? '<b>' + esc(alT('tu')) + ':</b> ' : '') + esc(x.text) + '</p>').join('') + '</div>';
+  const btn = (a, k, ghost) => '<button type="button" class="btn sm' + (ghost ? ' ghost' : '') + '" data-al="' + a + '">' + esc(alT(k)) + '</button>';
+  if (p === 'plan') h += '<div class="agk-b">' + btn('go', 'go') + btn('no', 'no', 1) + '</div><small>' + esc(alT('ayudaPlan')) + '</small>';
+  else if (p === 'error') h += '<div class="agk-b">' + btn('retry', 'retry') + btn('skip', 'skip', 1) + btn('stop', 'stop', 1) + '</div>' + (S.errors[S.cur] ? '<small>' + esc(S.errors[S.cur]) + '</small>' : '');
+  else if (p === 'limit') h += '<div class="agk-b">' + btn('stop', 'stop', 1) + '</div>';
+  else if (p === 'run') h += '<div class="agk-b">' + btn('stop', 'stop', 1) + '</div><small>' + esc(alT('ayudaRun')) + '</small>';
   el.innerHTML = h; el.dataset.phase = p;
   try{ inp.placeholder = p === 'run' || p === 'plan' ? (p === 'run' ? alT('ayudaRun') : alT('ayudaPlan')) : alT('ph'); }catch(e){}
   if (S.chat === chatArr()) follow();
 }
 lane.addEventListener('click', ev => {
   const f = ev.target.closest('[data-alforce]');
-  if (f){ const c = f.closest('.alhand'); if (c && c._q && !AL) alMission(c._q, { force:true, push:false }); return; }
+  if (f){ const c = f.closest('[data-quoryn="hand"]'); if (c && c._q && !AL) alMission(c._q, { force:true, push:false }); return; }
   const b = ev.target.closest('[data-al]'); if (!b || !AL || !AL.el || !AL.el.contains(b)) return;
   const S = AL, a = b.dataset.al;
   if (a === 'go'){ if (S.phase === 'plan' && S.plan && S.plan.steps.length){ S.t0 = Date.now(); alDrive(S, false); } }

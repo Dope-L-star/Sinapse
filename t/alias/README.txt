@@ -34,8 +34,10 @@ Lo que cuida cada una
 
 Ganchos que usa la prueba de navegador (dentro del chat)
   #ptModos [data-pm="agente"]     botón del modo Agente (solo equipo)
-  .alrun                          tarjeta del plan / de la misión en marcha
-  .alrun [data-al="go"|"stop"]    Aprobar y empezar / Detener
-  .alhand [data-alforce]          chip «Quoryn vio que era algo fácil…» y su botón «Hacerlo con Quoryn»
-  .m.bot.alias-msg                mensaje de resultado de Quoryn
+  [data-quoryn="on"] (en body)     el modo Quoryn está puesto
+  [data-quoryn="card"]            tarjeta del plan / de la misión en marcha (es la tarjeta normal .agrun de agente del chat)
+  [data-quoryn="card"] [data-al="go"|"stop"]   Aprobar y empezar / Detener (botones .btn normales)
+  [data-quoryn="hand"] [data-alforce]   nota «Quoryn vio que era algo fácil…» (.agkeep) y su botón «Hacerlo con Quoryn»
+  .m.bot[data-quoryn="msg"]       mensaje de resultado de Quoryn
+  Quoryn NO tiene estilos propios: solo usa .agrun/.agkeep/.btn del chat. La prueba lo vigila (clases de la tarjeta, hojas de estilo y pedidos).
   window.ALIAS = { plan(goal, {force}), runStep, adjust, feedback, routes }   (motor; ya no hay herramientas en una página aparte)

@@ -11,6 +11,11 @@
 > **Cribado «¿es algo fácil?» (`api/_triage.js`, sin IA y sin gastar cupo):** un «hola» o «gracias» solos no arman plan: los responde **Relay** (la IA Automática) y queda el chip
 > «Hacerlo con Quoryn». Un tipo de pregunta muy chica (≤ 5 palabras, sin entregable) puede ir a **Apex** (SuperiorSynth). Pero un saludo con un pedido real
 > («Hola, ¿cómo estás? ¿me puedes ayudar a redactar un texto…?») SÍ lo toma Quoryn: el saludo se quita antes de juzgar y, si hay duda, se queda con Quoryn. `force:true` lo obliga.
+> **Sin interfaz propia (10 de noviembre de 2026).** Sammuel: «alias ya no debe tener su propio UI». Quoryn no trae pantalla, panel, CSS, componentes React ni rutas propias
+> (se quitó también el diseño del `ALIAS_VISUAL_CONCEPT`): el plan y el avance salen en la tarjeta de agente normal del chat (`.agrun`, la misma de Apex, con su ícono de píxeles),
+> los botones son los `.btn` de siempre, la nota «lo respondió Relay/Apex» es la `.agkeep` normal y el resultado es un mensaje más. Solo quedan marcas `data-quoryn` para encontrarlos
+> (sin estilos). `alias-textos.json` conserva únicamente los textos que usan el motor y el servidor. `t/alias/chat.mjs` vigila que no vuelva a aparecer UI propia
+> (clases de la tarjeta, hojas de estilo y archivos pedidos).
 > Pruebas: `node t/alias/triage.mjs`, `node t/alias/contrato.mjs`, `node t/alias/chat.mjs`.
 >
 > **Solo para el equipo desde el 9 de noviembre de 2026 (v4.5).** Sammuel: «quita a todos el ALIAS excepto los admins».
