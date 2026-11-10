@@ -26,7 +26,7 @@ export default function LegacyPage({
 }) {
   const scriptUrls = scripts.map(versionado);
   for (const src of scriptUrls) preload(src, { as: 'script' });
-  /* SynthFlow espera a SynthonIA (core.js la trae con su propio cargador): que ya esté bajada cuando la pida */
+  /* SynthFlow espera a Sona (core.js la trae con su propio cargador): que ya esté bajada cuando la pida */
   if (page === 'chat') preload('/synthonia.js', { as: 'script', fetchPriority: 'low' });
   return (
     <>

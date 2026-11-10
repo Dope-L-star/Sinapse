@@ -257,7 +257,7 @@ function visionPick(){
   if (szOn()) return info('sz:auto');
   return cat.list.find(m => m.vision && connected(m.id) && !SZ.isBad(m.id)) || null;
 }
-/* ---------- v1.3 · SynthonIA te rescata cuando una IA falla o cuando notas que no te entiende ---------- */
+/* ---------- v1.3 · Sona te rescata cuando una IA falla o cuando notas que no te entiende ---------- */
 const TOPIC_RX = [['codigo', /c[oó]digo|program|funci[oó]n|javascript|python|html|css|sql|bug|error de|script|coding|code\b|website|app\b/i], ['mate', /ecuaci|matem|calcul|derivad|integral|math|equation|algebra|\d+\s*[x×*+\/-]\s*\d+/i], ['estudiar', /explica|estudi|examen|tarea|aprend|resum|homework|study|exam|learn|explain|summar/i], ['correo', /correo|email|e-mail/i], ['marketing', /marketing|publicidad|anuncio|vender|ventas|campa[ñn]a|advert|\bads?\b|sell|sales/i], ['redes', /instagram|tiktok|reel|post|redes|social media/i], ['idiomas', /traduc|ingl[eé]s|franc[eé]s|idioma|translat|english|spanish|french|language/i], ['negocios', /negocio|emprend|empresa|cliente|business|startup|company|customer/i], ['ideas', /idea|nombre para|lluvia de/i], ['escribir', /escrib|texto|carta|historia|poema|redact|writ|essay|letter|story|poem/i]];
 function guessTopic(t){ const f = TOPIC_RX.find(([k, rx]) => TOPIC[k] && rx.test(t)); return f ? f[0] : null; }
 function altFor(mid, text){
@@ -437,7 +437,7 @@ async function regen(){
 }
 
 
-/* v4.2 · la IA dijo que no tiene datos de hoy: SynthonIA te pregunta antes de buscar (tú decides; no se busca a escondidas) */
+/* v4.2 · la IA dijo que no tiene datos de hoy: Sona te pregunta antes de buscar (tú decides; no se busca a escondidas) */
 function offerWeb(lastU, onFail, o){
   if (!lastU || lastU.sources || lastU.webTried || !SZ.BOT || !SZ.BOT.offer) return;
   const en = SZ.lang() === 'en';

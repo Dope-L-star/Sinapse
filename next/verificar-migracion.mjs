@@ -135,7 +135,7 @@ assert.ok(fs.existsSync(path.join(root, 'sintetico.html')));
 assert.ok(fs.existsSync(path.join(root, 'functions/sintetico.js')));
 // Regresión: React no renderiza el atributo <html data-brand="flow"> del chat legado.
 // El runtime tiene que restaurarlo antes de cargar core.js/synthonia.js, de lo contrario
-// SynthonIA se posiciona como en portada y el botón BETA desaparece.
+// Sona se posiciona como en portada y el botón BETA desaparece.
 const legacyRuntime = fs.readFileSync(path.join(nextDir, 'componentes/LegacyRuntime.jsx'), 'utf8');
 const brandSetupAt = legacyRuntime.indexOf("if (page === 'chat') root.dataset.brand = 'flow'");
 const scriptLoopAt = legacyRuntime.indexOf('for (const src of scripts)');
@@ -144,13 +144,13 @@ assert.ok(legacyRuntime.includes("else if (root.dataset.brand === 'flow') root.r
 const coreBrand = fs.readFileSync(path.join(root, 'core.js'), 'utf8');
 assert.ok(coreBrand.includes("document.documentElement.dataset.brand === 'flow'"), 'core.js debe conservar la identificación por marca de SynthFlow');
 const betaSource = fs.readFileSync(path.join(root, 'src/synthonia/24-beta-cuentanos-mejorar-llega.js'), 'utf8');
-assert.ok(betaSource.includes('if (isFlow()) return betaBot()') && betaSource.includes('function betaBot()'), 'el botón BETA debe seguir la ubicación de SynthonIA en SynthFlow');
-console.log('OK regresión SynthonIA/BETA: data-brand=flow se establece antes de cargar core.js; Clarity sigue desactivado');
-// Regresiones reportadas: botón de guía y montaje de SynthonIA al migrar la página a React.
+assert.ok(betaSource.includes('if (isFlow()) return betaBot()') && betaSource.includes('function betaBot()'), 'el botón BETA debe seguir la ubicación de Sona en SynthFlow');
+console.log('OK regresión Sona/BETA: data-brand=flow se establece antes de cargar core.js; Clarity sigue desactivado');
+// Regresiones reportadas: botón de guía y montaje de Sona al migrar la página a React.
 const guideComponentPath = path.join(nextDir, 'componentes/GuideButton.jsx');
 const synthonIAComponentPath = path.join(nextDir, 'componentes/SynthonIAHost.jsx');
 assert.ok(fs.existsSync(guideComponentPath), 'el botón Guía debe ser un componente cliente de React');
-assert.ok(fs.existsSync(synthonIAComponentPath), 'SynthFlow debe tener un host React para SynthonIA');
+assert.ok(fs.existsSync(synthonIAComponentPath), 'SynthFlow debe tener un host React para Sona');
 const guideComponent = fs.readFileSync(guideComponentPath, 'utf8');
 const synthonIAComponent = fs.readFileSync(synthonIAComponentPath, 'utf8');
 const reactTree = fs.readFileSync(path.join(nextDir, 'componentes/ReactTree.jsx'), 'utf8');
@@ -162,18 +162,18 @@ const botSource = fs.readFileSync(path.join(root, 'src/synthonia/22-synthonia-ay
 assert.ok(reactTree.includes("node.attrs?.id === 'guideTop'") && reactTree.includes('createElement(GuideButton'), 'ReactTree debe transformar #guideTop en un componente React interactivo');
 assert.ok(guideComponent.includes('window.SymphoriaOpenGuide') && guideComponent.includes("symphoria:guide-request") && guideComponent.includes('window.__symphoriaGuideQueued = true') && guideComponent.includes('data-react-component="guide"'), 'GuideButton debe llamar al selector original, marcar el ownership React o encolar el clic durante la hidratación');
 assert.ok(guideFlowSource.includes('window.SymphoriaOpenGuide = openGuide') && guideFlowSource.includes('SZ.guideAsk({ full:runGuide') && guideSource.includes("guideButton.dataset.reactComponent !== 'guide'") && guideSource.includes("guideButton.addEventListener('click', () => openGuide())"), 'el flujo original debe conservar su listener en HTML estático y evitar duplicarlo cuando React posee el botón');
-assert.ok(legacyRuntime.includes('window.SZ?.synReady') && legacyRuntime.includes('ready.catch(() => false)'), 'el runtime debe esperar a SynthonIA antes de arrancar el chat, con límite de espera');
-assert.ok(legacyRuntime.includes("window.addEventListener('synthz-synthonia', onSynthonIAReady)"), 'una guía en espera debe reintentarse cuando SynthonIA llegue');
-assert.ok(legacyPage.includes("page === 'chat' ? <SynthonIAHost />") && synthonIAComponent.includes('id="synthonIA-react-host"'), 'el punto de montaje de SynthonIA debe estar controlado por el árbol React');
+assert.ok(legacyRuntime.includes('window.SZ?.synReady') && legacyRuntime.includes('ready.catch(() => false)'), 'el runtime debe esperar a Sona antes de arrancar el chat, con límite de espera');
+assert.ok(legacyRuntime.includes("window.addEventListener('synthz-synthonia', onSynthonIAReady)"), 'una guía en espera debe reintentarse cuando Sona llegue');
+assert.ok(legacyPage.includes("page === 'chat' ? <SynthonIAHost />") && synthonIAComponent.includes('id="synthonIA-react-host"'), 'el punto de montaje de Sona debe estar controlado por el árbol React');
 assert.ok(synthonIAComponent.includes('id="szBot"') && synthonIAComponent.includes('id="betaBot"') && synthonIAComponent.includes('onClick={activateAssistant}') && synthonIAComponent.includes('onClick={openFeedback}'), 'la bolita y el BETA deben ser nodos y controles React, no elementos paralelos creados por el motor legado');
 assert.ok(botSource.includes("document.getElementById('synthonIA-react-host')") && botSource.includes('(reactHost || document.body).appendChild(b)'), 'el avatar debe montarse dentro del host React en SynthFlow, manteniendo el fallback legado');
 assert.ok(botSource.includes("const existing = document.getElementById('szBot')") && botSource.includes("existing.dataset.reactComponent === 'synthonia-avatar'"), 'el motor debe reutilizar la bolita React, sin duplicarla');
 const betaBotSource = fs.readFileSync(path.join(root, 'src/synthonia/24-beta-cuentanos-mejorar-llega.js'), 'utf8');
-assert.ok(betaBotSource.includes("b.dataset.reactComponent === 'synthonia-avatar'") && betaBotSource.includes("t.style.visibility = 'visible'") && betaBotSource.includes('activate:botAvatarClick'), 'BETA debe posicionarse respecto al nodo React y el API debe exponer el clic de SynthonIA');
+assert.ok(betaBotSource.includes("b.dataset.reactComponent === 'synthonia-avatar'") && betaBotSource.includes("t.style.visibility = 'visible'") && betaBotSource.includes('activate:botAvatarClick'), 'BETA debe posicionarse respecto al nodo React y el API debe exponer el clic de Sona');
 const hideSource = fs.readFileSync(path.join(root, 'src/synthonia/23-ayuda-personas-chat.js'), 'utf8');
-assert.ok(hideSource.includes("el && el.dataset.reactComponent === 'synthonia-avatar'") && hideSource.includes("dispatchEvent(new Event('symphoria:hide-synthonIA'))") && synthonIAComponent.includes('window.SZ?.BOT?.unmount?.()'), 'ocultar SynthonIA debe pedir a React que retire sus nodos y limpiar listeners antes de hacerlo');
+assert.ok(hideSource.includes("el && el.dataset.reactComponent === 'synthonia-avatar'") && hideSource.includes("dispatchEvent(new Event('symphoria:hide-synthonIA'))") && synthonIAComponent.includes('window.SZ?.BOT?.unmount?.()'), 'ocultar Sona debe pedir a React que retire sus nodos y limpiar listeners antes de hacerlo');
 assert.ok(chatRoute.includes("scripts={['core.js', 'chat.js', 'movimiento.js']}") , 'no debe inyectarse synthonia.js duplicado; core.js conserva su cargador con reintentos');
-console.log('OK React Guide/SynthonIA: clic React, selector de guía original, espera de synReady y host React presente');
+console.log('OK React Guide/Sona: clic React, selector de guía original, espera de synReady y host React presente');
 const clarityPath = path.join(nextDir, 'componentes/ClarityConsent.jsx');
 const clarityCode = fs.readFileSync(clarityPath, 'utf8');
 const clarityLib = fs.readFileSync(path.join(nextDir, 'lib/clarity-client.mjs'), 'utf8');

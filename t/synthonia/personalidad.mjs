@@ -1,4 +1,4 @@
-/* Personalidad de SynthonIA (v3.7): idioma, límites de respeto, pensamientos ocultos y memoria que pregunta. node t/synthonia/personalidad.mjs */
+/* Personalidad de Sona (v3.7): idioma, límites de respeto, pensamientos ocultos y memoria que pregunta. node t/synthonia/personalidad.mjs */
 import assert from 'node:assert/strict';
 import { PERSONA, LANG_HEAD, isRude, boundary, cleanThoughts, langOf, memOf, memSys, takeMemory } from '../../api/_synthonia.js';
 

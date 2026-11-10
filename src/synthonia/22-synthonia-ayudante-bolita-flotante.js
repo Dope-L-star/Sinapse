@@ -1,6 +1,6 @@
 /* =====================================================================
-   SynthonIA, la ayudante: bolita flotante (en el celular, junto al logo del chat)
-   1) respuestas guardadas: no gastan nada y, si es un «¿dónde está…?», te lo señala con su manita
+   Sona, la ayudante: botón flotante (en el celular, junto al logo del chat)
+   1) respuestas guardadas: no gastan nada y, si es un «¿dónde está…?», te lo señala con su puntero
    2) si no la sabe, piensa con una IA gratis de SymphorIA (máx. 15 preguntas nuevas al día)
    3) «Hablar con el equipo»: una persona (Prime, ZFlow o Symmetrix) te responde aquí mismo
    ===================================================================== */
@@ -11,7 +11,7 @@ const BOT_FAQ = [
   { k:'puter conectar conecto conecta conectarlo vincular vinculo', need:'puter', a:'Así conectas Puter: abre Ajustes › «Tus IAs» › «Conectar Puter u otra IA» y toca «Conectar con Puter». Se abre una ventanita: entra o crea tu cuenta de Puter (es gratis) y listo. También se conecta solo si eliges una IA que diga «Conecta tu Puter» y le escribes. Con Puter usas la versión pro de IAs como ChatGPT, Claude o Gemini, con un saldo gratis que se renueva cada mes.', act:'conn', lbl:'Conectar mi Puter', go:['[data-tab="cfg"]', '#railCfg', '#cfgBtn'] },
   { k:'cambiar cambio cambias elegir escoger ia modelo cual otra seleccionar', a:'Toca el nombre de la IA que estás usando y se abre «Elige tu IA». Ahí mismo ves las IA: buscas o tocas «Para ti», «Todas» o «Mis favoritas», y tocas «Usar». Si quieres afinar, «Personalizar búsqueda» tiene los filtros. Para comparar varias, usa «Comparar IAs» en la barra.', go:['#cPick', '#curChip', '[data-tab="ia"]'] },
   { k:'comparar comparacion varias dos lado mismo tiempo', a:'Con «Comparar con otra IA» sumas hasta 4. Todas responden lo mismo y aparecen en el orden en que llegan.', go:['#cCmp', '#pickRow [data-add]'] },
-  { k:'guia tutorial aprender enseñar como funciona', a:'En la Guía rápida te pregunto si la quieres completa o qué quieres ver: eliges uno o varios temas y te los muestro con mi manita, en ese orden.', go:['#guideTop', '#helpBtn'], act:'guide', lbl:'Abrir la Guía' },
+  { k:'guia tutorial aprender enseñar como funciona', a:'En la Guía rápida te pregunto si la quieres completa o qué quieres ver: eliges uno o varios temas y te los muestro con mi puntero de luz, en ese orden.', go:['#guideTop', '#helpBtn'], act:'guide', lbl:'Abrir la Guía' },
   { k:'limite cuanto queda quedan mensajes barra uso gasto consumo enerx energia bateria pila carga synxcoin coins', a:'Cada día tienes EnerX, tu batería gratis para usar las IAs conectadas: baja un poco con cada mensaje (lo que escribes y lo que la IA te responde) y a medianoche se carga al 100 %. Sin cuenta tienes una EnerX de prueba; con tu cuenta gratis tu EnerX dura mucho más. Te muestro dónde está.', go:['#railCoin', '#tabCoin', '#navTotal', '.pill-total'], tour:'coins' },
   { k:'pagar cobro cobran gratis precio plata dinero costo tarjeta', a:'SymphorIA es gratis y hoy no te cobra nada. Las IAs conectadas son gratis, y Puter también tiene su parte gratis cada mes. Los planes del menú «⋯» › Planes por ahora solo se muestran: los pagos están apagados.', go:['#moreBtn'] },
   { k:'chats historial conversaciones anteriores guardados donde estan mis', a:'Tus chats están en «Mis chats», en la barrita (en el celular, la pestaña Chats). Se guardan en tu dispositivo y en tu cuenta si entras.', go:['#railChats', '[data-r="chats"]', '[data-tab="chats"]'] },
@@ -26,7 +26,7 @@ const BOT_FAQ = [
   { k:'tema temas color colores cambiar simple estilo oscuro barra izquierda', a:'En Ajustes › General eliges el estilo («Sonyx» o «Simple», más tranquilo), el color de Sonyx (Océano, Bosque, Lavanda…) y, en el celular, si la barra va abajo o a la izquierda.', go:['[data-tab="cfg"]', '#sAcc', '#cfgBtn'] },
   { k:'vincular google correo usuario contraseña juntar unir cuentas', a:'En Ajustes › Cuenta › «Seguridad y acceso» vinculas tu Google a tu cuenta con usuario, o le pones usuario y contraseña a tu cuenta de Google. Así entras a la misma cuenta de las dos formas.', go:['#accBtn', '[data-tab="me"]'] },
   { k:'symphoria symphora sinfonia significa nombre pagina por que se llama etimologia', a:'SymphorIA viene del griego: Sym- (σύν) es «junto, en sintonía», como en sinfonía o sinergia, y -phora (φέρειν) es «llevar», como en metáfora o semáforo. Juntas dicen «el portador de la armonía»: toma el caos de datos y lo lleva a un flujo claro. Es como la evolución del ábaco. ✨', mood:'encantada' },
-  { k:'synth synthetism synthflow synthonia sintonia sona sonyx apex relay superiorsynth nombre nuevo cambio nombres antes', a:'Los nombres cambiaron, pero somos los de siempre: el chat ahora es Sonyx (antes SynthFlow), yo soy Sona (antes SynthonIA), el modo que elige la IA por ti es Apex (antes SuperiorSynth) y la IA automática es Relay. ✨', en:'The names changed, but we\'re the same as ever: the chat is now Sonyx (formerly SynthFlow), I\'m Sona (formerly SynthonIA), the mode that picks the AI for you is Apex (formerly SuperiorSynth) and the automatic AI is Relay. ✨', mood:'feliz' },
+  { k:'synth synthetism synthflow synthonia sintonia sona sonyx apex relay superiorsynth nombre nuevo cambio nombres antes', a:'Los nombres cambiaron, pero somos los de siempre: el chat ahora es Sonyx (antes SynthFlow), yo soy Sona, el modo que elige la IA por ti es Apex (antes SuperiorSynth) y la IA automática es Relay. ✨', en:'The names changed, but we\'re the same as ever: the chat is now Sonyx (formerly SynthFlow), I\'m Sona, the mode that picks the AI for you is Apex (formerly SuperiorSynth) and the automatic AI is Relay. ✨', mood:'feliz' },
   /* charla sencilla */
   { k:'chiste broma cuentame algo gracioso risa', a:'', joke:true, mood:'riendo' },
   { k:'dato curioso sabias algo interesante', a:'', fact:true, mood:'sorprendida' },
@@ -48,7 +48,7 @@ function botMatch(q){
   return best && bs >= .6 && br / tot >= .55 ? best : null;
 }
 const BOT = { el:null, panel:null, open:false, hist:[], help:null, poll:0, seen:0, team:null, inbox:[], cur:null, mode:'chat', teamSeen:{}, positionCleanup:null, betaCleanup:null, betaPut:null };
-/* v2.6: en la portada no hay bolita; la ventanita y las frases salen de donde esté parada SynthonIA */
+/* v2.6: en la portada no hay botón; la ventanita y las frases salen de donde esté parada Sona */
 const botAt = () => { const a = BOT.anchor && BOT.anchor(); return a && a.getClientRects().length ? a : BOT.el; };
 const vis = sel => (Array.isArray(sel) ? sel : [sel]).map(x => $(x)).find(n => n && n.getClientRects().length && n.getBoundingClientRect().width > 0) || null;
 function botAvatarClick(e){
@@ -56,14 +56,14 @@ function botAvatarClick(e){
   BOT.lostN = 0; b.classList.remove('g1', 'g2');
   /* según dónde la toques, hace una cara distinta */
   let z = e && e.detail ? botZone(e) : '';
-  /* v4.6 · en el celular (o con la bolita pegada al logo, de 37 px) tocar el ojo o la antenita TAMBIÉN abre a Sona: antes solo
+  /* v4.6 · en el celular (o con el botón pegado al logo, de 37 px) tocar el ojo o la antenita TAMBIÉN abre a Sona: antes solo
      decía «¡Ay! Ese es mi ojo.» y parecía que no había cómo abrirla. La carita igual reacciona. */
   let touch = false; try{ touch = b.classList.contains('inhead') || matchMedia('(pointer:coarse)').matches; }catch(er){}
   if (touch && (z === 'eye' || z === 'top')){ botFace(z === 'eye' ? 'auch' : 'sorprendida', true); setTimeout(() => botFace('feliz', true), 1500); z = ''; }
   if (z === 'eye'){ SND.blip('auch'); botFace('auch', true); botBubble('¡Ay! Ese es mi ojo.', 2200); setTimeout(() => botFace('feliz', true), 1900); return; }
   if (z === 'top'){ botFace('sorprendida', true); botBubble('¡Uy, mi antena! Me haces cosquillas.', 2200); setTimeout(() => botFace('feliz', true), 1900); return; }
-  if (z === 'cheek'){ botFace('encantada', true); setTimeout(() => botFace('feliz'), 1600); }
-  else if (z === 'mouth'){ botFace('riendo', true); setTimeout(() => botFace('feliz'), 1600); }
+  if (z === 'ear'){ botFace('encantada', true); setTimeout(() => botFace('feliz'), 1600); }
+  else if (z === 'chin'){ botFace('riendo', true); setTimeout(() => botFace('feliz'), 1600); }
   botToggle();
 }
 function botReactUnmount(){
@@ -85,7 +85,7 @@ function botMount(){
   const existing = document.getElementById('szBot');
   const reactOwned = !!(existing && existing.dataset.reactComponent === 'synthonia-avatar');
   const b = existing || document.createElement('button');
-  b.id = 'szBot'; b.type = 'button'; b.setAttribute('aria-label', 'SynthonIA'); b.dataset.tip = 'SynthonIA';
+  b.id = 'szBot'; b.type = 'button'; b.setAttribute('aria-label', 'Sona'); b.dataset.tip = 'Sona';
   const bf = $('.bf', b);
   if (bf) bf.innerHTML = face('feliz', 40);
   else b.innerHTML = '<span class="bf" aria-hidden="true">' + face('feliz', 40) + '</span><i class="bdot" hidden></i>';
@@ -105,7 +105,7 @@ function botMount(){
       };
       const onViewport = () => put();
       put(); addEventListener('resize', onViewport); addEventListener('scroll', onViewport, { passive:true });
-      /* v3.7 · el nombre «SynthFlow» del logo se pinta después: si el logo crece, la bolita se corre con él (antes quedaba encima del logo en el celular) */
+      /* v3.7 · el nombre «SynthFlow» del logo se pinta después: si el logo crece, el botón se corre con él (antes quedaba encima del logo en el celular) */
       let ro = null; try{ ro = new ResizeObserver(() => put()); ro.observe(mLogo); }catch(e){} [300, 1200].forEach(t => setTimeout(put, t));
       BOT.positionCleanup = () => { removeEventListener('resize', onViewport); removeEventListener('scroll', onViewport); if (ro) ro.disconnect(); };
       if (document.fonts) document.fonts.ready.then(put);
@@ -139,12 +139,12 @@ function botMount(){
 
 /* v1.4: la carita cambia suave (una se desvanece y la otra aparece), y si está «pegada» (triste) no cambia */
 function botZone(e){
-  const r = BOT.el.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
-  const fx = (x - .5) / .667 + .5, fy = (y - .5) / .667 + .5;          /* a coordenadas de la carita (0–1) */
-  if (Math.hypot(fx - .40, fy - .52) < .085 || Math.hypot(fx - .60, fy - .52) < .085) return 'eye';
-  if (fy < .22) return 'top';
-  if (fy > .58 && fy < .72 && (fx < .38 || fx > .62)) return 'cheek';
-  if (fy > .6 && fy < .8) return 'mouth';
+  const f = $('.bf .szface', BOT.el) || BOT.el, r = f.getBoundingClientRect();
+  const fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;          /* a coordenadas de la carita (0–1) */
+  if (Math.hypot(fx - .40, fy - .52) < .1 || Math.hypot(fx - .60, fy - .52) < .1) return 'eye';
+  if (fy < .27) return 'top';                                                               /* la antena */
+  if (fy > .4 && fy < .68 && (fx < .21 || fx > .79)) return 'ear';                          /* las orejitas */
+  if (fy > .68 && fy < .84) return 'chin';
   return '';
 }
 function botFace(mood, force){
@@ -186,7 +186,7 @@ function botBubble(text, ms){
   bb.style.width = W + 'px'; bb.style.left = clamp(r.left + r.width / 2 - W / 2, 12, innerWidth - W - 12) + 'px';
   const up = r.top > 140; bb.style.top = up ? 'auto' : (r.bottom + 12) + 'px'; bb.style.bottom = up ? (innerHeight - r.top + 12) + 'px' : 'auto'; bb.classList.toggle('dn', !up);
   bb.classList.remove('on'); void bb.offsetWidth; bb.classList.add('on'); clearTimeout(bb._t); bb._t = setTimeout(() => bb.classList.remove('on'), (ms || 5200) + Math.min(3000, D.text.length * 18));
-  typeIn($('p', bb), { cps:45, max:4, onFrame:lipSync([$('.bbf .szface', bb), ballFace()], D.text) }).catch(() => {});
+  typeIn($('p', bb), { cps:45, max:4, onFrame:lipSync([$('.bbf .szface', bb), botFaceEl()], D.text) }).catch(() => {});
 }
 function botPlace(){
   const P = BOT.panel, b = BOT.el && botAt(); if (!P || !b) return;
@@ -195,7 +195,7 @@ function botPlace(){
   const r = b.getBoundingClientRect(), W = Math.min(410, innerWidth - 24), H = Math.min(690, innerHeight - 40);
   P.style.width = W + 'px'; P.style.height = H + 'px';
   if (b !== BOT.el){
-    /* junto a SynthonIA (del lado con más espacio), sin taparla */
+    /* junto a Sona (del lado con más espacio), sin taparla */
     const R = innerWidth - r.right, L = r.left, top = Math.min(84, innerHeight - H - 12);
     /* si no cabe al lado sin tapar el título, ella la sostiene: la ventanita sale debajo de su cara */
     if (Math.max(R, L) < W + 28 || r.width > 220){ P.style.left = clamp(r.left + r.width / 2 - W / 2, 12, innerWidth - W - 12) + 'px'; P.style.top = clamp(r.top + Math.min(150, r.height * .42), top, innerHeight - H - 12) + 'px'; return; }
@@ -225,7 +225,7 @@ function botOpen(){
     inp.addEventListener('blur', () => { if (BOT.stageKeep === 'listen' && !BOT.rec){ BOT.stageKeep = ''; if (!BOT.think){ botStatus('idle'); botStage(BOT.stageMood === 'escuchando' ? 'feliz' : (BOT.stageMood || 'feliz'), 'idle'); } } }); }
   botStage('feliz', 'saluda');
   botRender();
-  if (!BOT.hist.length) botSay(T('¡Hola! Soy Sona. Estoy aquí para que nunca te pierdas: pregúntame cómo se hace algo o dónde está, y te lo explico fácil o te lo señalo con mi manita.', 'Hi! I\'m Sona. I\'m here so you never get lost: ask me how to do something or where it is, and I\'ll explain it simply or point to it with my hand.'), 'feliz', null, 'saluda');
+  if (!BOT.hist.length) botSay(T('¡Hola! Soy Sona. Estoy aquí para que nunca te pierdas: pregúntame cómo se hace algo o dónde está, y te lo explico fácil o te lo señalo con mi puntero de luz.', 'Hi! I\'m Sona. I\'m here so you never get lost: ask me how to do something or where it is, and I\'ll explain it simply or point to it with my light pointer.'), 'feliz', null, 'saluda');
 }
 /* a11y: cerrado, el panel sale del árbol accesible y del foco (inert + aria-hidden); al cerrar el foco vuelve a quien lo abrió */
 function botA11y(on){
@@ -289,13 +289,13 @@ function botSay(text, mood, btn, pose){
   if (BOT.open && BOT.panel){
     botStage(mood, pose); botStatus('talk');
     const L = $$('.bl .bm.a', BOT.panel), last = L[L.length - 1], p = last && $('p', last);
-    if (p) setTimeout(() => typeIn(p, { cps:45, max:4.5, onFrame:lipSync([botStageHead(), $('.mf .szface', last), ballFace()], D.text) }).then(() => { if (BOT.panel && !BOT.think && !BOT.rec){ BOT.stageKeep = ''; botStatus('idle'); } }).catch(() => {}), 80);
+    if (p) setTimeout(() => typeIn(p, { cps:45, max:4.5, onFrame:lipSync([botStageHead(), $('.mf .szface', last), botFaceEl()], D.text) }).then(() => { if (BOT.panel && !BOT.think && !BOT.rec){ BOT.stageKeep = ''; botStatus('idle'); } }).catch(() => {}), 80);
     else botStatus('idle');
   }
   /* si cerraste la ventanita mientras pensaba: «Ten paciencia… modo zen…» y luego la respuesta */
   if (!BOT.open && BOT.zen){ BOT.zen = false; botFace('dormida', true); botBubble('Ten paciencia… modo zen…', 1900); setTimeout(() => { botFace(mood, true); botBubble(D.text.length > 240 ? D.text.slice(0, 236) + '…' : D.text, 8000); }, 2000); }
 }
-/* respuesta guardada: si dice «dónde», la manita lo señala */
+/* respuesta guardada: si dice «dónde», el puntero lo señala */
 async function botAnswer(f){
   if (f.joke || f.fact){ const t = await botThink(() => f.joke ? BOTAPI.joke() : BOTAPI.fact()); return botSay((f.fact ? '¿Sabías que…? ' : '') + t, f.joke ? 'riendo' : 'sorprendida'); }
   await botThink();
@@ -348,7 +348,7 @@ async function botAsk(q){
     const d = await r.json().catch(() => ({})); return { r, d }; });
     const { r, d } = res;
     if (!r.ok) return botSay(d.error || (B.LANG === 'en' ? 'I couldn\'t come up with an answer right now. Check the Guide or talk to the team.' : 'No pude pensar una respuesta ahora. Mira la Guía o habla con el equipo.'), 'disculpa', ['team', B.LANG === 'en' ? 'Talk to the team' : 'Hablar con el equipo']);
-    /* v3.0 · si la IA dice [ver:lugar], la manita lo señala */
+    /* v3.0 · si la IA dice [ver:lugar], el puntero lo señala */
     const pm = String(d.text || '').match(/\[ver:(\w+)\]/), place = pm && BOT_PLACES[pm[1]];
     /* v3.7 · si le faltaron al respeto, pone el límite con cara seria (sin señalar nada); v4.6 · si dijo algo delicado, responde con calidez */
     if (d.bound) return botSay(String(d.text || ''), 'neutral');
@@ -358,7 +358,7 @@ async function botAsk(q){
     if (d.remember) memAsk(String(d.remember));
   }catch(e){ botSay(B.LANG === 'en' ? 'I couldn\'t connect. Check your internet and try again.' : 'No pude conectarme. Revisa tu internet e intenta otra vez.', 'disculpa'); }
 }
-/* v3.7 · memoria: SynthonIA propone recordar algo que vale la pena y PREGUNTA; nada se guarda sin el «Sí» de la persona */
+/* v3.7 · memoria: Sona propone recordar algo que vale la pena y PREGUNTA; nada se guarda sin el «Sí» de la persona */
 function memAsk(fact){
   if (!memAddCore || !memList) return;
   BOT.memQ = BOT.memQ || {}; const id = 'mem:' + Date.now().toString(36); BOT.memQ[id] = fact;

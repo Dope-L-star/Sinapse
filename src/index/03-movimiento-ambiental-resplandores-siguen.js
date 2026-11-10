@@ -21,7 +21,7 @@ function loop(now){
 let heroDone = false;
 async function heroSeq(){
   if (heroDone) return; heroDone = true;
-  /* v2.6: SynthonIA saluda mientras se escribe el título (antes aparecía 5 segundos después) */
+  /* v2.6: Sona saluda mientras se escribe el título (antes aparecía 5 segundos después) */
   $$('.hstage.hero-fade').forEach(el => setTimeout(() => el.classList.add('show'), 350));
   /* v4.0 · quien saltó la intro quiere usar la página ya: el título se escribe rápido */
   const q = introSkipped ? .35 : 1;

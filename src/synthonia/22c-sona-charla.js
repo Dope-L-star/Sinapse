@@ -1,5 +1,5 @@
 /* =====================================================================
-   v4.6 · Sona (antes SynthonIA): charla propia y respuestas con sentido
+   v4.6 · Sona: charla propia y respuestas con sentido
    Antes cualquier palabra parecida disparaba una respuesta guardada sin relación («cuéntame algo» → chiste, «qué día es hoy» →
    «Buscar en internet») y lo demás iba a una IA con un texto enorme. Ahora, en este orden:
    1) cuidado: si dice que se quiere hacer daño, responde con calidez (nunca con un chiste ni con una IA)
@@ -39,8 +39,8 @@ const SONA_INT = [
     es:['¡Chao! Que tengas un día con mucho Flow.', '¡Hasta pronto, {n}! Aquí te espero.', 'Nos vemos. Cuando quieras volver, aquí estoy.'],
     en:['Bye! Have a day full of Flow.', 'See you soon, {n}! I\'ll be right here.', 'See you. Whenever you want to come back, I\'m here.'] },
   { id:'quien', rx:/\b(quien eres|que eres|como te llamas|cual es tu nombre|who are you|what are you|what s your name|your name is)\b/, mood:'guino', pose:'presenta',
-    es:['Soy Sona, la ayudante de la página: te explico cómo funciona, te digo las cosas claras y tengo mis opiniones sobre tecnología (spoiler: lo simple que funciona le gana a lo brillante que se rompe).', 'Me llamo Sona. Soy una IA con cara de bola de cristal y manitas flotantes: te guío por la página y charlo contigo cuando quieras.'],
-    en:['I\'m Sona, the site\'s helper: I explain how things work, I tell it like it is, and I have my own opinions about tech (spoiler: simple things that work beat shiny things that break).', 'My name is Sona. I\'m an AI with a glass-ball face and floating hands: I guide you around the site and chat whenever you like.'] },
+    es:['Soy Sona, la ayudante de la página: te explico cómo funciona, te digo las cosas claras y tengo mis opiniones sobre tecnología (spoiler: lo simple que funciona le gana a lo brillante que se rompe).', 'Me llamo Sona. Soy un robotcito negro con antena y ojos de neón: te guío por la página y charlo contigo cuando quieras.'],
+    en:['I\'m Sona, the site\'s helper: I explain how things work, I tell it like it is, and I have my own opinions about tech (spoiler: simple things that work beat shiny things that break).', 'My name is Sona. I\'m a little black robot with an antenna and neon eyes: I guide you around the site and chat whenever you like.'] },
   { id:'real', rx:/\b(eres (una? )?(humana?|real|persona|robot|ia|chica|chico)|are you (real|human|a robot|a person|an ai|a bot))\b/, mood:'guino',
     es:['No soy humana: soy Sona, una IA ayudante. Pero te escucho y te respondo de verdad, sin cuento.', 'Soy una IA, sin disfraz. Eso sí, una bien simpática 😉'],
     en:['I\'m not human: I\'m Sona, an AI helper. But I really do listen and answer you, no tricks.', 'I\'m an AI, no costume. A friendly one, though 😉'] },
@@ -69,11 +69,11 @@ const SONA_INT = [
     es:['¡Juguemos! Escribe «chiste» y te cuento uno, o «dato» y te sorprendo con un dato curioso. ¿Cuál prefieres?'],
     en:['Let\'s play! Type «joke» and I\'ll tell you one, or «fact» and I\'ll surprise you with a fun fact. Which one do you want?'] },
   { id:'deti', rx:/\b(cuentame de ti|hablame de ti|platica conmigo|conversemos|charlemos|hablemos|tell me about yourself|talk to me|let s chat)\b/, mood:'encantada', pose:'presenta',
-    es:['Soy Sona: una ayudante de IA con cara de bola de cristal, ojos azules y manitas flotantes. Me gusta lo simple que funciona, comparar IAs y los chistes cortos. ¿Y tú, qué andas buscando hoy?'],
-    en:['I\'m Sona: an AI helper with a glass-ball face, blue eyes and floating hands. I like simple things that work, comparing AIs and short jokes. And you, what are you looking for today?'] },
+    es:['Soy Sona: una ayudante de IA, un robotcito negro con antena y ojos azules de neón. Me gusta lo simple que funciona, comparar IAs y los chistes cortos. ¿Y tú, qué andas buscando hoy?'],
+    en:['I\'m Sona: an AI helper, a little black robot with an antenna and neon-blue eyes. I like simple things that work, comparing AIs and short jokes. And you, what are you looking for today?'] },
   { id:'perdido', rx:/\b(no entiendo( nada)?|estoy perdid[oa]|no se que hacer|no se por donde empezar|i don t understand|i m lost|im lost|i don t know where to start)\b/, mood:'feliz', btn:['guide', { es:'Ver la Guía', en:'See the Guide' }],
-    es:['Tranquilidad, para eso estoy. Dime qué quieres lograr y te llevo paso a paso, o toca «Ver la Guía» y te lo muestro con mi manita.'],
-    en:['No worries, that\'s what I\'m here for. Tell me what you want to do and I\'ll walk you through it, or tap «See the Guide» and I\'ll show you with my hand.'] },
+    es:['Tranquilidad, para eso estoy. Dime qué quieres lograr y te llevo paso a paso, o toca «Ver la Guía» y te lo muestro con mi puntero de luz.'],
+    en:['No worries, that\'s what I\'m here for. Tell me what you want to do and I\'ll walk you through it, or tap «See the Guide» and I\'ll show you with my light pointer.'] },
   /* solo cuando el mensaje es exactamente esto */
   { id:'saludo', exact:/^$/, mood:'feliz', pose:'saluda',
     es:['¡Hola! Soy Sona 😊 ¿En qué te ayudo?', '¡Hola, {n}! Qué gusto verte. ¿En qué te ayudo?', '¡Hey! Aquí estoy. Cuéntame qué necesitas.', '¡Hola! Qué bueno tenerte por aquí. ¿Qué andas buscando?'],

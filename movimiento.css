@@ -39,7 +39,7 @@ html.noanim .mv-gl,html.noanim .mv-rp,html.noanim .mv-prog{display:none}
 html.noanim .mv-r{opacity:1}
 html.noanim::view-transition-old(root),html.noanim::view-transition-new(root){animation:none}
 /* v3.1 · Borde de luz: un aro que fluye alrededor de los botones donde hay que tocar (Empezar gratis, Siguiente del tutorial,
-   «Muéstramelo», «Ahora pruébalo tú», el botón de SynthonIA…), para que la gente sepa dónde dar clic. Con Animaciones apagado queda quieto. */
+   «Muéstramelo», «Ahora pruébalo tú», el botón de Sona…), para que la gente sepa dónde dar clic. Con Animaciones apagado queda quieto. */
 @property --mvA{syntax:'<angle>';inherits:false;initial-value:0deg}
 :is(#startBtn,.flowbtn,#nav .navgo,#tNext,.tcard .btn[data-next],[data-gnext],[data-nw="show"],#szSay .sb .btn:not(.ghost),#szWelcome .btn.flow,[data-bcmp],.gq-full,[data-gq="go"]:not(:disabled),[data-lk="pu"],.mv-edge){position:relative;isolation:isolate;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 :is(#startBtn,.flowbtn,#nav .navgo,#tNext,.tcard .btn[data-next],[data-gnext],[data-nw="show"],#szSay .sb .btn:not(.ghost),#szWelcome .btn.flow,[data-bcmp],.gq-full,[data-gq="go"]:not(:disabled),[data-lk="pu"],.mv-edge)::before,

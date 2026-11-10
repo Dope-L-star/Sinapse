@@ -1,5 +1,5 @@
 /* ===== v3.0 · textos de la landing SymphorIA y de EnerX (español / inglés). Formato en 00b-idioma.js ===== */
-/* EnerX: el nombre de la batería vive solo aquí. Cambia ENERX y cambia en toda la página (landing, SynthFlow, Pulsem, SynthonIA), en español y en inglés */
+/* EnerX: el nombre de la batería vive solo aquí. Cambia ENERX y cambia en toda la página (landing, SynthFlow, Pulsem, Sona), en español y en inglés */
 const ENERX = 'EnerX';
 Object.assign(I18N.es, {
   'landing.nombre.eyebrow': 'Por qué se llama así',
@@ -384,7 +384,7 @@ Object.assign(I18N.en, {
  "ix.149": "Your chats are saved on this device. If you sign in, you also see them on your phone and on any computer."
 });
 
-/* textos que escribe el JS de la portada (src/index): recorrido, SynthonIA, pistas, Puter, glosario */
+/* textos que escribe el JS de la portada (src/index): recorrido, Sona, pistas, Puter, glosario */
 Object.assign(I18N.es, {
  "rb.como": "¡Así de fácil! Pregunta lo que sea.",
  "rb.modos": "Si no sabes cuál elegir, déjalo en Automático.",

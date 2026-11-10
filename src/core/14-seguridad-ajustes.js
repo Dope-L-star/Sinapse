@@ -124,7 +124,7 @@ function memAddCore(text){
   else m.items.unshift({ id:'m' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), t:Date.now(), text:t });
   m.items = m.items.slice(0, 40); memTouch(); return true;
 }
-/* v3.7 · lo que SynthonIA puede usar: solo lo aprobado y solo si la memoria está encendida */
+/* v3.7 · lo que Sona puede usar: solo lo aprobado y solo si la memoria está encendida */
 function memList(){ const m = memSt0(); return m.on ? m.items.slice(0, 12).map(x => x.text) : []; }
 /* la lista de «Lo que recuerdo de ti»: se ve, se agrega, se olvida */
 function memPanel(host){

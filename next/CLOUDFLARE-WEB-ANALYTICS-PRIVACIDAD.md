@@ -4,7 +4,7 @@ Estado por defecto: **desactivado**. Microsoft Clarity continúa desactivado y c
 
 ## Qué mide y qué no
 
-La integración usa el beacon manual oficial de Cloudflare Web Analytics: `https://static.cloudflareinsights.com/beacon.min.js`. Solo proporciona métricas agregadas de páginas y rendimiento (tiempos de carga/Core Web Vitals). No se envían eventos personalizados ni contenido de aplicación; no se usan grabaciones, mapas de calor, IDs de usuario, identificadores de cuenta ni contenido de chats. El código de SymphorIA no añade prompts, mensajes, títulos, nombres, correos, adjuntos ni resultados de SynthonIA al beacon.
+La integración usa el beacon manual oficial de Cloudflare Web Analytics: `https://static.cloudflareinsights.com/beacon.min.js`. Solo proporciona métricas agregadas de páginas y rendimiento (tiempos de carga/Core Web Vitals). No se envían eventos personalizados ni contenido de aplicación; no se usan grabaciones, mapas de calor, IDs de usuario, identificadores de cuenta ni contenido de chats. El código de SymphorIA no añade prompts, mensajes, títulos, nombres, correos, adjuntos ni resultados de Sona al beacon.
 
 La documentación de Cloudflare dice que Web Analytics no recoge ni usa datos personales; su documentación técnica explica que el beacon de RUM mide datos de rendimiento, no escribe cookies o almacenamiento en el navegador, y descarta la IP en el punto de presencia en lugar de guardarla en sus bases de datos/logs principales. Cloudflare advierte que el procesamiento puede ocurrir en una región distinta de la de origen. La política de privacidad debe reflejar eso, y cualquier determinación jurídica final debe revisarse según el público y las jurisdicciones reales.
 
@@ -58,7 +58,7 @@ Manuales en un navegador limpio de Preview:
 4. Borra la preferencia de prueba o usa otro perfil, pulsa **Permitir métricas** y verifica que se solicita `beacon.min.js` solo después de aceptar y que las métricas aparecen en Cloudflare al cabo de unos minutos. El `spa: false` evita medir automáticamente transiciones internas de cliente.
 5. Abre «Analítica», retira el permiso y confirma la recarga. La métrica del documento en el que diste permiso puede haber sido recibida por Cloudflare y no se puede retirar retroactivamente desde el navegador; después de recargar, no deben aparecer nuevas solicitudes del beacon.
 6. Prueba `/chat.html?code=TEST` y un fragmento `#token=TEST`: la medición debe quedar omitida en esas URL. Prueba `/pulsem.html` y `/sintetico.html`: deben excluirse.
-7. Comprueba CSP sin errores y que SynthFlow, login, chats, streaming, adjuntos y SynthonIA siguen funcionando.
+7. Comprueba CSP sin errores y que SynthFlow, login, chats, streaming, adjuntos y Sona siguen funcionando.
 8. Verifica en el panel que la inserción automática no está activada; de lo contrario, las pruebas de ausencia previa al consentimiento no son válidas.
 
 ## Retención y revisión

@@ -1,5 +1,5 @@
-/* ===== v3.1 · Movimiento: SynthonIA sabe por qué todo se mueve, cómo apagarlo y qué cambió =====
-   La capa de animaciones vive en movimiento.css / movimiento.js (src/movimiento*). Aquí solo va lo que SynthonIA cuenta y las novedades. */
+/* ===== v3.1 · Movimiento: Sona sabe por qué todo se mueve, cómo apagarlo y qué cambió =====
+   La capa de animaciones vive en movimiento.css / movimiento.js (src/movimiento*). Aquí solo va lo que Sona cuenta y las novedades. */
 WHATSNEW.v = '3.1';
 WHATSNEW.items.unshift(
   ['guia', B.LANG === 'en'

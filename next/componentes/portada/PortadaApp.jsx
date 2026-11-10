@@ -9,6 +9,7 @@ import { useAliasVisible } from '../../lib/solo-equipo';
 import BarraSuperior from '../partitura/BarraSuperior';
 import Pentagrama from '../partitura/Pentagrama';
 import Chispas from '../partitura/Chispas';
+import SonaRobot from '../partitura/SonaRobot';
 import { TEXTOS } from './textos';
 import './portada.css';
 
@@ -211,7 +212,7 @@ export default function PortadaApp() {
           <div className="wrap pt-dos">
             <div className="pt-anillo" role="img" aria-label="OpenAI, Gemini, Claude, Meta, Mistral, Nvidia, Kimi, Perplexity, DeepSeek, Qwen, Grok, Gemma">
               <div className="circ" /><div className="circ b" />
-              <div className="orb"><span className="syn big" /></div>
+              <div className="orb"><SonaRobot size={96} /></div>
               {ANILLO.map(([ico, n, x, y, tam], i) => (
                 <span key={ico} className={'ai ' + tam} style={{ left: x + '%', top: y + '%', '--d': i * 0.25 + 's' }}><img src={ICO(ico)} alt="" /></span>
               ))}

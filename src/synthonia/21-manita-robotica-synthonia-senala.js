@@ -1,19 +1,21 @@
-/* ---------- la manita robótica de SynthonIA: señala, hace clic, escribe y explica ---------- */
+/* ---------- el puntero de luz de Sona: señala, hace clic, escribe y explica (SIN manos: es un puntero de neón) ----------
+   arrow = flecha, point = mira con anillo (para hacer clic), grab = punto que arrastra, palm = destello que saluda, text = cursor de escribir */
+const HP = 'fill="#0b0b12" stroke="url(#hgd)" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"';
 const HAND_SVG = {
-  arrow:'<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 3l20 11.2-8.6 2.2L12 25.5z" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.6 8.3l11.3 6.3" stroke="#fff4d6" stroke-opacity=".7" stroke-width="1.2" stroke-linecap="round"/><circle cx="12.6" cy="17.6" r="1.6" fill="#c9566c" stroke="#1a0f08" stroke-width=".8"/></svg>',
-  point:'<svg viewBox="0 0 32 32" aria-hidden="true"><rect x="14.6" y="10.6" width="3.9" height="7" rx="1.95" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.3"/><rect x="18.3" y="11.6" width="3.7" height="6.4" rx="1.85" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.3"/><rect x="21.8" y="13" width="3.4" height="5.6" rx="1.7" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.3"/><path d="M7.4 17.4c0-1.8 1.3-3 3-3h11.6c2 0 3.4 1.4 3.4 3.4v3.4c0 4.2-3.2 7.4-7.4 7.4h-3.2c-4.2 0-7.4-3.2-7.4-7.4z" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.4" stroke-linejoin="round"/><path d="M7.6 18.6c-1.9-1.2-4-.2-3.9 1.7.1 1.3 1.3 2.2 3 3.4l2.8 1.6" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><rect x="9.2" y="1.4" width="5.4" height="17.4" rx="2.7" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.4"/><path d="M10 7h3.8M10 11.6h3.8" stroke="#1a0f08" stroke-opacity=".45" stroke-width="1" stroke-linecap="round"/><path d="M10.6 3.4v2" stroke="#fff4d6" stroke-opacity=".75" stroke-width="1.1" stroke-linecap="round"/><rect x="10" y="26.6" width="12.6" height="3.6" rx="1.6" fill="#c9566c" stroke="#1a0f08" stroke-width="1.2"/><circle cx="18.6" cy="21.6" r="1.5" fill="#c9566c"/></svg>',
-  grab:'<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7.4 13.6c0-1.8 1.4-3 3-3h10.8c2.6 0 4.4 1.8 4.4 4.4v5.6c0 4.4-3.4 7.8-7.8 7.8h-2.6c-4.4 0-7.8-3.4-7.8-7.8z" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.4"/><path d="M11 10.8v4M14.8 10.6v4.4M18.6 10.6v4.4M22.2 11.2v4" stroke="#1a0f08" stroke-opacity=".55" stroke-width="1.1" stroke-linecap="round"/><rect x="10.2" y="26.2" width="12.6" height="3.6" rx="1.6" fill="#c9566c" stroke="#1a0f08" stroke-width="1.2"/></svg>',
-  palm:'<svg viewBox="0 0 32 32" aria-hidden="true"><rect x="8.4" y="4.2" width="3.7" height="12.6" rx="1.85" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.3"/><rect x="12.4" y="1.6" width="3.8" height="15" rx="1.9" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.3"/><rect x="16.5" y="2.4" width="3.7" height="14.4" rx="1.85" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.3"/><rect x="20.4" y="5.2" width="3.4" height="11.8" rx="1.7" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.3"/><path d="M7.8 15.2c0-1.5 1.1-2.5 2.6-2.5h11.6c1.8 0 3 1.2 3 3v4.6c0 4.3-3.3 7.6-7.6 7.6h-2.6c-4.2 0-7-3.3-7-7.6z" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 17.6c-1.6-2-4.4-1.6-4.3.4.1 1.4 1.5 2.4 3.3 3.6l2.2 1.4" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.2 4v2.2M17.3 4.6v2" stroke="#fff4d6" stroke-opacity=".75" stroke-width="1.1" stroke-linecap="round"/><rect x="10" y="26.6" width="12.6" height="3.6" rx="1.6" fill="#c9566c" stroke="#1a0f08" stroke-width="1.2"/><circle cx="18.4" cy="20.6" r="1.5" fill="#c9566c"/></svg>',
-  text:'<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M11 4.5c2.4 0 4 .8 5 2 1-1.2 2.6-2 5-2M11 27.5c2.4 0 4-.8 5-2 1 1.2 2.6 2 5 2M16 6.5v19M13.2 16h5.6" fill="none" stroke="#1a0f08" stroke-width="4" stroke-linecap="round"/><path d="M11 4.5c2.4 0 4 .8 5 2 1-1.2 2.6-2 5-2M11 27.5c2.4 0 4-.8 5-2 1 1.2 2.6 2 5 2M16 6.5v19M13.2 16h5.6" fill="none" stroke="url(#hgd)" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="16" r="1.4" fill="#c9566c"/></svg>'
+  arrow:'<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 3l20 11.2-8.6 2.2L12 25.5z" ' + HP + '/><path d="M8.6 8.3l8.2 4.6" stroke="#fff" stroke-opacity=".55" stroke-width="1.1" stroke-linecap="round"/><circle cx="12.4" cy="17.4" r="1.5" fill="#ff7ac0"/></svg>',
+  point:'<svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="9.4" fill="rgba(11,11,18,.55)" stroke="url(#hgd)" stroke-width="1.9"/><path d="M16 2.4v4.4M16 25.2v4.4M2.4 16h4.4M25.2 16h4.4" stroke="url(#hgd)" stroke-width="1.9" stroke-linecap="round"/><circle cx="16" cy="16" r="3" fill="#3de0ff"/></svg>',
+  grab:'<svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="9" ' + HP + '/><circle cx="16" cy="16" r="4" fill="#ff7ac0"/><path d="M16 4.6v3M16 24.4v3M4.6 16h3M24.4 16h3" stroke="#3de0ff" stroke-width="1.6" stroke-linecap="round"/></svg>',
+  palm:'<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2.5l3.2 10.3L29.5 16l-10.3 3.2L16 29.5l-3.2-10.3L2.5 16l10.3-3.2z" ' + HP + '/><circle cx="16" cy="16" r="2.6" fill="#3de0ff"/></svg>',
+  text:'<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M11 4.5c2.4 0 4 .8 5 2 1-1.2 2.6-2 5-2M11 27.5c2.4 0 4-.8 5-2 1 1.2 2.6 2 5 2M16 6.5v19" fill="none" stroke="#0b0b12" stroke-width="4.4" stroke-linecap="round"/><path d="M11 4.5c2.4 0 4 .8 5 2 1-1.2 2.6-2 5-2M11 27.5c2.4 0 4-.8 5-2 1 1.2 2.6 2 5 2M16 6.5v19" fill="none" stroke="url(#hgd)" stroke-width="2.2" stroke-linecap="round"/><circle cx="16" cy="16" r="1.5" fill="#ff7ac0"/></svg>'
 };
-const HAND_HOT = { arrow:[5, 3], point:[11.9, 1.8], grab:[16, 12], text:[16, 16], palm:[16, 14] };
+const HAND_HOT = { arrow:[5, 3], point:[16, 16], grab:[16, 16], text:[16, 16], palm:[16, 16] };
 const HAND = (() => {
   let el = null, spot = null, say = null, x = -80, y = -80, shape = 'arrow', alive = false, raf = 0, sayTok = 0, wraf = 0, wArea = null;
   const fast = () => !CFG.anim || PERF;
   function build(){
     if (el) return;
     el = document.createElement('div'); el.id = 'szHand'; el.setAttribute('aria-hidden', 'true');
-    el.innerHTML = '<svg width="0" height="0" style="position:absolute"><defs><linearGradient id="hgd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe7b0"/><stop offset=".45" stop-color="#e6b65f"/><stop offset="1" stop-color="#b8743f"/></linearGradient></defs></svg><div class="hs"></div><span class="hl">SynthonIA</span>';
+    el.innerHTML = '<svg width="0" height="0" style="position:absolute"><defs><linearGradient id="hgd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7ac0"/><stop offset=".5" stop-color="#a866ff"/><stop offset="1" stop-color="#3de0ff"/></linearGradient></defs></svg><div class="hs"></div><span class="hl">Sona</span>';
     spot = document.createElement('div'); spot.id = 'szSpot'; spot.setAttribute('aria-hidden', 'true');
     say = document.createElement('div'); say.id = 'szSay'; say.setAttribute('role', 'status'); say.setAttribute('aria-live', 'polite');
     document.body.append(spot, el, say);
@@ -58,7 +60,7 @@ const HAND = (() => {
     spot.classList.add('on');
   }
   const spotOff = () => { if (spot) spot.classList.remove('on'); if (spotT && spotT.removeAttribute) spotT.removeAttribute('data-guide-ok'); spotT = null; };
-  /* clic con la manita: se aprieta, sale una onda y (si se pide) hace el clic de verdad */
+  /* clic con el puntero: se aprieta, sale una onda y (si se pide) hace el clic de verdad */
   async function click(t, o = {}){
     if (t && !(await moveTo(t, Object.assign({ shape:'point' }, o)))) return false;
     setShape('point'); el.classList.add('press'); SND.tap();
@@ -81,11 +83,11 @@ const HAND = (() => {
     n.value = text; n.dispatchEvent(new Event('input', { bubbles:true }));
     if (el) setShape('arrow'); return true;
   }
-  /* SynthonIA habla en una burbuja junto a la manita (con botones opcionales) */
+  /* Sona habla en una burbuja junto al puntero (con botones opcionales) */
   function talk(text, o = {}){
     build(); const tok = ++sayTok;
     const mood = o.mood || 'feliz', btns = o.buttons || [];
-    say.innerHTML = '<span class="sf">' + face(mood, 56) + '</span><div class="st"><b>SynthonIA</b><p></p>' + (btns.length ? '<div class="sb">' + btns.map((b, i) => '<button type="button" class="btn sm' + (b.ghost ? ' ghost' : '') + '" data-sb="' + i + '">' + esc(b.label) + '</button>').join('') + '</div>' : '') + '</div>';
+    say.innerHTML = '<span class="sf">' + face(mood, 56) + '</span><div class="st"><b>Sona</b><p></p>' + (btns.length ? '<div class="sb">' + btns.map((b, i) => '<button type="button" class="btn sm' + (b.ghost ? ' ghost' : '') + '" data-sb="' + i + '">' + esc(b.label) + '</button>').join('') + '</div>' : '') + '</div>';
     const p = $('p', say); p.textContent = text;
     say.classList.remove('on'); void say.offsetWidth;
     /* lo más cerca posible de lo que explica, sin salirse de la pantalla */
@@ -100,7 +102,7 @@ const HAND = (() => {
     say.style.left = lx + 'px'; say.style.top = ly + 'px';
     requestAnimationFrame(() => say && say.classList.add('on'));
     SND.blip(mood);
-    if (!fast()) typeIn(p, { cps:48, max:4, onFrame:lipSync([$('.sf .szface', say), ballFace()], text) }).catch(() => { p.textContent = text; });
+    if (!fast()) typeIn(p, { cps:48, max:4, onFrame:lipSync([$('.sf .szface', say), botFaceEl()], text) }).catch(() => { p.textContent = text; });
     return new Promise(res => {
       if (!btns.length){ res(-1); return; }
       $$('[data-sb]', say).forEach(b => b.addEventListener('click', () => { if (tok === sayTok) res(+b.dataset.sb); }));
@@ -108,7 +110,7 @@ const HAND = (() => {
     });
   }
   const quiet = () => { if (say) say.classList.remove('on'); };
-  /* mientras eliges algo (p. ej. los temas), la manita no se queda quieta tapando opciones:
+  /* mientras eliges algo (p. ej. los temas), el puntero no se queda quieto tapando opciones:
      flota suave por fuera del panel, arriba y abajo, sin ponerse encima de nada */
   function stopWander(){ cancelAnimationFrame(wraf); wraf = 0; wArea = null; }
   function spotFor(r){
@@ -137,7 +139,7 @@ const HAND = (() => {
       paint(clamp(vx * .4, -8, 8) + Math.sin(t * 1.7) * 4);
     })(t0);
   }
-  /* «¡hola!»: la manita se abre y saluda */
+  /* «¡hola!»: el puntero hace un destello y saluda */
   async function wave(n){
     build(); stopWander(); const prev = shape; setShape('palm');
     const hs = $('.hs', el); if (!hs) return;

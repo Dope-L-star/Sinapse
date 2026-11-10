@@ -85,9 +85,9 @@ El proyecto configurado es `z5es3kuqoz`; antes de producción confirma en Clarit
 El árbol React en `contenido/arboles-react/` conserva el marcado y los IDs originales, mientras `LegacyRuntime` carga los módulos interactivos antiguos. Esto protege funcionalidad durante la migración, pero no significa que todo el comportamiento ya esté reescrito con hooks de React.
 
 
-## Guía y SynthonIA en React
+## Guía y Sona en React
 
-Consulta `GUIA-REACT-SYNTHONIA.md`. La guía rápida se conecta a `openGuide` y mantiene `SZ.guideAsk`; SynthonIA y BETA son botones renderizados por React y el motor existente se limita a aportar su comportamiento. Ejecuta `npm run test:guide --prefix next` además de los controles de migración y Clarity. Las pruebas visuales end-to-end y `next build` todavía deben ejecutarse en una vista previa real.
+Consulta `GUIA-REACT-SYNTHONIA.md`. La guía rápida se conecta a `openGuide` y mantiene `SZ.guideAsk`; Sona y BETA son botones renderizados por React y el motor existente se limita a aportar su comportamiento. Ejecuta `npm run test:guide --prefix next` además de los controles de migración y Clarity. Las pruebas visuales end-to-end y `next build` todavía deben ejecutarse en una vista previa real.
 
 ### Analítica de privacidad mínima
 

@@ -1,4 +1,4 @@
-/* ===== v2.5 · portada igual al boceto: sin barra lateral, SynthonIA de cuerpo entero que te acompaña,
+/* ===== v2.5 · portada igual al boceto: sin barra lateral, Sona de cuerpo entero que te acompaña,
    un fondo distinto en cada sección y los íconos 3D del boceto ===== */
 :root{--rw:0px}
 .rail{display:none !important}
@@ -83,7 +83,7 @@ main>section{position:relative;isolation:isolate}
 @keyframes nebdrift{to{transform:translate(3%,-2%) scale(1.06) rotate(3deg)}}
 @keyframes twk{to{opacity:.35}}
 @keyframes spin{to{transform:rotate(360deg)}}
-/* SynthonIA es para ti: ondas líquidas de color que se apagan hacia abajo */
+/* Sona es para ti: ondas líquidas de color que se apagan hacia abajo */
 .bg-liquid{background:radial-gradient(46% 30% at 50% 58%,rgba(46,16,92,.55),transparent)}
 .bg-liquid i:nth-child(1){left:-10%;right:-10%;bottom:9%;height:40%;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 400' preserveAspectRatio='none'><path d='M0 200C360 90 760 330 1440 130V400H0Z' fill='%235b2bd8'/><path d='M0 200C360 90 760 330 1440 130' fill='none' stroke='%23fff' stroke-opacity='.35' stroke-width='3'/><path d='M0 250C400 150 780 360 1440 200V400H0Z' fill='%23ff3d9a'/><path d='M0 300C420 210 820 390 1440 265V400H0Z' fill='%23ff7a45'/><path d='M0 345C440 280 840 410 1440 330V400H0Z' fill='%23ffc857'/></svg>") 0 100%/100% 100% no-repeat;opacity:.55;animation:liq 12s ease-in-out infinite alternate;transform-origin:50% 100%;
   -webkit-mask:linear-gradient(180deg,#000 45%,transparent 96%);mask:linear-gradient(180deg,#000 45%,transparent 96%)}
@@ -151,7 +151,7 @@ div.ready .rd-f{margin:-110px 0 -30px}
 @media (min-width:761px){div.ready{margin-top:104px}}
 div.ready .rd-f .szbody{width:min(230px,50vw);height:auto}
 
-/* ---------- SynthonIA que te acompaña ---------- */
+/* ---------- Sona que te acompaña ---------- */
 .szroam{position:fixed;top:21vh;z-index:58;width:132px;cursor:pointer;opacity:0;pointer-events:none;transform:scale(.6) translateY(30px);transition:opacity .5s var(--ease),transform .6s cubic-bezier(.34,1.56,.64,1);--ex:0px;--ey:0px;--tilt:0deg}
 .szroam[data-side="r"]{right:18px}.szroam[data-side="l"]{left:18px}
 .szroam.abs{position:absolute;z-index:45;right:auto !important;bottom:auto !important;transition:opacity .5s var(--ease),transform .6s cubic-bezier(.34,1.56,.64,1)}
@@ -180,7 +180,7 @@ html.noanim .szroam .rb-fig{animation:none}
   .hstage{min-height:0;padding-top:0}
   .hdemo{position:relative !important;right:auto;bottom:auto;margin-top:-30px !important}
   .sbody .szbody{width:min(240px,58vw)}
-  #heroBot{min-height:calc(min(240px,58vw) * 4 / 3)}   /* guarda el sitio de SynthonIA antes de que aparezca: nada salta al cargar */
+  #heroBot{min-height:calc(min(240px,58vw) * 4 / 3)}   /* guarda el sitio de Sona antes de que aparezca: nada salta al cargar */
 }
 @media (max-width:620px){
   .v24hero{padding-top:96px}
@@ -223,7 +223,7 @@ main .free.lqg,main div.ready.lqg{backdrop-filter:var(--lg-blur);-webkit-backdro
   main .free.lqg,main div.ready.lqg{backdrop-filter:blur(8px) saturate(1.6);-webkit-backdrop-filter:blur(8px) saturate(1.6)}
 }
 
-/* ---------- v2.6 · SynthonIA es la ayudante: sin bolita en la portada ---------- */
+/* ---------- v2.6 · Sona es la ayudante: sin botón en la portada ---------- */
 html.szlive #szBot,html.szlive #betaBot{opacity:0 !important;pointer-events:none !important;visibility:hidden}
 #heroBot,#readyFace{cursor:pointer}
 #heroBot:focus-visible,#readyFace:focus-visible{outline:2px solid #3de0ff;outline-offset:6px;border-radius:24px}
@@ -239,7 +239,7 @@ html.szlive #szBot,html.szlive #betaBot{opacity:0 !important;pointer-events:none
   .hub{max-width:860px;width:100%;margin:0 auto}
 }
 .hub-i{text-align:left}
-/* «SynthonIA es para ti» no tenía margen a los lados: las tarjetas tocaban el borde de la pantalla */
+/* «Sona es para ti» no tenía margen a los lados: las tarjetas tocaban el borde de la pantalla */
 #usos{padding-left:clamp(18px,4vw,40px);padding-right:clamp(18px,4vw,40px)}
 /* «Descansando» en grande se salía de su tarjeta en celulares chicos: el texto se achica y nunca pasa del borde */
 #consumo .limbig>div{min-width:0;flex:1}
@@ -292,12 +292,12 @@ html.szlive #szBot,html.szlive #betaBot{opacity:0 !important;pointer-events:none
 /* «¿Listo para sintonizar?»: el listón de colores pasaba justo detrás del texto; un velo oscuro suave del lado del texto lo hace legible */
 main div.ready.lqg{background:linear-gradient(90deg,rgba(12,7,30,.62),rgba(12,7,30,.34) 55%,rgba(12,7,30,.08)),var(--lg-bg),rgba(20,12,44,.16)}
 @media (max-width:620px){main div.ready.lqg{background:linear-gradient(180deg,rgba(12,7,30,.6),rgba(12,7,30,.3) 60%,rgba(12,7,30,.1)),var(--lg-bg),rgba(20,12,44,.16)}}
-/* celular: la caja va en columna; SynthonIA quedaba subida encima del botón «Empezar gratis». Va debajo, sin pisarlo */
+/* celular: la caja va en columna; Sona quedaba subida encima del botón «Empezar gratis». Va debajo, sin pisarlo */
 @media (max-width:620px){div.ready .rd-f{margin:14px 0 -44px}div.ready .rd-f .szbody{width:min(190px,52vw)}}
 /* el campo no empuja el ancho de la portada en celulares chicos (antes la estiraba a 347 px en una pantalla de 320) */
 .hask{width:100%;max-width:520px;box-sizing:border-box}
 .hask input{width:0}
-/* la tarjeta «Ejemplo» quedaba montada sobre el aro de luz de la base de SynthonIA: un poco más abajo, sin tocarla */
+/* la tarjeta «Ejemplo» quedaba montada sobre el aro de luz de la base de Sona: un poco más abajo, sin tocarla */
 .hdemo{bottom:0}
 @media (max-width:980px){.hdemo{margin-top:8px !important}}
 /* tablet y PC chico (561–1023 px): los enlaces del menú no cabían, se partían en dos líneas y «Entrar» quedaba cortado.

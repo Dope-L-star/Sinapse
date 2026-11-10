@@ -39,7 +39,7 @@ if (!q && DRAFTS[draftK]){
   }, enter ? 1700 : 600);
 }
 try{
-  /* temas elegidos en la portada: SynthonIA los muestra aquí, en ese orden */
+  /* temas elegidos en la portada: Sona los muestra aquí, en ese orden */
   let gt = null; try{ gt = JSON.parse(sessionStorage.getItem('synthz:gtopics') || 'null'); sessionStorage.removeItem('synthz:gtopics'); }catch(e){}
   if (params.get('guia') === '1') setTimeout(runGuide, enter ? 2000 : 500);
   else if (Array.isArray(gt) && gt.length) setTimeout(() => runTopics(gt), enter ? 2000 : 600);

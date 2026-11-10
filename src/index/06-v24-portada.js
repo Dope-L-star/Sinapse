@@ -1,10 +1,10 @@
 
-/* ===== v2.4 · portada del boceto: SynthonIA de cuerpo entero, onda «synthonized», compáralas a ciegas y detalles ===== */
+/* ===== v2.4 · portada del boceto: Sona de cuerpo entero, onda «synthonized», compáralas a ciegas y detalles ===== */
 (() => {
 const { $, $$, reduce } = SZ;
 const q = s => document.querySelector(s);
 
-/* v2.5 · SynthonIA de cuerpo entero, igual al boceto (cabeza 45 %, torso 30 %, base 25 %) */
+/* v2.5 · Sona de cuerpo entero, igual al boceto (cabeza 45 %, torso 30 %, base 25 %) */
 const body = (mood, pose, size) => SZ.synBody(mood, pose, size);
 /* v2.6: cambia cara y pose sobre el mismo cuerpo, así los brazos se mueven suave */
 const set = (host, mood, pose, size) => SZ.synSet(host, mood, pose, size);
@@ -22,7 +22,7 @@ if (hb){
     set(hb, 'celebrando', 'celebra', 300); hb.classList.remove('boop'); void hb.offsetWidth; hb.classList.add('boop');
     try{ SZ.SND && SZ.SND.blip && SZ.SND.blip('feliz'); SZ.burst && SZ.burst(hb); }catch(e){}
     setTimeout(() => { set(hb, 'feliz', 'saluda', 300); setTimeout(calm, 2600); }, 1600);
-    /* v2.6: ella es la ayudante (ya no hay bolita): tocarla abre su ventanita para hablarle */
+    /* v2.6: ella es la ayudante (ya no hay botón): tocarla abre su ventanita para hablarle */
     try{ SZ.BOT && SZ.BOT.open && SZ.BOT.open(); }catch(e){}
   });
   hb.setAttribute('role', 'button'); hb.tabIndex = 0; hb.setAttribute('aria-label', SZ.t('rb.aria'));
@@ -33,7 +33,7 @@ if (hb){
     addEventListener('pointermove', e => { const r = hb.getBoundingClientRect(); ex = Math.max(-1, Math.min(1, (e.clientX - r.left - r.width / 2) / 500)); ey = Math.max(-1, Math.min(1, (e.clientY - r.top - 90) / 500)); if (!raf) raf = requestAnimationFrame(() => { raf = 0; hb.style.setProperty('--ex', (ex * 3.2).toFixed(2) + 'px'); hb.style.setProperty('--ey', (ey * 2.4).toFixed(2) + 'px'); hb.style.setProperty('--tilt', (ex * 4).toFixed(2) + 'deg'); }); }, { passive:true });
   }
 }
-/* chispitas doradas que flotan alrededor de SynthonIA */
+/* chispitas doradas que flotan alrededor de Sona */
 const dust = q('#heroDust');
 if (dust && !reduce) dust.innerHTML = Array.from({ length:26 }, (_, i) => '<i style="--x:' + (Math.random() * 100).toFixed(1) + '%;--y:' + (Math.random() * 100).toFixed(1) + '%;--t:' + (3 + Math.random() * 5).toFixed(1) + 's;--dl:-' + (Math.random() * 6).toFixed(1) + 's;--s:' + (1.5 + Math.random() * 2.5).toFixed(1) + 'px"></i>').join('');
 const rf = q('#readyFace');
@@ -70,7 +70,7 @@ if (cv){
   else { on = true; raf = requestAnimationFrame(draw); }
 }
 
-/* Compáralas a ciegas: eliges la que tiene más Flow y SynthonIA te cuenta quién respondió (son IAs de ejemplo) */
+/* Compáralas a ciegas: eliges la que tiene más Flow y Sona te cuenta quién respondió (son IAs de ejemplo) */
 const bf = q('#blFace'); if (bf) bf.innerHTML = SZ.face('guino', 44);
 $$('.bl-v').forEach((b, i) => b.addEventListener('click', () => {
   $$('.bl-c').forEach((c, j) => { c.classList.toggle('won', i === j); c.classList.add('shown'); const n = c.querySelector('b'); if (n && !n.dataset.was){ n.dataset.was = n.textContent; n.textContent = 'IA de ejemplo ' + (j + 1); } });

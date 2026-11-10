@@ -66,8 +66,8 @@ Se marcan `#msgs`, `#thList`, `#sideFoot`, `#accBtn`, `#launch`, `#usagePanel`, 
 Las ocho rutas de interfaz están en App Router: las seis páginas principales se renderizan con elementos creados por React y árboles verificados, y Privacidad/Términos son componentes JSX. **La lógica interactiva completa aún no ha pasado a hooks/context**: chat, autenticación, proveedores, streaming, historial, A.L.I.A.S. y Pulsem siguen usando módulos JavaScript antiguos cargados mediante `LegacyRuntime` para conservar compatibilidad. No se debe describir este estado como una reescritura React 100% terminada. La conversión de esos módulos debe hacerse por subsistema y con pruebas E2E reales.
 
 
-## Corrección de regresión: marca SynthFlow y SynthonIA
+## Corrección de regresión: marca SynthFlow y Sona
 
-La conversión del `body` a un árbol React no puede trasladar directamente el atributo del elemento raíz original, `html[data-brand="flow"]`. `core.js` usa `document.documentElement.dataset.brand` para identificar SynthFlow. Si falta, SynthonIA se trata como la bolita global de SymphorIA y el botón BETA no se adjunta a ella.
+La conversión del `body` a un árbol React no puede trasladar directamente el atributo del elemento raíz original, `html[data-brand="flow"]`. `core.js` usa `document.documentElement.dataset.brand` para identificar SynthFlow. Si falta, Sona se trata como la bolita global de SymphorIA y el botón BETA no se adjunta a ella.
 
 `next/componentes/LegacyRuntime.jsx` asigna `data-brand="flow"` sincrónicamente al iniciar la ruta de chat **antes** de cargar `core.js`, `chat.js` y `movimiento.js`; al salir de la ruta lo limpia de forma conservadora. `next/verificar-migracion.mjs` contiene una prueba de regresión que garantiza el orden. La integración de Clarity sigue desactivada por defecto y no se activa como parte de este arreglo.

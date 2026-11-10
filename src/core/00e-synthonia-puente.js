@@ -1,5 +1,5 @@
-/* ===== v3.4 · SynthonIA vive en su propio archivo: synthonia.js (piezas en src/synthonia/) =====
-   Antes estaba dentro de core.js (≈190 KB: su cara, su manita, sus sonidos, su ventanita, la guía, el mantenimiento…).
+/* ===== v3.4 · Sona vive en su propio archivo: synthonia.js (piezas en src/synthonia/) =====
+   Antes estaba dentro de core.js (≈190 KB: su cara, su puntero, sus sonidos, su ventanita, la guía, el mantenimiento…).
    Ahora core.js la carga aparte: en la portada enseguida (ella es la portada) y en Sonyx y Pulsem cuando la página ya cargó.
    Mientras llega, estos nombres son «de espera»: lo que se le pida a Sona se guarda y se hace apenas llegue
    (los sonidos de antes de que llegue simplemente no suenan, y su cara sale vacía). SZ.synReady avisa cuando ya está.
@@ -7,7 +7,7 @@
 let synOk = false, synDone;
 const synReady = new Promise(r => { synDone = r; });
 const synQ = [];
-/* una función de espera: si SynthonIA ya llegó llama a la de verdad; si no, la guarda y devuelve una promesa */
+/* una función de espera: si Sona ya llegó llama a la de verdad; si no, la guarda y devuelve una promesa */
 const synLater = name => (...a) => synOk ? SYNX[name](...a) : new Promise(ok => synQ.push(() => { try{ ok(SYNX[name](...a)); }catch(e){ ok(undefined); } }));
 /* un objeto de espera (SZ.BOT, SZ.HAND): sus métodos se guardan; los valores conocidos devuelven algo neutro */
 const synObj = (name, vals = {}) => new Proxy({}, { get:(t, k) => {
@@ -17,7 +17,7 @@ const synObj = (name, vals = {}) => new Proxy({}, { get:(t, k) => {
   return (...a) => new Promise(ok => synQ.push(() => { try{ const f = SYNX[name][k]; ok(typeof f === 'function' ? f(...a) : f); }catch(e){ ok(undefined); } }));
 } });
 const SYNX = {};
-let face = () => '', synBody = () => '', synSet = () => {}, lipSync = () => () => {}, ballFace = () => null, randomGoodFace = () => 'feliz', wasAway = () => false;
+let face = () => '', synBody = () => '', synSet = () => {}, lipSync = () => () => {}, botFaceEl = () => null, randomGoodFace = () => 'feliz', wasAway = () => false;
 let EV;   /* los eventos de 50, 100 y 500 visitas (el portal pregunta «typeof EV») */
 let FACE_GOOD = ['feliz', 'riendo', 'guino', 'encantada', 'celebrando', 'flow'], SPOSE = {}, GTOPICS = [];
 let botOpen = synLater('botOpen'), botTeam = synLater('botTeam'), feedbackModal = synLater('feedbackModal'), guideChooser = synLater('guideChooser'),
@@ -28,7 +28,7 @@ let HAND = synObj('HAND', { alive:false, pos:{ x:0, y:0 } }), BOTAPI = synObj('B
 function synArrive(x){
   if (synOk) return;
   Object.assign(SYNX, x);
-  ({ face, synBody, synSet, lipSync, ballFace, randomGoodFace, wasAway, FACE_GOOD, SPOSE, GTOPICS, botOpen, botTeam, feedbackModal, guideChooser, welcomeBack, guideAsk, whatsNew, SND, HAND, BOTAPI, EV } = x);
+  ({ face, synBody, synSet, lipSync, botFaceEl, randomGoodFace, wasAway, FACE_GOOD, SPOSE, GTOPICS, botOpen, botTeam, feedbackModal, guideChooser, welcomeBack, guideAsk, whatsNew, SND, HAND, BOTAPI, EV } = x);
   synOk = true;
   synQ.splice(0).forEach(f => f());
   synDone(true);

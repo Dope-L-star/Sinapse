@@ -69,7 +69,7 @@ function authModal(first, next, opts){
   return o;
 }
 function openHelp(){ SZ.helpGuide({ extra:[['Recorrido por la página', () => pageTour()], ['Abrir Sonyx', () => openChat()]] }); }
-/* Guía: Asistida (SynthonIA en SynthFlow, con la cinemática y 5 mensajes de prueba) o Lectura (aquí mismo) */
+/* Guía: Asistida (Sona en SynthFlow, con la cinemática y 5 mensajes de prueba) o Lectura (aquí mismo) */
 function openGuide(){ pageTour(() => setTimeout(() => { if (!SZ.ACC.ready) authModal(false, () => updateTotals()); }, 400)); }
 $('#helpBtn').addEventListener('click', openGuide);
 /* menú del celular */

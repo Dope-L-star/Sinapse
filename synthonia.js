@@ -1,5 +1,5 @@
-/* ===== SymphorIA · SynthonIA (su cara, su manita, sus sonidos, su ventanita, la guía, los eventos y el mantenimiento) =====
-   Va aparte de core.js desde v3.4: así SynthFlow y Pulsem abren más livianos y SynthonIA llega justo después.
+/* ===== SymphorIA · Sona (su cara, su puntero, sus sonidos, su ventanita, la guía, los eventos y el mantenimiento) =====
+   Va aparte de core.js desde v3.4: así SynthFlow y Pulsem abren más livianos y Sona llega justo después.
    Lo de core que necesita viene por SZ.__syn (LANG y SESS cambian, por eso se leen siempre como B.LANG y B.SESS).
    Al final devuelve lo suyo con B.ready({ … }) (ver src/core/00e-synthonia-puente.js). Se arma con «node build.mjs». */
 (() => {
@@ -7,7 +7,7 @@
 if (!window.SZ || !SZ.__syn) return;
 const B = SZ.__syn;
 const { root, $, $$, clamp, CFG, PERF, reduce, sleepRaw, esc, isFlow, BRAND, zWord, t, onLang, ENERX, trStr, ACC, accHooks, api, accName, toast, pixelGrid, pixelRun, typeIn, SZQ, szCatalog, telPage, telEv, burst, portalOut, portalLock, authBox, cfgModal, plansModal, memAddCore, memList } = B;
-/* v3.7 · lo que escribe SynthonIA sale con formato: **negrita**, *cursiva*, `código` y listas con «-».
+/* v3.7 · lo que escribe Sona sale con formato: **negrita**, *cursiva*, `código` y listas con «-».
    Antes se veían los asteriscos y cosas como «&gt;» (Sammuel, 2 nov). Primero se escapa todo (seguro) y después se pone el formato. */
 const synMd = s => {
   let h = String(s == null ? '' : s).replace(/&(gt|lt|amp|quot|#39|nbsp);/g, (m, k) => ({ gt:'>', lt:'<', amp:'&', quot:'"', '#39':"'", nbsp:' ' })[k]);
@@ -19,48 +19,37 @@ const synMd = s => {
     .replace(/\*\*/g, '').replace(/\n/g, '<br>');
   return h;
 };
-/* ---------- SynthonIA: su carita (SVG), con una expresión para cada momento ---------- */
-const FACE_G = '#3DE0FF';   /* 2026-11-09 · Partitura: los ojos de SynthonIA son cian (antes dorados) */
-/* v2.5 · SynthonIA idéntica al boceto «Cuerpo maestro» y «Expresiones»:
-   casco de vidrio perlado (rosa, lila y un filo cian abajo), visor negro grande con borde rosa que brilla,
-   ojos cian alargados, cuello de anillos, torso con núcleo cian, brazos por partes, base de pedestal y anillo flotante.
-   Ondas: azul a la IZQUIERDA cuando escucha, naranja a la DERECHA cuando habla. */
+/* ---------- Sona: su carita de robot (SVG), con una expresión para cada momento ---------- */
+const FACE_G = '#3DE0FF';   /* los ojos son pantallitas de neón cian */
+/* 2026-11-10 · Sona es un robotcito NEGRO con neón (pedido de Sammuel, con su dibujo de referencia): cabeza cuadradita de esquinas
+   redondas, antena con su rizo, orejitas a los lados y dos ojos de pantalla. Cuerpo de vidrio negro, filo de luz rosa → violeta → cian,
+   ojos cian que brillan y un foquito en la antena que late según lo que hace (escucha, piensa, habla, duerme…).
+   SIN manos y SIN boca. Ondas de voz: azules a la IZQUIERDA cuando escucha, rosadas a la DERECHA cuando habla. */
 const FACE_EYE = '#3de0ff';
 (function faceDefs(){
   if (document.getElementById('szFaceDefs')) return;
   const d = document.createElement('div'); d.id = 'szFaceDefs'; d.setAttribute('aria-hidden', 'true');
   d.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
   d.innerHTML = '<svg width="0" height="0"><defs>'
-    /* vidrio perlado: brillo blanco rosado arriba a la izquierda, rosa, lila y violeta en el borde */
-    + '<radialGradient id="szPearl" cx=".46" cy=".42" r=".62"><stop offset="0" stop-color="#2b1a6e" stop-opacity=".62"/><stop offset=".58" stop-color="#4630b8" stop-opacity=".5"/><stop offset=".84" stop-color="#78c8ff" stop-opacity=".62"/><stop offset="1" stop-color="#e9fdff" stop-opacity=".95"/></radialGradient>'
-    /* filo de luz cian abajo y a los lados (la luz del ambiente rebota en el vidrio) */
-    + '<radialGradient id="szRimL" cx=".5" cy=".1" r="1"><stop offset=".66" stop-color="#bff6ff" stop-opacity="0"/><stop offset=".9" stop-color="#9ff0ff" stop-opacity=".5"/><stop offset="1" stop-color="#e6fdff" stop-opacity=".95"/></radialGradient>'
-    /* el rosa que se ve a través del vidrio, más fuerte a la derecha */
-    + '<radialGradient id="szSub" cx=".7" cy=".86" r=".7"><stop offset="0" stop-color="#5ff4ff" stop-opacity=".55"/><stop offset=".55" stop-color="#ff3d9a" stop-opacity=".16"/><stop offset="1" stop-color="#ff3d9a" stop-opacity="0"/></radialGradient>'
-    + '<radialGradient id="szVisor" cx=".42" cy=".32" r=".8"><stop offset="0" stop-color="#1d1236"/><stop offset=".55" stop-color="#0b0719"/><stop offset="1" stop-color="#030209"/></radialGradient>'
-    /* v2.7 · vidrio de las manitas: casi transparente, filo de luz cian, borde iridiscente con los colores de la marca */
-    + '<radialGradient id="sgGlass" cx=".42" cy=".34" r=".78"><stop offset="0" stop-color="#2a2840" stop-opacity=".45"/><stop offset=".6" stop-color="#0d0c16" stop-opacity=".7"/><stop offset=".86" stop-color="#3d6fa0" stop-opacity=".45"/><stop offset="1" stop-color="#bff6ff" stop-opacity=".85"/></radialGradient>'
-    + '<radialGradient id="sgCaus" cx=".5" cy=".96" r=".62"><stop offset="0" stop-color="#3DE0FF" stop-opacity=".55"/><stop offset=".5" stop-color="#7B3FF2" stop-opacity=".2"/><stop offset="1" stop-color="#7B3FF2" stop-opacity="0"/></radialGradient>'
-    + '<linearGradient id="sgIri" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e6fdff"/><stop offset=".3" stop-color="#3DE0FF"/><stop offset=".68" stop-color="#7B3FF2"/><stop offset="1" stop-color="#FF3D9A"/></linearGradient>'
-    + '<linearGradient id="sgArm" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e6fdff" stop-opacity=".9"/><stop offset=".22" stop-color="#2a3a5a" stop-opacity=".55"/><stop offset=".55" stop-color="#0d0c16" stop-opacity=".7"/><stop offset=".82" stop-color="#3DE0FF" stop-opacity=".45"/><stop offset="1" stop-color="#ffffff" stop-opacity=".85"/></linearGradient>'
-    + '<radialGradient id="sgHalo" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffc857" stop-opacity=".5"/><stop offset=".55" stop-color="#ff3d9a" stop-opacity=".16"/><stop offset="1" stop-color="#ff3d9a" stop-opacity="0"/></radialGradient>'
-    /* 2026-11-09 · Partitura: la bola negra de vidrio de SynthonIA (brillo arriba a la izquierda, filo cian abajo) */
-    + '<radialGradient id="szBall" cx=".38" cy=".3" r=".8"><stop offset="0" stop-color="#3a3550"/><stop offset=".45" stop-color="#16141f"/><stop offset="1" stop-color="#07060c"/></radialGradient>'
-    + '<radialGradient id="szBallRim" cx=".5" cy=".18" r=".95"><stop offset=".72" stop-color="#3DE0FF" stop-opacity="0"/><stop offset=".93" stop-color="#3DE0FF" stop-opacity=".35"/><stop offset="1" stop-color="#bff6ff" stop-opacity=".7"/></radialGradient>'
-    + '<filter id="szEye" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
-    + '<filter id="szBlur3" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2"/></filter>'
-    + '<filter id="szBlur1" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>'
+    /* vidrio negro: un brillo gris arriba a la izquierda y casi negro abajo */
+    + '<linearGradient id="rbBody" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2c2c3b"/><stop offset=".38" stop-color="#11111a"/><stop offset="1" stop-color="#040408"/></linearGradient>'
+    /* el filo de neón de toda la cabeza (en coordenadas de la carita, para que también pinte líneas rectas) */
+    + '<linearGradient id="rbRim" gradientUnits="userSpaceOnUse" x1="12" y1="10" x2="88" y2="86"><stop offset="0" stop-color="#ff5fae"/><stop offset=".5" stop-color="#a866ff"/><stop offset="1" stop-color="#3de0ff"/></linearGradient>'
+    + '<radialGradient id="rbScreen" cx=".5" cy=".3" r=".85"><stop offset="0" stop-color="#171726"/><stop offset=".6" stop-color="#07070d"/><stop offset="1" stop-color="#010103"/></radialGradient>'
+    + '<linearGradient id="rbSheen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9ff4ff" stop-opacity="0"/><stop offset=".5" stop-color="#9ff4ff" stop-opacity=".2"/><stop offset="1" stop-color="#9ff4ff" stop-opacity="0"/></linearGradient>'
+    /* el brillo que deja en el piso cuando flota */
+    + '<radialGradient id="rbFloor" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ff4fa3" stop-opacity=".55"/><stop offset=".55" stop-color="#7B3FF2" stop-opacity=".18"/><stop offset="1" stop-color="#7B3FF2" stop-opacity="0"/></radialGradient>'
+    + '<clipPath id="rbScr"><rect x="26.5" y="35.5" width="47" height="36" rx="11"/></clipPath>'
+    + '<filter id="szEye" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.9" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
+    + '<filter id="rbNeon" x="-25%" y="-25%" width="150%" height="150%"><feGaussianBlur stdDeviation="1.3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
     + '</defs></svg>';
   (document.body || document.documentElement).appendChild(d);
 })();
-/* ---------- v2.8 · SynthonIA vuelve a ser la de main (pedido de Sammuel, 27 oct) ----------
-   Cabeza cuadradita oscura con filo dorado, antena y orejas rosadas, pantalla negra con ojos, boca y cachetes dorados.
-   Todas las caras de main siguen igual; las nuevas (escuchando, analizando, creando, hablando, error) usan el mismo dibujo.
-   v2.9: sin cuerpo; solo la cabecita y dos manitas que flotan (más abajo), con detalles que se mueven (engranes, foco, escáner, ondas). */
-const FFX_C = '#f6d9a0';
+/* detalles que aparecen alrededor según la cara (escáner, foco de idea, falla) */
+const FFX_C = '#9ff4ff';
 const FFX = {
-  bulb:'<g class="fx"><circle cx="90" cy="12" r="6.5" fill="#ffd36a"/><rect x="87.5" y="18" width="5" height="4" rx="1" fill="#e9b04a"/><path d="M78 6l2 4M98 4l-2 4M100 14h-3" stroke="#ffd36a" stroke-width="1.6" stroke-linecap="round"/></g>',
-  scan:'<g class="fx fscan" stroke="' + FFX_C + '" stroke-opacity=".28" stroke-width=".8"><path d="M24 40h52M23 48h54M23 56h54M23 64h54M24 72h52"/></g><g class="fx" stroke="' + FFX_C + '" stroke-width="1.8" fill="none" opacity=".9"><path d="M4 18V8h10M86 8h10v10M96 86v10H86M14 96H4V86"/></g>',
+  bulb:'<g class="fx"><circle cx="90" cy="12" r="6.5" fill="#ffe38a"/><rect x="87.5" y="18" width="5" height="4" rx="1" fill="#d9bd6a"/><path d="M78 6l2 4M98 4l-2 4M100 14h-3" stroke="#ffe38a" stroke-width="1.6" stroke-linecap="round"/></g>',
+  scan:'<g class="fx fscan" stroke="' + FFX_C + '" stroke-opacity=".28" stroke-width=".8"><path d="M28 40h44M27 48h46M27 56h46M27 64h46"/></g><g class="fx" stroke="' + FFX_C + '" stroke-width="1.8" fill="none" opacity=".9"><path d="M4 18V8h10M86 8h10v10M96 86v10H86M14 96H4V86"/></g>',
   glitch:'<g class="fx fglitch"><rect x="8" y="40" width="14" height="3" fill="#ff5fb4" opacity=".7"/><rect x="78" y="62" width="16" height="3" fill="#3de0ff" opacity=".7"/><rect x="70" y="30" width="8" height="2" fill="#fff" opacity=".5"/></g>'
 };
 const FACE = (() => {
@@ -69,185 +58,136 @@ const FACE = (() => {
   const heart = x => 'M' + x + ' 58l-5.5-5.5a3.2 3.2 0 0 1 5.5-4a3.2 3.2 0 0 1 5.5 4z';
   const star = x => 'M' + x + ' 45l1.8 3.8 4 .5-3 2.8.8 4-3.6-2-3.6 2 .8-4-3-2.8 4-.5z';
   const ring = x => 'M' + (x - 4.5) + ' 52a4.5 4.5 0 1 0 9 0a4.5 4.5 0 1 0-9 0';
+  const PINK = '#ff6fb8', SUN = '#ffe38a';
   return {
-    feliz:{ e:open(0, 0), m:'M42 64q8 7 16 0', ck:1 },
-    neutral:{ e:open(0, 0), m:'M45 66h10' },
-    encantada:{ e:[heart(40), heart(60)], ew:1.6, ef:FACE_G, m:'M41 63q9 10 18 0z', mf:1, ck:1 },
-    riendo:{ e:happy, m:'M41 62q9 11 18 0z', mf:1, ck:1 },
-    guino:{ e:['M40 48v8', 'M55 54q5-7 10 0'], m:'M42 64q8 7 16 0', ck:1 },
-    pensando:{ e:open(3, -3), m:'M45 67q5-3 10-1', x:'M84 26h.1M91 16h.1', xw:5 },
-    sorprendida:{ e:[ring(40), ring(60)], ew:3, ef:FACE_G, m:'M47 68a3 3 0 1 0 6 0a3 3 0 1 0-6 0', b:'M34 41l10-1M56 40l10 1' },
-    senalando:{ e:open(4, 0), m:'M46 65q6 4 12 0' },
-    disculpa:{ e:['M40 51v6', 'M60 51v6'], b:'M34 46l10-4M66 46l-10-4', m:'M43 69q7-6 14 0' },
-    confundida:{ e:['M40 48v8', 'M60 51v3'], b:'M54 42l12-3', m:'M41 67q3-3 6 0t6 0t6 0' },
-    dormida:{ e:['M35 52q5 4 10 0', 'M55 52q5 4 10 0'], ew:3.4, m:'M47 67h6', x:'M73 15h8l-8 9h8' },
-    celebrando:{ e:[star(40), star(60)], ew:1.5, ef:FACE_G, m:'M41 62q9 11 18 0z', mf:1, ck:1, x:'M10 16l4 4M90 14l-4 5M6 32h5M94 30h-5', xw:2.6 },
-    esperando:{ e:open(-3, -2), m:'M45 66h10', x:'M84 14a6 6 0 1 0 .01 0M84 11v3.5l2.5 2', xw:2 },
-    flow:{ glasses:1, m:'M43 65q8 6 16-1', ck:1 },
-    preocupada:{ e:open(0, 2), b:'M33 45l11-5M67 45l-11-5', m:'M42 70q4-4 8-1t8-1', drop:1 },
-    triste:{ e:['M40 53v4', 'M60 53v4'], ew:6, b:'M32 47l11-5M68 47l-11-5', m:'M41 72q9-8 18 0' },
-    auch:{ e:['M34 49l10 4-10 4', 'M55 53q5-4 10 0'], ew:3.4, b:'M32 43l12 5M57 45l10-3', m:'M41 70q4.5-4 9 0q4.5 4 9 0', x:'M78 30l4-6M84 36l6-2' },
-    /* las de la v2.4 en adelante, con el dibujo de main: escucha mirando a un lado (ondas azules), analiza con ojos de barra
-       y su escáner, crea con el foco encendido, habla con la boca abierta (ondas naranjas), y se «cuelga» cuando hay un error */
-    escuchando:{ e:open(-4, -1), m:'M46 66h8', w:'l' },
-    analizando:{ e:['M34 52h12', 'M54 52h12'], ew:5, m:'M45 66h10', fx:'scan' },
-    creando:{ e:open(0, -2), m:'M42 64q8 7 16 0', ck:1, fx:'bulb' },
-    hablando:{ e:open(0, 0), m:'M42 61.5q8-2 16 0q-1 9-8 9q-7 0-8-9z', mf:1, ck:1, w:'r' },
-    error:{ e:['M35 47l10 10M45 47l-10 10', 'M55 47l10 10M65 47l-10 10'], ew:3.6, m:'M41 68q4.5-4 9 0q4.5 4 9 0', fx:'glitch' }
+    feliz:{ e:open(0, 0) },
+    neutral:{ e:open(0, 0) },
+    encantada:{ e:[heart(40), heart(60)], ew:1.6, ec:PINK, ef:PINK },
+    riendo:{ e:happy },
+    guino:{ e:['M40 48v8', 'M55 54q5-7 10 0'] },
+    pensando:{ e:open(3, -3), x:'M84 26h.1M91 16h.1', xw:5 },
+    sorprendida:{ e:[ring(40), ring(60)], ew:3, b:'M34 41l10-1M56 40l10 1' },
+    senalando:{ e:open(4, 0) },
+    disculpa:{ e:['M40 51v6', 'M60 51v6'], b:'M34 46l10-4M66 46l-10-4' },
+    confundida:{ e:['M40 48v8', 'M60 51v3'], b:'M54 42l12-3' },
+    dormida:{ e:['M35 52q5 4 10 0', 'M55 52q5 4 10 0'], ew:3.4, ec:'#8fa6ff', x:'M73 15h8l-8 9h8' },
+    celebrando:{ e:[star(40), star(60)], ew:1.5, ec:SUN, ef:SUN, x:'M10 16l4 4M90 14l-4 5M6 32h5M94 30h-5', xw:2.6 },
+    esperando:{ e:open(-3, -2), x:'M84 14a6 6 0 1 0 .01 0M84 11v3.5l2.5 2', xw:2 },
+    flow:{ glasses:1 },
+    preocupada:{ e:open(0, 2), b:'M33 45l11-5M67 45l-11-5', drop:1 },
+    triste:{ e:['M40 53v4', 'M60 53v4'], ew:6, ec:'#8fb4ff', b:'M32 47l11-5M68 47l-11-5' },
+    auch:{ e:['M34 49l10 4-10 4', 'M55 53q5-4 10 0'], ew:3.4, b:'M32 43l12 5M57 45l10-3', x:'M78 30l4-6M84 36l6-2' },
+    /* escucha mirando a un lado (ondas azules), analiza con ojos de barra y su escáner, crea con el foco encendido,
+       habla (ondas rosadas) y se «cuelga» cuando hay un error */
+    escuchando:{ e:open(-4, -1), w:'l' },
+    analizando:{ e:['M34 52h12', 'M54 52h12'], ew:5, fx:'scan' },
+    creando:{ e:open(0, -2), fx:'bulb' },
+    hablando:{ e:open(0, 0), w:'r' },
+    error:{ e:['M35 47l10 10M45 47l-10 10', 'M55 47l10 10M65 47l-10 10'], ew:3.6, ec:'#ff5a7a', fx:'glitch' }
   };
 })();
 FACE.descansando = FACE.dormida;
 const FACE_GOOD = ['feliz', 'riendo', 'guino', 'encantada', 'celebrando', 'flow'];
-/* la cabeza de main (lo mismo en la bolita, los botones y el cuerpo entero) */
+/* la cabeza de Sona (lo mismo en el botón, los globitos y el cuerpo entero) */
 function headSvg(f){
-  const G = FACE_G, P = (d, st) => d ? '<path d="' + d + '" ' + st + '/>' : '';
+  const G = f.ec || FACE_G, P = (d, st) => d ? '<path d="' + d + '" ' + st + '/>' : '';
   const eyes = f.glasses
-    ? '<path d="M27 45h20v6.5a7 7 0 0 1-7 7h-6a7 7 0 0 1-7-7z" fill="#07070a" stroke="#3DE0FF" stroke-width="2.2"/><path d="M53 45h20v6.5a7 7 0 0 1-7 7h-6a7 7 0 0 1-7-7z" fill="#07070a" stroke="#3DE0FF" stroke-width="2.2"/><path d="M47 47.5q3-2.5 6 0" stroke="#3DE0FF" stroke-width="2.2" fill="none"/><path d="M31 49l5-3M57 49l5-3" stroke="rgba(255,255,255,.55)" stroke-width="1.6" stroke-linecap="round"/>'
-    : f.e.map(d => P(d, 'stroke="' + (f.ec || G) + '" stroke-width="' + (f.ew || 7) + '" stroke-linecap="round" stroke-linejoin="round" fill="' + (f.ef || 'none') + '"')).join('');
-  /* 2026-11-09 · Partitura (Sammuel: «me encanta la nueva SynthonIA, la bola negra con ojos azules»): una bola de vidrio negro,
-     brillo arriba, filo cian abajo y la cara en luz cian. Las expresiones son las mismas de siempre.
-     Sammuel, 9 nov: «que no tenga boca ni cachetitos ni esa cosa roja, como en el boceto»: solo ojos (y cejas cuando la cara las pide).
-     Cuando habla, lo dicen las ondas naranjas que laten con cada sílaba; ya no se dibuja boca ni lengua. */
-  return '<ellipse cx="50" cy="93" rx="26" ry="3.5" fill="#3DE0FF" opacity=".14"/>'
-    + '<circle cx="50" cy="52" r="40" fill="url(#szBall)" stroke="rgba(255,255,255,.16)" stroke-width="1"/><circle cx="50" cy="52" r="40" fill="url(#szBallRim)"/>'
-    + '<ellipse cx="36" cy="27" rx="14" ry="7" transform="rotate(-28 36 27)" fill="#fff" opacity=".14"/><circle cx="28" cy="34" r="2.2" fill="#fff" opacity=".35"/>'
+    ? '<path d="M28 45h19v6.5a7 7 0 0 1-7 7h-5a7 7 0 0 1-7-7z" fill="#050508" stroke="#3DE0FF" stroke-width="2.2"/><path d="M53 45h19v6.5a7 7 0 0 1-7 7h-5a7 7 0 0 1-7-7z" fill="#050508" stroke="#3DE0FF" stroke-width="2.2"/><path d="M47 47.5q3-2.5 6 0" stroke="#3DE0FF" stroke-width="2.2" fill="none"/><path d="M32 49l4.5-3M57 49l4.5-3" stroke="rgba(255,255,255,.55)" stroke-width="1.6" stroke-linecap="round"/>'
+    : f.e.map(d => P(d, 'stroke="' + G + '" stroke-width="' + (f.ew || 7) + '" stroke-linecap="round" stroke-linejoin="round" fill="' + (f.ef || 'none') + '"')).join('');
+  return ''
+    /* antena con su rizo y el foquito que late */
+    + '<g class="rb-ant"><g filter="url(#rbNeon)" fill="none" stroke="#ff7ac0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M50 28V19"/><path d="M50 19c0-4.6 2.8-7.6 6.6-7.6s6.2 2.8 6.2 6-2.4 5-4.8 5"/></g>'
+    + '<circle class="rb-bulb" cx="58" cy="22.4" r="2.9" fill="#ff7ac0" filter="url(#rbNeon)"/></g>'
+    /* orejitas y cabeza de vidrio negro */
+    + '<rect x="10.5" y="43" width="9" height="20" rx="4.5" fill="url(#rbBody)"/><rect x="80.5" y="43" width="9" height="20" rx="4.5" fill="url(#rbBody)"/>'
+    + '<rect x="19" y="27" width="62" height="54" rx="17" fill="url(#rbBody)"/>'
+    + '<path d="M27 36q4-5 14-5.5" stroke="#fff" stroke-opacity=".2" stroke-width="2" stroke-linecap="round" fill="none"/>'
+    /* el filo de neón */
+    + '<g class="rb-rim" filter="url(#rbNeon)" fill="none" stroke="url(#rbRim)" stroke-width="2.2" stroke-linecap="round"><rect x="19" y="27" width="62" height="54" rx="17"/><rect x="10.5" y="43" width="9" height="20" rx="4.5" stroke-width="1.9"/><rect x="80.5" y="43" width="9" height="20" rx="4.5" stroke-width="1.9"/></g>'
+    /* la pantalla: negra, con un barrido de luz que pasa de vez en cuando */
+    + '<rect x="26.5" y="35.5" width="47" height="36" rx="11" fill="url(#rbScreen)" stroke="#fff" stroke-opacity=".09"/>'
+    + '<g clip-path="url(#rbScr)"><rect class="rb-sheen" x="22" y="26" width="56" height="9" fill="url(#rbSheen)"/></g>'
     + P(f.b, 'stroke="' + G + '" stroke-width="2.6" stroke-linecap="round" fill="none"')
-    + '<g class="fe" filter="url(#szEye)">' + eyes + '</g>'
-    + P(f.x, 'class="fx" stroke="#e6b65f" stroke-width="' + (f.xw || 2.4) + '" stroke-linecap="round" stroke-linejoin="round" fill="none"')
+    + '<g class="rb-eyes"><g class="fe" filter="url(#szEye)">' + eyes + '</g></g>'
+    + P(f.x, 'class="fx" stroke="#ff9ccc" stroke-width="' + (f.xw || 2.4) + '" stroke-linecap="round" stroke-linejoin="round" fill="none"')
     + (f.drop ? '<path class="fdrop" d="M83 28q-6 9-1 12.5q6 2.5 7-3.5q0-3-6-9z" fill="#8fd3e8" fill-opacity=".9"/>' : '')
     + (f.fx ? FFX[f.fx] : '');
 }
-/* ondas de voz: naranja a la DERECHA cuando habla, azul a la IZQUIERDA cuando escucha (por fuera de las orejas) */
+/* ondas de voz: rosadas a la DERECHA cuando habla, azules a la IZQUIERDA cuando escucha (por fuera de las orejas) */
 function wavesSvg(){
   const W = (x, dir, c, k) => '<g class="' + k + '" stroke="' + c + '" stroke-width="3" stroke-linecap="round" fill="none">'
     + [4.5, 9.5, 14.5].map((r, i) => '<path style="--i:' + i + '" d="M' + x + ' ' + (55 - r) + 'a' + r + ' ' + r + ' 0 0 ' + (dir > 0 ? 1 : 0) + ' 0 ' + (2 * r) + '"/>').join('') + '</g>';
-  return W(97, 1, '#ff8a3d', 'fwr') + W(3, -1, '#3de0ff', 'fwl');
+  return W(97, 1, '#ff5fae', 'fwr') + W(3, -1, '#3de0ff', 'fwl');
 }
 function face(mood, size, cls){
   const m = FACE[mood] ? mood : 'feliz', f = FACE[m], z = size || 40;
   return '<svg class="szface' + (cls ? ' ' + cls : '') + (f.w ? ' w' + f.w : '') + '" data-mood="' + m + '" viewBox="0 0 100 100" width="' + z + '" height="' + z + '" aria-hidden="true">'
     + wavesSvg() + headSvg(f) + '</svg>';
 }
-/* ---------- v2.9 · SynthonIA es su cabecita y dos manitas que flotan cerca (sin cuerpo; pedido de Sammuel, 27 oct) ----------
-   La cabeza es la de main, grande y al centro, con todas sus caras. Las manos van sueltas a los lados (nunca pegadas)
-   y cada una flota a su propio ritmo. Cada pose dice dónde va cada mano: [x, y, giro, gesto]; la derecha se escribe
-   como si fuera la izquierda (va en espejo), así las poses quedan parejas. Alrededor: chispitas, una sombra que
-   respira cuando sube y baja, y un detalle según la cara (corazones, confeti, zzz, burbujas, «!», notas).
-   Todo en SVG, se mueve en vivo y se pausa cuando no se ve. Escenario 300 × 400 (3:4). */
-const SG_IDLE = [40, 280, 8, 'open'];
-const SPOSE = {
-  idle:     { L:SG_IDLE, R:SG_IDLE },
-  saluda:   { L:SG_IDLE, R:[18, 148, 165, 'wave'], wave:'r' },
-  senala:   { L:SG_IDLE, R:[34, 206, 90, 'point'] },   /* v3.7 · más adentro: el índice ya no se corta en el borde */
-  senalaL:  { L:[34, 206, 90, 'point'], R:SG_IDLE },
-  celebra:  { L:[22, 130, 158, 'wave'], R:[22, 130, 158, 'wave'] },
-  piensa:   { L:SG_IDLE, R:[126, 320, 176, 'point'] },   /* v3.7 · el índice toca la barbilla (antes quedaba lejos, abajo) */
-  escucha:  { L:SG_IDLE, R:[14, 172, 150, 'open'] },
-  presenta: { L:SG_IDLE, R:[12, 250, 66, 'wave'] },
-  sorpresa: { L:[26, 188, 168, 'wave'], R:[26, 188, 168, 'wave'] },
-  escribe:  { L:[104, 308, -4, 'open'], R:[104, 308, -4, 'open'] },
-  lee:      { L:[90, 306, -34, 'open'], R:[90, 306, -34, 'open'] }
-};
-/* una pieza de vidrio: relleno casi transparente, luz que se junta abajo, borde iridiscente y filo blanco */
-const sgPiece = (d, rim) => '<path d="' + d + '" fill="url(#sgGlass)"/><path d="' + d + '" fill="url(#sgCaus)"/>'
-  + '<path d="' + d + '" fill="none" stroke="url(#sgIri)" stroke-width="' + (rim || 1.6) + '" stroke-opacity=".85"/><path d="' + d + '" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width=".7"/>';
-/* v3.7 · el pulgar nace a media palma (antes salía pegado a la muñeca y se veía raro) y en «point» los dedos se doblan de verdad.
-   v2.9 · manos de verdad: palma de vidrio, tres dedos con nudillos y pulgar (antes era una manopla).
-   Cada dedo: [x de la base, giro, doblez de la punta, largo 1, largo 2]; el pulgar además dice dónde nace.
-   open = relajada, wave = abierta para saludar o celebrar, point = puño con el índice estirado */
-const SG_HANDS = {
-  open:  { f:[[-7, 9, 6, 8, 6.5], [0, 0, 4, 8.8, 7], [7, -7, 4, 8.4, 6.8]], t:[9.4, 11.5, -40, 16, 6.6, 5.4] },
-  wave:  { f:[[-7, 22, -4, 8, 6.5], [0, 4, 0, 9, 7], [7, -14, 2, 8.6, 6.8]], t:[9.4, 11, -54, 12, 7.2, 5.6] },
-  /* índice estirado y los otros dos doblados hacia la palma (se ven los nudillos, no palitos sueltos); el pulgar los cruza */
-  point: { f:[[-7, 4, 178, 3, 3.8], [0, 1, 178, 3.2, 4], [7, -3, 0, 9.6, 8]], t:[8.6, 13.2, 64, 22, 6, 4.6] }
-};
-const sgSeg = (L, w) => '<rect x="' + (-w / 2) + '" y="0" width="' + w + '" height="' + L + '" rx="' + (w / 2) + '" fill="url(#sgArm)" stroke="url(#sgIri)" stroke-width=".9"/>';
-const sgKnuckle = (y, r) => '<circle cy="' + y + '" r="' + r + '" fill="#c9566c" stroke="#e6b65f" stroke-opacity=".8" stroke-width=".6"/>';
-const sgFinger = ([x, a, c, L1, L2], y0, w) => '<g transform="translate(' + x + ' ' + y0 + ') rotate(' + a + ')">' + sgSeg(L1 + w / 2, w)
-  + (L2 ? '<g transform="translate(0 ' + L1 + ') rotate(' + c + ')">' + sgSeg(L2, w - .5) + '<circle cx="-.8" cy="' + (L2 - 2.2) + '" r=".9" fill="#fff" opacity=".7"/></g>' + sgKnuckle(L1, 1.7) : '') + '</g>';
-function sgHand(kind){
-  const H = SG_HANDS[kind] || SG_HANDS.open, [tx, ty, ta, tc, t1, t2] = H.t;
-  return sgFinger([tx, ta, tc, t1, t2], ty, 6.4)
-    + H.f.map(f => sgFinger(f, 17.5, 6.2)).join('')
-    + sgPiece('M-8 1h16q3 0 3 3v9q0 6-6 6.5h-10q-6-.5-6-6.5v-9q0-3 3-3z', 1.1)
-    + '<path d="M-6.5 4.5q4-2 9-1" stroke="#fff" stroke-opacity=".75" stroke-width="1.4" stroke-linecap="round" fill="none"/>'
-    + '<ellipse cx="0" cy="1" rx="8.5" ry="2.6" fill="#c9566c" stroke="#e6b65f" stroke-opacity=".8" stroke-width=".8"/>';
-}
-/* una mano suelta: posición de la pose → flotar → gesto (saludar, teclear…) → el dibujo. La derecha va en espejo.
-   v3.0: el dibujo va volteado (-1.95) para que se vea la palma: el pulgar queda hacia su cara al saludar y hacia afuera
-   con la mano abajo, como una mano de verdad (antes salían al revés, pedido de Sammuel) */
-const sgMano = (side, kind) => '<g class="syb-mano ' + side + '"' + (side === 'hr' ? ' transform="matrix(-1 0 0 1 300 0)"' : '') + '>'
-  + '<g class="syb-hp"><g class="syb-bob"><g class="syb-wv"><g class="syb-hand" transform="scale(-1.95 1.95)">' + sgHand(kind) + '</g></g></g></g></g>';
-const sgVars = P => '--lx:' + P.L[0] + 'px;--ly:' + P.L[1] + 'px;--lr:' + P.L[2] + 'deg;--rx:' + P.R[0] + 'px;--ry:' + P.R[1] + 'px;--rr:' + P.R[2] + 'deg';
+/* ---------- Sona entera: su cabecita flotando (sin cuerpo y SIN manos) ----------
+   La cabeza es la del botón, grande y al centro, con todas sus caras. Flota, respira y deja un brillo en el piso.
+   Cada «postura» (pose) es un gesto de la CABEZA y la antena: se inclina, se asoma, salta, se asusta, se columpia…
+   Alrededor: chispitas, y un detalle según la cara (corazones, confeti, zzz, burbujas, «!», notas, ondas de aviso).
+   Todo en SVG, se mueve en vivo y se pausa cuando no se ve. Escenario 300 × 400 (3:4). Los gestos están en 11-v24-synthonia.css (data-pose). */
+const SPOSE = { idle:1, saluda:1, senala:1, senalaL:1, celebra:1, piensa:1, escucha:1, presenta:1, sorpresa:1, escribe:1, lee:1, colgada:1, estira:1 };
 /* chispitas que titilan alrededor (siempre) */
 const sgStar = (x, y, s, d) => '<g transform="translate(' + x + ' ' + y + ') scale(' + s + ')"><path class="syb-sp" style="--d:' + d + 's" d="M0-6L1.3-1.3 6 0 1.3 1.3 0 6-1.3 1.3-6 0-1.3-1.3z"/></g>';
-const SG_SPARKS = sgStar(36, 112, 1.1, 0) + sgStar(266, 86, 1.4, -1.1) + sgStar(278, 214, .8, -2) + sgStar(22, 206, .9, -.6) + sgStar(214, 44, .7, -1.6) + sgStar(92, 40, .9, -2.4);
+const SG_SPARKS = sgStar(40, 128, 1.1, 0) + sgStar(264, 98, 1.4, -1.1) + sgStar(276, 226, .8, -2) + sgStar(24, 222, .9, -.6) + sgStar(214, 52, .7, -1.6) + sgStar(92, 56, .9, -2.4);
 /* el detalle de cada cara: sube, cae o late encima de la cabeza */
 const sgUp = (x, y, d, dx, inner) => '<g transform="translate(' + x + ' ' + y + ')"><g class="syb-f" style="--d:' + d + 's;--dx:' + dx + 'px">' + inner + '</g></g>';
-const SG_HEART = '<path d="M0 6l-7-7a4 4 0 0 1 7-5a4 4 0 0 1 7 5z" fill="#ef7f93" stroke="#ffd1dc" stroke-width="1"/>';
-const SG_NOTE = '<path d="M0 0v-16l11-4v16" stroke="#f6d9a0" stroke-width="2.4" fill="none" stroke-linejoin="round"/><ellipse cx="-3" cy="0" rx="4" ry="3.2" fill="#f6d9a0"/><ellipse cx="8" cy="-4" rx="4" ry="3.2" fill="#f6d9a0"/>';
+const SG_HEART = '<path d="M0 6l-7-7a4 4 0 0 1 7-5a4 4 0 0 1 7 5z" fill="#ff6fb8" stroke="#ffd1e8" stroke-width="1"/>';
+const SG_NOTE = '<path d="M0 0v-16l11-4v16" stroke="#bff6ff" stroke-width="2.4" fill="none" stroke-linejoin="round"/><ellipse cx="-3" cy="0" rx="4" ry="3.2" fill="#bff6ff"/><ellipse cx="8" cy="-4" rx="4" ry="3.2" fill="#bff6ff"/>';
 const SG_Z = s => '<path d="M' + (-5 * s) + ' ' + (-5 * s) + 'h' + 10 * s + 'l' + (-10 * s) + ' ' + 10 * s + 'h' + 10 * s + '" stroke="#bfe9ff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
-const SG_CONF = ['#ff3d9a', '#3de0ff', '#ffc857', '#9b7bff', '#f6d9a0', '#ff7a45'];
+const SG_CONF = ['#ff4fa3', '#3de0ff', '#ffe38a', '#a866ff', '#7ef0ff', '#ff8a5c'];
+/* ondas de aviso que salen del foquito de la antena (cuando saluda o presenta) */
+const SG_PING = '<g transform="translate(171 98)">' + [0, 1, 2].map(i => '<circle class="syb-ping" style="--d:' + (-i * .75) + 's" r="16" fill="none" stroke="#ff7ac0" stroke-width="2.4"/>').join('') + '</g>';
 const SG_FX = {
-  love:  sgUp(58, 128, 0, -16, SG_HEART) + sgUp(244, 110, -.9, 14, SG_HEART) + sgUp(262, 176, -1.8, 20, SG_HEART) + sgUp(40, 190, -2.4, -12, SG_HEART),
-  music: sgUp(250, 120, 0, 18, SG_NOTE) + sgUp(46, 150, -1.3, -16, SG_NOTE),
-  zzz:   sgUp(236, 96, 0, 22, SG_Z(1)) + sgUp(236, 96, -1, 26, SG_Z(1.4)) + sgUp(236, 96, -2, 30, SG_Z(.8)),
-  think: '<g class="syb-tb"><circle cx="236" cy="96" r="4.5"/><circle cx="252" cy="74" r="7"/><circle cx="272" cy="46" r="10.5"/></g>',
-  wow:   '<g transform="translate(262 70)"><g class="syb-wow"><rect x="-4.5" y="-24" width="9" height="26" rx="4.5" fill="#ffc857"/><circle cy="12" r="5" fill="#ffc857"/><path d="M-16-18l-6-6M16-18l6-6M-19 0h-8M19 0h8" stroke="#f6d9a0" stroke-width="2.4" stroke-linecap="round"/></g></g>',
-  party: Array.from({ length:14 }, (_, i) => '<g transform="translate(' + (34 + i * 17.5) + ' ' + (36 + (i * 37) % 50) + ')"><rect class="syb-cf" style="--d:' + (-(i * .29) % 2).toFixed(2) + 's;--dx:' + ((i % 2 ? 1 : -1) * (6 + i % 4 * 5)) + 'px" x="-3" y="-5" width="6" height="10" rx="1.5" fill="' + SG_CONF[i % 6] + '"/></g>').join('')
+  love:  sgUp(62, 138, 0, -16, SG_HEART) + sgUp(240, 120, -.9, 14, SG_HEART) + sgUp(262, 186, -1.8, 20, SG_HEART) + sgUp(44, 200, -2.4, -12, SG_HEART),
+  music: sgUp(250, 130, 0, 18, SG_NOTE) + sgUp(50, 160, -1.3, -16, SG_NOTE),
+  zzz:   sgUp(236, 106, 0, 22, SG_Z(1)) + sgUp(236, 106, -1, 26, SG_Z(1.4)) + sgUp(236, 106, -2, 30, SG_Z(.8)),
+  think: '<g class="syb-tb"><circle cx="240" cy="104" r="4.5"/><circle cx="256" cy="82" r="7"/><circle cx="274" cy="54" r="10.5"/></g>',
+  wow:   '<g transform="translate(262 80)"><g class="syb-wow"><rect x="-4.5" y="-24" width="9" height="26" rx="4.5" fill="#ff7ac0"/><circle cy="12" r="5" fill="#ff7ac0"/><path d="M-16-18l-6-6M16-18l6-6M-19 0h-8M19 0h8" stroke="#ffc2e0" stroke-width="2.4" stroke-linecap="round"/></g></g>',
+  party: Array.from({ length:14 }, (_, i) => '<g transform="translate(' + (34 + i * 17.5) + ' ' + (46 + (i * 37) % 50) + ')"><rect class="syb-cf" style="--d:' + (-(i * .29) % 2).toFixed(2) + 's;--dx:' + ((i % 2 ? 1 : -1) * (6 + i % 4 * 5)) + 'px" x="-3" y="-5" width="6" height="10" rx="1.5" fill="' + SG_CONF[i % 6] + '"/></g>').join(''),
+  hola:  SG_PING
 };
 const SG_MOODFX = { encantada:'love', flow:'music', dormida:'zzz', descansando:'zzz', pensando:'think', confundida:'think', sorprendida:'wow', celebrando:'party' };
-const sgFx = (m, p) => SG_FX[p === 'celebra' ? 'party' : SG_MOODFX[m]] || '';
+const SG_POSEFX = { celebra:'party', saluda:'hola', presenta:'hola' };
+const sgFx = (m, p) => SG_FX[SG_POSEFX[p] || SG_MOODFX[m]] || '';
 function synHead(mood){
   const m = FACE[mood] ? mood : 'feliz', f = FACE[m];
-  return '<svg class="szface syb-hsvg' + (f.w ? ' w' + f.w : '') + '" data-mood="' + m + '" x="30" y="44" width="240" height="240" viewBox="0 0 100 100" overflow="visible">'
+  return '<svg class="szface syb-hsvg' + (f.w ? ' w' + f.w : '') + '" data-mood="' + m + '" x="15" y="44" width="270" height="270" viewBox="0 0 100 100" overflow="visible">'
     + wavesSvg() + headSvg(f) + '</svg>';
 }
 function synBody(mood, pose, size){
-  const m = FACE[mood] ? mood : 'feliz', p = SPOSE[pose] ? pose : 'idle', P = SPOSE[p];
-  return '<div class="szbody" data-mood="' + m + '" data-pose="' + p + '"' + (P.wave ? ' data-wave="' + P.wave + '"' : '') + ' style="' + sgVars(P) + (size ? ';--sz:' + size + 'px' : '') + '" aria-hidden="true">'
+  const m = FACE[mood] ? mood : 'feliz', p = SPOSE[pose] ? pose : 'idle';
+  return '<div class="szbody" data-mood="' + m + '" data-pose="' + p + '"' + (size ? ' style="--sz:' + size + 'px"' : '') + ' aria-hidden="true">'
     + '<i class="syb-glow"></i>'
     + '<svg class="syb-svg" viewBox="0 0 300 400" overflow="visible" aria-hidden="true">'
-    /* la sombrita de luz en el piso: se achica cuando ella sube */
-    + '<ellipse class="syb-shadow" cx="150" cy="370" rx="80" ry="12" fill="url(#sgHalo)"/>'
+    /* el brillo en el piso: se achica cuando ella sube */
+    + '<ellipse class="syb-shadow" cx="150" cy="334" rx="84" ry="11" fill="url(#rbFloor)"/>'
     + '<g class="syb-sparks">' + SG_SPARKS + '</g>'
     + '<g class="syb-up"><g class="syb-head"><g class="syb-hd">' + synHead(m) + '</g></g></g>'
-    + sgMano('hl', P.L[3]) + sgMano('hr', P.R[3])
     + '<g class="syb-fx">' + sgFx(m, p) + '</g>'
     + '</svg></div>';
 }
-/* las animaciones de SynthonIA se pausan cuando no está en pantalla (cero trabajo de más) */
+/* las animaciones de Sona se pausan cuando no está en pantalla (cero trabajo de más) */
 const synIO = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => e.target.classList.toggle('syb-off', !e.isIntersecting)), { rootMargin:'80px' }) : null;
 function synWatch(host){ if (!synIO || !host) return; host.querySelectorAll('.szbody').forEach(b => { if (!b._sw){ b._sw = 1; synIO.observe(b); } }); }
 if (synIO) new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1){ if (n.classList.contains('szbody')){ if (!n._sw){ n._sw = 1; synIO.observe(n); } } else if (n.querySelector) synWatch(n); } }))).observe(document.documentElement, { childList:true, subtree:true });
-/* cambia la cara y la pose de una SynthonIA que ya está en pantalla (las manos vuelan suave a su lugar); si no hay, la dibuja */
+/* cambia la cara y la postura de una Sona que ya está en pantalla (la cabeza se mueve suave a su lugar); si no hay, la dibuja */
 function synSet(host, mood, pose, size){
-  const b = host && host.querySelector('.szbody'); if (!host) return;
+  if (!host) return;
+  const b = host.querySelector('.szbody');
   if (!b){ host.innerHTML = synBody(mood, pose, size); return; }
-  const m = FACE[mood] ? mood : 'feliz', p = SPOSE[pose] ? pose : 'idle', P = SPOSE[p];
+  const m = FACE[mood] ? mood : 'feliz', p = SPOSE[pose] ? pose : 'idle';
   const fx0 = sgFx(b.dataset.mood, b.dataset.pose), fx1 = sgFx(m, p);
   if (b.dataset.mood !== m){ b.querySelector('.syb-hd').innerHTML = synHead(m); b.dataset.mood = m; }
-  if (b.dataset.pose !== p){
-    const was = SPOSE[b.dataset.pose] || SPOSE.idle;
-    b.dataset.pose = p; if (P.wave) b.dataset.wave = P.wave; else delete b.dataset.wave;
-    sgVars(P).split(';').forEach(kv => { const [k, v] = kv.split(':'); b.style.setProperty(k, v); });
-    /* las manos cambian de gesto solo si hace falta */
-    b.querySelectorAll('.syb-hand').forEach((hd, i) => { const k = i ? 'R' : 'L'; if (was[k][3] !== P[k][3]) hd.innerHTML = sgHand(P[k][3]); });
-  }
+  if (b.dataset.pose !== p) b.dataset.pose = p;
   if (fx0 !== fx1) b.querySelector('.syb-fx').innerHTML = fx1;
   if (size) b.style.setProperty('--sz', size + 'px');
 }
-/* v1.9 · SynthonIA mueve la boca con cada letra que dice: a (abierta), e/i (ancha), o/u (redonda), m/b/p (cerrada) */
-const VIS = { a:['M42 61.5q8-2 16 0q-1 9-8 9q-7 0-8-9z', 1], e:['M40.5 62.5q9.5-1.5 19 0q-2 5.5-9.5 5.5q-7.5 0-9.5-5.5z', 1], o:['M45.5 60.5q4.5-2 9 0q2.5 4.5 0 9q-4.5 2-9 0q-2.5-4.5 0-9z', 1], m:['M43 65h14', 0], c:['M42.5 63q7.5 4.5 15 0', 0] };
-function visOf(ch){ const c = String(ch || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); return c === 'a' ? 'a' : (c === 'e' || c === 'i' || c === 'y') ? 'e' : (c === 'o' || c === 'u') ? 'o' : 'mbpfv'.includes(c) && c ? 'm' : /[a-zñ0-9]/.test(c) ? 'c' : 'm'; }
-function mouthSet(svgs, v){
-  svgs.forEach(s => { const m = s && s.querySelector && s.querySelector('.fm'); if (!m) return;
-    if (m._d0 == null){ m._d0 = m.getAttribute('d'); m._f0 = m.getAttribute('fill'); }
-    if (v === null){ m.setAttribute('d', m._d0); m.setAttribute('fill', m._f0); return; }
-    m.setAttribute('d', VIS[v][0]); m.setAttribute('fill', VIS[v][1] ? FACE_G : 'none'); });
-}
-/* v2.2 · habla de verdad: la frase se parte en sílabas y la boca las «dice» a ritmo de voz (≈7 por segundo),
-   con la forma de cada vocal (a abierta, e/i ancha, o/u redonda), labios cerrados en m/b/p y paso suave entre una y otra.
+/* v2.2 · habla de verdad: la frase se parte en sílabas y la voz de Sona late a ritmo (≈7 por segundo): el foquito de la antena
+   se enciende, los ojos se agrandan un poquito y las ondas rosadas laten con cada sílaba. (Sin boca: ya no se dibuja.)
    Devuelve el «onFrame» para typeIn: arranca al primer cuadro y termina poco después de que se escribe todo. */
 const MOUTH = { a:[7.2, 6.4], e:[9, 3.6], i:[8.4, 2.8], o:[4.8, 5.6], u:[3.8, 4.4], m:[7, .5], f:[6.4, 1.6], c:[6, 2.4], r:[5.4, 0] };
 function syllables(text){
@@ -264,29 +204,15 @@ function syllables(text){
   }
   return out;
 }
-function talkEls(svg){
-  if (svg._talk) return svg._talk;
-  const NS = 'http://www.w3.org/2000/svg', g = document.createElementNS(NS, 'g'); g.setAttribute('class', 'ftalk');
-  const mo = document.createElementNS(NS, 'ellipse'), tg = document.createElementNS(NS, 'ellipse');
-  mo.setAttribute('cx', '50'); mo.setAttribute('cy', '65'); mo.setAttribute('fill', '#2a0d18'); mo.setAttribute('stroke', FACE_G); mo.setAttribute('stroke-width', '3');
-  tg.setAttribute('cx', '50'); tg.setAttribute('fill', '#e07a93');
-  g.appendChild(mo); g.appendChild(tg);   /* 2026-11-09 · sin boca: la boca y la lengua ya no se ponen en la cara; solo laten las ondas */
-  return (svg._talk = { g, mo, tg, w:svg.querySelector('.fwr') });
-}
 function lipSync(svgs, text){
   svgs = (svgs || []).filter(Boolean); if (!svgs.length || reduce) return undefined;
   const seq = syllables(text); if (!seq.length) return undefined;
-  let raf = 0, t0 = 0, doneAt = 0, rx = 6, ry = 0, i = 0;
-  const fm = svg => svg.querySelector('.fm');
+  let raf = 0, t0 = 0, doneAt = 0, ry = 0, i = 0;
   const L = svgs.map(el => ({ el, ball:!!(el.closest && el.closest('#szBot')) }));
-  const live = () => L.map(o => { if (!o.el.isConnected && o.ball) o.el = ballFace() || o.el; return o.el; }).filter(e => e.isConnected);
-  /* la boca de main dice cada sílaba; las ondas naranjas laten con ella */
-  const paint = () => live().forEach(svg => { const T = talkEls(svg), m = fm(svg);
-    if (m) m.style.opacity = '0';
-    T.mo.setAttribute('rx', rx.toFixed(2)); T.mo.setAttribute('ry', Math.max(.4, ry).toFixed(2));
-    T.tg.setAttribute('rx', (rx * .55).toFixed(2)); T.tg.setAttribute('ry', Math.max(0, ry * .32).toFixed(2)); T.tg.setAttribute('cy', (65 + ry * .55).toFixed(2));
-    T.g.style.opacity = '1'; svg.classList.add('talking'); if (T.w) T.w.style.setProperty('--amp', Math.min(1, ry / 6).toFixed(2)); });
-  const stop = () => { cancelAnimationFrame(raf); raf = 0; L.map(o => o.el).forEach(svg => { const T = svg._talk, m = fm(svg); svg.classList.remove('talking'); if (T){ T.g.style.opacity = '0'; if (T.w) T.w.style.removeProperty('--amp'); } if (m) m.style.opacity = ''; }); };
+  const live = () => L.map(o => { if (!o.el.isConnected && o.ball) o.el = botFaceEl() || o.el; return o.el; }).filter(e => e.isConnected);
+  /* --amp (0–1) lo leen el foquito, los ojos y las ondas */
+  const paint = () => live().forEach(svg => { svg.classList.add('talking'); svg.style.setProperty('--amp', Math.min(1, ry / 6).toFixed(2)); });
+  const stop = () => { cancelAnimationFrame(raf); raf = 0; L.map(o => o.el).forEach(svg => { svg.classList.remove('talking'); svg.style.removeProperty('--amp'); }); };
   const SYL = 140;                                    /* ms por sílaba: ritmo de voz */
   function loop(now){
     if (!t0) t0 = now;
@@ -294,7 +220,7 @@ function lipSync(svgs, text){
     const ending = doneAt && (now - doneAt > 1100 || i >= seq.length);
     const v = ending ? 'r' : seq[Math.min(i, seq.length - 1)], tgt = MOUTH[v] || MOUTH.c;
     const ph = ((now - t0) % SYL) / SYL, open = v === 'r' || v === 'm' ? 1 : Math.sin(Math.min(1, ph * 1.6) * Math.PI) * .35 + .75;
-    rx += (tgt[0] - rx) * .35; ry += (tgt[1] * open - ry) * .38;
+    ry += (tgt[1] * open - ry) * .38;
     paint();
     if (ending && ry < .6){ stop(); return; }
     raf = requestAnimationFrame(loop);
@@ -304,7 +230,7 @@ function lipSync(svgs, text){
     if (k >= 1 && !doneAt) doneAt = performance.now();
   };
 }
-const ballFace = () => { const b = document.getElementById('szBot'); return b ? (b.querySelector('.bf > :last-child .szface') || b.querySelector('.bf .szface')) : null; };
+const botFaceEl = () => { const b = document.getElementById('szBot'); return b ? (b.querySelector('.bf > :last-child .szface') || b.querySelector('.bf .szface')) : null; };
 const randomGoodFace = (not) => { const L = FACE_GOOD.filter(m => !(not && not.has && not.has(m))); return L[Math.floor(Math.random() * L.length)] || 'feliz'; };
 
 /* ---------- sonidos SymphorIA: sintetizados en vivo (Web Audio), sin archivos; se apagan en Ajustes ---------- */
@@ -347,9 +273,9 @@ const SND = (() => {
       hiss(c, t, 'bandpass', 500, .7, .25, .08, .4, 3000);
     }); },
     impact(){ play((c, t) => { tone(c, t, 'sine', 78, 36, .004, .55, .42); hiss(c, t, 'lowpass', 900, .7, .003, .25, .28); tone(c, t + .02, 'triangle', 220, 110, .003, .06, .2); }); },
-    /* SynthonIA: un «bip» amable (sube si está contenta, baja si se disculpa) */
+    /* Sona: un «bip» amable (sube si está contenta, baja si se disculpa) */
     blip(mood){ play((c, t) => { const sad = mood === 'disculpa' || mood === 'confundida' || mood === 'preocupada'; tone(c, t, 'sine', sad ? 620 : 640, sad ? 430 : 980, .006, .09, .1); tone(c, t + .07, 'sine', sad ? 470 : 990, sad ? 360 : 1320, .006, .06, .09); }); },
-    /* la manita hace clic */
+    /* el puntero de luz hace clic */
     tap(){ play((c, t) => { tone(c, t, 'sine', 1300, 900, .002, .07, .045); hiss(c, t, 'highpass', 3500, .6, .001, .05, .02); }); },
     /* llegó ayuda / aviso del panel: se expande */
     expand(){ play((c, t) => { hiss(c, t, 'bandpass', 300, .9, .25, .1, .35, 4200); [523, 659, 784].forEach((f, i) => tone(c, t + .12 + i * .04, 'sine', f, f, .05, .07, .7)); }); },
@@ -367,7 +293,7 @@ const SND = (() => {
   };
 })();
 
-/* v2.4 · SynthonIA te escucha: mientras escribes (en el chat o en su ventanita) le salen ondas azules a la izquierda */
+/* v2.4 · Sona te escucha: mientras escribes (en el chat o en su ventanita) le salen ondas azules a la izquierda */
 (function listen(){
   let t = 0;
   addEventListener('input', e => {
@@ -377,16 +303,14 @@ const SND = (() => {
   }, true);
 })();
 
-/* ---------- v3.2 · SynthonIA juega cuando no estás (pedido de Sammuel, 28 oct) ----------
+/* ---------- v3.2 · Sona juega cuando no estás (pedido de Sammuel, 28 oct) ----------
    2 min sin moverte: sale de su rincón, grandota, y se duerme en la mitad de la pantalla sobre una nubecita.
-   1 min y medio después abre los ojos, se estira y juega con la página: se cuelga de un título, hace ejercicio,
-   empuja un botón, apaga la gravedad, hace malabares, rebota por las esquinas o se asoma por un borde.
+   1 min y medio después abre los ojos, se estira y juega con la página: se cuelga de un título con su antena, hace ejercicio (saltos),
+   empuja un botón con la cabeza, apaga la gravedad, hace órbitas con bolitas de luz, rebota por las esquinas o se asoma por un borde.
    Tres juegos y vuelve a dormir; así mientras no vuelvas. Cuando mueves el mouse (o tocas, o una tecla): cara de
    sorprendida, sale corriendo a su lugar de siempre y dice «¡Ah, volviste!». Lo que movió vuelve solo: a la página
    solo le pone animaciones sumadas (composite:'add') que se cancelan al final, nunca le cambia estilos.
-   Con Animaciones apagadas solo se duerme en su bolita, como antes. Para probar rápido: ?siesta=rapida */
-SPOSE.colgada = { L:[42, 116, 166, 'open'], R:[42, 116, 166, 'open'] };
-SPOSE.estira = { L:[4, 212, 98, 'wave'], R:[4, 212, 98, 'wave'] };
+   Con Animaciones apagadas solo se duerme en su botón, como antes. Para probar rápido: ?siesta=rapida */
 const SZIDLE = (() => {
   const FAST = /[?&]siesta=rapida/.test(location.search);
   const T_SLEEP = FAST ? 4000 : 120000, T_NAP = FAST ? 6000 : 90000;
@@ -478,13 +402,13 @@ const SZIDLE = (() => {
     await fly(g, center(), 1300);
     await nap(g);
   }
-  /* se cuelga de un título (o del borde de arriba) y se columpia; el título se hunde un poquito con su peso */
+  /* se cuelga de un título (o del borde de arriba) por la antena y se columpia; el título se hunde un poquito con su peso */
   async function hang(g){
     const t = pickOne(seen('h1,h2,h3,#nav,header,.topbar,.head', r => r.width >= 140 && r.bottom >= 40 && r.bottom <= H() * .5)) || null;
     const k = S / 300, gy = t ? t.r.bottom : 0;
     const x = t ? clamp(t.r.left + t.r.width / 2 - S / 2, 8, W() - S - 8) : (W() - S) / 2;
     look('feliz', 'idle'); await fly(g, { x, y:Math.max(-20 * k, gy + 20), r:0 }, 1100);
-    look('encantada', 'colgada'); await fly(g, { y:gy - 54 * k }, 500, 'cubic-bezier(.3,1.6,.5,1)');
+    look('encantada', 'colgada'); await fly(g, { y:gy - 66 * k }, 500, 'cubic-bezier(.3,1.6,.5,1)');
     act.classList.add('swing');
     if (t) nudge(t.n, [{ transform:'translateY(0)' }, { transform:'translateY(5px) rotate(.4deg)' }], { duration:900, iterations:6, direction:'alternate' });
     talk(L2(t ? '¡Wiii! Me cuelgo de aquí.' : '¡Wiii! Me cuelgo del borde.', t ? 'Wheee! Hanging from here.' : 'Wheee! Hanging from the edge.'), 2600);
@@ -495,10 +419,10 @@ const SZIDLE = (() => {
     act.classList.add('land'); look('riendo', 'idle'); await wait(g, 900);
     return true;
   }
-  /* hace ejercicio: saltos de tijera con sus lentes de Flow y va contando */
+  /* hace ejercicio: saltos con sus lentes de Flow y va contando */
   async function gym(g){
     await fly(g, spot(), 1000); look('flow', 'idle');
-    talk(L2('Hora de hacer ejercicio. 💪', 'Workout time!'), 1800); await wait(g, 1700);
+    talk(L2('Hora de hacer ejercicio. ⚡', 'Workout time! ⚡'), 1800); await wait(g, 1700);
     for (let i = 1; i <= 8; i++){
       look('flow', i % 2 ? 'celebra' : 'estira'); act.classList.remove('jump'); void act.offsetWidth; act.classList.add('jump');
       talk(String(i) + (i === 8 ? '!' : '…'), 700); await wait(g, 620);
@@ -506,7 +430,7 @@ const SZIDLE = (() => {
     act.classList.remove('jump'); look('riendo', 'idle'); talk(L2('¡Uf! Hay que mantenerse en forma.', 'Phew! Gotta stay in shape.'), 2400); await wait(g, 2400);
     return true;
   }
-  /* empuja un botón o una tarjeta… y lo devuelve a su lugar */
+  /* empuja un botón o una tarjeta con la cabeza… y lo devuelve a su lugar */
   async function push(g){
     const L = seen('button,.btn,.card,.tcard,.chip,.sug,.pill,h2,h3,img', r => r.width >= 40 && r.width <= 560 && r.height >= 20 && r.height <= 280 && (r.left > S * .9 || W() - r.right > S * .9));
     const t = pickOne(L); if (!t) return false;
@@ -539,11 +463,11 @@ const SZIDLE = (() => {
     look('riendo', 'idle'); talk(L2('¡Gravedad, vuelve! Todo en su lugar.', 'Gravity, come back! All in place.'), 2200); await wait(g, 2200);
     return true;
   }
-  /* malabares con tres bolitas de luz; al final se le cae una */
+  /* órbitas: tres bolitas de luz le dan la vuelta a la cabeza; al final se le escapa una */
   async function juggle(g){
     await fly(g, spot(), 1000); look('encantada', 'celebra'); act.classList.add('jug');
-    talk(L2('¡Mira, malabares!', 'Look, juggling!'), 2200); await wait(g, 5200);
-    act.classList.add('drop'); look('sorprendida', 'sorpresa'); talk(L2('¡Ay! Se me cayó una.', 'Oops! Dropped one.'), 2000); await wait(g, 1600);
+    talk(L2('¡Mira, órbitas de luz!', 'Look, orbits of light!'), 2200); await wait(g, 5200);
+    act.classList.add('drop'); look('sorprendida', 'sorpresa'); talk(L2('¡Ay! Se me escapó una.', 'Oops! One got away.'), 2000); await wait(g, 1600);
     act.classList.remove('jug', 'drop'); look('riendo', 'idle'); await wait(g, 800);
     return true;
   }
@@ -598,7 +522,7 @@ const SZIDLE = (() => {
                   pickOne(['Oh, you\'re back! 👀', 'Oh, you\'re back! I wasn\'t playing with your page… 🙈', 'Oh, you\'re back! I put everything back. 😉']));
     if (BOT.el && typeof botBubble === 'function'){ botFace('sorprendida', true); setTimeout(() => { botBubble(hi, 3600); setTimeout(() => botFace('feliz'), 2600); }, 450); }
     else if (h){
-      /* en la portada no hay bolita: ella misma (la que camina por las secciones) pone la cara y el globito sale a su lado */
+      /* en la portada no hay botón: ella misma (la que camina por las secciones) pone la cara y el globito sale a su lado */
       if (h.querySelector('.szbody')) synSet(h.querySelector('.rb-fig') || h, 'sorprendida', 'sorpresa');
       const q = document.createElement('p'); q.className = 'szi-hi notr'; q.textContent = hi.replace(/\s*\p{Extended_Pictographic}/gu, '');
       document.body.appendChild(q); const hr = h.getBoundingClientRect(), qw = Math.min(300, W() - 24);
@@ -619,22 +543,24 @@ const SZIDLE = (() => {
     get state(){ return state; }, FAST
   };
 })();
-/* ---------- la manita robótica de SynthonIA: señala, hace clic, escribe y explica ---------- */
+/* ---------- el puntero de luz de Sona: señala, hace clic, escribe y explica (SIN manos: es un puntero de neón) ----------
+   arrow = flecha, point = mira con anillo (para hacer clic), grab = punto que arrastra, palm = destello que saluda, text = cursor de escribir */
+const HP = 'fill="#0b0b12" stroke="url(#hgd)" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"';
 const HAND_SVG = {
-  arrow:'<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 3l20 11.2-8.6 2.2L12 25.5z" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.6 8.3l11.3 6.3" stroke="#fff4d6" stroke-opacity=".7" stroke-width="1.2" stroke-linecap="round"/><circle cx="12.6" cy="17.6" r="1.6" fill="#c9566c" stroke="#1a0f08" stroke-width=".8"/></svg>',
-  point:'<svg viewBox="0 0 32 32" aria-hidden="true"><rect x="14.6" y="10.6" width="3.9" height="7" rx="1.95" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.3"/><rect x="18.3" y="11.6" width="3.7" height="6.4" rx="1.85" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.3"/><rect x="21.8" y="13" width="3.4" height="5.6" rx="1.7" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.3"/><path d="M7.4 17.4c0-1.8 1.3-3 3-3h11.6c2 0 3.4 1.4 3.4 3.4v3.4c0 4.2-3.2 7.4-7.4 7.4h-3.2c-4.2 0-7.4-3.2-7.4-7.4z" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.4" stroke-linejoin="round"/><path d="M7.6 18.6c-1.9-1.2-4-.2-3.9 1.7.1 1.3 1.3 2.2 3 3.4l2.8 1.6" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><rect x="9.2" y="1.4" width="5.4" height="17.4" rx="2.7" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.4"/><path d="M10 7h3.8M10 11.6h3.8" stroke="#1a0f08" stroke-opacity=".45" stroke-width="1" stroke-linecap="round"/><path d="M10.6 3.4v2" stroke="#fff4d6" stroke-opacity=".75" stroke-width="1.1" stroke-linecap="round"/><rect x="10" y="26.6" width="12.6" height="3.6" rx="1.6" fill="#c9566c" stroke="#1a0f08" stroke-width="1.2"/><circle cx="18.6" cy="21.6" r="1.5" fill="#c9566c"/></svg>',
-  grab:'<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7.4 13.6c0-1.8 1.4-3 3-3h10.8c2.6 0 4.4 1.8 4.4 4.4v5.6c0 4.4-3.4 7.8-7.8 7.8h-2.6c-4.4 0-7.8-3.4-7.8-7.8z" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.4"/><path d="M11 10.8v4M14.8 10.6v4.4M18.6 10.6v4.4M22.2 11.2v4" stroke="#1a0f08" stroke-opacity=".55" stroke-width="1.1" stroke-linecap="round"/><rect x="10.2" y="26.2" width="12.6" height="3.6" rx="1.6" fill="#c9566c" stroke="#1a0f08" stroke-width="1.2"/></svg>',
-  palm:'<svg viewBox="0 0 32 32" aria-hidden="true"><rect x="8.4" y="4.2" width="3.7" height="12.6" rx="1.85" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.3"/><rect x="12.4" y="1.6" width="3.8" height="15" rx="1.9" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.3"/><rect x="16.5" y="2.4" width="3.7" height="14.4" rx="1.85" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.3"/><rect x="20.4" y="5.2" width="3.4" height="11.8" rx="1.7" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.3"/><path d="M7.8 15.2c0-1.5 1.1-2.5 2.6-2.5h11.6c1.8 0 3 1.2 3 3v4.6c0 4.3-3.3 7.6-7.6 7.6h-2.6c-4.2 0-7-3.3-7-7.6z" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 17.6c-1.6-2-4.4-1.6-4.3.4.1 1.4 1.5 2.4 3.3 3.6l2.2 1.4" fill="url(#hgd)" stroke="#1a0f08" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.2 4v2.2M17.3 4.6v2" stroke="#fff4d6" stroke-opacity=".75" stroke-width="1.1" stroke-linecap="round"/><rect x="10" y="26.6" width="12.6" height="3.6" rx="1.6" fill="#c9566c" stroke="#1a0f08" stroke-width="1.2"/><circle cx="18.4" cy="20.6" r="1.5" fill="#c9566c"/></svg>',
-  text:'<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M11 4.5c2.4 0 4 .8 5 2 1-1.2 2.6-2 5-2M11 27.5c2.4 0 4-.8 5-2 1 1.2 2.6 2 5 2M16 6.5v19M13.2 16h5.6" fill="none" stroke="#1a0f08" stroke-width="4" stroke-linecap="round"/><path d="M11 4.5c2.4 0 4 .8 5 2 1-1.2 2.6-2 5-2M11 27.5c2.4 0 4-.8 5-2 1 1.2 2.6 2 5 2M16 6.5v19M13.2 16h5.6" fill="none" stroke="url(#hgd)" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="16" r="1.4" fill="#c9566c"/></svg>'
+  arrow:'<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 3l20 11.2-8.6 2.2L12 25.5z" ' + HP + '/><path d="M8.6 8.3l8.2 4.6" stroke="#fff" stroke-opacity=".55" stroke-width="1.1" stroke-linecap="round"/><circle cx="12.4" cy="17.4" r="1.5" fill="#ff7ac0"/></svg>',
+  point:'<svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="9.4" fill="rgba(11,11,18,.55)" stroke="url(#hgd)" stroke-width="1.9"/><path d="M16 2.4v4.4M16 25.2v4.4M2.4 16h4.4M25.2 16h4.4" stroke="url(#hgd)" stroke-width="1.9" stroke-linecap="round"/><circle cx="16" cy="16" r="3" fill="#3de0ff"/></svg>',
+  grab:'<svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="9" ' + HP + '/><circle cx="16" cy="16" r="4" fill="#ff7ac0"/><path d="M16 4.6v3M16 24.4v3M4.6 16h3M24.4 16h3" stroke="#3de0ff" stroke-width="1.6" stroke-linecap="round"/></svg>',
+  palm:'<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2.5l3.2 10.3L29.5 16l-10.3 3.2L16 29.5l-3.2-10.3L2.5 16l10.3-3.2z" ' + HP + '/><circle cx="16" cy="16" r="2.6" fill="#3de0ff"/></svg>',
+  text:'<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M11 4.5c2.4 0 4 .8 5 2 1-1.2 2.6-2 5-2M11 27.5c2.4 0 4-.8 5-2 1 1.2 2.6 2 5 2M16 6.5v19" fill="none" stroke="#0b0b12" stroke-width="4.4" stroke-linecap="round"/><path d="M11 4.5c2.4 0 4 .8 5 2 1-1.2 2.6-2 5-2M11 27.5c2.4 0 4-.8 5-2 1 1.2 2.6 2 5 2M16 6.5v19" fill="none" stroke="url(#hgd)" stroke-width="2.2" stroke-linecap="round"/><circle cx="16" cy="16" r="1.5" fill="#ff7ac0"/></svg>'
 };
-const HAND_HOT = { arrow:[5, 3], point:[11.9, 1.8], grab:[16, 12], text:[16, 16], palm:[16, 14] };
+const HAND_HOT = { arrow:[5, 3], point:[16, 16], grab:[16, 16], text:[16, 16], palm:[16, 16] };
 const HAND = (() => {
   let el = null, spot = null, say = null, x = -80, y = -80, shape = 'arrow', alive = false, raf = 0, sayTok = 0, wraf = 0, wArea = null;
   const fast = () => !CFG.anim || PERF;
   function build(){
     if (el) return;
     el = document.createElement('div'); el.id = 'szHand'; el.setAttribute('aria-hidden', 'true');
-    el.innerHTML = '<svg width="0" height="0" style="position:absolute"><defs><linearGradient id="hgd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe7b0"/><stop offset=".45" stop-color="#e6b65f"/><stop offset="1" stop-color="#b8743f"/></linearGradient></defs></svg><div class="hs"></div><span class="hl">SynthonIA</span>';
+    el.innerHTML = '<svg width="0" height="0" style="position:absolute"><defs><linearGradient id="hgd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7ac0"/><stop offset=".5" stop-color="#a866ff"/><stop offset="1" stop-color="#3de0ff"/></linearGradient></defs></svg><div class="hs"></div><span class="hl">Sona</span>';
     spot = document.createElement('div'); spot.id = 'szSpot'; spot.setAttribute('aria-hidden', 'true');
     say = document.createElement('div'); say.id = 'szSay'; say.setAttribute('role', 'status'); say.setAttribute('aria-live', 'polite');
     document.body.append(spot, el, say);
@@ -679,7 +605,7 @@ const HAND = (() => {
     spot.classList.add('on');
   }
   const spotOff = () => { if (spot) spot.classList.remove('on'); if (spotT && spotT.removeAttribute) spotT.removeAttribute('data-guide-ok'); spotT = null; };
-  /* clic con la manita: se aprieta, sale una onda y (si se pide) hace el clic de verdad */
+  /* clic con el puntero: se aprieta, sale una onda y (si se pide) hace el clic de verdad */
   async function click(t, o = {}){
     if (t && !(await moveTo(t, Object.assign({ shape:'point' }, o)))) return false;
     setShape('point'); el.classList.add('press'); SND.tap();
@@ -702,11 +628,11 @@ const HAND = (() => {
     n.value = text; n.dispatchEvent(new Event('input', { bubbles:true }));
     if (el) setShape('arrow'); return true;
   }
-  /* SynthonIA habla en una burbuja junto a la manita (con botones opcionales) */
+  /* Sona habla en una burbuja junto al puntero (con botones opcionales) */
   function talk(text, o = {}){
     build(); const tok = ++sayTok;
     const mood = o.mood || 'feliz', btns = o.buttons || [];
-    say.innerHTML = '<span class="sf">' + face(mood, 56) + '</span><div class="st"><b>SynthonIA</b><p></p>' + (btns.length ? '<div class="sb">' + btns.map((b, i) => '<button type="button" class="btn sm' + (b.ghost ? ' ghost' : '') + '" data-sb="' + i + '">' + esc(b.label) + '</button>').join('') + '</div>' : '') + '</div>';
+    say.innerHTML = '<span class="sf">' + face(mood, 56) + '</span><div class="st"><b>Sona</b><p></p>' + (btns.length ? '<div class="sb">' + btns.map((b, i) => '<button type="button" class="btn sm' + (b.ghost ? ' ghost' : '') + '" data-sb="' + i + '">' + esc(b.label) + '</button>').join('') + '</div>' : '') + '</div>';
     const p = $('p', say); p.textContent = text;
     say.classList.remove('on'); void say.offsetWidth;
     /* lo más cerca posible de lo que explica, sin salirse de la pantalla */
@@ -721,7 +647,7 @@ const HAND = (() => {
     say.style.left = lx + 'px'; say.style.top = ly + 'px';
     requestAnimationFrame(() => say && say.classList.add('on'));
     SND.blip(mood);
-    if (!fast()) typeIn(p, { cps:48, max:4, onFrame:lipSync([$('.sf .szface', say), ballFace()], text) }).catch(() => { p.textContent = text; });
+    if (!fast()) typeIn(p, { cps:48, max:4, onFrame:lipSync([$('.sf .szface', say), botFaceEl()], text) }).catch(() => { p.textContent = text; });
     return new Promise(res => {
       if (!btns.length){ res(-1); return; }
       $$('[data-sb]', say).forEach(b => b.addEventListener('click', () => { if (tok === sayTok) res(+b.dataset.sb); }));
@@ -729,7 +655,7 @@ const HAND = (() => {
     });
   }
   const quiet = () => { if (say) say.classList.remove('on'); };
-  /* mientras eliges algo (p. ej. los temas), la manita no se queda quieta tapando opciones:
+  /* mientras eliges algo (p. ej. los temas), el puntero no se queda quieto tapando opciones:
      flota suave por fuera del panel, arriba y abajo, sin ponerse encima de nada */
   function stopWander(){ cancelAnimationFrame(wraf); wraf = 0; wArea = null; }
   function spotFor(r){
@@ -758,7 +684,7 @@ const HAND = (() => {
       paint(clamp(vx * .4, -8, 8) + Math.sin(t * 1.7) * 4);
     })(t0);
   }
-  /* «¡hola!»: la manita se abre y saluda */
+  /* «¡hola!»: el puntero hace un destello y saluda */
   async function wave(n){
     build(); stopWander(); const prev = shape; setShape('palm');
     const hs = $('.hs', el); if (!hs) return;
@@ -772,8 +698,8 @@ const HAND = (() => {
 })();
 
 /* =====================================================================
-   SynthonIA, la ayudante: bolita flotante (en el celular, junto al logo del chat)
-   1) respuestas guardadas: no gastan nada y, si es un «¿dónde está…?», te lo señala con su manita
+   Sona, la ayudante: botón flotante (en el celular, junto al logo del chat)
+   1) respuestas guardadas: no gastan nada y, si es un «¿dónde está…?», te lo señala con su puntero
    2) si no la sabe, piensa con una IA gratis de SymphorIA (máx. 15 preguntas nuevas al día)
    3) «Hablar con el equipo»: una persona (Prime, ZFlow o Symmetrix) te responde aquí mismo
    ===================================================================== */
@@ -784,7 +710,7 @@ const BOT_FAQ = [
   { k:'puter conectar conecto conecta conectarlo vincular vinculo', need:'puter', a:'Así conectas Puter: abre Ajustes › «Tus IAs» › «Conectar Puter u otra IA» y toca «Conectar con Puter». Se abre una ventanita: entra o crea tu cuenta de Puter (es gratis) y listo. También se conecta solo si eliges una IA que diga «Conecta tu Puter» y le escribes. Con Puter usas la versión pro de IAs como ChatGPT, Claude o Gemini, con un saldo gratis que se renueva cada mes.', act:'conn', lbl:'Conectar mi Puter', go:['[data-tab="cfg"]', '#railCfg', '#cfgBtn'] },
   { k:'cambiar cambio cambias elegir escoger ia modelo cual otra seleccionar', a:'Toca el nombre de la IA que estás usando y se abre «Elige tu IA». Ahí mismo ves las IA: buscas o tocas «Para ti», «Todas» o «Mis favoritas», y tocas «Usar». Si quieres afinar, «Personalizar búsqueda» tiene los filtros. Para comparar varias, usa «Comparar IAs» en la barra.', go:['#cPick', '#curChip', '[data-tab="ia"]'] },
   { k:'comparar comparacion varias dos lado mismo tiempo', a:'Con «Comparar con otra IA» sumas hasta 4. Todas responden lo mismo y aparecen en el orden en que llegan.', go:['#cCmp', '#pickRow [data-add]'] },
-  { k:'guia tutorial aprender enseñar como funciona', a:'En la Guía rápida te pregunto si la quieres completa o qué quieres ver: eliges uno o varios temas y te los muestro con mi manita, en ese orden.', go:['#guideTop', '#helpBtn'], act:'guide', lbl:'Abrir la Guía' },
+  { k:'guia tutorial aprender enseñar como funciona', a:'En la Guía rápida te pregunto si la quieres completa o qué quieres ver: eliges uno o varios temas y te los muestro con mi puntero de luz, en ese orden.', go:['#guideTop', '#helpBtn'], act:'guide', lbl:'Abrir la Guía' },
   { k:'limite cuanto queda quedan mensajes barra uso gasto consumo enerx energia bateria pila carga synxcoin coins', a:'Cada día tienes EnerX, tu batería gratis para usar las IAs conectadas: baja un poco con cada mensaje (lo que escribes y lo que la IA te responde) y a medianoche se carga al 100 %. Sin cuenta tienes una EnerX de prueba; con tu cuenta gratis tu EnerX dura mucho más. Te muestro dónde está.', go:['#railCoin', '#tabCoin', '#navTotal', '.pill-total'], tour:'coins' },
   { k:'pagar cobro cobran gratis precio plata dinero costo tarjeta', a:'SymphorIA es gratis y hoy no te cobra nada. Las IAs conectadas son gratis, y Puter también tiene su parte gratis cada mes. Los planes del menú «⋯» › Planes por ahora solo se muestran: los pagos están apagados.', go:['#moreBtn'] },
   { k:'chats historial conversaciones anteriores guardados donde estan mis', a:'Tus chats están en «Mis chats», en la barrita (en el celular, la pestaña Chats). Se guardan en tu dispositivo y en tu cuenta si entras.', go:['#railChats', '[data-r="chats"]', '[data-tab="chats"]'] },
@@ -799,7 +725,7 @@ const BOT_FAQ = [
   { k:'tema temas color colores cambiar simple estilo oscuro barra izquierda', a:'En Ajustes › General eliges el estilo («Sonyx» o «Simple», más tranquilo), el color de Sonyx (Océano, Bosque, Lavanda…) y, en el celular, si la barra va abajo o a la izquierda.', go:['[data-tab="cfg"]', '#sAcc', '#cfgBtn'] },
   { k:'vincular google correo usuario contraseña juntar unir cuentas', a:'En Ajustes › Cuenta › «Seguridad y acceso» vinculas tu Google a tu cuenta con usuario, o le pones usuario y contraseña a tu cuenta de Google. Así entras a la misma cuenta de las dos formas.', go:['#accBtn', '[data-tab="me"]'] },
   { k:'symphoria symphora sinfonia significa nombre pagina por que se llama etimologia', a:'SymphorIA viene del griego: Sym- (σύν) es «junto, en sintonía», como en sinfonía o sinergia, y -phora (φέρειν) es «llevar», como en metáfora o semáforo. Juntas dicen «el portador de la armonía»: toma el caos de datos y lo lleva a un flujo claro. Es como la evolución del ábaco. ✨', mood:'encantada' },
-  { k:'synth synthetism synthflow synthonia sintonia sona sonyx apex relay superiorsynth nombre nuevo cambio nombres antes', a:'Los nombres cambiaron, pero somos los de siempre: el chat ahora es Sonyx (antes SynthFlow), yo soy Sona (antes SynthonIA), el modo que elige la IA por ti es Apex (antes SuperiorSynth) y la IA automática es Relay. ✨', en:'The names changed, but we\'re the same as ever: the chat is now Sonyx (formerly SynthFlow), I\'m Sona (formerly SynthonIA), the mode that picks the AI for you is Apex (formerly SuperiorSynth) and the automatic AI is Relay. ✨', mood:'feliz' },
+  { k:'synth synthetism synthflow synthonia sintonia sona sonyx apex relay superiorsynth nombre nuevo cambio nombres antes', a:'Los nombres cambiaron, pero somos los de siempre: el chat ahora es Sonyx (antes SynthFlow), yo soy Sona, el modo que elige la IA por ti es Apex (antes SuperiorSynth) y la IA automática es Relay. ✨', en:'The names changed, but we\'re the same as ever: the chat is now Sonyx (formerly SynthFlow), I\'m Sona, the mode that picks the AI for you is Apex (formerly SuperiorSynth) and the automatic AI is Relay. ✨', mood:'feliz' },
   /* charla sencilla */
   { k:'chiste broma cuentame algo gracioso risa', a:'', joke:true, mood:'riendo' },
   { k:'dato curioso sabias algo interesante', a:'', fact:true, mood:'sorprendida' },
@@ -821,7 +747,7 @@ function botMatch(q){
   return best && bs >= .6 && br / tot >= .55 ? best : null;
 }
 const BOT = { el:null, panel:null, open:false, hist:[], help:null, poll:0, seen:0, team:null, inbox:[], cur:null, mode:'chat', teamSeen:{}, positionCleanup:null, betaCleanup:null, betaPut:null };
-/* v2.6: en la portada no hay bolita; la ventanita y las frases salen de donde esté parada SynthonIA */
+/* v2.6: en la portada no hay botón; la ventanita y las frases salen de donde esté parada Sona */
 const botAt = () => { const a = BOT.anchor && BOT.anchor(); return a && a.getClientRects().length ? a : BOT.el; };
 const vis = sel => (Array.isArray(sel) ? sel : [sel]).map(x => $(x)).find(n => n && n.getClientRects().length && n.getBoundingClientRect().width > 0) || null;
 function botAvatarClick(e){
@@ -829,14 +755,14 @@ function botAvatarClick(e){
   BOT.lostN = 0; b.classList.remove('g1', 'g2');
   /* según dónde la toques, hace una cara distinta */
   let z = e && e.detail ? botZone(e) : '';
-  /* v4.6 · en el celular (o con la bolita pegada al logo, de 37 px) tocar el ojo o la antenita TAMBIÉN abre a Sona: antes solo
+  /* v4.6 · en el celular (o con el botón pegado al logo, de 37 px) tocar el ojo o la antenita TAMBIÉN abre a Sona: antes solo
      decía «¡Ay! Ese es mi ojo.» y parecía que no había cómo abrirla. La carita igual reacciona. */
   let touch = false; try{ touch = b.classList.contains('inhead') || matchMedia('(pointer:coarse)').matches; }catch(er){}
   if (touch && (z === 'eye' || z === 'top')){ botFace(z === 'eye' ? 'auch' : 'sorprendida', true); setTimeout(() => botFace('feliz', true), 1500); z = ''; }
   if (z === 'eye'){ SND.blip('auch'); botFace('auch', true); botBubble('¡Ay! Ese es mi ojo.', 2200); setTimeout(() => botFace('feliz', true), 1900); return; }
   if (z === 'top'){ botFace('sorprendida', true); botBubble('¡Uy, mi antena! Me haces cosquillas.', 2200); setTimeout(() => botFace('feliz', true), 1900); return; }
-  if (z === 'cheek'){ botFace('encantada', true); setTimeout(() => botFace('feliz'), 1600); }
-  else if (z === 'mouth'){ botFace('riendo', true); setTimeout(() => botFace('feliz'), 1600); }
+  if (z === 'ear'){ botFace('encantada', true); setTimeout(() => botFace('feliz'), 1600); }
+  else if (z === 'chin'){ botFace('riendo', true); setTimeout(() => botFace('feliz'), 1600); }
   botToggle();
 }
 function botReactUnmount(){
@@ -858,7 +784,7 @@ function botMount(){
   const existing = document.getElementById('szBot');
   const reactOwned = !!(existing && existing.dataset.reactComponent === 'synthonia-avatar');
   const b = existing || document.createElement('button');
-  b.id = 'szBot'; b.type = 'button'; b.setAttribute('aria-label', 'SynthonIA'); b.dataset.tip = 'SynthonIA';
+  b.id = 'szBot'; b.type = 'button'; b.setAttribute('aria-label', 'Sona'); b.dataset.tip = 'Sona';
   const bf = $('.bf', b);
   if (bf) bf.innerHTML = face('feliz', 40);
   else b.innerHTML = '<span class="bf" aria-hidden="true">' + face('feliz', 40) + '</span><i class="bdot" hidden></i>';
@@ -878,7 +804,7 @@ function botMount(){
       };
       const onViewport = () => put();
       put(); addEventListener('resize', onViewport); addEventListener('scroll', onViewport, { passive:true });
-      /* v3.7 · el nombre «SynthFlow» del logo se pinta después: si el logo crece, la bolita se corre con él (antes quedaba encima del logo en el celular) */
+      /* v3.7 · el nombre «SynthFlow» del logo se pinta después: si el logo crece, el botón se corre con él (antes quedaba encima del logo en el celular) */
       let ro = null; try{ ro = new ResizeObserver(() => put()); ro.observe(mLogo); }catch(e){} [300, 1200].forEach(t => setTimeout(put, t));
       BOT.positionCleanup = () => { removeEventListener('resize', onViewport); removeEventListener('scroll', onViewport); if (ro) ro.disconnect(); };
       if (document.fonts) document.fonts.ready.then(put);
@@ -912,12 +838,12 @@ function botMount(){
 
 /* v1.4: la carita cambia suave (una se desvanece y la otra aparece), y si está «pegada» (triste) no cambia */
 function botZone(e){
-  const r = BOT.el.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
-  const fx = (x - .5) / .667 + .5, fy = (y - .5) / .667 + .5;          /* a coordenadas de la carita (0–1) */
-  if (Math.hypot(fx - .40, fy - .52) < .085 || Math.hypot(fx - .60, fy - .52) < .085) return 'eye';
-  if (fy < .22) return 'top';
-  if (fy > .58 && fy < .72 && (fx < .38 || fx > .62)) return 'cheek';
-  if (fy > .6 && fy < .8) return 'mouth';
+  const f = $('.bf .szface', BOT.el) || BOT.el, r = f.getBoundingClientRect();
+  const fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;          /* a coordenadas de la carita (0–1) */
+  if (Math.hypot(fx - .40, fy - .52) < .1 || Math.hypot(fx - .60, fy - .52) < .1) return 'eye';
+  if (fy < .27) return 'top';                                                               /* la antena */
+  if (fy > .4 && fy < .68 && (fx < .21 || fx > .79)) return 'ear';                          /* las orejitas */
+  if (fy > .68 && fy < .84) return 'chin';
   return '';
 }
 function botFace(mood, force){
@@ -959,7 +885,7 @@ function botBubble(text, ms){
   bb.style.width = W + 'px'; bb.style.left = clamp(r.left + r.width / 2 - W / 2, 12, innerWidth - W - 12) + 'px';
   const up = r.top > 140; bb.style.top = up ? 'auto' : (r.bottom + 12) + 'px'; bb.style.bottom = up ? (innerHeight - r.top + 12) + 'px' : 'auto'; bb.classList.toggle('dn', !up);
   bb.classList.remove('on'); void bb.offsetWidth; bb.classList.add('on'); clearTimeout(bb._t); bb._t = setTimeout(() => bb.classList.remove('on'), (ms || 5200) + Math.min(3000, D.text.length * 18));
-  typeIn($('p', bb), { cps:45, max:4, onFrame:lipSync([$('.bbf .szface', bb), ballFace()], D.text) }).catch(() => {});
+  typeIn($('p', bb), { cps:45, max:4, onFrame:lipSync([$('.bbf .szface', bb), botFaceEl()], D.text) }).catch(() => {});
 }
 function botPlace(){
   const P = BOT.panel, b = BOT.el && botAt(); if (!P || !b) return;
@@ -968,7 +894,7 @@ function botPlace(){
   const r = b.getBoundingClientRect(), W = Math.min(410, innerWidth - 24), H = Math.min(690, innerHeight - 40);
   P.style.width = W + 'px'; P.style.height = H + 'px';
   if (b !== BOT.el){
-    /* junto a SynthonIA (del lado con más espacio), sin taparla */
+    /* junto a Sona (del lado con más espacio), sin taparla */
     const R = innerWidth - r.right, L = r.left, top = Math.min(84, innerHeight - H - 12);
     /* si no cabe al lado sin tapar el título, ella la sostiene: la ventanita sale debajo de su cara */
     if (Math.max(R, L) < W + 28 || r.width > 220){ P.style.left = clamp(r.left + r.width / 2 - W / 2, 12, innerWidth - W - 12) + 'px'; P.style.top = clamp(r.top + Math.min(150, r.height * .42), top, innerHeight - H - 12) + 'px'; return; }
@@ -998,7 +924,7 @@ function botOpen(){
     inp.addEventListener('blur', () => { if (BOT.stageKeep === 'listen' && !BOT.rec){ BOT.stageKeep = ''; if (!BOT.think){ botStatus('idle'); botStage(BOT.stageMood === 'escuchando' ? 'feliz' : (BOT.stageMood || 'feliz'), 'idle'); } } }); }
   botStage('feliz', 'saluda');
   botRender();
-  if (!BOT.hist.length) botSay(T('¡Hola! Soy Sona. Estoy aquí para que nunca te pierdas: pregúntame cómo se hace algo o dónde está, y te lo explico fácil o te lo señalo con mi manita.', 'Hi! I\'m Sona. I\'m here so you never get lost: ask me how to do something or where it is, and I\'ll explain it simply or point to it with my hand.'), 'feliz', null, 'saluda');
+  if (!BOT.hist.length) botSay(T('¡Hola! Soy Sona. Estoy aquí para que nunca te pierdas: pregúntame cómo se hace algo o dónde está, y te lo explico fácil o te lo señalo con mi puntero de luz.', 'Hi! I\'m Sona. I\'m here so you never get lost: ask me how to do something or where it is, and I\'ll explain it simply or point to it with my light pointer.'), 'feliz', null, 'saluda');
 }
 /* a11y: cerrado, el panel sale del árbol accesible y del foco (inert + aria-hidden); al cerrar el foco vuelve a quien lo abrió */
 function botA11y(on){
@@ -1062,13 +988,13 @@ function botSay(text, mood, btn, pose){
   if (BOT.open && BOT.panel){
     botStage(mood, pose); botStatus('talk');
     const L = $$('.bl .bm.a', BOT.panel), last = L[L.length - 1], p = last && $('p', last);
-    if (p) setTimeout(() => typeIn(p, { cps:45, max:4.5, onFrame:lipSync([botStageHead(), $('.mf .szface', last), ballFace()], D.text) }).then(() => { if (BOT.panel && !BOT.think && !BOT.rec){ BOT.stageKeep = ''; botStatus('idle'); } }).catch(() => {}), 80);
+    if (p) setTimeout(() => typeIn(p, { cps:45, max:4.5, onFrame:lipSync([botStageHead(), $('.mf .szface', last), botFaceEl()], D.text) }).then(() => { if (BOT.panel && !BOT.think && !BOT.rec){ BOT.stageKeep = ''; botStatus('idle'); } }).catch(() => {}), 80);
     else botStatus('idle');
   }
   /* si cerraste la ventanita mientras pensaba: «Ten paciencia… modo zen…» y luego la respuesta */
   if (!BOT.open && BOT.zen){ BOT.zen = false; botFace('dormida', true); botBubble('Ten paciencia… modo zen…', 1900); setTimeout(() => { botFace(mood, true); botBubble(D.text.length > 240 ? D.text.slice(0, 236) + '…' : D.text, 8000); }, 2000); }
 }
-/* respuesta guardada: si dice «dónde», la manita lo señala */
+/* respuesta guardada: si dice «dónde», el puntero lo señala */
 async function botAnswer(f){
   if (f.joke || f.fact){ const t = await botThink(() => f.joke ? BOTAPI.joke() : BOTAPI.fact()); return botSay((f.fact ? '¿Sabías que…? ' : '') + t, f.joke ? 'riendo' : 'sorprendida'); }
   await botThink();
@@ -1121,7 +1047,7 @@ async function botAsk(q){
     const d = await r.json().catch(() => ({})); return { r, d }; });
     const { r, d } = res;
     if (!r.ok) return botSay(d.error || (B.LANG === 'en' ? 'I couldn\'t come up with an answer right now. Check the Guide or talk to the team.' : 'No pude pensar una respuesta ahora. Mira la Guía o habla con el equipo.'), 'disculpa', ['team', B.LANG === 'en' ? 'Talk to the team' : 'Hablar con el equipo']);
-    /* v3.0 · si la IA dice [ver:lugar], la manita lo señala */
+    /* v3.0 · si la IA dice [ver:lugar], el puntero lo señala */
     const pm = String(d.text || '').match(/\[ver:(\w+)\]/), place = pm && BOT_PLACES[pm[1]];
     /* v3.7 · si le faltaron al respeto, pone el límite con cara seria (sin señalar nada); v4.6 · si dijo algo delicado, responde con calidez */
     if (d.bound) return botSay(String(d.text || ''), 'neutral');
@@ -1131,7 +1057,7 @@ async function botAsk(q){
     if (d.remember) memAsk(String(d.remember));
   }catch(e){ botSay(B.LANG === 'en' ? 'I couldn\'t connect. Check your internet and try again.' : 'No pude conectarme. Revisa tu internet e intenta otra vez.', 'disculpa'); }
 }
-/* v3.7 · memoria: SynthonIA propone recordar algo que vale la pena y PREGUNTA; nada se guarda sin el «Sí» de la persona */
+/* v3.7 · memoria: Sona propone recordar algo que vale la pena y PREGUNTA; nada se guarda sin el «Sí» de la persona */
 function memAsk(fact){
   if (!memAddCore || !memList) return;
   BOT.memQ = BOT.memQ || {}; const id = 'mem:' + Date.now().toString(36); BOT.memQ[id] = fact;
@@ -1152,10 +1078,10 @@ function botAct(a){
   else if (a === 'team') botTeam();
   else if (a === 'login'){ botClose(); if (window.SZFlow && SZFlow.signIn) SZFlow.signIn(); else { const b = $('#accBtn') || $('[data-tab="me"]'); if (b) b.click(); } }
 }
-/* ===== v3.0 · SynthonIA se sabe toda la página (en español y en inglés) y te señala cada cosa =====
+/* ===== v3.0 · Sona se sabe toda la página (en español y en inglés) y te señala cada cosa =====
    Cada entrada: k = palabras que la activan (es + en, sin tildes), a = respuesta, en = respuesta en inglés,
    go = dónde señala (el primero que se vea), pre = qué abre antes de señalar (por ejemplo Ajustes).
-   Cuando agregues algo a la página, agrégalo aquí también: así SynthonIA nunca queda desactualizada. */
+   Cuando agregues algo a la página, agrégalo aquí también: así Sona nunca queda desactualizada. */
 const openCfg = tab => () => { if (!$('#cfgm')) cfgModal(tab); };
 const inFlow = () => isFlow();
 BOT_FAQ.push(
@@ -1301,11 +1227,11 @@ BOT_FAQ.push(
  ['symphoria', 'symphoria name meaning means why called'], ['synth ', 'synth synthetism synthflow synthonia'], ['hola', 'hello hi hey greetings good morning evening'],
  ['como estas', 'how are you doing'], ['como te llamas', 'who are you your name'], ['chiste', 'joke funny laugh'], ['dato curioso', 'fun fact interesting know'],
  ['gracias', 'thanks thank great perfect cool'], ['adios', 'bye goodbye see you later']].forEach(([s, en]) => { const f = BOT_FAQ.find(x => x.k.startsWith(s)); if (f) f.k += ' ' + en; });
-/* lo que sí existe en la página, para que la IA de SynthonIA (cuando no hay respuesta guardada) diga dónde está y la manita lo señale */
+/* lo que sí existe en la página, para que la IA de Sona (cuando no hay respuesta guardada) diga dónde está y el puntero lo señale */
 const BOT_PLACES = { chats:['[data-r="chats"]', '[data-tab="chats"]'], nuevo:['#cNew', '[data-r="new"]'], buscar:['[data-r="search"]'], favoritos:['#railFav', '[data-r="favs"]'], proyectos:['#railProj', '#cProj'], sinteticos:['#railSyn', '#cSyn'],
   ajustes:['#sAcc', '#cfgBtn', '[data-tab="cfg"]'], cuenta:['#accBtn', '[data-tab="me"]'], mas:['#attachBtn'], menu:['#moreBtn'], ia:['#cPick'], comparar:['#cCmp'], modo:['#cMode'], esfuerzo:['#cEffort'], cortas:['#saverBtn'], caja:['#inp'], planes:['#moreBtn'], ayuda:['a[href*="ayuda"]'], enerx:['#railCoin', '#tabCoin'], guia:['#guideTop', '#helpBtn'] };
 /* =====================================================================
-   v4.6 · Sona (antes SynthonIA): charla propia y respuestas con sentido
+   v4.6 · Sona: charla propia y respuestas con sentido
    Antes cualquier palabra parecida disparaba una respuesta guardada sin relación («cuéntame algo» → chiste, «qué día es hoy» →
    «Buscar en internet») y lo demás iba a una IA con un texto enorme. Ahora, en este orden:
    1) cuidado: si dice que se quiere hacer daño, responde con calidez (nunca con un chiste ni con una IA)
@@ -1345,8 +1271,8 @@ const SONA_INT = [
     es:['¡Chao! Que tengas un día con mucho Flow.', '¡Hasta pronto, {n}! Aquí te espero.', 'Nos vemos. Cuando quieras volver, aquí estoy.'],
     en:['Bye! Have a day full of Flow.', 'See you soon, {n}! I\'ll be right here.', 'See you. Whenever you want to come back, I\'m here.'] },
   { id:'quien', rx:/\b(quien eres|que eres|como te llamas|cual es tu nombre|who are you|what are you|what s your name|your name is)\b/, mood:'guino', pose:'presenta',
-    es:['Soy Sona, la ayudante de la página: te explico cómo funciona, te digo las cosas claras y tengo mis opiniones sobre tecnología (spoiler: lo simple que funciona le gana a lo brillante que se rompe).', 'Me llamo Sona. Soy una IA con cara de bola de cristal y manitas flotantes: te guío por la página y charlo contigo cuando quieras.'],
-    en:['I\'m Sona, the site\'s helper: I explain how things work, I tell it like it is, and I have my own opinions about tech (spoiler: simple things that work beat shiny things that break).', 'My name is Sona. I\'m an AI with a glass-ball face and floating hands: I guide you around the site and chat whenever you like.'] },
+    es:['Soy Sona, la ayudante de la página: te explico cómo funciona, te digo las cosas claras y tengo mis opiniones sobre tecnología (spoiler: lo simple que funciona le gana a lo brillante que se rompe).', 'Me llamo Sona. Soy un robotcito negro con antena y ojos de neón: te guío por la página y charlo contigo cuando quieras.'],
+    en:['I\'m Sona, the site\'s helper: I explain how things work, I tell it like it is, and I have my own opinions about tech (spoiler: simple things that work beat shiny things that break).', 'My name is Sona. I\'m a little black robot with an antenna and neon eyes: I guide you around the site and chat whenever you like.'] },
   { id:'real', rx:/\b(eres (una? )?(humana?|real|persona|robot|ia|chica|chico)|are you (real|human|a robot|a person|an ai|a bot))\b/, mood:'guino',
     es:['No soy humana: soy Sona, una IA ayudante. Pero te escucho y te respondo de verdad, sin cuento.', 'Soy una IA, sin disfraz. Eso sí, una bien simpática 😉'],
     en:['I\'m not human: I\'m Sona, an AI helper. But I really do listen and answer you, no tricks.', 'I\'m an AI, no costume. A friendly one, though 😉'] },
@@ -1375,11 +1301,11 @@ const SONA_INT = [
     es:['¡Juguemos! Escribe «chiste» y te cuento uno, o «dato» y te sorprendo con un dato curioso. ¿Cuál prefieres?'],
     en:['Let\'s play! Type «joke» and I\'ll tell you one, or «fact» and I\'ll surprise you with a fun fact. Which one do you want?'] },
   { id:'deti', rx:/\b(cuentame de ti|hablame de ti|platica conmigo|conversemos|charlemos|hablemos|tell me about yourself|talk to me|let s chat)\b/, mood:'encantada', pose:'presenta',
-    es:['Soy Sona: una ayudante de IA con cara de bola de cristal, ojos azules y manitas flotantes. Me gusta lo simple que funciona, comparar IAs y los chistes cortos. ¿Y tú, qué andas buscando hoy?'],
-    en:['I\'m Sona: an AI helper with a glass-ball face, blue eyes and floating hands. I like simple things that work, comparing AIs and short jokes. And you, what are you looking for today?'] },
+    es:['Soy Sona: una ayudante de IA, un robotcito negro con antena y ojos azules de neón. Me gusta lo simple que funciona, comparar IAs y los chistes cortos. ¿Y tú, qué andas buscando hoy?'],
+    en:['I\'m Sona: an AI helper, a little black robot with an antenna and neon-blue eyes. I like simple things that work, comparing AIs and short jokes. And you, what are you looking for today?'] },
   { id:'perdido', rx:/\b(no entiendo( nada)?|estoy perdid[oa]|no se que hacer|no se por donde empezar|i don t understand|i m lost|im lost|i don t know where to start)\b/, mood:'feliz', btn:['guide', { es:'Ver la Guía', en:'See the Guide' }],
-    es:['Tranquilidad, para eso estoy. Dime qué quieres lograr y te llevo paso a paso, o toca «Ver la Guía» y te lo muestro con mi manita.'],
-    en:['No worries, that\'s what I\'m here for. Tell me what you want to do and I\'ll walk you through it, or tap «See the Guide» and I\'ll show you with my hand.'] },
+    es:['Tranquilidad, para eso estoy. Dime qué quieres lograr y te llevo paso a paso, o toca «Ver la Guía» y te lo muestro con mi puntero de luz.'],
+    en:['No worries, that\'s what I\'m here for. Tell me what you want to do and I\'ll walk you through it, or tap «See the Guide» and I\'ll show you with my light pointer.'] },
   /* solo cuando el mensaje es exactamente esto */
   { id:'saludo', exact:/^$/, mood:'feliz', pose:'saluda',
     es:['¡Hola! Soy Sona 😊 ¿En qué te ayudo?', '¡Hola, {n}! Qué gusto verte. ¿En qué te ayudo?', '¡Hey! Aquí estoy. Cuéntame qué necesitas.', '¡Hola! Qué bueno tenerte por aquí. ¿Qué andas buscando?'],
@@ -1436,13 +1362,13 @@ function sonaTaskSay(q){
 }
 /* =====================================================================
    v4.6 · La ventanita de Sona, como una compañera (estilo «compañero» de Grok, con la ropa de la portada)
-   Arriba un escenario con SU mismo dibujo de la portada (la bola de vidrio con ojos cian y las manitas flotantes), grande, con el pentagrama
-   de la marca detrás; ella reacciona: piensa con el dedo en la barbilla, se inclina a escucharte cuando escribes, señala, celebra y mueve
-   la boca (ondas naranjas) cuando habla. Abajo la charla en burbujas de vidrio, sugerencias que se deslizan y una píldora flotante
+   Arriba un escenario con SU dibujo de robotcito negro con neón (sin manos), grande, con el pentagrama
+   de la marca detrás; ella reacciona: piensa (el foquito de la antena parpadea), se inclina a escucharte cuando escribes, señala, celebra y
+   enciende el foquito y las ondas rosadas cuando habla. Abajo la charla en burbujas de vidrio, sugerencias que se deslizan y una píldora flotante
    para escribir con micrófono (el dictado del navegador: toca y habla, y el navegador pide el permiso, igual que en el chat).
    ===================================================================== */
 const T = (es, en) => B.LANG === 'en' ? en : es;
-/* la cara → qué pose del cuerpo (las de SPOSE en 20-synthonia-carita-svg-expresion.js) */
+/* la cara → qué postura de la cabeza (las de SPOSE en 20-synthonia-carita-svg-expresion.js) */
 const SONA_POSE = { senalando:'senala', pensando:'piensa', celebrando:'celebra', sorprendida:'sorpresa', escuchando:'escucha', confundida:'piensa', presenta:'presenta' };
 
 /* el pentagrama de la marca, ondulado, detrás de ella (como la cinta de la portada) */
@@ -1617,7 +1543,7 @@ async function botClick(e){
   const k = b.dataset.b;
   if (k === 'min') botClose();
   else if (k === 'mic') botMic();
-  else if (k === 'hide'){ botClose(); try{ sessionStorage.setItem('synthz:bothide', '1'); }catch(er){} const el = BOT.el; if (el && el.dataset.reactComponent === 'synthonia-avatar'){ el.classList.remove('on'); /* Deja BOT.el vivo hasta que React procese la retirada y el motor limpie listeners de posición. */ setTimeout(() => dispatchEvent(new Event('symphoria:hide-synthonIA')), 400); } else { BOT.el = null; if (el) setTimeout(() => el.remove(), 400); } toast('SynthonIA se escondió hasta que vuelvas a abrir la página.'); }
+  else if (k === 'hide'){ botClose(); try{ sessionStorage.setItem('synthz:bothide', '1'); }catch(er){} const el = BOT.el; if (el && el.dataset.reactComponent === 'synthonia-avatar'){ el.classList.remove('on'); /* Deja BOT.el vivo hasta que React procese la retirada y el motor limpie listeners de posición. */ setTimeout(() => dispatchEvent(new Event('symphoria:hide-synthonIA')), 400); } else { BOT.el = null; if (el) setTimeout(() => el.remove(), 400); } toast('Sona se escondió hasta que vuelvas a abrir la página.'); }
   else if (k === 'team') botTeam();
   else if (k === 'fb'){ botClose(); feedbackModal(); }
   else if (k === 'ia'){ BOT.mode = 'chat'; botRender(); }
@@ -1661,7 +1587,7 @@ function betaTags(){
   const a = document.querySelector('#nav .logo'); if (!a || document.querySelector('#nav .beta-tag')) return;
   const w = document.createElement('div'); w.className = 'logow'; a.before(w); w.append(a, betaMk());
 }
-/* SynthFlow: el BETA va pegadito a la bolita de SynthonIA y la sigue si la mueves */
+/* SynthFlow: el BETA va pegadito al botón de Sona y la sigue si la mueves */
 function betaBot(){
   const b = BOT.el; if (!b || !isFlow()) return;
   let t = document.getElementById('betaBot');
@@ -1673,7 +1599,7 @@ function betaBot(){
       /* React owns both controls: keep BETA fixed to the avatar's real viewport box,
          even when the avatar sits beside the mobile logo. */
       t.style.position = 'fixed'; t.style.zIndex = '9599';
-      /* v3.7 · en la cabecera del celular va a la DERECHA de la bolita (a la izquierda tapaba el logo «SynthFlow») */
+      /* v3.7 · en la cabecera del celular va a la DERECHA del botón (a la izquierda tapaba el logo «SynthFlow») */
       const candidate = b.classList.contains('inhead') || r.left - w - 10 < 8 ? r.right + 10 : r.left - w - 10;
       const left = Math.max(8, Math.min(innerWidth - w - 8, candidate));
       const top = Math.max(8, Math.min(innerHeight - h - 8, r.top + r.height / 2 - h / 2));
@@ -1696,12 +1622,12 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 addEventListener('synthz-ready-bot', botMount);
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(botMount, 900)); else setTimeout(botMount, 900);
 const BOTAPI = { anchor:fn => { BOT.anchor = fn; }, open:botOpen, close:botClose, mount:botMount, unmount:botReactUnmount, activate:botAvatarClick, say:botSay, sync:botSync, team:botTeam, chatOpen, chatClose, match:q => { const f = botMatch(q); return f ? BOT_FAQ.indexOf(f) : -1; }, faq:i => BOT_FAQ[i] && BOT_FAQ[i].k, intent:q => { const s = sonaIntent(q); return s ? s.id : ''; }, task:sonaTask, get el(){ return BOT.el; } };
-/* ---------- Guía: elegir cómo aprender (Asistida con SynthonIA o Lectura) ---------- */
+/* ---------- Guía: elegir cómo aprender (Asistida con Sona o Lectura) ---------- */
 function guideChooser(o = {}){
   if ($('#szGch')) return;
   const w = document.createElement('div'); w.id = 'szGch'; w.className = 'szm';
   w.innerHTML = '<div class="tcard" role="dialog" aria-modal="true" aria-label="Guía"><div class="word">' + zWord('Synth') + '</div><div class="tn">GUÍA</div><div class="tb"><h3>¿Cómo quieres aprender?</h3><p>' + esc(o.lead || 'Te muestro ' + (isFlow() ? 'SynthFlow' : 'SymphorIA') + ' como prefieras. Puedes volver aquí cuando quieras con el botón «Guía».') + '</p></div>'
-    + '<div class="gch"><button type="button" class="gco a" data-g="a"><span class="gf">' + face('senalando', 54) + '</span><b>Asistida</b><small>SynthonIA te lo muestra con su manita, paso a paso: temas, IA recomendadas, comparar 2 y ' + (o.trial === false ? 'cómo conectar.' : 'tu primer chat con las IAs conectadas.') + '</small><em>Unos 2 minutos</em></button>'
+    + '<div class="gch"><button type="button" class="gco a" data-g="a"><span class="gf">' + face('senalando', 54) + '</span><b>Asistida</b><small>Sona te lo muestra con su puntero de luz, paso a paso: temas, IA recomendadas, comparar 2 y ' + (o.trial === false ? 'cómo conectar.' : 'tu primer chat con las IAs conectadas.') + '</small><em>Unos 2 minutos</em></button>'
     + '<button type="button" class="gco l" data-g="l"><span class="gf"><svg viewBox="0 0 48 48" width="54" height="54" aria-hidden="true"><path d="M8 11c6-2 12-1 16 3 4-4 10-5 16-3v26c-6-2-12-1-16 3-4-4-10-5-16-3z" fill="rgba(184,196,255,.12)" stroke="#b8c4ff" stroke-width="2" stroke-linejoin="round"/><path d="M24 14v26" stroke="#b8c4ff" stroke-width="2"/><path d="M12 18h7M12 23h7M29 18h7M29 23h7" stroke="#b8c4ff" stroke-opacity=".6" stroke-width="1.6" stroke-linecap="round"/></svg></span><b>Lectura</b><small>Una guía corta para leer a tu ritmo, con todo lo importante.</small><em>A tu ritmo</em></button></div>'
     + '<div class="tbtn" style="margin-top:14px"><button class="lnk" type="button" data-close>Ahora no</button></div></div>';
   document.body.appendChild(w); requestAnimationFrame(() => w.classList.add('on'));
@@ -1774,7 +1700,7 @@ function welcomeBack(opts){
     }
     if (e.type === 'wheel' || e.type === 'touchmove') return;      /* mirar (desplazarse) sí se puede */
     e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-    if ((e.type === 'pointerdown' || e.type === 'keydown') && Date.now() - warnT > 2600){ warnT = Date.now(); try{ toast('Estás en la guía. Sigue con los botones de SynthonIA o toca «Saltar guía».'); }catch(x){} const h = document.querySelector('#szgHud .gh-x'); if (h){ h.classList.remove('nudge'); void h.offsetWidth; h.classList.add('nudge'); } }
+    if ((e.type === 'pointerdown' || e.type === 'keydown') && Date.now() - warnT > 2600){ warnT = Date.now(); try{ toast('Estás en la guía. Sigue con los botones de Sona o toca «Saltar guía».'); }catch(x){} const h = document.querySelector('#szgHud .gh-x'); if (h){ h.classList.remove('nudge'); void h.offsetWidth; h.classList.add('nudge'); } }
   };
   ['pointerdown', 'mousedown', 'mouseup', 'click', 'dblclick', 'contextmenu', 'keydown', 'submit'].forEach(t => addEventListener(t, stop, { capture:true, passive:false }));
 })();
@@ -1784,7 +1710,7 @@ addEventListener('pointerdown', e => {
   const r = document.createElement('i'); r.className = 'tapr'; r.style.left = e.clientX + 'px'; r.style.top = e.clientY + 'px';
   document.body.appendChild(r); setTimeout(() => r.remove(), 600);
 }, { capture:true, passive:true });
-/* ===== v1.3 · SynthonIA con vida: chistes, datos curiosos que no se repiten, siesta, reacciones y ayuda si te pierdes ===== */
+/* ===== v1.3 · Sona con vida: chistes, datos curiosos que no se repiten, siesta, reacciones y ayuda si te pierdes ===== */
 (function botLife(){
   const JOKES = [
     '¿Por qué la computadora fue al médico? Porque tenía un virus… y no quería compartirlo. 🤒',
@@ -1798,7 +1724,7 @@ addEventListener('pointerdown', e => {
     'Intenté hacer un chiste sobre la nube… pero se fue volando. ☁️',
     '¿Cuál es el café más peligroso del mundo? El ex-preso. ☕',
     '¿Qué le dijo el 0 al 8? «¡Qué buen cinturón!» 0️⃣',
-    'Soy SynthonIA y no duermo… bueno, solo cuando te vas. 😴',
+    'Soy Sona y no duermo… bueno, solo cuando te vas. 😴',
     '¿Qué hace un pez en internet? Navega. 🐟',
     '¿Cómo se despiden los químicos? Ácido un placer. 🧪',
     '¿Qué le dijo una impresora a otra? «¿Ese papel es tuyo o es impresión mía?» 🖨️',
@@ -1880,7 +1806,7 @@ addEventListener('pointerdown', e => {
   }
   ['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach(t => addEventListener(t, wake, { capture:true, passive:true }));
   document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });
-  /* 1 minuto sin moverte: SynthonIA se duerme y la página baja el ritmo para ahorrar batería */
+  /* 1 minuto sin moverte: Sona se duerme y la página baja el ritmo para ahorrar batería */
   setInterval(() => {
     /* v3.2 · a los 2 minutos sale a dormir en la mitad de la pantalla y luego juega (core 20, SZIDLE) */
     SZIDLE.tick(Date.now() - last, busyUI() || !!document.querySelector('.work:not(.fin)'));
@@ -1920,11 +1846,11 @@ addEventListener('pointerdown', e => {
     const m = o.text ? [o.mood || 'feliz', o.text] : M[kind]; if (!m) return;
     botFace(m[0]); botBubble(m[1], o.ms || 5200); setTimeout(() => { if (!asleep) botFace('feliz'); }, (o.ms || 5200) + 200);
   };
-  /* un mensaje con botón dentro del panel de SynthonIA (rescatar un error, cambiar de IA…) */
+  /* un mensaje con botón dentro del panel de Sona (rescatar un error, cambiar de IA…) */
   BOT.acts = BOT.acts || {};
   BOTAPI.offer = (text, mood, label, fn) => { const id = 'x' + Date.now().toString(36); BOT.acts[id] = fn; if (!BOT.open) botOpen(); botSay(text, mood || 'feliz', label ? [id, label] : null); };
 
-  /* ---- demasiados problemas seguidos: saca su manita, pide perdón y señala el botón para contarnos qué pasó ---- */
+  /* ---- demasiados problemas seguidos: saca su puntero, pide perdón y señala el botón para contarnos qué pasó ---- */
   let probs = [], sorryAt = 0;
   BOTAPI.problem = kind => {
     const now = Date.now(); probs = probs.filter(t => now - t < 600000); probs.push(now);
@@ -1958,8 +1884,8 @@ addEventListener('pointerdown', e => {
   }, { passive:true });
 })();
 
-/* ===== v2.0 · Guía rápida con SynthonIA: «¿La quieres completa o qué quieres ver?»
-   Eliges uno o varios temas (en el orden que los toques) y te los muestra con su manita.
+/* ===== v2.0 · Guía rápida con Sona: «¿La quieres completa o qué quieres ver?»
+   Eliges uno o varios temas (en el orden que los toques) y te los muestra con su puntero de luz.
    Además: «¡Descubriste algo nuevo!» la primera vez que usas algo, y «Qué hay de nuevo» contado por ella ===== */
 const GTOPICS = [
   ['chat', 'Escribir y enviar', 'Dónde escribes y cómo envías.'],
@@ -1972,14 +1898,14 @@ const GTOPICS = [
   ['limite', 'Tu límite gratis', 'Cuánto te queda hoy y cuándo se llena.'],
   ['cuenta', 'Tu cuenta y Puter', 'Guardar tus chats y la versión pro de las IA.'],
   ['ajustes', 'Ajustes', 'Más bonito, más rápido, sonidos y más.'],
-  ['synthonia', 'SynthonIA', 'Cómo pedirme ayuda cuando quieras.']
+  ['synthonia', 'Sona', 'Cómo pedirme ayuda cuando quieras.']
 ];
 function guideAsk(o = {}){
   if ($('#szGq')) return;
   const L = (o.topics || GTOPICS), picked = [];
   const w = document.createElement('div'); w.id = 'szGq'; w.className = 'szm';
   w.innerHTML = '<div class="tcard gq" role="dialog" aria-modal="true" aria-label="Guía rápida">'
-    + '<div class="gq-say"><span class="gq-f">' + face('feliz', 64) + '</span><div><b>SynthonIA</b><p></p></div></div>'
+    + '<div class="gq-say"><span class="gq-f">' + face('feliz', 64) + '</span><div><b>Sona</b><p></p></div></div>'
     + '<button type="button" class="gq-full" data-gq="full"><span>Completa</span><small>' + esc(o.fullTxt || 'Te muestro todo, paso a paso (unos 2 minutos).') + '</small></button>'
     + '<p class="gq-or">o elige lo que quieres ver <small>(puedes elegir varios; los veremos en el orden en que los toques)</small></p>'
     + '<div class="gq-chips">' + L.map(t => '<button type="button" class="gq-c" data-t="' + t[0] + '" aria-pressed="false" title="' + esc(t[2]) + '"><i></i>' + esc(t[1]) + '</button>').join('') + '</div>'
@@ -1988,7 +1914,7 @@ function guideAsk(o = {}){
   $('.tcard', w).animate([{ transform:'scale(.92) translateY(20px)', opacity:0, filter:'blur(8px)' }, { transform:'none', opacity:1, filter:'blur(0)' }], { duration:600, easing:'cubic-bezier(.22,1,.36,1)' });
   const say = '¡Hola! ¿Quieres ver la guía completa o qué quieres aprender?';
   const p = $('.gq-say p', w); p.textContent = say; SND.blip('feliz');
-  typeIn(p, { cps:46, max:3, onFrame:lipSync([$('.gq-f .szface', w), ballFace()], say) }).catch(() => {});
+  typeIn(p, { cps:46, max:3, onFrame:lipSync([$('.gq-f .szface', w), botFaceEl()], say) }).catch(() => {});
   const go = $('[data-gq="go"]', w);
   const paint = () => { $$('.gq-c', w).forEach(b => { const i = picked.indexOf(b.dataset.t); b.setAttribute('aria-pressed', String(i >= 0)); $('i', b).textContent = i >= 0 ? String(i + 1) : ''; }); go.disabled = !picked.length; go.textContent = picked.length ? 'Muéstrame ' + (picked.length === 1 ? 'eso' : 'estos ' + picked.length) : 'Muéstrame lo que elegí'; };
   const close = then => { w.classList.remove('on'); setTimeout(() => w.remove(), 420); if (then) setTimeout(then, 280); };
@@ -2002,7 +1928,7 @@ function guideAsk(o = {}){
   setTimeout(() => { const b = $('.gq-full', w); if (b) b.focus(); }, 80);
 }
 
-/* «¡Descubriste algo nuevo!»: la primera vez que usas algo, SynthonIA te cuenta en una línea para qué sirve */
+/* «¡Descubriste algo nuevo!»: la primera vez que usas algo, Sona te cuenta en una línea para qué sirve */
 const DISC = [
   ['#cCmp, #pickRow [data-add], [data-add-cmp]', 'comparar', 'Comparar IAs', 'Ahora varias IA responden lo mismo y ves cuál lo hace mejor.'],
   ['#modeMenu [data-mode="agent"]', 'agente', 'SuperiorSynth', 'Tú escribes; SuperiorSynth mejora tu pedido y elige la IA que más sabe de eso.'],
@@ -2038,13 +1964,13 @@ document.addEventListener('click', e => {
   }
 }, true);
 
-/* «Qué hay de nuevo»: SynthonIA te lo cuenta una vez por versión (y está en el menú cuando quieras) */
+/* «Qué hay de nuevo»: Sona te lo cuenta una vez por versión (y está en el menú cuando quieras) */
 const WHATSNEW = { v:'3.0', items:[
   ['portada', 'La página ahora se llama SymphorIA, «el portador de la armonía», y estrena icono.'],
   ['chat', ENERX + ': tu batería del día para usar las IAs conectadas. Baja con cada mensaje y se carga a medianoche.'],
   ['chat', 'Sintéticos como en Claude: cuando la IA te crea una página, un juego o un dibujo, se abre solo al lado del chat. Y en la barrita, «Sintéticos» los junta todos.'],
   ['ajustes', 'Toda la página en español o en inglés: botón ES/EN en la portada, y en SynthFlow, Ajustes › «Idioma · Language» o el menú «⋯».'],
-  ['synthonia', 'Ahora me sé toda la página: pregúntame dónde está cualquier cosa (también en inglés) y te la señalo con mi manita.'],
+  ['synthonia', 'Ahora me sé toda la página: pregúntame dónde está cualquier cosa (también en inglés) y te la señalo con mi puntero de luz.'],
   ['proyectos', 'Proyectos: junta chats, instrucciones y archivos de un mismo tema. Ahora se pintan con los colores de tu tema.'],
   ['ajustes', 'Modo compacto: SynthFlow ahora se ve un poco más pequeño. Si prefieres el tamaño de antes, Ajustes → Tamaño → Normal.'],
   ['chat', 'Más seguro: lo que crea la IA corre aparte, en su propio espacio, y tu sesión queda protegida.'],
@@ -2060,26 +1986,26 @@ function newsBang(onShow){
   const x = document.createElement('span'); x.className = 'nwbang'; x.setAttribute('role', 'button'); x.setAttribute('tabindex', '0'); x.setAttribute('aria-label', '¿Qué hay de nuevo?'); x.dataset.tip = '¿Qué hay de nuevo?'; x.textContent = '!';
   const go = e => { e.preventDefault(); e.stopPropagation(); whatsNew(true, onShow); };
   x.addEventListener('click', go); x.addEventListener('pointerdown', e => e.stopPropagation()); x.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') go(e); });
-  b.appendChild(x); b.setAttribute('aria-label', 'SynthonIA · hay novedades');
+  b.appendChild(x); b.setAttribute('aria-label', 'Sona · hay novedades');
   try{ SND.blip('celebrando'); }catch(e){}
 }
 function whatsNew(force, onShow){
   let seen = ''; try{ seen = localStorage.getItem('synthz:newv') || ''; }catch(e){}
   const visited = (() => { try{ return !!localStorage.getItem('synthz:visited'); }catch(e){ return false; } })();
   if (!force && (seen === WHATSNEW.v || !visited)){ try{ localStorage.setItem('synthz:newv', WHATSNEW.v); }catch(e){} return false; }
-  /* v2.2 · ya no se abre sola: sale un «!» sobre la cabeza de SynthonIA (una vez por versión) y se abre al tocarlo */
+  /* v2.2 · ya no se abre sola: sale un «!» sobre la cabeza de Sona (una vez por versión) y se abre al tocarlo */
   if (!force){ newsBang(onShow); return false; }
   try{ localStorage.setItem('synthz:newv', WHATSNEW.v); }catch(e){}
-  $$('.nwbang').forEach(x => { x.classList.add('out'); setTimeout(() => x.remove(), 400); }); const sb = $('#szBot'); if (sb) sb.setAttribute('aria-label', 'SynthonIA');
+  $$('.nwbang').forEach(x => { x.classList.add('out'); setTimeout(() => x.remove(), 400); }); const sb = $('#szBot'); if (sb) sb.setAttribute('aria-label', 'Sona');
   if ($('#szNew')) return true;
   const w = document.createElement('div'); w.id = 'szNew'; w.className = 'szm';
-  w.innerHTML = '<div class="tcard gq" role="dialog" aria-modal="true" aria-label="Qué hay de nuevo"><div class="gq-say"><span class="gq-f">' + face('celebrando', 64) + '</span><div><b>SynthonIA · Qué hay de nuevo</b><p></p></div></div>'
+  w.innerHTML = '<div class="tcard gq" role="dialog" aria-modal="true" aria-label="Qué hay de nuevo"><div class="gq-say"><span class="gq-f">' + face('celebrando', 64) + '</span><div><b>Sona · Qué hay de nuevo</b><p></p></div></div>'
     + '<ul class="nw-l">' + WHATSNEW.items.map((x, i) => '<li style="--i:' + i + '">' + esc(x[1]) + '</li>').join('') + '</ul>'
     + '<div class="tbtn gq-b"><button class="lnk" type="button" data-close>Luego</button>' + (onShow ? '<button class="btn sm flow" type="button" data-nw="show">Muéstramelo</button>' : '') + '</div></div>';
   document.body.appendChild(w); requestAnimationFrame(() => w.classList.add('on'));
   const say = '¡Hay cosas nuevas en ' + BRAND() + '! Te cuento rapidito:';
   const p = $('.gq-say p', w); p.textContent = say; SND.blip('celebrando');
-  typeIn(p, { cps:44, max:3, onFrame:lipSync([$('.gq-f .szface', w), ballFace()], say) }).catch(() => {});
+  typeIn(p, { cps:44, max:3, onFrame:lipSync([$('.gq-f .szface', w), botFaceEl()], say) }).catch(() => {});
   const close = then => { w.classList.remove('on'); setTimeout(() => w.remove(), 420); if (then) setTimeout(then, 280); };
   w.addEventListener('click', e => { if (e.target.closest('[data-nw="show"]')) return close(() => onShow(WHATSNEW.items.map(x => x[0]).filter((k, i, a) => a.indexOf(k) === i && GTOPICS.some(t => t[0] === k)))); if (e.target === w || e.target.closest('[data-close]')) close(); });
   return true;
@@ -2112,15 +2038,15 @@ function alertBack(){
 }
 addEventListener('synthz-szq', () => {
   if (SZQ.alert && !alertDismissed) alertMode(true); else if (!SZQ.alert && alertEl) alertBack();
-  /* al equipo: SynthonIA avisa una vez por sesión que hay alertas en Pulsem */
+  /* al equipo: Sona avisa una vez por sesión que hay alertas en Pulsem */
   if (SZQ.alertN > 0 && ACC && ACC.user && ['owner', 'admin', 'staff'].includes(ACC.user.role)){
     let seen = false; try{ seen = sessionStorage.getItem('synthz:alertn') === String(SZQ.alertN); sessionStorage.setItem('synthz:alertn', String(SZQ.alertN)); }catch(e){}
     if (!seen) setTimeout(() => { try{ BOTAPI.offer && BOTAPI.offer('Ojo, equipo: hay ' + SZQ.alertN + (SZQ.alertN === 1 ? ' alerta' : ' alertas') + ' de las IAs (un proveedor pidió pago o cambió su plan gratis). Nada se cobró. Revísalo en Pulsem.', 'preocupada', 'Abrir Pulsem', () => { location.href = 'pulsem.html'; }); }catch(e){} }, 4000);
   }
 });
-/* ---------- v2.3 · aviso de mantenimiento: cubre la página y SynthonIA (la de verdad) charla un rato ----------
+/* ---------- v2.3 · aviso de mantenimiento: cubre la página y Sona (la de verdad) charla un rato ----------
    Lo encienden Prime o ZFlow en Pulsem › Ajustes. Pulsem nunca se cubre (desde ahí se apaga).
-   SynthonIA cambia de cara según lo que le dicen: con cariño se encanta, con chistes se ríe, si piensa pone cara de pensar.
+   Sona cambia de cara según lo que le dicen: con cariño se encanta, con chistes se ríe, si piensa pone cara de pensar.
    Si la IA no responde (puede ser justo la falla), contesta con frases propias para que la charla nunca se corte. */
 const MT = { el:null, hist:[], timer:0, mood:'feliz', busy:false, since:0, idle:0 };
 const MT_LOVE = /(gracias|te quiero|te amo|te adoro|eres (muy |la |una )?(linda|bonita|hermosa|genial|la mejor|incre[ií]ble|tierna|buena|top)|qu[eé] (linda|bonita|tierna|genial)|me (caes|encantas|gustas)|eres lo m[aá]ximo|abrazo|besito|❤|♥|💖|😍|🥰)/i;
@@ -2214,7 +2140,7 @@ function mtOpen(m){
     + '<div class="mt-head"><span class="mt-chip"><i></i>Mantenimiento</span><h2>Volvemos en un momento</h2><p class="mt-text"></p><small class="mt-ago"></small></div>'
     + '<div class="mt-chat"><div class="mt-msgs" aria-live="polite"></div>'
     + '<div class="mt-sugs">' + ['Cuéntame un chiste', '¿Qué estás arreglando?', 'Eres la mejor 💛'].map(s => '<button type="button" class="mt-sug">' + esc(s) + '</button>').join('') + '</div>'
-    + '<form class="mt-form" autocomplete="off"><input class="mt-in" maxlength="300" placeholder="Charla con SynthonIA…" aria-label="Escribir a SynthonIA"><button class="mt-send" type="submit" aria-label="Enviar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form></div>'
+    + '<form class="mt-form" autocomplete="off"><input class="mt-in" maxlength="300" placeholder="Charla con Sona…" aria-label="Escribir a Sona"><button class="mt-send" type="submit" aria-label="Enviar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form></div>'
     + '<div class="mt-acct"><button class="mt-login" type="button"><span>Iniciar sesión</span></button><div class="mt-auth" hidden></div>'
     + '<a class="mt-pulsem" href="/pulsem" hidden><span>Ir a Pulsem</span><small>Ahí se activa y se desactiva el mantenimiento</small></a></div>'
     + '<button class="mt-exit" type="button" hidden>Entrar igual · solo Prime y ZFlow</button></div>';
@@ -2236,7 +2162,7 @@ function mtOpen(m){
   });
   $('.mt-exit', el).addEventListener('click', () => { try{ sessionStorage.setItem('synthz:mtskip', '1'); }catch(e){} mtClose(); });
   if (!reduce) el.animate([{ opacity:0 }, { opacity:1 }], { duration:500 });
-  setTimeout(() => { if (MT.el && !MT.hist.length) mtAdd('assistant', '¡Hola! Soy SynthonIA. Estamos dejando todo mejor para ti. Mientras tanto, ¿charlamos un rato?', 'feliz'); }, 650);
+  setTimeout(() => { if (MT.el && !MT.hist.length) mtAdd('assistant', '¡Hola! Soy Sona. Estamos dejando todo mejor para ti. Mientras tanto, ¿charlamos un rato?', 'feliz'); }, 650);
   /* de vez en cuando hace un gesto, para que se sienta viva */
   clearInterval(MT.idle); MT.idle = setInterval(() => { if (MT.el && !MT.busy && MT.mood === 'feliz' && !document.hidden){ const g = mtPick(['guino', 'flow', 'riendo']); mtSetMood(g); setTimeout(() => { if (MT.el && MT.mood === g) mtSetMood('feliz'); }, 1800); } }, 9000);
   if (matchMedia('(hover:hover)').matches) setTimeout(() => { const i = MT.el && $('.mt-in', MT.el); if (i) i.focus({ preventScroll:true }); }, 500);
@@ -2266,8 +2192,8 @@ if (!mtOff()){
   /* Fase 4 · al volver a la pestaña se revisa, pero no más de una vez por minuto (antes: cada cambio de pestaña era una llamada) */
   document.addEventListener('visibilitychange', () => { if (!document.hidden && (MT.el || Date.now() - mtLastCheck > 60e3)) mtCheck(); });
 }
-/* ===== v3.1 · Movimiento: SynthonIA sabe por qué todo se mueve, cómo apagarlo y qué cambió =====
-   La capa de animaciones vive en movimiento.css / movimiento.js (src/movimiento*). Aquí solo va lo que SynthonIA cuenta y las novedades. */
+/* ===== v3.1 · Movimiento: Sona sabe por qué todo se mueve, cómo apagarlo y qué cambió =====
+   La capa de animaciones vive en movimiento.css / movimiento.js (src/movimiento*). Aquí solo va lo que Sona cuenta y las novedades. */
 WHATSNEW.v = '3.1';
 WHATSNEW.items.unshift(
   ['guia', B.LANG === 'en'
@@ -2294,7 +2220,7 @@ BOT_FAQ.push(
     a:BRAND() + ' se está pasando a Next.js (React) por partes, sin romper nada: Términos y Privacidad ya están hechas así, y las demás páginas siguen el mismo camino una por una. Para ti no cambia nada: mismas direcciones, misma cuenta, más rápida de mantener y de mejorar.',
     en:BRAND() + ' is moving to Next.js (React) step by step, without breaking anything: Terms and Privacy are already built that way, and the other pages follow one by one. Nothing changes for you: same addresses, same account, quicker to maintain and improve.' }
 );
-/* ===== v3.2 · barra de escribir, lista de chats y barra Simple: SynthonIA lo cuenta y lo explica ===== */
+/* ===== v3.2 · barra de escribir, lista de chats y barra Simple: Sona lo cuenta y lo explica ===== */
 WHATSNEW.v = '3.2';
 WHATSNEW.items.unshift(
   ['chat', B.LANG === 'en'
@@ -2330,12 +2256,12 @@ BOT_FAQ.push(
     a:'Lo que tengas encendido en la caja de escribir (Respuestas cortas, Internet, Crear imagen) aparece como una bolita junto al «+». Pasa el puntero para ver su nombre y tócala para apagarlo.',
     en:'Whatever you have on in the writing box (Short answers, Internet, Create image) shows as a little bubble next to the «+». Hover to see its name and tap it to turn it off.', go:['#onChips', '#attachBtn'] },
   { k:'dormida pantalla mitad duerme duermes dormirte despiertas despierta dormir sueño juega jugar inactiva quieta siesta ejercicio malabares volviste asleep sleep sleeping play plays idle nap exercise juggle back',
-    a:'Si dejas la página quieta 2 minutos, salgo de mi rincón y me duermo en la mitad de la pantalla. Un minuto y medio después me despierto y juego con la página: me cuelgo de un título, hago ejercicio, malabares, rebotes… Tres juegos y vuelvo a dormir. Cuando mueves el mouse me asusto, corro a mi rincón y te digo «¡Ah, volviste!». Nada se daña: todo vuelve a su lugar. Con Animaciones apagadas solo me duermo en mi bolita.',
-    en:'If you leave the page still for 2 minutes, I leave my corner and fall asleep in the middle of the screen. A minute and a half later I wake up and play with the page: I hang from a title, exercise, juggle, bounce… Three games and I sleep again. When you move the mouse I get a fright, run to my corner and say «Oh, you\'re back!». Nothing breaks: everything goes back in place. With Animations off I just sleep in my bubble.' }
+    a:'Si dejas la página quieta 2 minutos, salgo de mi rincón y me duermo en la mitad de la pantalla. Un minuto y medio después me despierto y juego con la página: me cuelgo de un título con mi antena, hago ejercicio, órbitas de luz, rebotes… Tres juegos y vuelvo a dormir. Cuando mueves el mouse me asusto, corro a mi rincón y te digo «¡Ah, volviste!». Nada se daña: todo vuelve a su lugar. Con Animaciones apagadas solo me duermo en mi botón.',
+    en:'If you leave the page still for 2 minutes, I leave my corner and fall asleep in the middle of the screen. A minute and a half later I wake up and play with the page: I hang from a title by my antenna, exercise, make light orbits, bounce… Three games and I sleep again. When you move the mouse I get a fright, run to my corner and say «Oh, you\'re back!». Nothing breaks: everything goes back in place. With Animations off I just sleep in my button.' }
 );
 /* si alguien pregunta por «la barra del estilo Simple», gana la respuesta nueva (antes ganaba la de colores y temas) */
 { const i = BOT_FAQ.findIndex(f => f.k.startsWith('simple estilo barra lateral')); if (i > 0) BOT_FAQ.unshift(BOT_FAQ.splice(i, 1)[0]); }
-/* ===== v4.4 · «Entrada»: la carga de Gestión en todo el sitio. SynthonIA lo cuenta y lo explica ===== */
+/* ===== v4.4 · «Entrada»: la carga de Gestión en todo el sitio. Sona lo cuenta y lo explica ===== */
 WHATSNEW.v = '4.4';
 WHATSNEW.items.unshift(
   ['chat', B.LANG === 'en'
@@ -2384,7 +2310,7 @@ const EV = (() => {
     return () => { run = false; };
   }
   async function typeCode(o, kind){
-    const box = $('.hk-code', o), bar = $('.hk-bar i', o), lines = kind === 100 ? ['⚠ ALERTA: el núcleo de Flow se sobrecalentó', 'desviando energía a SynthonIA…', ...CODE.slice(2, 9), '[OK] temperatura normal'] : CODE;
+    const box = $('.hk-code', o), bar = $('.hk-bar i', o), lines = kind === 100 ? ['⚠ ALERTA: el núcleo de Flow se sobrecalentó', 'desviando energía a Sona…', ...CODE.slice(2, 9), '[OK] temperatura normal'] : CODE;
     for (let i = 0; i < lines.length; i++){
       const ln = document.createElement('div'); box.appendChild(ln);
       for (const ch of lines[i]){ ln.textContent += ch; if (Math.random() < .5) await sleepRaw(6); }
@@ -2438,6 +2364,6 @@ const EV = (() => {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', onLoad); else setTimeout(onLoad, 50);
   return { pending, play, badge, get visits(){ return visits; } };
 })();
-/* lo que SynthonIA le devuelve a core (y por SZ, a cada página) */
-B.ready({ face, synBody, synSet, lipSync, ballFace, randomGoodFace, wasAway, FACE_GOOD, SPOSE, GTOPICS, botOpen, botTeam, feedbackModal, guideChooser, welcomeBack, guideAsk, whatsNew, SND, HAND, BOTAPI, EV });
+/* lo que Sona le devuelve a core (y por SZ, a cada página) */
+B.ready({ face, synBody, synSet, lipSync, botFaceEl, randomGoodFace, wasAway, FACE_GOOD, SPOSE, GTOPICS, botOpen, botTeam, feedbackModal, guideChooser, welcomeBack, guideAsk, whatsNew, SND, HAND, BOTAPI, EV });
 })();

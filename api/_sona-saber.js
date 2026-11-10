@@ -1,4 +1,4 @@
-/* Sona (antes SynthonIA) · lo que sabe y cómo responde con sentido (v4.6).
+/* Sona · lo que sabe y cómo responde con sentido (v4.6).
    Antes: un solo texto de sistema de ~12 000 letras con TODO lo de la página, para una IA gratis pequeña. Las IAs chicas se
    mezclaban y soltaban datos de la página aunque solo les dijeran «hola».
    Ahora:
@@ -11,13 +11,13 @@
    Los nombres de los productos están en NAMES (un solo lugar): cuando cambien, se cambian aquí. */
 import { PERSONA, LANG_HEAD, LANG_TAIL, memSys, takeMemory, cleanThoughts, isRude } from './_synthonia.js';
 
-export const NAMES = { bot:'Sona', flow:'Sonyx', apex:'Apex', relay:'Relay', site:'SymphorIA', oldBot:'SynthonIA', oldFlow:'SynthFlow', oldApex:'SuperiorSynth' };
+export const NAMES = { bot:'Sona', flow:'Sonyx', apex:'Apex', relay:'Relay', site:'SymphorIA', oldFlow:'SynthFlow', oldApex:'SuperiorSynth' };
 const fill = t => String(t)
   .replace(/\{bot\}/g, NAMES.bot).replace(/\{flow\}/g, NAMES.flow).replace(/\{apex\}/g, NAMES.apex)
   .replace(/\{relay\}/g, NAMES.relay).replace(/\{site\}/g, NAMES.site);
 
 /* lo básico: va SIEMPRE, corto */
-const CORE = '{bot} es la ayudante de la página {site} y de {flow} (antes se llamaba {oldFlow}; {bot} antes se llamaba {oldBot} y {apex} se llamaba {oldApex}: si alguien usa los nombres viejos, entiéndelos igual). '
+const CORE = '{bot} es la ayudante de la página {site} y de {flow} (antes se llamaba {oldFlow}; {apex} se llamaba {oldApex}: si alguien usa los nombres viejos, entiéndelos igual). '
   + '{flow} es el chat gratis de la página, donde se habla con muchas IAs y se pueden comparar. Habla sencillo, como a alguien que no sabe nada de tecnología. '
   + 'Nunca uses palabras técnicas como modelo, token, API, servidor o sesión. Nunca menciones proveedores técnicos ni llaves, y nunca pidas contraseñas.';
 
@@ -49,8 +49,8 @@ export const SABER = [
     t:'La Guía enseña todo paso a paso (botón de ayuda arriba): dura 2 minutos, arranca sola al terminar «Empieza en {flow}» y muestra Nuevo chat, modos, esfuerzo, Proyectos, Sintéticos y Ajustes. También hay una página de Ayuda (ayuda.html) con preguntas frecuentes y botones para hablar con el equipo, enviar una idea o hablar con {bot}. Si es un problema de cuenta o algo que no sabes, sugiere «Hablar con el equipo».' },
   { id:'codigo', k:'codigo programar pagina web sintetico errores arreglar probar consola vista previa code fix errors preview',
     t:'Cuando la IA da una página, {flow} la prueba sola en computador y celular, busca errores y, si encuentra, ofrece «Arreglar con la IA». En la vista previa hay Computador, Tablet, Celular y Consola. El botón de esfuerzo (junto a la caja) dice cómo piensa la IA: Auto, Veloz, Profundo (piensa a fondo; gasta más y es con cuenta) o Creativo.' },
-  { id:'duerme', k:'duerme duermes dormida inactiva quieta juega jugar manitas manita bolita saludo frases ayuda sleep play',
-    t:'Si la página queda quieta 2 minutos, {bot} se duerme en la mitad de la pantalla, 1 minuto y medio después juega con la página (se cuelga de títulos, hace ejercicio, malabares) y cuando la persona vuelve se asusta, corre a su rincón y dice «¡Ah, volviste!». Al entrar a {flow} el saludo es «¿Qué quieres FlowIA’r hoy?» y cada chat nuevo trae otra frase.' }
+  { id:'duerme', k:'duerme duermes dormida inactiva quieta juega jugar antena saludo frases ayuda sleep play',
+    t:'Si la página queda quieta 2 minutos, {bot} se duerme en la mitad de la pantalla, 1 minuto y medio después juega con la página (se cuelga de títulos con su antena, hace ejercicio, órbitas de luz) y cuando la persona vuelve se asusta, corre a su rincón y dice «¡Ah, volviste!». Al entrar a {flow} el saludo es «¿Qué quieres FlowIA’r hoy?» y cada chat nuevo trae otra frase.' }
 ];
 
 const ES_STOP = /^(que|como|donde|cual|cuales|son|estan|esta|este|esto|eso|es|para|por|con|una|uno|los|las|del|mis|tus|sus|hay|hago|hacer|puedo|quiero|tengo|necesito|sobre|algo|the|and|how|can|what|where|does|you|are|there|this|that|with|for|from|have|want|need|please|ayuda|ayudame|favor|porfa|me|mi|tu|te|se|lo|le|un|al|en|de|el|la|y|o|a|no|si|my|is|it|to|of|in|on|do|i)$/;
@@ -116,7 +116,7 @@ const RULE = {
     en: 'Answer what the person asked. If it is a simple or general-knowledge question, answer it in 1 to 3 sentences; if you are not sure of a fact, say so instead of inventing it. If they ask for long work (text, code, homework), kindly say an AI in the {flow} chat does that better. Don\'t talk about site features they did not ask about. Under 60 words.'
   }
 };
-const VER = ' Cuando tu respuesta trate de un lugar de la página, termina con una de estas marcas para que tu manita lo señale: [ver:chats] [ver:nuevo] [ver:buscar] [ver:favoritos] [ver:proyectos] [ver:sinteticos] [ver:ajustes] [ver:cuenta] [ver:mas] [ver:menu] [ver:ia] [ver:comparar] [ver:modo] [ver:esfuerzo] [ver:cortas] [ver:caja] [ver:planes] [ver:ayuda] [ver:enerx] [ver:guia]. Usa solo una y solo si de verdad aplica.';
+const VER = ' Cuando tu respuesta trate de un lugar de la página, termina con una de estas marcas para que tu puntero de luz lo señale: [ver:chats] [ver:nuevo] [ver:buscar] [ver:favoritos] [ver:proyectos] [ver:sinteticos] [ver:ajustes] [ver:cuenta] [ver:mas] [ver:menu] [ver:ia] [ver:comparar] [ver:modo] [ver:esfuerzo] [ver:cortas] [ver:caja] [ver:planes] [ver:ayuda] [ver:enerx] [ver:guia]. Usa solo una y solo si de verdad aplica.';
 
 const DATE_LINE = (L, when) => when ? (L === 'en' ? ' Right now, for the person it is: ' : ' Ahora mismo, para la persona, es: ') + when + '.' : '';
 const nameLine = (L, name) => name ? (L === 'en' ? ' The person\'s first name is ' : ' La persona se llama ') + name + (L === 'en' ? '; use it once in a while, not in every message.' : '; úsalo de vez en cuando, no en todos los mensajes.') : '';

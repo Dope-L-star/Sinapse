@@ -3278,7 +3278,7 @@ function visionPick(){
   if (szOn()) return info('sz:auto');
   return cat.list.find(m => m.vision && connected(m.id) && !SZ.isBad(m.id)) || null;
 }
-/* ---------- v1.3 · SynthonIA te rescata cuando una IA falla o cuando notas que no te entiende ---------- */
+/* ---------- v1.3 · Sona te rescata cuando una IA falla o cuando notas que no te entiende ---------- */
 const TOPIC_RX = [['codigo', /c[oó]digo|program|funci[oó]n|javascript|python|html|css|sql|bug|error de|script|coding|code\b|website|app\b/i], ['mate', /ecuaci|matem|calcul|derivad|integral|math|equation|algebra|\d+\s*[x×*+\/-]\s*\d+/i], ['estudiar', /explica|estudi|examen|tarea|aprend|resum|homework|study|exam|learn|explain|summar/i], ['correo', /correo|email|e-mail/i], ['marketing', /marketing|publicidad|anuncio|vender|ventas|campa[ñn]a|advert|\bads?\b|sell|sales/i], ['redes', /instagram|tiktok|reel|post|redes|social media/i], ['idiomas', /traduc|ingl[eé]s|franc[eé]s|idioma|translat|english|spanish|french|language/i], ['negocios', /negocio|emprend|empresa|cliente|business|startup|company|customer/i], ['ideas', /idea|nombre para|lluvia de/i], ['escribir', /escrib|texto|carta|historia|poema|redact|writ|essay|letter|story|poem/i]];
 function guessTopic(t){ const f = TOPIC_RX.find(([k, rx]) => TOPIC[k] && rx.test(t)); return f ? f[0] : null; }
 function altFor(mid, text){
@@ -3458,7 +3458,7 @@ async function regen(){
 }
 
 
-/* v4.2 · la IA dijo que no tiene datos de hoy: SynthonIA te pregunta antes de buscar (tú decides; no se busca a escondidas) */
+/* v4.2 · la IA dijo que no tiene datos de hoy: Sona te pregunta antes de buscar (tú decides; no se busca a escondidas) */
 function offerWeb(lastU, onFail, o){
   if (!lastU || lastU.sources || lastU.webTried || !SZ.BOT || !SZ.BOT.offer) return;
   const en = SZ.lang() === 'en';
@@ -3672,7 +3672,7 @@ async function iaThenAdd(id, node){
   closeSide(); iaAsk(id, v, 'cmp', name);
 }
 /* ---------- comparar: las respuestas llegan en orden, sin cajas vacías, y puedes sumar IA después ---------- */
-/* «Esta tiene más Flow»: cada respuesta trae una carita buena de SynthonIA, distinta a las demás */
+/* «Esta tiene más Flow»: cada respuesta trae una carita buena de Sona, distinta a las demás */
 function flowBtn(C){ const f = SZ.randomGoodFace(C.faces); C.faces.add(f); return '<button class="flowb" type="button" title="Sigue la conversación con esta IA"><i aria-hidden="true">' + SZ.face(f, 24) + '</i>Esta tiene más Flow</button>'; }
 function flipAdd(grid, el){
   const kids = [...grid.children].filter(k => k.classList.contains('cmp-card')), before = kids.map(k => k.getBoundingClientRect());
@@ -4137,7 +4137,7 @@ function closeTour(go){
   burst(innerWidth / 2, innerHeight / 2, ['#8fb0ff', '#c9566c', '#ff8f7a', '#7fd6b8'], 22);
 }
 /* =====================================================================
-   Guía Asistida: Sona enseña Sonyx con su manita (camino B)
+   Guía Asistida: Sona enseña Sonyx con su puntero (camino B)
    1 temas · 2 IA recomendadas · 3 recorrido · 4 comparar 2 · 5 prueba real · 6 conectar
    v3.0: arranca sola al terminar «Empieza en Sonyx» (ya elegiste tema e IA, así que salta 1 y 2) y el recorrido
    muestra también Nuevo chat, los modos, el esfuerzo, Espacios, Sintéticos y los Ajustes (temas, Simple, tamaño, rápido, idioma)
@@ -4200,10 +4200,10 @@ function gPanel(html, cls, say, mood, dir){
   const p = document.createElement('div'); p.id = 'szgPanel'; p.className = 'szgp' + (cls ? ' ' + cls : '') + (dir < 0 ? ' rev' : '');
   p.innerHTML = '<div class="gp-in">' + (say ? '<div class="gp-say"><span class="sf">' + SZ.face(mood || 'feliz', 58) + '</span><p>' + esc(say) + '</p></div>' : '') + html + '</div>';
   document.body.appendChild(p); requestAnimationFrame(() => p.classList.add('on'));
-  if (say){ SZ.SND.blip(mood); if (!SZ.reduce) SZ.typeIn($('.gp-say p', p), { cps:50, max:4, delay:250, onFrame:SZ.lipSync([$('.gp-say .sf .szface', p), SZ.ballFace()], say) }).catch(() => {}); }
+  if (say){ SZ.SND.blip(mood); if (!SZ.reduce) SZ.typeIn($('.gp-say p', p), { cps:50, max:4, delay:250, onFrame:SZ.lipSync([$('.gp-say .sf .szface', p), SZ.botFaceEl()], say) }).catch(() => {}); }
   return p;
 }
-/* la barra de la guía se aparta si tapa lo que SynthonIA está señalando */
+/* la barra de la guía se aparta si tapa lo que Sona está señalando */
 function gDodge(t){ const h = $('#szgHud'); if (!h || !t || !t.getBoundingClientRect) return; const r = t.getBoundingClientRect(); h.classList.toggle('low', r.top < 96); }
 function gPanelClose(dir){ if (H.wander) H.wander(null); const p = $('#szgPanel'); if (!p) return; p.id = ''; p.classList.remove('on', 'rev'); p.classList.add('bye'); if (dir < 0) p.classList.add('back'); setTimeout(() => p.remove(), 520); }
 /* lo primero que se vea de una lista de opciones (la pantalla cambia entre el inicio limpio y el chat) */
@@ -4284,7 +4284,7 @@ async function runGuide(o = {}){
       b.setAttribute('aria-pressed', String(!on)); SZ.SND.tap();
       const n = pickN(); $('.gp-n', P).textContent = n + ' de 3'; $('[data-gnext]', P).disabled = !n;
     });
-    /* el botón responde desde el primer instante, aunque la manita aún se esté moviendo */
+    /* el botón responde desde el primer instante, aunque el puntero aún se esté moviendo */
     const go1 = new Promise(res => { $('[data-gnext]', P).addEventListener('click', res, { once:true }); const iv = setInterval(() => { if (!G || G.skip){ clearInterval(iv); res(); } }, 300); });
     await gWait(450);
     const firstChip = $('[data-gt]', P);
@@ -4340,7 +4340,7 @@ async function runGuide(o = {}){
       const x = $('#cfgm [data-close]'); if (x) x.click();
       await gWait(400);
     }
-    await gPoint(gT('#guideTop', '#guideTop'), 'Y si te pierdes, la Guía rápida siempre está aquí: la ves completa o solo lo que quieras. También puedes preguntarme lo que sea con mi bolita.', { mood:'guino' });
+    await gPoint(gT('#guideTop', '#guideTop'), 'Y si te pierdes, la Guía rápida siempre está aquí: la ves completa o solo lo que quieras. También puedes preguntarme lo que sea tocando mi botón.', { mood:'guino' });
     H.unspot(); H.quiet();
 
     /* 4 · comparar 2 IA (ejemplo animado: no gasta nada) */
@@ -4443,7 +4443,7 @@ function endGuide(done){
   else H.hide();
 }
 addEventListener('keydown', e => { if (e.key === 'Escape' && G && !document.querySelector('.szm,#conn,#acc,#sx,#blk')){ e.preventDefault(); endGuide(false); } });
-/* ===== v2.0 · Guía por temas: SynthonIA muestra solo lo que elegiste, en el orden en que lo elegiste ===== */
+/* ===== v2.0 · Guía por temas: Sona muestra solo lo que elegiste, en el orden en que lo elegiste ===== */
 const TOPIC_STEPS = {
   chat:async () => {
     await gPoint(gT('#inp', '#inp'), 'Aquí escribes lo que necesitas. Entre más detalles le das (qué quieres, para qué y cómo), mejor te responde.');
@@ -4489,7 +4489,7 @@ const TOPIC_STEPS = {
     await gPoint(gT('#sAcc', '#tabbar [data-tab="cfg"]') || gT('#cfgBtn', '#tabbar [data-tab="cfg"]'), 'Ajustes está en tu perfil y tiene un menú a la izquierda: «Cuenta», «General» (estilo, color e idioma), «Efectos» (más bonito o más rápido, sonidos, animaciones), «Respuestas» (modo principiante, respuestas cortas), «Memoria» (lo que recuerdo de ti) y «Tus IAs».', { side:true });
   },
   synthonia:async () => {
-    await gPoint(gT('#szBot', '#szBot'), 'Y yo siempre estoy aquí. Tócame y pregúntame cómo se hace algo: te lo explico o te lo señalo con mi manita.', { mood:'encantada' });
+    await gPoint(gT('#szBot', '#szBot'), 'Y yo siempre estoy aquí. Tócame y pregúntame cómo se hace algo: te lo explico o te lo señalo con mi puntero de luz.', { mood:'encantada' });
   }
 };
 async function runTopics(list){
@@ -4731,7 +4731,7 @@ $('#lockCard').addEventListener('click', async e => {
 inp.addEventListener('pointerdown', () => { if (isLocked()) lockNudge(); });
 inp.addEventListener('keydown', e => { if (isLocked() && e.key.length === 1){ lockNudge(); } });
 
-/* ---------- SynthonIA preocupada: si te ve perdido (muchos clics al azar o el mouse por todas partes) ---------- */
+/* ---------- Sona preocupada: si te ve perdido (muchos clics al azar o el mouse por todas partes) ---------- */
 const CF = { pts:[], hits:[], shows:0, last:0 };
 function wBusy(){ return !!(G || document.querySelector('#szWorry,#conn,.szm,#szgPanel,#bflow,#tour,#side.open,#blk,#acc,#sx,#portal,#drv')); }
 function confuse(w){
@@ -4761,7 +4761,7 @@ const W_FAQ = [
   ['¿Por qué no puedo escribir?', 'Porque ahora no hay ninguna IA libre para ti: usaste tu límite gratis de hoy o las IAs están descansando. Conecta Puter y la caja se abre al instante.'],
   ['¿Qué es Puter?', 'Con Puter usas la versión pro de las IAs más usadas, como ChatGPT, Claude o Gemini. Es gratis, tiene un límite que se renueva cada mes y se conecta con un clic.'],
   ['¿Me cobran algo?', 'No. Sinapse es gratis y nunca te cobra. Tienes un límite gratis cada día.'],
-  ['¿Qué hay en la Guía?', 'Te muestro todo paso a paso con mi manita: temas, IA recomendadas para ti, cómo comparar dos y tu primer chat de verdad.']
+  ['¿Qué hay en la Guía?', 'Te muestro todo paso a paso con mi puntero de luz: temas, IA recomendadas para ti, cómo comparar dos y tu primer chat de verdad.']
 ];
 let wTok = 0;
 const zz = ms => new Promise(r => setTimeout(r, ms));
@@ -4802,7 +4802,7 @@ async function worry(){
   w.classList.add('say');
   await wSay('Ay… te veo un poquito perdido 😟', 'preocupada'); if (!alive()) return;
   await zz(SZ.reduce ? 200 : 700); if (!alive()) return;
-  /* con su manita: primero se señala a ella, luego la Guía (se nota el esfuerzo) */
+  /* con su puntero: primero se señala a ella, luego la Guía (se nota el esfuerzo) */
   const me = $('.wme', w), gd = [$('#guideTop')].find(n => n && n.getClientRects().length && n.getBoundingClientRect().width);
   try{
     H2.show({ x:innerWidth * .55, y:innerHeight * .45 });
@@ -7140,7 +7140,7 @@ if (!q && DRAFTS[draftK]){
   }, enter ? 1700 : 600);
 }
 try{
-  /* temas elegidos en la portada: SynthonIA los muestra aquí, en ese orden */
+  /* temas elegidos en la portada: Sona los muestra aquí, en ese orden */
   let gt = null; try{ gt = JSON.parse(sessionStorage.getItem('synthz:gtopics') || 'null'); sessionStorage.removeItem('synthz:gtopics'); }catch(e){}
   if (params.get('guia') === '1') setTimeout(runGuide, enter ? 2000 : 500);
   else if (Array.isArray(gt) && gt.length) setTimeout(() => runTopics(gt), enter ? 2000 : 600);

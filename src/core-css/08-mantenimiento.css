@@ -1,4 +1,4 @@
-/* v2.3 · aviso de mantenimiento: SynthonIA en el centro, viva, con su charla */
+/* v2.3 · aviso de mantenimiento: Sona en el centro, viva, con su charla */
 #szMaint{position:fixed;inset:0;z-index:2147483000;display:flex;justify-content:center;overflow-y:auto;overscroll-behavior:contain;padding:max(18px,env(safe-area-inset-top)) 16px max(18px,env(safe-area-inset-bottom));background:#08070b;color:#f3ece2;font-family:inherit}
 #szMaint .mt-bg{position:fixed;inset:0;pointer-events:none;overflow:hidden}
 #szMaint .mt-bg i{position:absolute;border-radius:50%;filter:blur(70px);opacity:.42;animation:mtDrift 16s ease-in-out infinite alternate}

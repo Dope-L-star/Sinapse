@@ -137,7 +137,7 @@ export default function LegacyRuntime({ page, scripts = [], puter = false }) {
 
       for (const src of scripts) {
         await load(new URL(src, window.location.origin + '/').href);
-        // Let core.js load SynthonIA through its own retry-aware loader before chat.js
+        // Let core.js load Sona through its own retry-aware loader before chat.js
         // initializes the walkthrough. Never inject synthonia.js a second time.
         if (page === 'chat' && new URL(src, window.location.origin + '/').pathname.endsWith('/core.js')) {
           const ready = window.SZ?.synReady;

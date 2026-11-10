@@ -15,7 +15,7 @@
     }
     if (e.type === 'wheel' || e.type === 'touchmove') return;      /* mirar (desplazarse) sí se puede */
     e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-    if ((e.type === 'pointerdown' || e.type === 'keydown') && Date.now() - warnT > 2600){ warnT = Date.now(); try{ toast('Estás en la guía. Sigue con los botones de SynthonIA o toca «Saltar guía».'); }catch(x){} const h = document.querySelector('#szgHud .gh-x'); if (h){ h.classList.remove('nudge'); void h.offsetWidth; h.classList.add('nudge'); } }
+    if ((e.type === 'pointerdown' || e.type === 'keydown') && Date.now() - warnT > 2600){ warnT = Date.now(); try{ toast('Estás en la guía. Sigue con los botones de Sona o toca «Saltar guía».'); }catch(x){} const h = document.querySelector('#szgHud .gh-x'); if (h){ h.classList.remove('nudge'); void h.offsetWidth; h.classList.add('nudge'); } }
   };
   ['pointerdown', 'mousedown', 'mouseup', 'click', 'dblclick', 'contextmenu', 'keydown', 'submit'].forEach(t => addEventListener(t, stop, { capture:true, passive:false }));
 })();
@@ -25,7 +25,7 @@ addEventListener('pointerdown', e => {
   const r = document.createElement('i'); r.className = 'tapr'; r.style.left = e.clientX + 'px'; r.style.top = e.clientY + 'px';
   document.body.appendChild(r); setTimeout(() => r.remove(), 600);
 }, { capture:true, passive:true });
-/* ===== v1.3 · SynthonIA con vida: chistes, datos curiosos que no se repiten, siesta, reacciones y ayuda si te pierdes ===== */
+/* ===== v1.3 · Sona con vida: chistes, datos curiosos que no se repiten, siesta, reacciones y ayuda si te pierdes ===== */
 (function botLife(){
   const JOKES = [
     '¿Por qué la computadora fue al médico? Porque tenía un virus… y no quería compartirlo. 🤒',
@@ -39,7 +39,7 @@ addEventListener('pointerdown', e => {
     'Intenté hacer un chiste sobre la nube… pero se fue volando. ☁️',
     '¿Cuál es el café más peligroso del mundo? El ex-preso. ☕',
     '¿Qué le dijo el 0 al 8? «¡Qué buen cinturón!» 0️⃣',
-    'Soy SynthonIA y no duermo… bueno, solo cuando te vas. 😴',
+    'Soy Sona y no duermo… bueno, solo cuando te vas. 😴',
     '¿Qué hace un pez en internet? Navega. 🐟',
     '¿Cómo se despiden los químicos? Ácido un placer. 🧪',
     '¿Qué le dijo una impresora a otra? «¿Ese papel es tuyo o es impresión mía?» 🖨️',
@@ -121,7 +121,7 @@ addEventListener('pointerdown', e => {
   }
   ['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach(t => addEventListener(t, wake, { capture:true, passive:true }));
   document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });
-  /* 1 minuto sin moverte: SynthonIA se duerme y la página baja el ritmo para ahorrar batería */
+  /* 1 minuto sin moverte: Sona se duerme y la página baja el ritmo para ahorrar batería */
   setInterval(() => {
     /* v3.2 · a los 2 minutos sale a dormir en la mitad de la pantalla y luego juega (core 20, SZIDLE) */
     SZIDLE.tick(Date.now() - last, busyUI() || !!document.querySelector('.work:not(.fin)'));
@@ -161,11 +161,11 @@ addEventListener('pointerdown', e => {
     const m = o.text ? [o.mood || 'feliz', o.text] : M[kind]; if (!m) return;
     botFace(m[0]); botBubble(m[1], o.ms || 5200); setTimeout(() => { if (!asleep) botFace('feliz'); }, (o.ms || 5200) + 200);
   };
-  /* un mensaje con botón dentro del panel de SynthonIA (rescatar un error, cambiar de IA…) */
+  /* un mensaje con botón dentro del panel de Sona (rescatar un error, cambiar de IA…) */
   BOT.acts = BOT.acts || {};
   BOTAPI.offer = (text, mood, label, fn) => { const id = 'x' + Date.now().toString(36); BOT.acts[id] = fn; if (!BOT.open) botOpen(); botSay(text, mood || 'feliz', label ? [id, label] : null); };
 
-  /* ---- demasiados problemas seguidos: saca su manita, pide perdón y señala el botón para contarnos qué pasó ---- */
+  /* ---- demasiados problemas seguidos: saca su puntero, pide perdón y señala el botón para contarnos qué pasó ---- */
   let probs = [], sorryAt = 0;
   BOTAPI.problem = kind => {
     const now = Date.now(); probs = probs.filter(t => now - t < 600000); probs.push(now);

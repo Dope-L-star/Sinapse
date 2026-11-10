@@ -1,4 +1,4 @@
-/* ===== v3.2 · barra de escribir, lista de chats y barra Simple: SynthonIA lo cuenta y lo explica ===== */
+/* ===== v3.2 · barra de escribir, lista de chats y barra Simple: Sona lo cuenta y lo explica ===== */
 WHATSNEW.v = '3.2';
 WHATSNEW.items.unshift(
   ['chat', B.LANG === 'en'
@@ -34,8 +34,8 @@ BOT_FAQ.push(
     a:'Lo que tengas encendido en la caja de escribir (Respuestas cortas, Internet, Crear imagen) aparece como una bolita junto al «+». Pasa el puntero para ver su nombre y tócala para apagarlo.',
     en:'Whatever you have on in the writing box (Short answers, Internet, Create image) shows as a little bubble next to the «+». Hover to see its name and tap it to turn it off.', go:['#onChips', '#attachBtn'] },
   { k:'dormida pantalla mitad duerme duermes dormirte despiertas despierta dormir sueño juega jugar inactiva quieta siesta ejercicio malabares volviste asleep sleep sleeping play plays idle nap exercise juggle back',
-    a:'Si dejas la página quieta 2 minutos, salgo de mi rincón y me duermo en la mitad de la pantalla. Un minuto y medio después me despierto y juego con la página: me cuelgo de un título, hago ejercicio, malabares, rebotes… Tres juegos y vuelvo a dormir. Cuando mueves el mouse me asusto, corro a mi rincón y te digo «¡Ah, volviste!». Nada se daña: todo vuelve a su lugar. Con Animaciones apagadas solo me duermo en mi bolita.',
-    en:'If you leave the page still for 2 minutes, I leave my corner and fall asleep in the middle of the screen. A minute and a half later I wake up and play with the page: I hang from a title, exercise, juggle, bounce… Three games and I sleep again. When you move the mouse I get a fright, run to my corner and say «Oh, you\'re back!». Nothing breaks: everything goes back in place. With Animations off I just sleep in my bubble.' }
+    a:'Si dejas la página quieta 2 minutos, salgo de mi rincón y me duermo en la mitad de la pantalla. Un minuto y medio después me despierto y juego con la página: me cuelgo de un título con mi antena, hago ejercicio, órbitas de luz, rebotes… Tres juegos y vuelvo a dormir. Cuando mueves el mouse me asusto, corro a mi rincón y te digo «¡Ah, volviste!». Nada se daña: todo vuelve a su lugar. Con Animaciones apagadas solo me duermo en mi botón.',
+    en:'If you leave the page still for 2 minutes, I leave my corner and fall asleep in the middle of the screen. A minute and a half later I wake up and play with the page: I hang from a title by my antenna, exercise, make light orbits, bounce… Three games and I sleep again. When you move the mouse I get a fright, run to my corner and say «Oh, you\'re back!». Nothing breaks: everything goes back in place. With Animations off I just sleep in my button.' }
 );
 /* si alguien pregunta por «la barra del estilo Simple», gana la respuesta nueva (antes ganaba la de colores y temas) */
 { const i = BOT_FAQ.findIndex(f => f.k.startsWith('simple estilo barra lateral')); if (i > 0) BOT_FAQ.unshift(BOT_FAQ.splice(i, 1)[0]); }

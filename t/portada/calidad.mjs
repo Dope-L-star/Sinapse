@@ -1,6 +1,6 @@
 /* Pruebas de calidad de la portada (index.html) con Playwright, en 6 anchos de pantalla.
    Revisa lo que un usuario notaría: nada se sale de la pantalla, nada salta al cargar,
-   SynthonIA nunca queda encima de un texto o un botón, botones de 24 px o más,
+   Sona nunca queda encima de un texto o un botón, botones de 24 px o más,
    imágenes con descripción, cero errores de JavaScript.
    Se corre desde la raíz del repo:  node t/portada/calidad.mjs
    Necesita el paquete playwright (sirve NODE_PATH apuntando a donde esté instalado).
@@ -48,7 +48,7 @@ const PAGE_CHECKS = () => {
   out.small = [...document.querySelectorAll('main button, main a, nav button, nav a, footer a')].filter(e => vis(e) && !e.closest('p,li>span,details p')).filter(e => { const r = e.getBoundingClientRect(); return r.width && (r.width < 24 || r.height < 24); }).map(e => (e.id || e.className || e.tagName) + ' «' + e.textContent.trim().slice(0, 20) + '»').slice(0, 5);
   out.noAlt = [...document.querySelectorAll('img')].filter(i => !i.hasAttribute('alt')).map(i => i.src.split('/').pop()).slice(0, 5);
   out.terms = [...document.querySelectorAll('.term')].filter(t => !t.dataset.def).length;
-  /* SynthonIA (cuerpo entero) nunca encima de textos, botones, campos o tarjetas que no sean la suya */
+  /* Sona (cuerpo entero) nunca encima de textos, botones, campos o tarjetas que no sean la suya */
   const content = [...document.querySelectorAll('main h1,main h2,main h3,main p,main a,main button,main input,main textarea,main summary,main .lqg,main .card,main .band,nav#nav')];
   out.botOver = [];
   document.querySelectorAll('.szbody').forEach(b => {
@@ -95,7 +95,7 @@ for (const [W, H] of WIDTHS){
   }
   const ready = await page.evaluate(() => { const r = document.querySelector('div.ready'); if (r) r.scrollIntoView({ block:'center' }); return !!r; });
   if (ready){ await page.waitForTimeout(2000); (await page.evaluate(PAGE_CHECKS)).botOver.forEach(x => over.add('final: ' + x)); }
-  over.size ? ko(tag + 'SynthonIA no tapa nada', [...over].slice(0, 4).join(' | ')) : ok(tag + 'SynthonIA no tapa nada');
+  over.size ? ko(tag + 'Sona no tapa nada', [...over].slice(0, 4).join(' | ')) : ok(tag + 'Sona no tapa nada');
   small.size ? ko(tag + 'botones de 24 px o más', [...small].join(' | ')) : ok(tag + 'botones de 24 px o más');
   top.noAlt.length ? ko(tag + 'imágenes con descripción', top.noAlt.join(', ')) : ok(tag + 'imágenes con descripción');
   top.terms ? ko(tag + 'nombres propios explicados', top.terms + ' sin explicación') : ok(tag + 'nombres propios explicados');

@@ -53,7 +53,7 @@ Contador siempre visible de «te quedan X mensajes pro» (lo que más le critica
 - **Siempre:** cancelar con un clic y aviso 3 días antes de cada cobro (nada de renovaciones sorpresa).
 
 
-**Hechos en v1.9B:** archivos tipo Claude con vista previa, ejemplos en la caja, texto claro, guía que felicita y cierra lo abierto, saludo y boca de SynthonIA, revisión de seguridad.
+**Hechos en v1.9B:** archivos tipo Claude con vista previa, ejemplos en la caja, texto claro, guía que felicita y cierra lo abierto, saludo y boca de Sona, revisión de seguridad.
 
 **Para Sammuel (opcional, en Supabase):** Authentication → Providers → apagar «Email» si solo se va a entrar con Google (SynthZ ya rechaza esas cuentas, pero así ni se crean).
 
@@ -76,4 +76,4 @@ Contador siempre visible de «te quedan X mensajes pro» (lo que más le critica
    - Al final: «Quedarme con esta IA» o «Seguir en modo agente» (= repetir los mismos pasos en el próximo mensaje, sin fijar la IA).
 
 ## Plan después de esto
-Confirmar Supabase/Google · Google AI Studio y GitHub Models · guía nueva («Guía rápida», SynthonIA elige temas, «¡Descubriste algo nuevo!») · «Qué hay de nuevo» por SynthonIA · vista previa de código · presentaciones PowerPoint · imágenes con su propio límite · compartir chat y voz.
+Confirmar Supabase/Google · Google AI Studio y GitHub Models · guía nueva («Guía rápida», Sona elige temas, «¡Descubriste algo nuevo!») · «Qué hay de nuevo» por Sona · vista previa de código · presentaciones PowerPoint · imágenes con su propio límite · compartir chat y voz.

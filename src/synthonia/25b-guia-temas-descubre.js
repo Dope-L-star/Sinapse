@@ -1,5 +1,5 @@
-/* ===== v2.0 · Guía rápida con SynthonIA: «¿La quieres completa o qué quieres ver?»
-   Eliges uno o varios temas (en el orden que los toques) y te los muestra con su manita.
+/* ===== v2.0 · Guía rápida con Sona: «¿La quieres completa o qué quieres ver?»
+   Eliges uno o varios temas (en el orden que los toques) y te los muestra con su puntero de luz.
    Además: «¡Descubriste algo nuevo!» la primera vez que usas algo, y «Qué hay de nuevo» contado por ella ===== */
 const GTOPICS = [
   ['chat', 'Escribir y enviar', 'Dónde escribes y cómo envías.'],
@@ -12,14 +12,14 @@ const GTOPICS = [
   ['limite', 'Tu límite gratis', 'Cuánto te queda hoy y cuándo se llena.'],
   ['cuenta', 'Tu cuenta y Puter', 'Guardar tus chats y la versión pro de las IA.'],
   ['ajustes', 'Ajustes', 'Más bonito, más rápido, sonidos y más.'],
-  ['synthonia', 'SynthonIA', 'Cómo pedirme ayuda cuando quieras.']
+  ['synthonia', 'Sona', 'Cómo pedirme ayuda cuando quieras.']
 ];
 function guideAsk(o = {}){
   if ($('#szGq')) return;
   const L = (o.topics || GTOPICS), picked = [];
   const w = document.createElement('div'); w.id = 'szGq'; w.className = 'szm';
   w.innerHTML = '<div class="tcard gq" role="dialog" aria-modal="true" aria-label="Guía rápida">'
-    + '<div class="gq-say"><span class="gq-f">' + face('feliz', 64) + '</span><div><b>SynthonIA</b><p></p></div></div>'
+    + '<div class="gq-say"><span class="gq-f">' + face('feliz', 64) + '</span><div><b>Sona</b><p></p></div></div>'
     + '<button type="button" class="gq-full" data-gq="full"><span>Completa</span><small>' + esc(o.fullTxt || 'Te muestro todo, paso a paso (unos 2 minutos).') + '</small></button>'
     + '<p class="gq-or">o elige lo que quieres ver <small>(puedes elegir varios; los veremos en el orden en que los toques)</small></p>'
     + '<div class="gq-chips">' + L.map(t => '<button type="button" class="gq-c" data-t="' + t[0] + '" aria-pressed="false" title="' + esc(t[2]) + '"><i></i>' + esc(t[1]) + '</button>').join('') + '</div>'
@@ -28,7 +28,7 @@ function guideAsk(o = {}){
   $('.tcard', w).animate([{ transform:'scale(.92) translateY(20px)', opacity:0, filter:'blur(8px)' }, { transform:'none', opacity:1, filter:'blur(0)' }], { duration:600, easing:'cubic-bezier(.22,1,.36,1)' });
   const say = '¡Hola! ¿Quieres ver la guía completa o qué quieres aprender?';
   const p = $('.gq-say p', w); p.textContent = say; SND.blip('feliz');
-  typeIn(p, { cps:46, max:3, onFrame:lipSync([$('.gq-f .szface', w), ballFace()], say) }).catch(() => {});
+  typeIn(p, { cps:46, max:3, onFrame:lipSync([$('.gq-f .szface', w), botFaceEl()], say) }).catch(() => {});
   const go = $('[data-gq="go"]', w);
   const paint = () => { $$('.gq-c', w).forEach(b => { const i = picked.indexOf(b.dataset.t); b.setAttribute('aria-pressed', String(i >= 0)); $('i', b).textContent = i >= 0 ? String(i + 1) : ''; }); go.disabled = !picked.length; go.textContent = picked.length ? 'Muéstrame ' + (picked.length === 1 ? 'eso' : 'estos ' + picked.length) : 'Muéstrame lo que elegí'; };
   const close = then => { w.classList.remove('on'); setTimeout(() => w.remove(), 420); if (then) setTimeout(then, 280); };
@@ -42,7 +42,7 @@ function guideAsk(o = {}){
   setTimeout(() => { const b = $('.gq-full', w); if (b) b.focus(); }, 80);
 }
 
-/* «¡Descubriste algo nuevo!»: la primera vez que usas algo, SynthonIA te cuenta en una línea para qué sirve */
+/* «¡Descubriste algo nuevo!»: la primera vez que usas algo, Sona te cuenta en una línea para qué sirve */
 const DISC = [
   ['#cCmp, #pickRow [data-add], [data-add-cmp]', 'comparar', 'Comparar IAs', 'Ahora varias IA responden lo mismo y ves cuál lo hace mejor.'],
   ['#modeMenu [data-mode="agent"]', 'agente', 'SuperiorSynth', 'Tú escribes; SuperiorSynth mejora tu pedido y elige la IA que más sabe de eso.'],
@@ -78,13 +78,13 @@ document.addEventListener('click', e => {
   }
 }, true);
 
-/* «Qué hay de nuevo»: SynthonIA te lo cuenta una vez por versión (y está en el menú cuando quieras) */
+/* «Qué hay de nuevo»: Sona te lo cuenta una vez por versión (y está en el menú cuando quieras) */
 const WHATSNEW = { v:'3.0', items:[
   ['portada', 'La página ahora se llama SymphorIA, «el portador de la armonía», y estrena icono.'],
   ['chat', ENERX + ': tu batería del día para usar las IAs conectadas. Baja con cada mensaje y se carga a medianoche.'],
   ['chat', 'Sintéticos como en Claude: cuando la IA te crea una página, un juego o un dibujo, se abre solo al lado del chat. Y en la barrita, «Sintéticos» los junta todos.'],
   ['ajustes', 'Toda la página en español o en inglés: botón ES/EN en la portada, y en SynthFlow, Ajustes › «Idioma · Language» o el menú «⋯».'],
-  ['synthonia', 'Ahora me sé toda la página: pregúntame dónde está cualquier cosa (también en inglés) y te la señalo con mi manita.'],
+  ['synthonia', 'Ahora me sé toda la página: pregúntame dónde está cualquier cosa (también en inglés) y te la señalo con mi puntero de luz.'],
   ['proyectos', 'Proyectos: junta chats, instrucciones y archivos de un mismo tema. Ahora se pintan con los colores de tu tema.'],
   ['ajustes', 'Modo compacto: SynthFlow ahora se ve un poco más pequeño. Si prefieres el tamaño de antes, Ajustes → Tamaño → Normal.'],
   ['chat', 'Más seguro: lo que crea la IA corre aparte, en su propio espacio, y tu sesión queda protegida.'],
@@ -100,26 +100,26 @@ function newsBang(onShow){
   const x = document.createElement('span'); x.className = 'nwbang'; x.setAttribute('role', 'button'); x.setAttribute('tabindex', '0'); x.setAttribute('aria-label', '¿Qué hay de nuevo?'); x.dataset.tip = '¿Qué hay de nuevo?'; x.textContent = '!';
   const go = e => { e.preventDefault(); e.stopPropagation(); whatsNew(true, onShow); };
   x.addEventListener('click', go); x.addEventListener('pointerdown', e => e.stopPropagation()); x.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') go(e); });
-  b.appendChild(x); b.setAttribute('aria-label', 'SynthonIA · hay novedades');
+  b.appendChild(x); b.setAttribute('aria-label', 'Sona · hay novedades');
   try{ SND.blip('celebrando'); }catch(e){}
 }
 function whatsNew(force, onShow){
   let seen = ''; try{ seen = localStorage.getItem('synthz:newv') || ''; }catch(e){}
   const visited = (() => { try{ return !!localStorage.getItem('synthz:visited'); }catch(e){ return false; } })();
   if (!force && (seen === WHATSNEW.v || !visited)){ try{ localStorage.setItem('synthz:newv', WHATSNEW.v); }catch(e){} return false; }
-  /* v2.2 · ya no se abre sola: sale un «!» sobre la cabeza de SynthonIA (una vez por versión) y se abre al tocarlo */
+  /* v2.2 · ya no se abre sola: sale un «!» sobre la cabeza de Sona (una vez por versión) y se abre al tocarlo */
   if (!force){ newsBang(onShow); return false; }
   try{ localStorage.setItem('synthz:newv', WHATSNEW.v); }catch(e){}
-  $$('.nwbang').forEach(x => { x.classList.add('out'); setTimeout(() => x.remove(), 400); }); const sb = $('#szBot'); if (sb) sb.setAttribute('aria-label', 'SynthonIA');
+  $$('.nwbang').forEach(x => { x.classList.add('out'); setTimeout(() => x.remove(), 400); }); const sb = $('#szBot'); if (sb) sb.setAttribute('aria-label', 'Sona');
   if ($('#szNew')) return true;
   const w = document.createElement('div'); w.id = 'szNew'; w.className = 'szm';
-  w.innerHTML = '<div class="tcard gq" role="dialog" aria-modal="true" aria-label="Qué hay de nuevo"><div class="gq-say"><span class="gq-f">' + face('celebrando', 64) + '</span><div><b>SynthonIA · Qué hay de nuevo</b><p></p></div></div>'
+  w.innerHTML = '<div class="tcard gq" role="dialog" aria-modal="true" aria-label="Qué hay de nuevo"><div class="gq-say"><span class="gq-f">' + face('celebrando', 64) + '</span><div><b>Sona · Qué hay de nuevo</b><p></p></div></div>'
     + '<ul class="nw-l">' + WHATSNEW.items.map((x, i) => '<li style="--i:' + i + '">' + esc(x[1]) + '</li>').join('') + '</ul>'
     + '<div class="tbtn gq-b"><button class="lnk" type="button" data-close>Luego</button>' + (onShow ? '<button class="btn sm flow" type="button" data-nw="show">Muéstramelo</button>' : '') + '</div></div>';
   document.body.appendChild(w); requestAnimationFrame(() => w.classList.add('on'));
   const say = '¡Hay cosas nuevas en ' + BRAND() + '! Te cuento rapidito:';
   const p = $('.gq-say p', w); p.textContent = say; SND.blip('celebrando');
-  typeIn(p, { cps:44, max:3, onFrame:lipSync([$('.gq-f .szface', w), ballFace()], say) }).catch(() => {});
+  typeIn(p, { cps:44, max:3, onFrame:lipSync([$('.gq-f .szface', w), botFaceEl()], say) }).catch(() => {});
   const close = then => { w.classList.remove('on'); setTimeout(() => w.remove(), 420); if (then) setTimeout(then, 280); };
   w.addEventListener('click', e => { if (e.target.closest('[data-nw="show"]')) return close(() => onShow(WHATSNEW.items.map(x => x[0]).filter((k, i, a) => a.indexOf(k) === i && GTOPICS.some(t => t[0] === k)))); if (e.target === w || e.target.closest('[data-close]')) close(); });
   return true;
@@ -152,7 +152,7 @@ function alertBack(){
 }
 addEventListener('synthz-szq', () => {
   if (SZQ.alert && !alertDismissed) alertMode(true); else if (!SZQ.alert && alertEl) alertBack();
-  /* al equipo: SynthonIA avisa una vez por sesión que hay alertas en Pulsem */
+  /* al equipo: Sona avisa una vez por sesión que hay alertas en Pulsem */
   if (SZQ.alertN > 0 && ACC && ACC.user && ['owner', 'admin', 'staff'].includes(ACC.user.role)){
     let seen = false; try{ seen = sessionStorage.getItem('synthz:alertn') === String(SZQ.alertN); sessionStorage.setItem('synthz:alertn', String(SZQ.alertN)); }catch(e){}
     if (!seen) setTimeout(() => { try{ BOTAPI.offer && BOTAPI.offer('Ojo, equipo: hay ' + SZQ.alertN + (SZQ.alertN === 1 ? ' alerta' : ' alertas') + ' de las IAs (un proveedor pidió pago o cambió su plan gratis). Nada se cobró. Revísalo en Pulsem.', 'preocupada', 'Abrir Pulsem', () => { location.href = 'pulsem.html'; }); }catch(e){} }, 4000);

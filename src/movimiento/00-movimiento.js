@@ -33,7 +33,7 @@ const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => {
     el.classList.remove('mv-r');
     const o = { duration:760, easing:EASE, delay:Math.min(n, 6) * 75, fill:'backwards' };
     play(el, [{ opacity:0 }, { opacity:1 }], o);
-    /* en la portada SynthonIA se para junto a los textos midiendo dónde están: ahí solo se funde, sin correr nada de lugar */
+    /* en la portada Sona se para junto a los textos midiendo dónde están: ahí solo se funde, sin correr nada de lugar */
     if (!LAND) play(el, [{ translate:'0 30px', scale:.965 }, { translate:'0 0', scale:1 }], Object.assign({ composite:'add' }, o));
   });
 }, { threshold:.12, rootMargin:'0px 0px -6% 0px' }) : null;

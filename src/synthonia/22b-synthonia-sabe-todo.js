@@ -1,7 +1,7 @@
-/* ===== v3.0 · SynthonIA se sabe toda la página (en español y en inglés) y te señala cada cosa =====
+/* ===== v3.0 · Sona se sabe toda la página (en español y en inglés) y te señala cada cosa =====
    Cada entrada: k = palabras que la activan (es + en, sin tildes), a = respuesta, en = respuesta en inglés,
    go = dónde señala (el primero que se vea), pre = qué abre antes de señalar (por ejemplo Ajustes).
-   Cuando agregues algo a la página, agrégalo aquí también: así SynthonIA nunca queda desactualizada. */
+   Cuando agregues algo a la página, agrégalo aquí también: así Sona nunca queda desactualizada. */
 const openCfg = tab => () => { if (!$('#cfgm')) cfgModal(tab); };
 const inFlow = () => isFlow();
 BOT_FAQ.push(
@@ -147,6 +147,6 @@ BOT_FAQ.push(
  ['symphoria', 'symphoria name meaning means why called'], ['synth ', 'synth synthetism synthflow synthonia'], ['hola', 'hello hi hey greetings good morning evening'],
  ['como estas', 'how are you doing'], ['como te llamas', 'who are you your name'], ['chiste', 'joke funny laugh'], ['dato curioso', 'fun fact interesting know'],
  ['gracias', 'thanks thank great perfect cool'], ['adios', 'bye goodbye see you later']].forEach(([s, en]) => { const f = BOT_FAQ.find(x => x.k.startsWith(s)); if (f) f.k += ' ' + en; });
-/* lo que sí existe en la página, para que la IA de SynthonIA (cuando no hay respuesta guardada) diga dónde está y la manita lo señale */
+/* lo que sí existe en la página, para que la IA de Sona (cuando no hay respuesta guardada) diga dónde está y el puntero lo señale */
 const BOT_PLACES = { chats:['[data-r="chats"]', '[data-tab="chats"]'], nuevo:['#cNew', '[data-r="new"]'], buscar:['[data-r="search"]'], favoritos:['#railFav', '[data-r="favs"]'], proyectos:['#railProj', '#cProj'], sinteticos:['#railSyn', '#cSyn'],
   ajustes:['#sAcc', '#cfgBtn', '[data-tab="cfg"]'], cuenta:['#accBtn', '[data-tab="me"]'], mas:['#attachBtn'], menu:['#moreBtn'], ia:['#cPick'], comparar:['#cCmp'], modo:['#cMode'], esfuerzo:['#cEffort'], cortas:['#saverBtn'], caja:['#inp'], planes:['#moreBtn'], ayuda:['a[href*="ayuda"]'], enerx:['#railCoin', '#tabCoin'], guia:['#guideTop', '#helpBtn'] };

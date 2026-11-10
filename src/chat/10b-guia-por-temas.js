@@ -1,4 +1,4 @@
-/* ===== v2.0 · Guía por temas: SynthonIA muestra solo lo que elegiste, en el orden en que lo elegiste ===== */
+/* ===== v2.0 · Guía por temas: Sona muestra solo lo que elegiste, en el orden en que lo elegiste ===== */
 const TOPIC_STEPS = {
   chat:async () => {
     await gPoint(gT('#inp', '#inp'), 'Aquí escribes lo que necesitas. Entre más detalles le das (qué quieres, para qué y cómo), mejor te responde.');
@@ -44,7 +44,7 @@ const TOPIC_STEPS = {
     await gPoint(gT('#sAcc', '#tabbar [data-tab="cfg"]') || gT('#cfgBtn', '#tabbar [data-tab="cfg"]'), 'Ajustes está en tu perfil y tiene un menú a la izquierda: «Cuenta», «General» (estilo, color e idioma), «Efectos» (más bonito o más rápido, sonidos, animaciones), «Respuestas» (modo principiante, respuestas cortas), «Memoria» (lo que recuerdo de ti) y «Tus IAs».', { side:true });
   },
   synthonia:async () => {
-    await gPoint(gT('#szBot', '#szBot'), 'Y yo siempre estoy aquí. Tócame y pregúntame cómo se hace algo: te lo explico o te lo señalo con mi manita.', { mood:'encantada' });
+    await gPoint(gT('#szBot', '#szBot'), 'Y yo siempre estoy aquí. Tócame y pregúntame cómo se hace algo: te lo explico o te lo señalo con mi puntero de luz.', { mood:'encantada' });
   }
 };
 async function runTopics(list){

@@ -5,9 +5,9 @@
      las cinco líneas de la marca se dibujan arriba, «ALFA!» llega letra por letra con el degradado de la marca y los tres beneficios
      llevan cada uno su color. Sin bombillos, sin neón, sin dorado.
    · La sorpresa sigue: «Ver mi pase» voltea la tarjeta y aparece tu Pase Alfa holográfico, con un código propio
-     (se arma en tu navegador, no se manda a ningún lado), la fecha en que entraste y SynthonIA celebrando contigo.
+     (se arma en tu navegador, no se manda a ningún lado), la fecha en que entraste y Sona celebrando contigo.
      El brillo del pase sigue al mouse o a la inclinación del celular. Se puede guardar como imagen.
-   · El botón ALFA (antes BETA), junto a SynthonIA, sigue siendo el de «Cuéntanos qué mejorar».
+   · El botón ALFA (antes BETA), junto a Sona, sigue siendo el de «Cuéntanos qué mejorar».
    Respeta: ES/EN al instante, Simple, «sin animaciones» (html.noanim) y prefers-reduced-motion. Escape cierra. */
 import { useEffect, useRef, useState } from 'react';
 
@@ -50,8 +50,8 @@ function miPase() {
 }
 const fecha = (t, l) => new Date(t).toLocaleDateString(l === 'en' ? 'en-US' : 'es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
 
-/* SynthonIA de verdad (la misma de toda la página, dibujada por synthonia.js): saluda y, al voltear el pase, celebra */
-function SynthonIA({ fiesta }) {
+/* Sona de verdad (la misma de toda la página, dibujada por synthonia.js): saluda y, al voltear el pase, celebra */
+function Sona({ fiesta }) {
   const host = useRef(null);
   useEffect(() => {
     let tm = 0;
@@ -195,7 +195,7 @@ export default function LetreroAlfa() {
                   <b>{t.ptitle}</b>
                   <span>{t.holder}</span>
                 </div>
-                <SynthonIA fiesta={flip} />
+                <Sona fiesta={flip} />
               </div>
               <i className="la-pstaff" aria-hidden="true"><b /><b /><b /><b /><b /></i>
               <dl className="la-pd">

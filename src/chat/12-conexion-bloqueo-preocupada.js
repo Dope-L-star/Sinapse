@@ -81,7 +81,7 @@ $('#lockCard').addEventListener('click', async e => {
 inp.addEventListener('pointerdown', () => { if (isLocked()) lockNudge(); });
 inp.addEventListener('keydown', e => { if (isLocked() && e.key.length === 1){ lockNudge(); } });
 
-/* ---------- SynthonIA preocupada: si te ve perdido (muchos clics al azar o el mouse por todas partes) ---------- */
+/* ---------- Sona preocupada: si te ve perdido (muchos clics al azar o el mouse por todas partes) ---------- */
 const CF = { pts:[], hits:[], shows:0, last:0 };
 function wBusy(){ return !!(G || document.querySelector('#szWorry,#conn,.szm,#szgPanel,#bflow,#tour,#side.open,#blk,#acc,#sx,#portal,#drv')); }
 function confuse(w){
@@ -111,7 +111,7 @@ const W_FAQ = [
   ['¿Por qué no puedo escribir?', 'Porque ahora no hay ninguna IA libre para ti: usaste tu límite gratis de hoy o las IAs están descansando. Conecta Puter y la caja se abre al instante.'],
   ['¿Qué es Puter?', 'Con Puter usas la versión pro de las IAs más usadas, como ChatGPT, Claude o Gemini. Es gratis, tiene un límite que se renueva cada mes y se conecta con un clic.'],
   ['¿Me cobran algo?', 'No. Sinapse es gratis y nunca te cobra. Tienes un límite gratis cada día.'],
-  ['¿Qué hay en la Guía?', 'Te muestro todo paso a paso con mi manita: temas, IA recomendadas para ti, cómo comparar dos y tu primer chat de verdad.']
+  ['¿Qué hay en la Guía?', 'Te muestro todo paso a paso con mi puntero de luz: temas, IA recomendadas para ti, cómo comparar dos y tu primer chat de verdad.']
 ];
 let wTok = 0;
 const zz = ms => new Promise(r => setTimeout(r, ms));
@@ -152,7 +152,7 @@ async function worry(){
   w.classList.add('say');
   await wSay('Ay… te veo un poquito perdido 😟', 'preocupada'); if (!alive()) return;
   await zz(SZ.reduce ? 200 : 700); if (!alive()) return;
-  /* con su manita: primero se señala a ella, luego la Guía (se nota el esfuerzo) */
+  /* con su puntero: primero se señala a ella, luego la Guía (se nota el esfuerzo) */
   const me = $('.wme', w), gd = [$('#guideTop')].find(n => n && n.getClientRects().length && n.getBoundingClientRect().width);
   try{
     H2.show({ x:innerWidth * .55, y:innerHeight * .45 });

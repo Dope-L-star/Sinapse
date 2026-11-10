@@ -54,7 +54,7 @@ const stateOf = page => page.evaluate(() => document.querySelector('#szBotP').da
   check('ella (la misma de la portada) está en el escenario', await page.evaluate(() => !!document.querySelector('#szBotP .bstage .bsc .szbody .syb-hsvg') && document.querySelectorAll('#szBotP .bs-l').length === 5));
   const st = await box(page, '#szBotP .bstage'), sc = await box(page, '#szBotP .bsc .szbody');
   check('ella es grande (más de 130 px) y queda dentro del escenario', sc && sc.w >= 130 && sc.x >= st.x && sc.r <= st.r + 1, JSON.stringify([st, sc]));
-  check('el nombre y la X no se tapan con ella', await page.evaluate(() => { const a = document.querySelector('#szBotP .bnm').getBoundingClientRect(), b = document.querySelector('#szBotP .bx').getBoundingClientRect(), c = document.querySelector('#szBotP .bsc .syb-hsvg').getBoundingClientRect(); return a.right <= c.left + 4 && b.left >= c.right - 4; }));
+  check('el nombre y la X no se tapan con su cabeza', await page.evaluate(() => { const R = s => document.querySelector(s).getBoundingClientRect(), a = R('#szBotP .bnm'), b = R('#szBotP .bx'), c = R('#szBotP .bsc .syb-hsvg .rb-rim'); const hit = (p, q) => p.left < q.right - 2 && p.right > q.left + 2 && p.top < q.bottom - 2 && p.bottom > q.top + 2; return !hit(a, c) && !hit(b, c); }));
   check('saluda en español con su letrero', (await txt(page, '#szBotP .bl')).includes('Soy Sona') && (await txt(page, '#szBotP .bst')).length > 3);
   check('sin micrófono en el navegador, el botón del micrófono no sale', await page.evaluate(() => document.querySelector('#szBotP .bmic').hidden === true));
   /* estados: pensando → hablando → disponible */
@@ -132,9 +132,9 @@ for (const [name, opts] of [['PC', {}], ['celular', { W:390, H:844, mobile:true 
   check(name + ': tocar el botón abre a Sona', await page.evaluate(() => { const p = document.querySelector('#szBotP'); return !!p && p.classList.contains('on'); }));
   if (opts.mobile){
     /* en el celular, tocar justo su ojo o su antenita también la abre (antes solo decía «¡Ay! Ese es mi ojo.» y parecía que no había cómo abrirla) */
-    for (const [que, fx, fy] of [['el ojo', .40, .52], ['la antenita', .5, .12]]){
+    for (const [que, fx, fy] of [['el ojo', .40, .52], ['la antenita', .5, .16]]){
       await page.evaluate(() => document.querySelector('#szBotP .bx').click()); await page.waitForTimeout(700);
-      const pt = await page.evaluate(([fx, fy]) => { const r = document.getElementById('szBot').getBoundingClientRect(); return { x:r.left + ((fx - .5) * .667 + .5) * r.width, y:r.top + ((fy - .5) * .667 + .5) * r.height }; }, [fx, fy]);
+      const pt = await page.evaluate(([fx, fy]) => { const r = document.querySelector('#szBot .bf .szface').getBoundingClientRect(); return { x:r.left + fx * r.width, y:r.top + fy * r.height }; }, [fx, fy]);
       await page.mouse.click(pt.x, pt.y); await page.waitForTimeout(900);
       check(name + ': tocar ' + que + ' de Sona también abre el panel', await page.evaluate(() => { const p = document.querySelector('#szBotP'); return !!p && p.classList.contains('on'); }));
     }

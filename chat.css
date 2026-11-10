@@ -1656,7 +1656,7 @@ body.locked #hexR,body.locked .agentb,body.locked #railAgent,body.locked #cmpBtn
 body.locked .comp-in{opacity:.55;filter:saturate(.6)}
 body.locked .attach,body.locked #sendBtn{pointer-events:none}
 body.locked .hsub2{display:none}
-/* SynthonIA preocupada: aparece si te ve perdido mientras todo está bloqueado */
+/* Sona preocupada: aparece si te ve perdido mientras todo está bloqueado */
 #szWorry{position:fixed;right:22px;bottom:22px;z-index:9740;display:flex;flex-direction:column;align-items:flex-end;gap:10px;pointer-events:none}
 #szWorry .wb{position:relative;width:min(330px,calc(100vw - 32px));box-sizing:border-box;padding:16px 16px 14px;border-radius:22px;border:1px solid rgba(var(--gold-rgb),.34);background:rgba(20,17,20,.84);backdrop-filter:blur(22px) saturate(1.4);-webkit-backdrop-filter:blur(22px) saturate(1.4);box-shadow:0 30px 80px -20px rgba(0,0,0,.9);color:var(--text);opacity:0;transform:translateY(14px) scale(.9);transform-origin:85% 100%;filter:blur(6px);transition:opacity .45s ease,transform .6s cubic-bezier(.34,1.56,.64,1),filter .45s ease;pointer-events:auto}
 #szWorry .wb::after{content:"";position:absolute;right:46px;bottom:-9px;width:16px;height:16px;transform:rotate(45deg);background:rgba(20,17,20,.95);border-right:1px solid rgba(var(--gold-rgb),.34);border-bottom:1px solid rgba(var(--gold-rgb),.34)}

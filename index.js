@@ -355,7 +355,7 @@ function loop(now){
 let heroDone = false;
 async function heroSeq(){
   if (heroDone) return; heroDone = true;
-  /* v2.6: SynthonIA saluda mientras se escribe el título (antes aparecía 5 segundos después) */
+  /* v2.6: Sona saluda mientras se escribe el título (antes aparecía 5 segundos después) */
   $$('.hstage.hero-fade').forEach(el => setTimeout(() => el.classList.add('show'), 350));
   /* v4.0 · quien saltó la intro quiere usar la página ya: el título se escribe rápido */
   const q = introSkipped ? .35 : 1;
@@ -529,7 +529,7 @@ function authModal(first, next, opts){
   return o;
 }
 function openHelp(){ SZ.helpGuide({ extra:[['Recorrido por la página', () => pageTour()], ['Abrir Sonyx', () => openChat()]] }); }
-/* Guía: Asistida (SynthonIA en SynthFlow, con la cinemática y 5 mensajes de prueba) o Lectura (aquí mismo) */
+/* Guía: Asistida (Sona en SynthFlow, con la cinemática y 5 mensajes de prueba) o Lectura (aquí mismo) */
 function openGuide(){ pageTour(() => setTimeout(() => { if (!SZ.ACC.ready) authModal(false, () => updateTotals()); }, 400)); }
 $('#helpBtn').addEventListener('click', openGuide);
 /* menú del celular */
@@ -662,7 +662,7 @@ renderAccIdx();
   if (!st().models.openrouter) SZ.refreshModels(API[0]).catch(() => {});
 }
 boot();
-/* «Empezar a FlowIA'r»: SynthonIA guiña el ojo y luego se pone fachera (gafas de Flow) con brillitos */
+/* «Empezar a FlowIA'r»: Sona guiña el ojo y luego se pone fachera (gafas de Flow) con brillitos */
 (function startFace(){
   const f = $('#startFace'), b = $('#startBtn'); if (!f || !b) return;
   const put = m => { f.innerHTML = '<span class="fl">' + SZ.face(m, 38) + '</span>'; };
@@ -694,19 +694,19 @@ if (SZ.onLang) SZ.onLang(() => { try{ paintSzCard(); updateTotals(); renderLaunc
 $('#limPill').addEventListener('click', () => { const u = $('#consumo'); if (u) u.scrollIntoView({ behavior:SZ.reduce ? 'auto' : 'smooth' }); });
 })();
 
-/* v2.2 · Ajustes › Tus IAs en la portada, y el «!» de novedades sobre SynthonIA */
+/* v2.2 · Ajustes › Tus IAs en la portada, y el «!» de novedades sobre Sona */
 /* el texto se lee al abrir Ajustes, así sigue al idioma */
 const lk = (l, fn, d) => { const a = [, fn]; Object.defineProperties(a, { 0:{ get:() => SZ.t(l) }, 2:{ get:() => SZ.t(d) } }); return a; };
 SZ.cfgLinks.push(lk('ix.lk1', () => SZ.surveyModal(), 'ix.lk1d'), lk('ix.lk2', () => SZ.portalOut('chat.html?conn=1'), 'ix.lk2d'), lk('ixa.abrirsynthflow', () => { location.href = 'chat.html'; }, 'ix.lk3d'));
 if (!SZ.appStandalone()) SZ.cfgLinks.push(lk('ix.lk4', () => SZ.appPromo(true), 'ix.lk4d'));
 setTimeout(() => { if (!document.querySelector('.szm, #vintro, #intro')) SZ.whatsNew(false); }, 4000);
 
-/* ===== v2.4 · portada del boceto: SynthonIA de cuerpo entero, onda «synthonized», compáralas a ciegas y detalles ===== */
+/* ===== v2.4 · portada del boceto: Sona de cuerpo entero, onda «synthonized», compáralas a ciegas y detalles ===== */
 (() => {
 const { $, $$, reduce } = SZ;
 const q = s => document.querySelector(s);
 
-/* v2.5 · SynthonIA de cuerpo entero, igual al boceto (cabeza 45 %, torso 30 %, base 25 %) */
+/* v2.5 · Sona de cuerpo entero, igual al boceto (cabeza 45 %, torso 30 %, base 25 %) */
 const body = (mood, pose, size) => SZ.synBody(mood, pose, size);
 /* v2.6: cambia cara y pose sobre el mismo cuerpo, así los brazos se mueven suave */
 const set = (host, mood, pose, size) => SZ.synSet(host, mood, pose, size);
@@ -724,7 +724,7 @@ if (hb){
     set(hb, 'celebrando', 'celebra', 300); hb.classList.remove('boop'); void hb.offsetWidth; hb.classList.add('boop');
     try{ SZ.SND && SZ.SND.blip && SZ.SND.blip('feliz'); SZ.burst && SZ.burst(hb); }catch(e){}
     setTimeout(() => { set(hb, 'feliz', 'saluda', 300); setTimeout(calm, 2600); }, 1600);
-    /* v2.6: ella es la ayudante (ya no hay bolita): tocarla abre su ventanita para hablarle */
+    /* v2.6: ella es la ayudante (ya no hay botón): tocarla abre su ventanita para hablarle */
     try{ SZ.BOT && SZ.BOT.open && SZ.BOT.open(); }catch(e){}
   });
   hb.setAttribute('role', 'button'); hb.tabIndex = 0; hb.setAttribute('aria-label', SZ.t('rb.aria'));
@@ -735,7 +735,7 @@ if (hb){
     addEventListener('pointermove', e => { const r = hb.getBoundingClientRect(); ex = Math.max(-1, Math.min(1, (e.clientX - r.left - r.width / 2) / 500)); ey = Math.max(-1, Math.min(1, (e.clientY - r.top - 90) / 500)); if (!raf) raf = requestAnimationFrame(() => { raf = 0; hb.style.setProperty('--ex', (ex * 3.2).toFixed(2) + 'px'); hb.style.setProperty('--ey', (ey * 2.4).toFixed(2) + 'px'); hb.style.setProperty('--tilt', (ex * 4).toFixed(2) + 'deg'); }); }, { passive:true });
   }
 }
-/* chispitas doradas que flotan alrededor de SynthonIA */
+/* chispitas doradas que flotan alrededor de Sona */
 const dust = q('#heroDust');
 if (dust && !reduce) dust.innerHTML = Array.from({ length:26 }, (_, i) => '<i style="--x:' + (Math.random() * 100).toFixed(1) + '%;--y:' + (Math.random() * 100).toFixed(1) + '%;--t:' + (3 + Math.random() * 5).toFixed(1) + 's;--dl:-' + (Math.random() * 6).toFixed(1) + 's;--s:' + (1.5 + Math.random() * 2.5).toFixed(1) + 'px"></i>').join('');
 const rf = q('#readyFace');
@@ -772,7 +772,7 @@ if (cv){
   else { on = true; raf = requestAnimationFrame(draw); }
 }
 
-/* Compáralas a ciegas: eliges la que tiene más Flow y SynthonIA te cuenta quién respondió (son IAs de ejemplo) */
+/* Compáralas a ciegas: eliges la que tiene más Flow y Sona te cuenta quién respondió (son IAs de ejemplo) */
 const bf = q('#blFace'); if (bf) bf.innerHTML = SZ.face('guino', 44);
 $$('.bl-v').forEach((b, i) => b.addEventListener('click', () => {
   $$('.bl-c').forEach((c, j) => { c.classList.toggle('won', i === j); c.classList.add('shown'); const n = c.querySelector('b'); if (n && !n.dataset.was){ n.dataset.was = n.textContent; n.textContent = 'IA de ejemplo ' + (j + 1); } });
@@ -802,7 +802,7 @@ if (hub){ const place = () => {
 const demo = q('#demoBtn');
 if (demo) demo.addEventListener('click', e => { const c = q('#como'); if (!c) return; e.preventDefault(); c.scrollIntoView({ behavior:reduce ? 'auto' : 'smooth' }); setTimeout(() => { c.classList.remove('glint'); void c.offsetWidth; c.classList.add('glint'); }, 650); });
 })();
-/* ===== v2.5 · SynthonIA viva: cuando sales de la portada te acompaña por toda la página.
+/* ===== v2.5 · Sona viva: cuando sales de la portada te acompaña por toda la página.
    Vuela de un lado al otro según la sección, cambia de cara y de pose, dice una frase corta,
    te mira con los ojos y, si la tocas, abre su ventanita para hablar contigo. ===== */
 (() => {
@@ -960,7 +960,7 @@ if (!reduce) setInterval(() => {
   SZ.synSet(fig, alt, S.pose, small() ? 96 : 132); posed = '';
   setTimeout(() => { if (cur === k) paint(k); }, 1400);
 }, 9000);
-/* v2.6: en la portada SynthonIA de cuerpo entero ES la ayudante: no hay bolita, y su ventanita sale de donde esté parada
+/* v2.6: en la portada Sona de cuerpo entero ES la ayudante: no hay botón, y su ventanita sale de donde esté parada
    (arriba en la portada, caminando por las secciones o celebrando al final) */
 document.documentElement.classList.add('szlive');
 const shown = n => { if (!n) return false; const r = n.getBoundingClientRect(); return r.width > 0 && r.bottom > 0 && r.top < innerHeight; };
@@ -1033,7 +1033,7 @@ document.addEventListener('click', e => {
 });
 addEventListener('appinstalled', hideAll);
 })();
-/* ===== v2.7 · «SynthonIA es para ti»: las tres escenas, dibujadas en código (antes eran imágenes pegadas).
+/* ===== v2.7 · «Sona es para ti»: las tres escenas, dibujadas en código (antes eran imágenes pegadas).
    Cada escena es un escenario de 400 × 214 con sus cosas atrás, Sona (la misma de toda la página) y lo que va adelante.
    Todo se mueve en vivo: hojas que flotan, la página del libro que pasa, código que se escribe, errores que se arreglan,
    un documento que se arma solo. Cuando la escena no se ve, se queda quieta (cero trabajo de más). ===== */
@@ -1057,7 +1057,7 @@ const bug = (x, y, d) => '<g class="usc-bug" style="--d:' + d + 's" transform="t
 const star = (x, y, s, k, d) => '<path class="usc-star" style="--d:' + d + 's" transform="translate(' + x + ' ' + y + ') scale(' + s + ')" d="M0-10c1 7 3 9 10 10-7 1-9 3-10 10-1-7-3-9-10-10 7-1 9-3 10-10z" fill="url(#gi' + k + ')"/>';
 const dust = (cx, cy, n, k) => Array.from({ length:n }, (_, i) => '<circle class="usc-rise" style="--d:' + (-i * .7).toFixed(1) + 's" cx="' + (cx + ((i * 37) % 60) - 30) + '" cy="' + cy + '" r="' + (1 + (i % 3) * .5) + '" fill="url(#gi' + k + ')"/>').join('');
 const SCENES = {
-  /* estudia: SynthonIA lee un libro que brilla, con hojas flotando y pilas de libros a los lados */
+  /* estudia: Sona lee un libro que brilla, con hojas flotando y pilas de libros a los lados */
   study: { mood:'feliz', pose:'lee', bot:'--bx:50%;--bw:45%;--bb:-19%',
     back: sheet(56, 26, -14, 1, 'C', 0) + sheet(318, 20, 12, .95, 'V', -2.2) + sheet(300, 96, -8, .75, 'C', -3.6) + sheet(98, 104, 10, .7, 'P', -1.3)
       + book(28, 184, 72, 15, 'V') + book(36, 170, 62, 14, 'C') + book(30, 157, 58, 13, 'P') + book(302, 184, 70, 15, 'O') + book(310, 170, 56, 14, 'V')
@@ -1067,7 +1067,7 @@ const SCENES = {
       + '<path d="M160 200c11-3 23-3 33 0M160 206c11-3 23-3 33 0M207 200c11-3 23-3 33 0M207 206c9-2 17-2 24 0" stroke="#e8fbff" stroke-opacity=".7" stroke-width="1.3" stroke-linecap="round" fill="none"/>'
       + '<path class="usc-page" d="M200 196c15-6 33-7 49-3v21c-16-4-34-3-49 3z" fill="#dffaff" fill-opacity=".5" stroke="#fff" stroke-opacity=".8"/>'
       + dust(200, 188, 6, 'C') + '</g>' },
-  /* programa: SynthonIA escribe en su escritorio de vidrio; el código aparece en ventanas flotantes y los errores se vuelven vistos verdes */
+  /* programa: Sona escribe en su escritorio de vidrio; el código aparece en ventanas flotantes y los errores se vuelven vistos verdes */
   code: { mood:'analizando', pose:'escribe', bot:'--bx:50%;--bw:45%;--bb:-19%',
     back: win(24, 26, 108, 74, 'P', '<path d="M50 56l-10 10 10 10M80 56l10 10-10 10M70 52l-10 28" fill="none" stroke="url(#giP)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>' + code(98, 50, [[0, 22, 'C'], [4, 18, 'V'], [4, 24, 'Y'], [0, 14, 'C']]), 0)
       + win(272, 18, 110, 60, 'C', code(282, 40, [[0, 46, 'P'], [8, 62, 'C'], [8, 38, 'Y'], [0, 54, 'V'], [8, 30, 'G']]), -2)
@@ -1080,7 +1080,7 @@ const SCENES = {
       /* la taza de café, con su vapor */
       + '<path d="M318 172h20v14a5 5 0 0 1-5 5h-10a5 5 0 0 1-5-5z" ' + G('O', .3) + ' stroke-width="1.5"/><path d="M338 176h3a4 4 0 0 1 0 8h-3" fill="none" stroke="url(#giO)" stroke-width="1.5"/>'
       + '<path class="usc-steam" d="M324 166q-3-5 0-9t0-9M332 166q-3-5 0-9t0-9" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="1.5" stroke-linecap="round"/>' },
-  /* crea: un documento de luz se arma solo encima de su proyector; SynthonIA lo señala */
+  /* crea: un documento de luz se arma solo encima de su proyector; Sona lo señala */
   create: { mood:'creando', pose:'senalaL', bot:'--bx:74%;--bw:42%;--bb:-16%',
     back: '<ellipse cx="112" cy="200" rx="44" ry="9" ' + G('O', .25) + ' stroke-width="1.6"/><ellipse cx="112" cy="198" rx="26" ry="4.5" fill="#ffe1b0" fill-opacity=".7"/>'
       + '<path class="usc-beam" d="M74 198L58 160L172 146L150 198Z" fill="url(#uscBeam)"/>'
@@ -1259,7 +1259,7 @@ const chispa = x => {
     form.appendChild(i); setTimeout(() => i.remove(), 750);
   }
 };
-/* SynthonIA mira lo que escribes y asiente con cada letra */
+/* Sona mira lo que escribes y asiente con cada letra */
 const mira = x => {
   if (!bot) return;
   const r = bot.getBoundingClientRect(), ir = inp.getBoundingClientRect();
@@ -1291,7 +1291,7 @@ addEventListener('pageshow', () => send && send.classList.remove('vuela'));
 })();
 /* v3.8c · Pedido de Sammuel (2-nov-2026, eligió «B y C juntas»):
    B · «Sona te lo muestra en vivo»: en «Así de fácil», una ventanita de Sonyx de mentira que Sona maneja sola con su
-       manita (escribe, elige 3 IAs, envía, las respuestas llegan y elige la mejor). No llama a ninguna IA ni gasta EnerX.
+       puntero (escribe, elige 3 IAs, envía, las respuestas llegan y elige la mejor). No llama a ninguna IA ni gasta EnerX.
        Arriba tiene pestañas con candado (Voz, Chats en grupo): son puertas falsas que llevan a votar.
    C · «El laboratorio»: sección nueva con tubos de ensayo, uno por función que todavía no existe. Arrastras tu batería de EnerX
        (o tocas «Votar») al tubo que quieres y el líquido sube con los votos de todos. Correo opcional para avisarte. Nada se cobra.
@@ -1352,7 +1352,7 @@ const demo = document.createElement('div');
 demo.className = 'dm'; demo.id = 'szDemo';
 const grid = como.querySelector('.how-grid');
 (grid ? grid.nextSibling : null) ? como.insertBefore(demo, grid.nextSibling) : como.appendChild(demo);
-const MANO = '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M11 3.5c1.4 0 2.5 1.1 2.5 2.5v8.2l1-.2V11c0-1.3 1-2.3 2.3-2.3s2.3 1 2.3 2.3v3.2l.9-.1V12.6c0-1.2 1-2.2 2.2-2.2s2.2 1 2.2 2.2v3.6l.6-.1c1.2-.1 2.2.9 2.2 2.1v3.6c0 4.6-3.7 8.3-8.3 8.3h-1.6c-2.5 0-4.8-1.1-6.4-3.1l-4.6-5.8c-.8-1-.6-2.4.4-3.1.9-.7 2.2-.6 3 .2l1.8 1.9V6c0-1.4 1.1-2.5 2.5-2.5Z" fill="url(#dmMG)" stroke="rgba(255,255,255,.75)" stroke-width="1.1"/><defs><linearGradient id="dmMG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd2c2"/><stop offset="1" stop-color="#ff8fb8"/></linearGradient></defs></svg>';
+const MANO = '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 3l20 11.2-8.6 2.2L12 25.5z" fill="#0b0b12" stroke="url(#dmMG)" stroke-width="1.9" stroke-linejoin="round"/><circle cx="12.4" cy="17.4" r="1.5" fill="#ff7ac0"/><defs><linearGradient id="dmMG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7ac0"/><stop offset=".5" stop-color="#a866ff"/><stop offset="1" stop-color="#3de0ff"/></linearGradient></defs></svg>';
 function pintaDemo(){
   const x = t();
   demo.innerHTML =
@@ -1396,7 +1396,7 @@ demo.addEventListener('submit', async e => {
 });
 pintores.push(() => { const p = demo.querySelector('.dm-pop'); if (p && !p.hidden && p._pinta) p._pinta(); });
 
-/* la película: SynthonIA maneja la ventanita */
+/* la película: Sona maneja la ventanita */
 let corrida = 0, visible = false;
 const $d = s => demo.querySelector(s);
 function manoA(el, dx = .5, dy = .55){
