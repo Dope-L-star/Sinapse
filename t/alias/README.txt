@@ -7,8 +7,10 @@ No piden llaves ni tocan el build. Se corren desde la raíz del repo, con Node 2
   node t/alias/contrato.mjs       el servidor (api/alias.js): plan, paso, ajustar, límites y el cribado «¿es algo fácil?»
   node t/alias/triage.mjs         el cribado en sí (api/_triage.js): qué se lo queda Quoryn y qué va a Relay o a Apex
   node t/alias/ruta.mjs           el enrutador de herramientas (api/_ruta.js)
-  node cloudflare/preparar.mjs && node t/alias/chat.mjs [capturas]      navegador: Quoryn dentro del chat, de punta a punta
-  node cloudflare/preparar.mjs && node t/alias/solo-equipo.mjs [capturas]   navegador: solo lo ve el equipo; importar queda para todos
+  node t/alias/chat.mjs [capturas]      navegador: Quoryn dentro del chat, de punta a punta (en el CI; usa chat.html de la raíz, o la
+                                        página armada si ya corriste node cloudflare/preparar.mjs)
+  node cloudflare/preparar.mjs && node t/alias/solo-equipo.mjs [capturas]   navegador (solo en local: necesita el export de Next):
+                                        solo lo ve el equipo en la portada y en SynthFlow; importar queda para todos
 
 Las pruebas de navegador necesitan el paquete playwright y Chromium; si faltan, avisan FALLO
 y no inventan un resultado verde. Cada prueba imprime OK o FALLO y el código de salida es 1 si alguna falla.

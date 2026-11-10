@@ -6,7 +6,8 @@
      · plan en una tarjeta del chat → se aprueba UNA vez → trabaja solo → lo que escribes a mitad se suma sin pararlo → resultado como mensaje;
      · Detener entrega lo que alcanzó a hacer; quien no es del equipo no ve el modo Agente;
      · /alias y /alias.html llevan a SynthFlow (reglas de Cloudflare) y ya no hay página.
-   Uso: node cloudflare/preparar.mjs && node t/alias/chat.mjs [carpeta-de-capturas] */
+   Uso: node t/alias/chat.mjs [carpeta-de-capturas]   (en el CI, con chat.html de la raíz)
+        node cloudflare/preparar.mjs && node t/alias/chat.mjs [carpeta-de-capturas]   (con la página armada de Cloudflare) */
 import { start } from '../web/servidor.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -32,7 +33,10 @@ const mock = async b => {
   if (/Tarea: haz SOLO este paso/.test(txt)){ calls.paso++; await lento(1400); return 'RESULTADO-QUORYN: texto de prueba para tu emprendimiento de velas.'; }
   calls.charla++; return 'Respuesta normal de prueba de Relay.';
 };
-const s = await start({ reply:mock });
+/* En el CI no hay export de Next (cloudflare/public no existe): ahí se prueba con chat.html de la raíz del repo, que es el mismo motor (chat.js).
+   En local, con `node cloudflare/preparar.mjs` hecho, se prueba la página armada de verdad. */
+const PUB = path.join(ROOT, 'cloudflare/public'), ARMADA = fs.existsSync(path.join(PUB, 'chat.html'));
+const s = await start({ reply:mock, root: ARMADA ? PUB : ROOT });
 const { sha } = await import('../../api/_lib.js');   /* después de start(): _lib.js lee las llaves de Redis al importarse */
 const tok = {};
 for (const [k, role] of [['equipo', 'owner'], ['synther', null]]){
@@ -154,9 +158,15 @@ for (const quien of ['', 'synther']){
 
 /* ---------- /alias y /alias.html ya no son una página: llevan a SynthFlow ---------- */
 {
-  const red = fs.readFileSync(path.join(ROOT, 'cloudflare/public/_redirects'), 'utf8');
-  check('Cloudflare: /alias y /alias.html llevan a /chat', /^\/alias\.html \/chat 30[12]$/m.test(red) && /^\/alias \/chat 30[12]$/m.test(red), red.slice(0, 200));
-  check('ya no se publica alias.html', !fs.existsSync(path.join(ROOT, 'cloudflare/public/alias.html')) && !fs.existsSync(path.join(ROOT, 'cloudflare/public/alias')));
+  const vj = JSON.parse(fs.readFileSync(path.join(ROOT, 'vercel.json'), 'utf8'));
+  const va = vj.redirects.find(r => r.source === '/alias.html'), vb = vj.redirects.find(r => r.source === '/alias');
+  check('vercel.json: /alias y /alias.html llevan a /chat', !!va && !!vb && va.destination === '/chat' && vb.destination === '/chat', JSON.stringify([va, vb]));
+  check('ya no hay alias.html, alias.js ni alias-tools.js en la raíz', !['alias.html', 'alias.js', 'alias-tools.js', 'alias.css'].some(f => fs.existsSync(path.join(ROOT, f))));
+  if (ARMADA){
+    const red = fs.readFileSync(path.join(PUB, '_redirects'), 'utf8');
+    check('Cloudflare: /alias y /alias.html llevan a /chat', /^\/alias\.html \/chat 30[12]$/m.test(red) && /^\/alias \/chat 30[12]$/m.test(red), red.slice(0, 200));
+    check('ya no se publica alias.html', !fs.existsSync(path.join(PUB, 'alias.html')) && !fs.existsSync(path.join(PUB, 'alias')));
+  }
 }
 
 check('sin errores de página', !errs.length, errs.join(' | '));
