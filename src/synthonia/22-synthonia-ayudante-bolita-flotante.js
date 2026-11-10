@@ -190,7 +190,7 @@ function botBubble(text, ms){
 }
 function botPlace(){
   const P = BOT.panel, b = BOT.el && botAt(); if (!P || !b) return;
-  if (matchMedia('(max-width:760px)').matches){ P.classList.add('sheet'); P.style.left = P.style.top = P.style.right = P.style.bottom = ''; return; }
+  if (matchMedia('(max-width:760px)').matches){ P.classList.add('sheet'); P.style.left = P.style.top = P.style.right = P.style.bottom = P.style.width = P.style.height = ''; return; }
   P.classList.remove('sheet');
   const r = b.getBoundingClientRect(), W = Math.min(410, innerWidth - 24), H = Math.min(690, innerHeight - 40);
   P.style.width = W + 'px'; P.style.height = H + 'px';
