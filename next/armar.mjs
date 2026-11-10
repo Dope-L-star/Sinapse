@@ -38,7 +38,7 @@ if (cfAnalyticsRequested && !cfAnalyticsAllowed) {
 }
 
 /* páginas que ya pasaron a Next.js (app/<nombre>/page.jsx → out/<nombre>.html). Al pasar otra, se agrega aquí. */
-const HECHAS = ['index.html', 'chat.html', 'alias.html', 'ayuda.html', 'offline.html', 'terminos.html', 'privacidad.html', 'pulsem.html', 'gestion.html'];
+const HECHAS = ['index.html', 'chat.html', 'ayuda.html', 'offline.html', 'terminos.html', 'privacidad.html', 'pulsem.html', 'gestion.html'];
 const corre = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, stdio: 'inherit' });
 
 // Evita publicar un árbol React desactualizado respecto de las páginas fuente.
@@ -67,7 +67,7 @@ if (!fs.existsSync(path.join(aqui, 'node_modules', 'next', 'dist', 'bin', 'next'
 fs.rmSync(path.join(aqui, 'out'), { recursive: true, force: true });
 corre(process.execPath, [path.join(aqui, 'node_modules', 'next', 'dist', 'bin', 'next'), 'build'], aqui);
 for (const f of HECHAS) if (!fs.existsSync(path.join(aqui, 'out', f))) throw new Error('Next no generó ' + f);
-for (const f of ['chat.html', 'alias.html', 'ayuda.html', 'offline.html', 'pulsem.html', 'privacidad.html', 'terminos.html', 'index.html']) {
+for (const f of ['chat.html', 'ayuda.html', 'offline.html', 'pulsem.html', 'privacidad.html', 'terminos.html', 'index.html']) {
   const p = path.join(aqui, 'out', f);
   if (!fs.existsSync(p)) throw new Error('Falta ruta React exportada: ' + f);
 }

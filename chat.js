@@ -1621,10 +1621,11 @@ function renderMsgs(){
   let srcs = null;
   chat.forEach((m, i) => {
     if (isFix(m)){ lane.appendChild(fixNoteEl(m)); srcs = null; }
-    else if (m.role === 'user'){ const u = userEl(m.content, m.files); u.style.animation = 'none'; lane.appendChild(u); if (m.agent) lane.appendChild(agentSumEl(m.agent)); srcs = m.sources && m.sources.length ? m.sources : null; if (srcs) lane.appendChild(sourcesEl(m)); }
-    else { const b = botEl(m.model || selId()); b.style.animation = 'none'; b._raw = quitaMarcas(m.content); b._ck = ck0; b._ci = i; b.dataset.ci = i; if (m.work) b.insertBefore(SZ.workSaved(m.work), $('.body', b)); $('.body', b).innerHTML = md(quitaMarcas(m.content)); if (m.imgId) imgFill($('.body', b), m); b._sources = srcs; finishBot(b, m.meta, i === chat.length - 1, m.cont, m.star); revBadge(b, m); if (!isFix(chat[i + 1])) ckIdle(b); lane.appendChild(b); }
+    else if (m.role === 'user'){ const u = userEl(m.content, m.files); u.style.animation = 'none'; lane.appendChild(u); if (m.agent) lane.appendChild(agentSumEl(m.agent)); if (m.alHand) lane.appendChild(alHandEl(m)); srcs = m.sources && m.sources.length ? m.sources : null; if (srcs) lane.appendChild(sourcesEl(m)); }
+    else { const b = botEl(m.model || selId()); b.style.animation = 'none'; if (m.alias) alWho(b, m); b._raw = quitaMarcas(m.content); b._ck = ck0; b._ci = i; b.dataset.ci = i; if (m.work) b.insertBefore(SZ.workSaved(m.work), $('.body', b)); $('.body', b).innerHTML = md(quitaMarcas(m.content)); if (m.imgId) imgFill($('.body', b), m); b._sources = srcs; finishBot(b, m.meta, i === chat.length - 1, m.cont, m.star); revBadge(b, m); if (!isFix(chat[i + 1])) ckIdle(b); lane.appendChild(b); }
   });
-  if (live && live.chat === chat && live.el){ $$('.m.last', lane).forEach(x => x.classList.remove('last')); lane.appendChild(live.el); }   /* v3.3 · la respuesta en vivo no se pierde al repintar */
+  if (live && live.chat === chat && live.el){ $$('.m.last', lane).forEach(x => x.classList.remove('last')); lane.appendChild(live.el); }
+  else if (AL && AL.el && AL.chat === chat){ $$('.m.last', lane).forEach(x => x.classList.remove('last')); lane.appendChild(AL.el); }   /* v4.6 · la misión de Quoryn sigue en su sitio */   /* v3.3 · la respuesta en vivo no se pierde al repintar */
   else if (thinking) lane.appendChild(thinkEl(thinking));
   if (fresh){ msgsEl.scrollTop = 0; requestAnimationFrame(() => { msgsEl.scrollTop = 0; }); } else jump();
 }
@@ -3025,6 +3026,7 @@ const agentOn = () => !!st().agent && !trialOn;
 $('#agPill').addEventListener('click', () => { if (isMobile()) closeChatsSheet && closeChatsSheet(); setAgent(false); });
 function paintAgent(){ try{ paintMode(); }catch(e){} $$('.agentb, #railAgent').forEach(b => { b.setAttribute('aria-pressed', String(agentOn())); b.classList.toggle('on', agentOn()); }); document.body.classList.toggle('agenting', agentOn()); inp.placeholder = agentOn() ? 'Apex: cuéntame qué necesitas…' : (isLocked() ? inp.placeholder : 'Escribe tu mensaje...'); }
 function setAgent(on){
+  if (on && st().alias) setAlias(false);   /* v4.6 · Quoryn y SuperiorSynth no van a la vez */
   if (!!st().agent === !!on){ paintAgent(); return; }
   if (mode !== 'solo'){ stopNow(); cmpRun++; cmpLast = null; mode = 'solo'; }
   st().agent = !!on; save(); paintAgent(); gen++;
@@ -3156,9 +3158,18 @@ async function send(){
   if (!budgetOk()) return;
   /* v3.8 · si todavía se está comprobando la IA que elegiste, espera esa respuesta (1-2 s); si no responde, tu texto se queda en la caja */
   { const h = HEALTH.get(selId()), m1 = selId(); if (h && h.p){ sendBtn.disabled = true; try{ await h.p; }finally{ sendBtn.disabled = false; } if (selId() !== m1) return; } }
+  /* v4.6 · Quoryn (antes A.L.I.A.S.): con el modo Agente puesto, el pedido pasa primero por su enrutado: si es de verdad fácil lo responde Relay (Automática)
+     o Apex (SuperiorSynth); si es un pedido de verdad, Quoryn arma el plan aquí mismo (16w-alias-en-chat.js) */
+  let alJump = null;
+  if (alOn() && mode === 'solo' && text){
+    if (files.length) toast(alT('adjuntos'));
+    else if (!alPass || Date.now() - alPass.t > 6000) return aliasSend(text);
+    else { alJump = alPass; alPass = null; }
+  }
   /* modo agente: no eliges IA; el agente entiende tu pedido, lo mejora, elige la IA experta y te muestra los pasos */
-  if (agentOn() && mode === 'solo' && text && !files.length){
+  if ((agentOn() || (alJump && alJump.to === 'superior')) && mode === 'solo' && text && !files.length){
     if (agentBusy) return;
+    const alKeep = alJump ? { m:st().model.openrouter, p:st().pinned } : null;   /* Apex responde una vez: tu IA elegida no cambia */
     /* el agente ve que pides una imagen: la crea el creador de imágenes */
     if (IMG_RX.test(text) && SZ.ACC.ready){ toast('Apex vio que quieres una imagen: la crea el creador de imágenes.'); return createImage(text); }
     agentBusy = true; inp.readOnly = true; sendBtn.disabled = true;
@@ -3195,6 +3206,7 @@ async function send(){
     if (wd.go){ card.el.remove(); await webPrep(msg, plan.pedido || text, wd.why); if (g0 !== gen) return; }
     if (wantsDeck(text)) msg.deck = true;
     msg.agent = { pick, name:info(pick).name, tl:light ? 'cosas sencillas (gasta menos)' : tl, ask:same ? '' : plan.pedido };
+    if (alJump) msg.alHand = 'superior';
     st().model.openrouter = pick; save(); paintSel(); renderTop(false); paintAccent();
     /* v3.4 · si la IA falla, SuperiorSynth NO reintenta con la misma (siempre volvería a fallar): pasa el trabajo a otra IA
        experta en ese tema y sigue sola, sin que tengas que hacer nada. Hasta 3 IAs distintas; solo si todas fallan ves el error. */
@@ -3202,10 +3214,10 @@ async function send(){
     const ok = rx.ok, cur = rx.cur, lastErr = rx.err;
     if (!ok){ chat.pop(); save(); renderMsgs(); showErr(lastErr); inp.value = text; autoGrow(); updateHint(); if (g0 === gen && !(lastErr && lastErr.aborted)) setTimeout(() => rescue(cur, lastErr), 900); }
     const pickF = cur;
-    if (ok && g0 === gen) agentChoice(pickF);
+    if (ok && g0 === gen && !alJump) agentChoice(pickF);
     if (ok && g0 === gen && MEM_RX.test(text)) memOffer(text);
     }catch(e){ console.error('[superiorsynth]', e); $$('.agrun', lane).forEach(x => x.remove()); renderMsgs(); toast('Apex tuvo un problema. Tu mensaje quedó guardado: vuelve a intentarlo.'); }
-    finally{ unlock(); }
+    finally{ unlock(); if (alKeep){ st().model.openrouter = alKeep.m; st().pinned = alKeep.p; save(); try{ paintSel(); renderTop(false); paintAccent(); }catch(e){} } }
     return;
   }
   const th0 = ckey(), m0 = selId(), at0 = Date.now(), needed = needsConn();
@@ -3215,6 +3227,7 @@ async function send(){
   /* v3.4 · si la IA elegida no ve fotos, ya no te bloquea: esta respuesta la da una que sí ve (antes salía «Este modelo no ve imágenes» y no podías enviar) */
   /* v3.7 · y solo por esta respuesta: tu IA elegida se queda elegida (antes te la cambiaba para siempre al adjuntar una foto) */
   let oneModel = null;
+  if (alJump && alJump.to === 'auto' && szOn() && selId() !== 'sz:auto') oneModel = 'sz:auto';   /* v4.6 · Relay = la IA Automática, solo por esta respuesta */
   /* v3.8 · foto (o PDF escaneado, o video) con una IA que no ve: una IA que sí ve la describe en texto y responde TU IA elegida.
      Solo si eso falla, responde esa vez la que ve (como antes). Y si ninguna ve, se manda la ficha de la foto: nunca te bloquea. */
   if (ready.some(f => f.kind === 'img') && !info(selId()).vision){
@@ -3227,6 +3240,7 @@ async function send(){
   const chat = chatArr(), sent = files.splice(0).filter(f => f.state === 'ok');
   inp.value = ''; autoGrow(); updateHint(); renderTray();
   const msg = { role:'user', content:text };
+  if (alJump) msg.alHand = 'auto';
   if (sent.length) msg.files = sent.map(f => ({ name:f.name, kind:f.kind, text:f.text, thumb:f.thumb }));
   const imgs = sent.filter(f => f.kind === 'img').flatMap(f => f.dataUrls || [f.dataUrl]);
   if (imgs.length) Object.defineProperty(msg, '_imgs', { value:imgs, enumerable:false, writable:true });
@@ -5530,7 +5544,7 @@ function mmOpen(){
   const L = [{ label:'Nuevo chat', ico:'new', fn:() => newChat() }];
   if (mode === 'solo') L.push({ label:'Copiar la conversación', ico:'copy', fn:() => { copyText(chatMd()); toast('Conversación copiada.'); } }, { label:'Descargar como texto', ico:'down', fn:exportMd });
   else L.push({ label:'Empezar otra comparación', ico:'cmp', fn:() => clearChat() }, { label:'Volver a una sola IA', ico:'exit', fn:() => removeCmp(st().cmp[st().cmp.length - 1]) });
-  L.push('—', { label:'Lo que recuerdo de ti', ico:'brain', fn:() => SZ.cfgModal('mem') }, ...(SZ.importOpen ? [{ label:'Importar chats y memoria', ico:'up', fn:() => SZ.importOpen() }] : []), { label:'Ajustes', ico:'cog', fn:() => SZ.cfgModal() }, { label:'Planes', ico:'trophy', fn:() => SZ.plansModal() }, ...(SZ.aliasOk() ? [{ label:'Quoryn · equipo', ico:'ai', fn:() => { location.href = 'alias.html'; } }] : []), { label:SZ.lang() === 'en' ? 'Español' : 'English', ico:'globe', fn:() => SZ.setLang(SZ.lang() === 'en' ? 'es' : 'en') }, { label:'Ayuda: algo no carga', ico:'help', fn:helpLoad });
+  L.push('—', { label:'Lo que recuerdo de ti', ico:'brain', fn:() => SZ.cfgModal('mem') }, ...(SZ.importOpen ? [{ label:'Importar chats y memoria', ico:'up', fn:() => SZ.importOpen() }] : []), { label:'Ajustes', ico:'cog', fn:() => SZ.cfgModal() }, { label:'Planes', ico:'trophy', fn:() => SZ.plansModal() }, ...(SZ.aliasOk() ? [{ label:'Quoryn · equipo', ico:'ai', fn:() => setAlias(true) }] : []), { label:SZ.lang() === 'en' ? 'Español' : 'English', ico:'globe', fn:() => SZ.setLang(SZ.lang() === 'en' ? 'es' : 'en') }, { label:'Ayuda: algo no carga', ico:'help', fn:helpLoad });
   if (trialOn) L.push({ label:'Salir de la prueba guiada', ico:'exit', fn:() => exitTrial() });
   if (mode === 'solo') L.push('—', { label:'Borrar este chat', ico:'trash', danger:true, fn:() => clearChat(true) });
   const r = mb.getBoundingClientRect(), m = SZ.menuOpen(L, 0, r.bottom + 8, 'mm');
@@ -6207,6 +6221,696 @@ if (IMP_ON){
   SZ.importOpen = impOpen;
   SZ.cfgLinks.unshift(['Importar de otra IA', () => impOpen(), 'Trae tus chats y lo que recuerda ChatGPT, Claude u otra']);
 }
+// Hecho por: integrador (Claude). Punto de conexión que HERRAMIENTAS pidió: window.ALIAS_DEPS.
+// v4.6 · A.L.I.A.S. ya no tiene página: su motor (16p–16u) viaja dentro de chat.js y lo usa 16w-alias-en-chat.js. Usa los mismos
+// endpoints y la misma sesión que el chat:
+//   token   -> localStorage "synthz:sess" (lo mismo que manda el chat en Authorization: Bearer)
+//   buscar  -> POST /api/ai {action:"search"}   (Tavily/Exa/Wikipedia, con su propio límite)
+//   imagen  -> POST /api/ai {action:"image"}    (requiere cuenta; límite diario propio)
+//   memoria -> SOLO LECTURA de "synthz:v1".mem  (escribir desde aquí pisaría el guardado del chat y su sincronía)
+(function () {
+  'use strict';
+  var A = (window.ALIAS = window.ALIAS || {});
+  function token() { try { return localStorage.getItem('synthz:sess') || ''; } catch (e) { return ''; } }
+  async function ai(body) {
+    var h = { 'Content-Type': 'application/json' }, tk = token();
+    if (tk) h.Authorization = 'Bearer ' + tk;
+    var r = await fetch('/api/ai', { method: 'POST', headers: h, body: JSON.stringify(body) });
+    var j = null; try { j = await r.json(); } catch (e) {}
+    if (!r.ok || !j) throw new Error((j && (j.error || j.message)) || ((window.t && window.t('alias_err_server')) || 'error'));
+    return j;
+  }
+  window.ALIAS_DEPS = window.ALIAS_DEPS || {
+    getToken: token,
+    lang: function () { var U = window.AliasUI; return (U && U.lang) || document.documentElement.lang || 'es'; },
+    search: async function (q) {
+      var j = await ai({ action: 'search', q: String(q).slice(0, 300) }), res = Array.isArray(j.results) ? j.results : [];
+      return {
+        text: res.map(function (x) { return (x.t || x.u) + (x.s ? ': ' + x.s : ''); }).join('\n'),
+        sources: res.map(function (x) { return { title: x.t || x.u, url: x.u }; })
+      };
+    },
+    image: async function (prompt) { var j = await ai({ action: 'image', prompt: prompt }); return { url: j.img }; },
+    loadPptx: function () {
+      return new Promise(function (ok, no) {
+        if (window.PptxGenJS) return ok();
+        var s = document.createElement('script'); s.src = 'lib/pptxgen.bundle.js';
+        s.onload = function () { window.PptxGenJS ? ok() : no(new Error('pptx')); }; s.onerror = function () { no(new Error('pptx')); };
+        document.head.appendChild(s);
+      });
+    },
+    memoryGet: function () {
+      try {
+        var m = (JSON.parse(localStorage.getItem('synthz:v1')) || {}).mem;
+        return m && m.on !== false && Array.isArray(m.items) ? m.items.map(function (x) { return x && x.text; }).filter(Boolean) : [];
+      } catch (e) { return []; }
+    }
+    /* memoryAdd: a propósito no existe; ver arriba. */
+  };
+})();
+// Hecho por: HERRAMIENTAS
+// Herramienta de búsqueda con fuentes. Reutiliza la búsqueda existente vía window.ALIAS_DEPS.search.
+(function () {
+  'use strict';
+  var A = (window.ALIAS = window.ALIAS || {});
+  A.tools = A.tools || {};
+
+  function T(k) {
+    try {
+      if (A.t) return A.t(k);
+      if (typeof window.t === 'function') return window.t(k);
+    } catch (e) {}
+    return k;
+  }
+  function lang() {
+    var d = window.ALIAS_DEPS || {};
+    try { if (typeof d.lang === 'function') return d.lang(); } catch (e) {}
+    return (A.lang && A.lang()) || document.documentElement.lang || 'es';
+  }
+  function normSources(s) {
+    if (!Array.isArray(s)) return [];
+    return s
+      .map(function (x) { return { title: String((x && (x.title || x.name)) || (x && x.url) || ''), url: String((x && x.url) || '') }; })
+      .filter(function (x) { return /^https?:\/\//i.test(x.url); });
+  }
+
+  A.tools.search = async function (q) {
+    q = String(q || '').trim();
+    if (!q) throw new Error(T('alias_err_empty'));
+    var d = window.ALIAS_DEPS || {};
+    if (typeof d.search !== 'function') throw new Error(T('alias_err_nosearch'));
+    var r = await d.search(q, lang());
+    if (typeof r === 'string') return { text: r, sources: [] };
+    r = r || {};
+    return { text: String(r.text || r.answer || ''), sources: normSources(r.sources) };
+  };
+})();
+// Hecho por: HERRAMIENTAS
+// Genera archivos en el navegador: pptx (PptxGenJS), txt y código. Devuelve {name,mime,blobUrl}.
+(function () {
+  'use strict';
+  var A = (window.ALIAS = window.ALIAS || {});
+  A.tools = A.tools || {};
+
+  var PPTX_MIME = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+  var MIMES = {
+    txt: 'text/plain', md: 'text/markdown', js: 'text/javascript', mjs: 'text/javascript',
+    ts: 'text/plain', py: 'text/x-python', html: 'text/html', css: 'text/css',
+    json: 'application/json', csv: 'text/csv', xml: 'application/xml', sql: 'text/plain',
+    java: 'text/plain', c: 'text/plain', cpp: 'text/plain', cs: 'text/plain',
+    go: 'text/plain', rs: 'text/plain', php: 'text/plain', sh: 'text/plain'
+  };
+
+  function T(k) {
+    try {
+      if (A.t) return A.t(k);
+      if (typeof window.t === 'function') return window.t(k);
+    } catch (e) {}
+    return k;
+  }
+  function cleanName(n) {
+    return String(n || '').replace(/[\\\/:*?"<>|\u0000-\u001f]/g, '_').trim().slice(0, 100);
+  }
+  function ext(n) {
+    var m = /\.([a-z0-9]+)$/i.exec(n);
+    return m ? m[1].toLowerCase() : '';
+  }
+
+  // Convierte el contenido a {title, slides:[{title,bullets[],notes}]}
+  function parseDeck(content) {
+    var data = null;
+    try { data = JSON.parse(content); } catch (e) {}
+    if (data) {
+      /* acepta {title,slides:[{title,bullets,notes}]} y el formato del servidor {titulo,subtitulo,diapositivas:[{titulo,puntos,notas}]} */
+      var arr = Array.isArray(data) ? data : (data.slides || data.diapositivas);
+      if (Array.isArray(arr)) {
+        return {
+          title: Array.isArray(data) ? '' : String(data.title || data.titulo || ''),
+          slides: arr.map(function (s) {
+            var b = s.bullets || s.puntos || s.points || s.content || [];
+            if (typeof b === 'string') b = b.split('\n');
+            return { title: String(s.title || s.titulo || ''), bullets: b.map(String).filter(Boolean), notes: String(s.notes || s.notas || '') };
+          })
+        };
+      }
+    }
+    var deck = { title: '', slides: [] };
+    var cur = null;
+    String(content).split(/\r?\n/).forEach(function (line) {
+      var h = /^(#{1,2})\s+(.*)$/.exec(line);
+      if (h) {
+        if (h[1] === '#' && !deck.title && !deck.slides.length) { deck.title = h[2].trim(); return; }
+        cur = { title: h[2].trim(), bullets: [], notes: '' };
+        deck.slides.push(cur);
+        return;
+      }
+      if (!cur) { cur = { title: '', bullets: [], notes: '' }; deck.slides.push(cur); }
+      var n = /^>\s?(.*)$/.exec(line);
+      if (n) { cur.notes += (cur.notes ? '\n' : '') + n[1]; return; }
+      var b = /^\s*[-*•]\s+(.*)$/.exec(line);
+      if (b) cur.bullets.push(b[1].trim());
+      else if (line.trim()) cur.bullets.push(line.trim());
+    });
+    return deck;
+  }
+
+  async function makePptx(content) {
+    var d = window.ALIAS_DEPS || {};
+    if (!window.PptxGenJS && typeof d.loadPptx === 'function') await d.loadPptx();
+    if (!window.PptxGenJS) throw new Error(T('alias_err_pptx_lib'));
+    var deck = parseDeck(content);
+    if (!deck.slides.length && !deck.title) throw new Error(T('alias_err_empty'));
+    var p = new window.PptxGenJS();
+    p.layout = 'LAYOUT_16x9';
+    if (deck.title) {
+      var s0 = p.addSlide();
+      s0.addText(deck.title, { x: 0.6, y: 2.0, w: 8.8, h: 1.5, fontSize: 36, bold: true, align: 'center' });
+    }
+    deck.slides.forEach(function (sl) {
+      var s = p.addSlide();
+      s.addText(sl.title || T('alias_slide_default'), { x: 0.5, y: 0.4, w: 9, h: 0.9, fontSize: 28, bold: true });
+      if (sl.bullets.length) {
+        s.addText(
+          sl.bullets.map(function (b) { return { text: b, options: { bullet: true, breakLine: true } }; }),
+          { x: 0.6, y: 1.5, w: 8.8, h: 3.8, fontSize: 18, valign: 'top' }
+        );
+      }
+      if (sl.notes) s.addNotes(sl.notes);
+    });
+    return await p.write({ outputType: 'blob' });
+  }
+
+  // file({type:"pptx|txt|code", name, content}) -> {name,mime,blobUrl}
+  A.tools.file = async function (o) {
+    o = o || {};
+    var type = String(o.type || '').toLowerCase();
+    var content = String(o.content == null ? '' : o.content);
+    var name = cleanName(o.name);
+    if (['pptx', 'txt', 'code'].indexOf(type) < 0) throw new Error(T('alias_err_type'));
+    if (!content.trim()) throw new Error(T('alias_err_empty'));
+    var blob, mime;
+    if (type === 'pptx') {
+      if (!name) name = 'alias';
+      if (ext(name) !== 'pptx') name = name.replace(/\.[a-z0-9]+$/i, '') + '.pptx';
+      blob = await makePptx(content);
+      mime = PPTX_MIME;
+    } else {
+      if (!name) name = type === 'txt' ? 'alias.txt' : '';
+      if (!name) throw new Error(T('alias_err_empty'));
+      if (!ext(name) && type === 'txt') name += '.txt';
+      mime = MIMES[ext(name)] || 'text/plain';
+      blob = new Blob([content], { type: mime + ';charset=utf-8' });
+    }
+    return { name: name, mime: mime, blobUrl: URL.createObjectURL(blob) };
+  };
+  A.tools.file.PPTX_MIME = PPTX_MIME;
+})();
+// Hecho por: HERRAMIENTAS
+// Memoria del usuario. Reutiliza la memoria existente vía window.ALIAS_DEPS.memoryGet / memoryAdd.
+// Solo guarda si el usuario ya la tiene activada (la decide la memoria existente, no esta herramienta).
+(function () {
+  'use strict';
+  var A = (window.ALIAS = window.ALIAS || {});
+  A.tools = A.tools || {};
+
+  function T(k) {
+    try {
+      if (A.t) return A.t(k);
+      if (typeof window.t === 'function') return window.t(k);
+    } catch (e) {}
+    return k;
+  }
+
+  // memory({get:true}) -> {items:[texto]}   |   memory({add:"texto"}) -> {ok:true}
+  A.tools.memory = async function (o) {
+    o = o || {};
+    var d = window.ALIAS_DEPS || {};
+    if (o.add != null) {
+      var txt = String(o.add).trim().slice(0, 500);
+      if (!txt) throw new Error(T('alias_err_empty'));
+      if (typeof d.memoryAdd !== 'function') throw new Error(T('alias_err_nomemory'));
+      await d.memoryAdd(txt);
+      return { ok: true };
+    }
+    if (o.get) {
+      if (typeof d.memoryGet !== 'function') throw new Error(T('alias_err_nomemory'));
+      var r = await d.memoryGet();
+      var arr = Array.isArray(r) ? r : (r && r.items) || [];
+      return {
+        items: arr
+          .map(function (x) { return typeof x === 'string' ? x : String((x && (x.text || x.t)) || ''); })
+          .filter(Boolean)
+      };
+    }
+    throw new Error(T('alias_err_type'));
+  };
+})();
+// Hecho por: HERRAMIENTAS
+// Imágenes. Reutiliza la generación existente vía window.ALIAS_DEPS.image (respeta su límite diario).
+(function () {
+  'use strict';
+  var A = (window.ALIAS = window.ALIAS || {});
+  A.tools = A.tools || {};
+
+  function T(k) {
+    try {
+      if (A.t) return A.t(k);
+      if (typeof window.t === 'function') return window.t(k);
+    } catch (e) {}
+    return k;
+  }
+
+  // image(prompt) -> {url}
+  A.tools.image = async function (prompt) {
+    prompt = String(prompt || '').trim().slice(0, 800);
+    if (!prompt) throw new Error(T('alias_err_prompt'));
+    var d = window.ALIAS_DEPS || {};
+    if (typeof d.image !== 'function') throw new Error(T('alias_err_noimage'));
+    var r = await d.image(prompt);
+    var url = typeof r === 'string' ? r : r && r.url;
+    if (!url) throw new Error(T('alias_err_noimage'));
+    return { url: String(url) };
+  };
+})();
+// Hecho por: HERRAMIENTAS
+// window.ALIAS.plan / runStep: POST /api/alias con token del usuario, timeout 60 s, 1 reintento.
+(function () {
+  'use strict';
+  var A = (window.ALIAS = window.ALIAS || {});
+  A.tools = A.tools || {};
+
+  var TIMEOUT_MS = 60000;
+  var RETRY_WAIT_MS = 800;
+
+  function T(k) {
+    try {
+      if (A.t) return A.t(k);
+      if (typeof window.t === 'function') return window.t(k);
+    } catch (e) {}
+    return k;
+  }
+  function lang() {
+    var d = window.ALIAS_DEPS || {};
+    try { if (typeof d.lang === 'function') return d.lang(); } catch (e) {}
+    return (A.lang && A.lang()) || document.documentElement.lang || 'es';
+  }
+  function headers() {
+    var h = { 'Content-Type': 'application/json' };
+    var d = window.ALIAS_DEPS || {};
+    try {
+      var extra = typeof d.authHeaders === 'function' ? d.authHeaders() : null;
+      if (extra) { for (var k in extra) h[k] = extra[k]; }
+      else if (typeof d.getToken === 'function') {
+        var tk = d.getToken();
+        if (tk) h.Authorization = 'Bearer ' + tk;
+      }
+    } catch (e) {}
+    return h;
+  }
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  async function once(body) {
+    var ctl = new AbortController();
+    var timer = setTimeout(function () { ctl.abort(); }, TIMEOUT_MS);
+    try {
+      var res = await fetch('/api/alias', {
+        method: 'POST', headers: headers(), body: JSON.stringify(body), signal: ctl.signal
+      });
+      var j = null;
+      try { j = await res.json(); } catch (e) {}
+      return { status: res.status, json: j };
+    } finally { clearTimeout(timer); }
+  }
+
+  // Devuelve siempre {ok:true,...} o {ok:false,error,limit?}
+  async function post(body) {
+    body.lang = lang();
+    var r, failMsg = T('alias_err_network');
+    for (var i = 0; i < 2; i++) {
+      try {
+        r = await once(body);
+        if (r.json && r.json.limit) return { ok: false, error: T('alias_err_limit'), limit: true };
+        if (r.status === 429) return { ok: false, error: T('alias_err_limit'), limit: true };
+        if (r.status >= 500 && i === 0) { failMsg = T('alias_err_server'); await wait(RETRY_WAIT_MS); continue; }
+        if (!r.json) return { ok: false, error: T('alias_err_server') };
+        return r.json;
+      } catch (e) {
+        failMsg = e && e.name === 'AbortError' ? T('alias_err_timeout') : T('alias_err_network');
+        if (i === 0) await wait(RETRY_WAIT_MS);
+      }
+    }
+    return { ok: false, error: failMsg };
+  }
+
+  function fill(txt, o) { return String(txt).replace(/\{(\w+)\}/g, function (m, k) { return o[k] == null ? m : o[k]; }); }
+  function fail(s, e) { s.status = 'error'; s.output = ''; s.error = (e && e.message) || T('alias_err_server'); }
+
+  // memory: lista lo que la cuenta ya guardó (solo lectura; si no hay o está apagada, lo dice sin fallar)
+  // image: genera con el límite diario existente y deja un enlace local en file.blobUrl (no el base64 gigante)
+  async function clientStep(s, kind, text) {
+    if (kind === 'memory') {
+      var items = [];
+      try { items = (await A.tools.memory({ get: true })).items; } catch (e) { items = []; }
+      s.output = items.length ? T('alias_mem_list') + '\n' + items.slice(0, 25).map(function (x) { return '• ' + x; }).join('\n') : T('alias_mem_empty');
+      return;
+    }
+    try {
+      var url = (await A.tools.image(text)).url;
+      var blob = await (await fetch(url)).blob();
+      var ext = /png/.test(blob.type) ? 'png' : /webp/.test(blob.type) ? 'webp' : 'jpg';
+      s.file = { name: T('alias_img_nombre') + '.' + ext, mime: blob.type || 'image/jpeg', blobUrl: URL.createObjectURL(blob) };
+      s.output = fill(T('alias_img_listo'), { prompt: text });
+    } catch (e) { fail(s, e); }
+  }
+
+  /* v4.6 · enrutado con sentido: si el pedido es de verdad fácil el servidor NO arma plan y responde { ok, simple:true, to:'auto'|'superior', kind, reply }.
+     opts.force = true → armar el plan igual («hazlo con A.L.I.A.S.»). */
+  A.plan = async function (goal, opts) {
+    goal = String(goal || '').trim().slice(0, 500);   /* mismo tope que el servidor y la pantalla */
+    if (!goal) return { ok: false, error: T('alias_err_goal') };
+    var body = { action: 'plan', goal: goal };
+    if (opts && opts.force) body.force = true;
+    var r = await post(body);
+    if (!r || !r.ok) return r || { ok: false, error: T('alias_err_server') };
+    if (r.simple) return r;
+    var p = r.plan;
+    if (!p || !Array.isArray(p.steps) || p.steps.length < 3 || p.steps.length > 7) {
+      return { ok: false, error: T('alias_err_plan') };
+    }
+    return r;
+  };
+
+  /* v3.9 · enrutador: 👍/👎 sobre la IA que eligió para un tipo de trabajo, y lo que ha aprendido (para mostrarlo) */
+  A.feedback = function (cat, model, up) { return post({ action: 'feedback', cat: cat, model: model, up: !!up }); };
+  A.routes = function () { return post({ action: 'rutas' }); };
+
+  /* v4.3 · agente que trabaja solo: la persona escribe algo con el plan en marcha y A.L.I.A.S. rehace los pasos que faltan.
+     done = ids de los pasos hechos o en marcha (no se tocan). Responde { ok, steps, reply, changed }. */
+  A.adjust = async function (plan, done, note) {
+    note = String(note || '').trim().slice(0, 300);
+    if (!note) return { ok: false, error: T('alias_err_goal') };
+    var r = await post({ action: 'ajustar', plan: plan, done: Array.isArray(done) ? done : [], note: note });
+    if (!r || !r.ok) return r || { ok: false, error: T('alias_err_server') };
+    if (!Array.isArray(r.steps)) return { ok: false, error: T('alias_err_server') };
+    return r;
+  };
+
+  /* v3.0: opts.synth === false apaga la Síntesis del paso final (por defecto está encendida) */
+  A.runStep = async function (plan, stepId, prev, opts) {
+    var body = { action: 'step', plan: plan, stepId: stepId, prev: Array.isArray(prev) ? prev : [] };
+    if (opts && opts.synth === false) body.synth = false;
+    var r = await post(body);
+    if (!r || !r.ok) return r || { ok: false, error: T('alias_err_server') };
+    var s = r.step;
+    if (!s) return { ok: false, error: T('alias_err_server') };
+    /* Los archivos del servidor (texto, código o borrador de presentación en JSON) viajan en file.text;
+       la pantalla arma el .pptx al descargar. Aquí NO se crean enlaces blob para no dejarlos sin liberar. */
+    /* Los pasos de memoria e imagen los resuelve el navegador: el servidor deja un marcador. */
+    var mk = typeof s.output === 'string' ? /^\[\[ALIAS:(memory|image)\]\]\s*/.exec(s.output) : null;
+    if (mk && s.status !== 'error') await clientStep(s, mk[1], s.output.slice(mk[0].length));
+    return r;
+  };
+})();
+/* ---------- 2026-11-10 · Quoryn (antes A.L.I.A.S.) vive DENTRO de SynthFlow: ya no tiene página propia ----------
+   Sammuel (9 nov): «ALIAS ya no tiene UI: elimina esa página» y «que no te responda un simple hola ni algo muy fácil: que te mande a la
+   automática o a SuperiorSynth… PERO CON SENTIDO: si en el mismo mensaje te pide algo, ahí NO te manda a otra IA».
+   Con el modo «Agente» puesto (solo equipo, SZ.aliasOk()):
+     · lo que escribes pasa primero por el enrutado del servidor (api/_triage.js): si es de verdad fácil («hola», «gracias», una preguntita)
+       lo responde Relay (la IA Automática) o Apex (SuperiorSynth) y debajo queda «Quoryn vio que era fácil… [Hacerlo con Quoryn]»;
+     · si es un pedido de verdad (aunque empiece con «hola») Quoryn arma el plan en una tarjeta dentro del chat;
+     · lo apruebas UNA vez y trabaja solo (voy a continuar con…); si un paso falla lo reintenta solo con otra IA;
+     · lo que escribas mientras trabaja se suma encima sin pararlo (action 'ajustar'); Detener entrega lo que alcanzó a hacer;
+     · el resultado queda como un mensaje más del chat (texto, archivos y fuentes) y la conversación sigue normal.
+   El motor (plan, paso, ajustar) es window.ALIAS (16p–16u). La pantalla de misiones, el historial y «Agentes» de la página vieja se quitaron. */
+var AL = null, alPass = null, alDict = null;           /* var: renderMsgs los mira antes de que esta pieza corra */
+/* function y var (no const): renderMsgs puede pintar un chat guardado antes de que esta pieza termine de correr */
+function alEn(){ return !!(SZ.lang && SZ.lang() === 'en'); }
+function alOn(){ return !!st().alias && !!(SZ.aliasOk && SZ.aliasOk()) && !trialOn; }
+var AL_TOTAL = 9;
+var AT = {
+  es: { ph:'Quoryn: dime la meta y armo el plan…', activado:'Modo Quoryn: dime la meta; si es un pedido de verdad armo el plan y trabajo solo.', apagado:'Modo Quoryn apagado.',
+    planListo:'Plan listo: revísalo y apruébalo una sola vez', empiezo:'Voy a empezar con:', sigo:'Voy a continuar con:', reint:'Este paso falló; lo intento otra vez con otra IA…',
+    ajustando:'Ajustando el plan con lo que pediste…', fallo:'Este paso no salió ni en el segundo intento.', limite:'Hoy se acabaron tus misiones. Vuelven mañana.',
+    go:'Aprobar y empezar', no:'Descartar', stop:'Detener', retry:'Reintentar', skip:'Saltar este paso',
+    ayudaPlan:'¿Quieres cambiar algo del plan? Escríbelo en la caja de abajo.', ayudaRun:'Puedes escribirme algo y lo sumo sin pararme.',
+    tu:'Tú', pista:'(Inténtalo de otra forma.)', notaErr:'No pude rehacer el plan, pero lo tendré en cuenta en lo que falta.', notaOk:'Anotado. Lo tendré en cuenta en lo que falta.',
+    esperaPlan:'Estoy armando el plan: espera un momento.', otroChat:'Quoryn está trabajando en otro chat. Termina o detenlo allá.', adjuntos:'Quoryn todavía no lee adjuntos: esta vez te responde la IA de siempre.',
+    detenida:'Misión detenida.', descartada:'Plan descartado.', red:'No hubo conexión. Revisa tu red e inténtalo de nuevo.', mision:'misión de {n} pasos', fuentes:'Fuentes', parcial:'_Detuve la misión: esto es lo que alcancé a hacer._', vacio:'No alcancé a terminar nada. Puedes pedirme otra vez.',
+    handRelay:'Quoryn vio que era algo fácil y te respondió Relay.', handApex:'Quoryn vio que era algo sencillo y te respondió Apex.', hacerlo:'Hacerlo con Quoryn',
+    tool:{ search:'Buscar', file:'Archivo', memory:'Memoria', image:'Imagen', think:'Pensar' }, con:'con {n}' },
+  en: { ph:'Quoryn: tell me the goal and I will make a plan…', activado:'Quoryn mode: tell me the goal; if it is a real task I make the plan and work on my own.', apagado:'Quoryn mode is off.',
+    planListo:'Plan ready: look it over and approve it once', empiezo:'I am going to start with:', sigo:'I am going to continue with:', reint:'This step failed; trying again with another AI…',
+    ajustando:'Adjusting the plan with what you asked…', fallo:'This step did not work, not even on the second try.', limite:'You used all of today\'s missions. They come back tomorrow.',
+    go:'Approve and start', no:'Discard', stop:'Stop', retry:'Try again', skip:'Skip this step',
+    ayudaPlan:'Want to change something in the plan? Write it in the box below.', ayudaRun:'You can write to me and I will add it without stopping.',
+    tu:'You', pista:'(Try a different approach.)', notaErr:'I could not redo the plan, but I will keep it in mind for what is left.', notaOk:'Noted. I will keep it in mind for what is left.',
+    esperaPlan:'I am making the plan: wait a moment.', otroChat:'Quoryn is working in another chat. Finish or stop it there.', adjuntos:'Quoryn does not read attachments yet: this time the usual AI answers.',
+    detenida:'Mission stopped.', descartada:'Plan discarded.', red:'Couldn\'t connect. Check your network and try again.', mision:'{n}-step mission', fuentes:'Sources', parcial:'_I stopped the mission: this is what I got done._', vacio:'I did not finish anything. You can ask me again.',
+    handRelay:'Quoryn saw it was easy and Relay answered.', handApex:'Quoryn saw it was simple and Apex answered.', hacerlo:'Do it with Quoryn',
+    tool:{ search:'Search', file:'File', memory:'Memory', image:'Image', think:'Think' }, con:'with {n}' }
+};
+function alT(k, v){
+  const L = AT[alEn() ? 'en' : 'es']; let s = L[k]; if (s == null) s = AT.es[k]; if (s == null) s = k;
+  return typeof s === 'string' && v ? s.replace(/\{(\w+)\}/g, (m, x) => v[x] == null ? m : v[x]) : s;
+}
+/* el motor busca sus textos en alias-textos.json (los mismos del servidor); se baja la primera vez que se usa */
+function alLoadDict(){
+  if (alDict) return alDict;
+  alDict = fetch('alias-textos.json', { cache:'no-cache' }).then(r => r.ok ? r.json() : {}).catch(() => ({})).then(d => { alDict = Promise.resolve(d); window.ALIAS && (window.ALIAS.dict = d); return d; });
+  return alDict;
+}
+function alEngine(){
+  const A = window.ALIAS; if (!A) return null;
+  if (!A.chatReady){
+    A.chatReady = true;
+    A.t = k => { const d = A.dict || {}, l = alEn() ? 'en' : 'es'; return (d[l] && d[l][k]) || (d.es && d.es[k]) || k; };
+    A.lang = () => alEn() ? 'en' : 'es';
+    const D = window.ALIAS_DEPS; if (D) D.lang = () => alEn() ? 'en' : 'es';
+    alLoadDict();
+  }
+  return A;
+}
+
+/* ---------- el modo «Agente» ---------- */
+function setAlias(on){
+  on = !!on;
+  if (!!st().alias === on) return;
+  if (on){ if (agentOn()) setAgent(false); if (imgMode) setImgMode(false); if (mode !== 'solo') setMode('solo'); alEngine(); }
+  st().alias = on; save();
+  document.body.classList.toggle('aliasing', on);
+  try{ inp.placeholder = on ? alT('ph') : 'Escribe tu mensaje…'; }catch(e){}
+  toast(alT(on ? 'activado' : 'apagado'));
+  if (on) setTimeout(() => { try{ inp.focus(); }catch(e){} }, 50);
+  else alDrop(false);
+}
+document.body.classList.toggle('aliasing', alOn());
+/* desde la portada (modo Agente) y desde los enlaces viejos de /alias: ?quoryn=1 (o ?alias=1) deja puesto el modo, y ?q= lo manda.
+   Si la llave del equipo (synthz:alias) todavía no se conoce en este aparato, se espera a que el servidor la confirme. */
+var alQuiere = params.get('quoryn') === '1' || params.get('alias') === '1';
+function alQuiero(){ if (!alQuiere || !(SZ.aliasOk && SZ.aliasOk()) || trialOn) return; alQuiere = false; try{ setAlias(true); }catch(e){} }
+addEventListener('synthz-alias', () => { document.body.classList.toggle('aliasing', alOn()); setTimeout(alQuiero, 0); });
+setTimeout(alQuiero, 0);
+
+/* ---------- lo que escribes en modo Agente ---------- */
+async function aliasSend(text){
+  const A = alEngine(); if (!A){ toast(alT('red')); return; }
+  const here = chatArr();
+  if (AL){
+    if (AL.chat !== here){ toast(alT('otroChat')); return; }
+    if (AL.phase === 'planning'){ toast(alT('esperaPlan')); return; }
+    inp.value = ''; autoGrow(); updateHint();
+    return alSteer(AL, text);
+  }
+  /* «hi», «ok», «sí»: no hace falta ni preguntarle al servidor */
+  if (text.length < 3){ alPass = { to:'auto', kind:'saludo', t:Date.now() }; try{ await send(); }finally{ alPass = null; } return; }
+  return alMission(text, {});
+}
+async function alMission(text, o){
+  const A = alEngine(); if (!A) return;
+  if (AL) alDrop(false);
+  const chat = chatArr(); let msg = null;
+  if (o.push !== false){
+    msg = { role:'user', content:text }; chat.push(msg);
+    inp.value = ''; autoGrow(); updateHint(); touchThread(); save(); renderMsgs();
+  }
+  const S = AL = { goal:text, chat, msg, phase:'planning', plan:null, status:{}, results:{}, errors:{}, skipped:{}, retried:{}, notes:[], log:[], run:0, t0:0, adjusting:null, cur:null, retrying:null, say:'' };
+  S.el = document.createElement('div'); S.el.className = 'agrun alrun'; S.el.dataset.quoryn = 'card'; S.el.setAttribute('aria-live', 'polite');
+  const fr = () => { try{ return (window.SZFrases && window.SZFrases.frase('agente', alEn() ? 'en' : 'es')) || ''; }catch(e){ return ''; } };
+  S.say = fr(); S.tm = setInterval(() => { if (AL !== S || S.phase !== 'planning'){ clearInterval(S.tm); return; } S.say = fr(); const sm = $('.ag-t small', S.el); if (sm) sm.textContent = S.say + '…'; }, 2800);
+  if (chat === chatArr()) lane.appendChild(S.el);
+  alPaint(S); jump();
+  let r; try{ r = await A.plan(text, { force:!!o.force }); }catch(e){ r = { ok:false, error:alT('red') }; }
+  clearInterval(S.tm);
+  if (AL !== S) return;
+  /* ¿era de verdad fácil? el servidor lo dijo: lo responde Relay o Apex, sin plan */
+  if (r && r.ok && r.simple){ return alHandoff(S, r, text); }
+  if (!r || !r.ok){
+    alClear(S);
+    if (msg && chat[chat.length - 1] === msg){ chat.pop(); save(); }
+    if (chat === chatArr()){ renderMsgs(); if (msg){ inp.value = text; autoGrow(); updateHint(); } showErr({ message:(r && r.error) || alT('red'), limit:!!(r && r.limit) }); }
+    return;
+  }
+  try{ localStorage.setItem('synthz:sent', String(sentN() + 1)); }catch(e){}
+  const steps = (r.plan.steps || []).filter(s => s && s.id != null).map(alClean);
+  S.plan = Object.assign({}, r.plan, { steps }); S.phase = 'plan'; alPaint(S); if (chat === chatArr()) follow();
+}
+const alClean = s => ({ id:s.id, title:String(s.title || ''), tool:s.tool, input:s.input });
+/* lo fácil: se saca la pregunta del chat y se manda por el camino de siempre, pero con Relay (Automática) o Apex (SuperiorSynth) */
+function alHandoff(S, r, text){
+  const chat = S.chat;
+  if (S.msg && chat[chat.length - 1] === S.msg){ chat.pop(); save(); }
+  alClear(S);
+  if (chat !== chatArr()) return;
+  inp.value = text; autoGrow(); updateHint();
+  alPass = { to:r.to === 'superior' ? 'superior' : 'auto', kind:r.kind, t:Date.now() };
+  renderMsgs();
+  Promise.resolve(send()).finally(() => { alPass = null; });
+}
+/* el chip que queda debajo de lo que escribiste: qué IA lo respondió y cómo hacerlo con Quoryn igual */
+function alHandEl(m){
+  const el = document.createElement('div'); el.className = 'agsum alhand'; el._q = m.content;
+  el.innerHTML = '<div class="al-hand"><span></span><button type="button" class="lnk" data-alforce="1"></button></div>';
+  $('span', el).textContent = alT(m.alHand === 'superior' ? 'handApex' : 'handRelay'); $('button', el).textContent = alT('hacerlo');
+  return el;
+}
+function alWho(b, m){
+  const n = $('.who b', b), md = $('.who .md', b); if (n) n.textContent = 'Quoryn'; if (md) md.textContent = alT('mision', { n:(m.alias && m.alias.n) || '' });
+  b.classList.add('alias-msg');
+}
+const alPlace = () => { try{ if (alOn()) inp.placeholder = alT('ph'); }catch(e){} };
+function alClear(S){ clearInterval(S.tm); S.run++; if (S.el) S.el.remove(); if (AL === S) AL = null; alPlace(); }
+function alDrop(restore){
+  const S = AL; if (!S) return; const chat = S.chat;
+  alClear(S);
+  if (restore && S.msg && chat[chat.length - 1] === S.msg){ chat.pop(); save(); if (chat === chatArr()){ renderMsgs(); inp.value = S.goal; autoGrow(); updateHint(); } }
+}
+
+/* ---------- la tarjeta ---------- */
+const alFin = (S, id) => S.status[id] === 'done' || !!S.skipped[id];
+function alPaint(S){
+  const el = S.el; if (!el) return;
+  const steps = S.plan ? S.plan.steps : [], done = steps.filter(s => alFin(S, s.id)).length, total = steps.length, p = S.phase;
+  const cur = steps.find(s => !alFin(S, s.id)), n = cur ? steps.indexOf(cur) + 1 : total;
+  let say = '';
+  if (p === 'planning') say = (S.say || '') + '…';
+  else if (p === 'plan') say = alT('planListo');
+  else if (p === 'run') say = S.retrying != null ? alT('reint') : S.adjusting ? alT('ajustando') : cur ? alT(done ? 'sigo' : 'empiezo') + ' ' + cur.title : '';
+  else if (p === 'error') say = alT('fallo');
+  else if (p === 'limit') say = alT('limite');
+  let h = '<div class="ag-h"><span class="al-ico" aria-hidden="true"><svg viewBox="0 0 40 20"><path d="M20 10C17 5 13 3 9 3a7 7 0 000 14c4 0 8-2 11-7s7-7 11-7a7 7 0 010 14c-4 0-8-2-11-7z" fill="none" stroke="currentColor" stroke-width="2.4"/></svg></span>'
+    + '<span class="ag-t"><b>Quoryn</b><small>' + esc(say) + '</small></span>'
+    + (p === 'run' || p === 'error' || p === 'limit' ? '<button type="button" class="btn sm ghost al-x" data-al="stop">' + esc(alT('stop')) + '</button>' : '') + '</div>';
+  if (steps.length){
+    h += '<ol class="ag-s al-s">' + steps.map((s, i) => {
+      const r = S.results[s.id], cls = S.skipped[s.id] ? 'done skip' : S.status[s.id] === 'done' ? 'done' : S.status[s.id] === 'running' ? 'on' : S.status[s.id] === 'error' ? 'bad' : '';
+      const who = r && r.route ? (r.route.why === 'synth' && r.route.voices && r.route.voices.length ? r.route.voices.join(', ') : r.route.name) : '';
+      return '<li class="' + cls + '"><i aria-hidden="true"></i><span class="al-t">' + esc(s.title) + '</span><em>' + esc(alT('tool')[s.tool] || s.tool) + '</em>' + (who ? '<small>' + esc(alT('con', { n:who })) + '</small>' : '') + '</li>';
+    }).join('') + '</ol>';
+    if (p !== 'plan') h += '<span class="al-bar" aria-hidden="true"><i style="width:' + Math.round(done / Math.max(1, total) * 100) + '%"></i></span>';
+  }
+  if (S.log.length) h += '<div class="al-log">' + S.log.slice(-4).map(x => '<p class="' + x.k + '">' + (x.k === 'me' ? '<b>' + esc(alT('tu')) + ':</b> ' : '') + esc(x.text) + '</p>').join('') + '</div>';
+  if (p === 'error') h += '<div class="al-b"><button type="button" class="btn sm" data-al="retry">' + esc(alT('retry')) + '</button><button type="button" class="btn sm ghost" data-al="skip">' + esc(alT('skip')) + '</button></div>' + (S.errors[S.cur] ? '<small class="al-h">' + esc(S.errors[S.cur]) + '</small>' : '');
+  if (p === 'plan') h += '<div class="al-b"><button type="button" class="btn sm" data-al="go">' + esc(alT('go')) + '</button><button type="button" class="btn sm ghost" data-al="no">' + esc(alT('no')) + '</button></div><small class="al-h">' + esc(alT('ayudaPlan')) + '</small>';
+  if (p === 'run') h += '<small class="al-h">' + esc(alT('ayudaRun')) + '</small>';
+  el.innerHTML = h; el.dataset.phase = p;
+  try{ inp.placeholder = p === 'run' || p === 'plan' ? (p === 'run' ? alT('ayudaRun') : alT('ayudaPlan')) : alT('ph'); }catch(e){}
+  if (S.chat === chatArr()) follow();
+}
+lane.addEventListener('click', ev => {
+  const f = ev.target.closest('[data-alforce]');
+  if (f){ const c = f.closest('.alhand'); if (c && c._q && !AL) alMission(c._q, { force:true, push:false }); return; }
+  const b = ev.target.closest('[data-al]'); if (!b || !AL || !AL.el || !AL.el.contains(b)) return;
+  const S = AL, a = b.dataset.al;
+  if (a === 'go'){ if (S.phase === 'plan' && S.plan && S.plan.steps.length){ S.t0 = Date.now(); alDrive(S, false); } }
+  else if (a === 'no'){ alDrop(true); toast(alT('descartada')); }
+  else if (a === 'stop'){ alStop(S); }
+  else if (a === 'retry'){ const st = S.plan.steps.find(s => S.status[s.id] === 'error'); if (st){ delete S.status[st.id]; delete S.errors[st.id]; } alDrive(S, true); }
+  else if (a === 'skip'){ const st = S.plan.steps.find(s => S.status[s.id] === 'error'); if (st){ S.skipped[st.id] = true; delete S.status[st.id]; delete S.errors[st.id]; } alDrive(S, false); }
+});
+
+/* ---------- trabajar solo ---------- */
+const alPlanOut = (S, hintId) => ({ id:S.plan.id, goal:S.plan.goal, notes:S.notes.slice(-6),
+  steps:S.plan.steps.map(s => { const c = alClean(s); if (hintId != null && String(s.id) === String(hintId)) c.input = ((c.input || '') + ' ' + alT('pista')).trim(); return c; }) });
+async function alExec(S, st, hint){
+  const A = window.ALIAS, i = S.plan.steps.findIndex(s => String(s.id) === String(st.id));
+  const prev = S.plan.steps.slice(0, i).map(s => S.results[s.id]).filter(Boolean);
+  let r; try{ r = await A.runStep(alPlanOut(S, hint ? st.id : null), st.id, prev, {}); }catch(e){ return { err:alT('red') }; }
+  if (!r || !r.ok) return { err:(r && r.error) || alT('red'), limit:!!(r && r.limit) };
+  const sp = r.step || {}; if (sp.status === 'error') return { err:sp.error || alT('red') };
+  return { step:sp };
+}
+async function alDrive(S, hint){
+  if (S.running) return;
+  const my = ++S.run, dead = () => AL !== S || S.run !== my;
+  S.running = true; S.phase = 'run'; S.retrying = null; alPaint(S);
+  while (!dead()){
+    if (S.adjusting){ await S.adjusting; if (dead()) break; }
+    const st = S.plan.steps.find(s => !alFin(S, s.id));
+    if (!st){ S.running = false; return alFinish(S, false); }
+    S.cur = st.id; S.status[st.id] = 'running'; S.retrying = null; delete S.errors[st.id]; alPaint(S);
+    const out = await alExec(S, st, hint); hint = false;
+    if (dead()) break;
+    if (out.limit){ S.status[st.id] = 'pending'; S.phase = 'limit'; S.running = false; alPaint(S); return; }
+    if (out.err){
+      /* primera vez: lo vuelve a intentar solo (el enrutador cambia de IA); a la segunda, pregunta */
+      if (!S.retried[st.id]){ S.retried[st.id] = true; S.retrying = st.id; hint = true; alPaint(S); continue; }
+      S.retrying = null; S.status[st.id] = 'error'; S.errors[st.id] = out.err; S.phase = 'error'; S.running = false; alPaint(S); return;
+    }
+    S.status[st.id] = 'done'; S.results[st.id] = out.step; S.retrying = null; alPaint(S);
+  }
+  if (AL === S && S.run === my) S.running = false;
+}
+async function alSteer(S, raw){
+  const text = String(raw || '').trim().slice(0, 300); if (!text || !S.plan || S.adjusting) return;
+  const A = window.ALIAS;
+  S.log.push({ k:'me', text }); S.notes = S.notes.concat(text).slice(-6);
+  const fixed = S.plan.steps.filter(s => alFin(S, s.id) || S.status[s.id] === 'running' || S.status[s.id] === 'error').map(s => s.id);
+  let r = null;
+  S.adjusting = (async () => { try{ r = A && typeof A.adjust === 'function' ? await A.adjust(alPlanOut(S), fixed, text) : null; }catch(e){ r = null; } })();
+  alPaint(S);
+  await S.adjusting;
+  if (AL !== S) return;
+  if (r && r.ok && r.changed && Array.isArray(r.steps) && r.steps.length){
+    const keep = S.plan.steps.filter(s => fixed.includes(s.id)), room = Math.max(0, AL_TOTAL - keep.length);
+    S.plan.steps.filter(s => !fixed.includes(s.id)).forEach(s => { delete S.status[s.id]; delete S.results[s.id]; delete S.errors[s.id]; delete S.skipped[s.id]; });
+    S.plan.steps = keep.concat(r.steps.slice(0, room).map(alClean));
+  }
+  S.adjusting = null;
+  S.log.push({ k:'al', text:r && r.ok ? (r.reply || alT('notaOk')) : r && r.limit ? alT('limite') : alT('notaErr') });
+  alPaint(S);
+}
+function alStop(S){
+  S.run++; S.running = false; S.adjusting = null;
+  S.plan && S.plan.steps.forEach(s => { if (S.status[s.id] === 'running') delete S.status[s.id]; });
+  if (!S.plan || !Object.keys(S.results).length){ alDrop(true); toast(alT('detenida')); return; }
+  alFinish(S, true);
+}
+
+/* ---------- el resultado: un mensaje más del chat ---------- */
+const alSafeUrl = u => { try{ const x = new URL(String(u), location.href); return x.protocol === 'https:' || x.protocol === 'http:' ? x.href : ''; }catch(e){ return ''; } };
+function alFinish(S, stopped){
+  const done = S.plan.steps.filter(s => S.results[s.id]);
+  const last = done.slice().reverse().find(s => String(S.results[s.id].output || '').trim());
+  const seen = new Set(), sources = [], files = [];
+  done.forEach(s => {
+    const r = S.results[s.id];
+    (Array.isArray(r.sources) ? r.sources : []).forEach(x => { const u = x && alSafeUrl(x.url); if (!u || seen.has(u)) return; seen.add(u); sources.push({ url:u, title:String(x.title || u).replace(/[\[\]]/g, '') }); });
+    if (r.file && r.file.name && r.file.text != null) files.push(r.file);
+  });
+  let content = last ? String(S.results[last.id].output).trim() : alT('vacio');
+  if (stopped) content = alT('parcial') + '\n\n' + content;
+  files.reverse().forEach(f => {
+    const ext = (String(f.name).split('.').pop() || 'txt').toLowerCase(), isDeck = /"diapositivas"/.test(String(f.text)) || /\.pptx$/i.test(f.name);
+    const body = String(f.text).replace(/```/g, "'''");
+    content += '\n\n' + (isDeck ? '' : '**' + String(f.name).replace(/[*`]/g, '') + '**\n\n') + '```' + (isDeck ? 'json' : (/^[a-z0-9]{1,6}$/.test(ext) ? ext : 'txt')) + '\n' + body + '\n```';
+  });
+  if (sources.length) content += '\n\n**' + alT('fuentes') + '**\n' + sources.map(x => '- [' + x.title + '](' + x.url + ')').join('\n');
+  const chat = S.chat, msg = { role:'assistant', content, model:selId(), alias:{ n:S.plan.steps.length, secs:S.t0 ? Math.round((Date.now() - S.t0) / 1000) : 0 } };
+  clearInterval(S.tm); S.run++; S.running = false; S.phase = 'done';
+  if (S.el) S.el.remove(); if (AL === S) AL = null; alPlace();
+  chat.push(msg); save();
+  if (chat === chatArr()){ renderMsgs(); jump(); }
+}
 /* ---------- 2026-11-09 · aviso grande al elegir una IA de alto consumo (pedido de Sammuel) ----------
    «Que cada vez que elijan modelos de alto consumo, como Claude Fable, les salte un anuncio gigante que les avise».
    Sale cada vez que eliges a mano una de esas IAs (antes era un aviso chiquito, una vez por visita). No bloquea:
@@ -6238,7 +6942,7 @@ function ptAvisoConsumo(mm, alVolver){
      Auto      Sinapse elige la IA para cada pedido (y dice cuál usó).            → applyMode('auto')
      Una IA    tú eliges de la lista con buscador; abajo se ve cuál tienes.          → applyMode('chat') + abre la lista
      Comparar  2 a 3 IAs lado a lado; te quedas con la mejor.                         → cmpOpen()
-     Agente    Quoryn: arma un plan, lo apruebas una vez y trabaja solo.          → abre alias.html con lo escrito
+     Agente    Quoryn (antes A.L.I.A.S.): arma un plan, lo apruebas una vez y trabaja solo → setAlias(true), dentro del chat (16w)
                v4.5: solo para el equipo (SZ.aliasOk()); los demás ven 3 modos. Se repinta si cambia (evento synthz-alias).
    Y el esfuerzo, al lado: Auto · Veloz · Profundo · Creativo (los niveles de v4.3, Profundo pide cuenta) · Apex (el agente de Sonyx elige la IA y mejora tu pedido).
    Reemplaza a los botones «Modo», «Esfuerzo» y «Comparar con otra IA», que se esconden con CSS (siguen en el DOM para el motor). */
@@ -6252,7 +6956,7 @@ function ptAvisoConsumo(mm, alVolver){
         ayuda:{ auto:'Sinapse elige la IA para cada pedido y te dice cuál usó.', una:'Tú eliges la IA de la lista.', cmp:'Varias IAs responden lado a lado. Te quedas con la mejor.', agente:'Quoryn arma un plan, lo apruebas una vez y trabaja solo.' } };
   const MODOS_TODOS = ['auto', 'una', 'cmp', 'agente'];
   const modos = () => MODOS_TODOS.filter(k => k !== 'agente' || (SZ.aliasOk && SZ.aliasOk()));
-  const actual = () => mode === 'cmp' ? 'cmp' : selId() === 'sz:auto' && !agentOn() ? 'auto' : 'una';
+  const actual = () => mode === 'cmp' ? 'cmp' : alOn() ? 'agente' : selId() === 'sz:auto' && !agentOn() ? 'auto' : 'una';
   const NIV = ['auto', 'fast', 'deep', 'creative'], SS = NIV.length;
   const esfActual = () => agentOn() ? SS : Math.max(0, NIV.indexOf(effKey()));
   const bloqueado = i => NIV[i] === 'deep' && !SZ.ACC.ready;
@@ -6276,10 +6980,9 @@ function ptAvisoConsumo(mm, alVolver){
       const k = b.dataset.pm;
       if (k === 'agente'){
         if (!(SZ.aliasOk && SZ.aliasOk())){ pinta(); return; }
-        const q = (inp.value || '').trim();
-        location.href = 'alias.html?' + new URLSearchParams(q ? { from:'flow', meta:q } : { from:'flow' }).toString();
-        return;
+        salirDeComparar(); setAlias(true); pinta(); return;      /* v4.6 · Quoryn vive aquí mismo: ya no abre otra página */
       }
+      if (alOn()) setAlias(false);
       if (k === 'cmp'){ cmpOpen(b); setTimeout(pinta, 50); return; }
       salirDeComparar();
       if (k === 'auto'){ if (agentOn()) setAgent(false); applyMode('auto'); }
@@ -6329,7 +7032,7 @@ function ptAvisoConsumo(mm, alVolver){
     const b = ev.target.closest('[data-pe]'); if (!b) return; const i = +b.dataset.pe; abreMenu(false); eBtn.focus();
     if (i === SS){ if (!agentOn()) setAgent(true); }
     else if (bloqueado(i)){ toast(TT().pen); SZ.guestGate({ mode:'signup' }); }
-    else { if (agentOn()) setAgent(false); st().sx.effort = NIV[i]; save(); }
+    else { if (alOn()) setAlias(false); if (agentOn()) setAgent(false); st().sx.effort = NIV[i]; save(); }
     pinta();
   });
   menu.addEventListener('keydown', ev => { if (ev.key !== 'ArrowDown' && ev.key !== 'ArrowUp') return; ev.preventDefault(); const L = $$('button', menu), i = L.indexOf(document.activeElement); L[(i + (ev.key === 'ArrowDown' ? 1 : L.length - 1)) % L.length].focus(); });
@@ -6339,6 +7042,7 @@ function ptAvisoConsumo(mm, alVolver){
   iaBtn.addEventListener('click', () => {
     if (side.classList.contains('open')){ closeSide(); return; }
     if (mode === 'cmp'){ openSide('add', iaBtn); return; }
+    if (alOn()) setAlias(false);
     if (agentOn()) setAgent(false); if (selId() === 'sz:auto') applyMode('chat'); openSide('set', iaBtn); pinta();
   });
   $('#tbNew', grp).addEventListener('click', () => newChat());
@@ -6445,7 +7149,7 @@ try{
   else { setTimeout(warnBlocked, enter ? 2700 : 900); SZ.synReady.then(() => { if (!q && SZ.wasAway()) setTimeout(() => SZ.welcomeBack({ learn:runGuide, flow:() => { if (matchMedia('(pointer: fine)').matches) inp.focus(); } }), enter ? 2200 : 700); }); setTimeout(() => { if (!G && !document.querySelector('.szm, #szWelcome')) SZ.whatsNew(false, list => runTopics(list)); }, enter ? 4200 : 3000); }
 }catch(e){}
 try{ if (new URLSearchParams(location.search).get('conn') === '1') setTimeout(() => openConnect(), 1200); }catch(e){}
-try{ const clean = new URLSearchParams(location.search); ['q', 'from', 'draft', 'prueba', 'guia', 'conn'].forEach(k => clean.delete(k)); window.history.replaceState(null, '', location.pathname + (clean.toString() ? '?' + clean.toString() : '')); }catch(e){}
+try{ const clean = new URLSearchParams(location.search); ['q', 'from', 'draft', 'prueba', 'guia', 'conn', 'quoryn', 'alias'].forEach(k => clean.delete(k)); window.history.replaceState(null, '', location.pathname + (clean.toString() ? '?' + clean.toString() : '')); }catch(e){}
 if (q){ inp.value = q.slice(0, 4000); autoGrow(); updateHint(); if (fromHome) setTimeout(() => { send(); }, enter ? 1500 : 300); else inp.focus(); }
 else if (enter) setTimeout(() => { if (matchMedia('(pointer: fine)').matches) inp.focus(); }, 1300);
 })();

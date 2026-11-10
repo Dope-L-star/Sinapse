@@ -1,5 +1,5 @@
 /* ---------- api/_triage.js · ¿esto necesita a A.L.I.A.S. o basta una respuesta rápida? ----------
-   Sammuel (9 nov): «que ALIAS no te responda un simple hola ni nada muy fácil: que te mande a la Automática o a SuperiorSynth
+   Sammuel (9 nov): «que ALIAS no te responda un simple hola ni nada muy fácil: que te mande a la Automática o a Apex (SuperiorSynth)
    si es algo tan fácil. PERO CON SENTIDO: "Hola, ¿cómo estás? ¿me puedes ayudar a redactar un texto…?" no puede mandarte a
    otra IA, ahí te está pidiendo algo».
    Sin llamar a ninguna IA y sin gastar cupo: lee el pedido (español e inglés) y decide.
@@ -46,7 +46,7 @@ export function triage(goal){
   /* una pregunta de verdad termina en «?» (en el texto original) o empieza con palabra de pregunta */
   const esPregunta = /[?¿]/.test(raw) || PREGUNTA.test(s);
 
-  /* 1) solo cortesías: «hola», «gracias», «¿cómo estás?»… → la Automática */
+  /* 1) solo cortesías: «hola», «gracias», «¿cómo estás?»… → Relay (la IA Automática) */
   if (!toks.length) return { agent:false, kind:/graci|thank|thx/.test(n) ? 'gracias' : 'saludo', to:'auto' };
 
   /* 2) marcas de trabajo de verdad: varias líneas, enlaces, código, o un tema que casi siempre pide varios pasos */

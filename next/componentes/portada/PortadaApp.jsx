@@ -120,8 +120,9 @@ export default function PortadaApp() {
     const texto = q.trim();
     if (!texto) { setEmpuja(false); requestAnimationFrame(() => setEmpuja(true)); area.current?.focus(); return; }
     try { sessionStorage.setItem('synthz:q', JSON.stringify({ q: texto, t: Date.now() })); } catch (er) {}
-    if (modo === 'agente' && conAlias) { location.href = '/alias.html?' + new URLSearchParams({ from: 'home', meta: texto }); return; }
     const p = new URLSearchParams({ from: 'home', q: texto, esfuerzo: ['auto', 'veloz', 'profundo', 'creativo', 'superiorsynth'][esfuerzo] });
+    /* v4.6 · Quoryn (antes A.L.I.A.S.) ya no tiene página: el modo Agente abre SynthFlow con el modo puesto y lo escrito */
+    if (modo === 'agente' && conAlias) p.set('quoryn', '1');
     if (modo === 'comparar') p.set('mode', 'cmp');
     if (modo === 'una') p.set('elegir', '1');
     location.href = '/chat.html?' + p;
@@ -230,7 +231,7 @@ export default function PortadaApp() {
           <div className="wrap">
             <div className="pt-cab"><h2>{conAlias ? t.instT : t.instT2}</h2><p>{t.instS}</p></div>
             <div className={'pt-inst' + (conAlias ? '' : ' dos')}>
-              {t.inst.filter((x) => conAlias || x.href !== '/alias.html').map((x) => (
+              {t.inst.filter((x) => conAlias || !/quoryn=1/.test(x.href)).map((x) => (
                 <a key={x.n} className="card pt-ins" href={x.href} style={{ '--k': x.k }}>
                   <span className="pt-raya" /><h3>{x.n}</h3><p>{x.p}</p>
                   <span className="pt-ir"><span className="mono">{x.m}</span><span className="btn btn-s">{x.b}</span></span>
@@ -334,7 +335,7 @@ export default function PortadaApp() {
       <nav className="tabbar" aria-label="Menú">
         <a className="on" href="/" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z" /></svg>{t.tabs.inicio}</a>
         <a href="/chat.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z" /></svg>Sonyx</a>
-        {conAlias && <a href="/alias.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M7 8c-3 0-4 2-4 4s1 4 4 4c4 0 6-8 10-8 3 0 4 2 4 4s-1 4-4 4c-4 0-6-8-10-8z" /></svg>Quoryn</a>}
+        {conAlias && <a href="/chat.html?quoryn=1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M7 8c-3 0-4 2-4 4s1 4 4 4c4 0 6-8 10-8 3 0 4 2 4 4s-1 4-4 4c-4 0-6-8-10-8z" /></svg>Quoryn</a>}
         <a href="/chat.html#entrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c1-4 4-6 8-6s7 2 8 6" /></svg>{t.tabs.yo}</a>
       </nav>
     </div>

@@ -5,6 +5,7 @@ const agentOn = () => !!st().agent && !trialOn;
 $('#agPill').addEventListener('click', () => { if (isMobile()) closeChatsSheet && closeChatsSheet(); setAgent(false); });
 function paintAgent(){ try{ paintMode(); }catch(e){} $$('.agentb, #railAgent').forEach(b => { b.setAttribute('aria-pressed', String(agentOn())); b.classList.toggle('on', agentOn()); }); document.body.classList.toggle('agenting', agentOn()); inp.placeholder = agentOn() ? 'Apex: cuéntame qué necesitas…' : (isLocked() ? inp.placeholder : 'Escribe tu mensaje...'); }
 function setAgent(on){
+  if (on && st().alias) setAlias(false);   /* v4.6 · Quoryn y SuperiorSynth no van a la vez */
   if (!!st().agent === !!on){ paintAgent(); return; }
   if (mode !== 'solo'){ stopNow(); cmpRun++; cmpLast = null; mode = 'solo'; }
   st().agent = !!on; save(); paintAgent(); gen++;
@@ -136,9 +137,18 @@ async function send(){
   if (!budgetOk()) return;
   /* v3.8 · si todavía se está comprobando la IA que elegiste, espera esa respuesta (1-2 s); si no responde, tu texto se queda en la caja */
   { const h = HEALTH.get(selId()), m1 = selId(); if (h && h.p){ sendBtn.disabled = true; try{ await h.p; }finally{ sendBtn.disabled = false; } if (selId() !== m1) return; } }
+  /* v4.6 · Quoryn (antes A.L.I.A.S.): con el modo Agente puesto, el pedido pasa primero por su enrutado: si es de verdad fácil lo responde Relay (Automática)
+     o Apex (SuperiorSynth); si es un pedido de verdad, Quoryn arma el plan aquí mismo (16w-alias-en-chat.js) */
+  let alJump = null;
+  if (alOn() && mode === 'solo' && text){
+    if (files.length) toast(alT('adjuntos'));
+    else if (!alPass || Date.now() - alPass.t > 6000) return aliasSend(text);
+    else { alJump = alPass; alPass = null; }
+  }
   /* modo agente: no eliges IA; el agente entiende tu pedido, lo mejora, elige la IA experta y te muestra los pasos */
-  if (agentOn() && mode === 'solo' && text && !files.length){
+  if ((agentOn() || (alJump && alJump.to === 'superior')) && mode === 'solo' && text && !files.length){
     if (agentBusy) return;
+    const alKeep = alJump ? { m:st().model.openrouter, p:st().pinned } : null;   /* Apex responde una vez: tu IA elegida no cambia */
     /* el agente ve que pides una imagen: la crea el creador de imágenes */
     if (IMG_RX.test(text) && SZ.ACC.ready){ toast('Apex vio que quieres una imagen: la crea el creador de imágenes.'); return createImage(text); }
     agentBusy = true; inp.readOnly = true; sendBtn.disabled = true;
@@ -175,6 +185,7 @@ async function send(){
     if (wd.go){ card.el.remove(); await webPrep(msg, plan.pedido || text, wd.why); if (g0 !== gen) return; }
     if (wantsDeck(text)) msg.deck = true;
     msg.agent = { pick, name:info(pick).name, tl:light ? 'cosas sencillas (gasta menos)' : tl, ask:same ? '' : plan.pedido };
+    if (alJump) msg.alHand = 'superior';
     st().model.openrouter = pick; save(); paintSel(); renderTop(false); paintAccent();
     /* v3.4 · si la IA falla, SuperiorSynth NO reintenta con la misma (siempre volvería a fallar): pasa el trabajo a otra IA
        experta en ese tema y sigue sola, sin que tengas que hacer nada. Hasta 3 IAs distintas; solo si todas fallan ves el error. */
@@ -182,10 +193,10 @@ async function send(){
     const ok = rx.ok, cur = rx.cur, lastErr = rx.err;
     if (!ok){ chat.pop(); save(); renderMsgs(); showErr(lastErr); inp.value = text; autoGrow(); updateHint(); if (g0 === gen && !(lastErr && lastErr.aborted)) setTimeout(() => rescue(cur, lastErr), 900); }
     const pickF = cur;
-    if (ok && g0 === gen) agentChoice(pickF);
+    if (ok && g0 === gen && !alJump) agentChoice(pickF);
     if (ok && g0 === gen && MEM_RX.test(text)) memOffer(text);
     }catch(e){ console.error('[superiorsynth]', e); $$('.agrun', lane).forEach(x => x.remove()); renderMsgs(); toast('Apex tuvo un problema. Tu mensaje quedó guardado: vuelve a intentarlo.'); }
-    finally{ unlock(); }
+    finally{ unlock(); if (alKeep){ st().model.openrouter = alKeep.m; st().pinned = alKeep.p; save(); try{ paintSel(); renderTop(false); paintAccent(); }catch(e){} } }
     return;
   }
   const th0 = ckey(), m0 = selId(), at0 = Date.now(), needed = needsConn();
@@ -195,6 +206,7 @@ async function send(){
   /* v3.4 · si la IA elegida no ve fotos, ya no te bloquea: esta respuesta la da una que sí ve (antes salía «Este modelo no ve imágenes» y no podías enviar) */
   /* v3.7 · y solo por esta respuesta: tu IA elegida se queda elegida (antes te la cambiaba para siempre al adjuntar una foto) */
   let oneModel = null;
+  if (alJump && alJump.to === 'auto' && szOn() && selId() !== 'sz:auto') oneModel = 'sz:auto';   /* v4.6 · Relay = la IA Automática, solo por esta respuesta */
   /* v3.8 · foto (o PDF escaneado, o video) con una IA que no ve: una IA que sí ve la describe en texto y responde TU IA elegida.
      Solo si eso falla, responde esa vez la que ve (como antes). Y si ninguna ve, se manda la ficha de la foto: nunca te bloquea. */
   if (ready.some(f => f.kind === 'img') && !info(selId()).vision){
@@ -207,6 +219,7 @@ async function send(){
   const chat = chatArr(), sent = files.splice(0).filter(f => f.state === 'ok');
   inp.value = ''; autoGrow(); updateHint(); renderTray();
   const msg = { role:'user', content:text };
+  if (alJump) msg.alHand = 'auto';
   if (sent.length) msg.files = sent.map(f => ({ name:f.name, kind:f.kind, text:f.text, thumb:f.thumb }));
   const imgs = sent.filter(f => f.kind === 'img').flatMap(f => f.dataUrls || [f.dataUrl]);
   if (imgs.length) Object.defineProperty(msg, '_imgs', { value:imgs, enumerable:false, writable:true });

@@ -15,7 +15,6 @@ const reactNative = [
   /* 2026-11-09 · rediseño «Partitura»: la portada ya es React de verdad */
   { html: 'index.html', route: 'app/(site)/page.jsx', app: 'componentes/portada/PortadaApp.jsx', old: 'index.js', needs: 'core.js', masks: [] },
   { html: 'pulsem.html', route: 'app/(panel)/pulsem/page.jsx', app: 'componentes/pulsem/PulsemApp.jsx', old: 'pulsem.js', needs: 'core.js' },
-  { html: 'alias.html', route: 'app/(site)/alias/page.jsx', app: 'componentes/alias/AliasApp.jsx', old: 'alias.js', needs: 'alias-tools.js', masks: ['vPlan', 'vResult'] },
 ];
 function extractJsonModule(file, name) {
   const text = fs.readFileSync(file, 'utf8');
@@ -71,7 +70,6 @@ for (const r of routes) {
   const masks = {
     'chat.html': ['msgs', 'thList', 'sideFoot', 'accBtn'],
     'index.html': ['launch', 'usagePanel', 'accBtn'],
-    'alias.html': ['vPlan', 'vResult'],
   }[r.html] || [];
   for (const id of masks) {
     const masked = all.find(n => n.attrs?.id === id);

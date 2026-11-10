@@ -139,6 +139,16 @@
       "permanent": false
     },
     {
+      "source": "/alias.html",
+      "destination": "/chat",
+      "permanent": false
+    },
+    {
+      "source": "/alias",
+      "destination": "/chat",
+      "permanent": false
+    },
+    {
       "source": "/:ruta((?!api/|v/|portal\\.css$|portal\\.js$|sw\\.js$|icon\\.svg$|og-synthz\\.jpg$|robots\\.txt$).+)",
       "destination": "https://symphoria.pages.dev/:ruta",
       "permanent": false
@@ -158,10 +168,5 @@
       "maxDuration": 60
     }
   },
-  "rewrites": [
-    {
-      "source": "/alias",
-      "destination": "/alias.html"
-    }
-  ]
+  "rewrites": []
 }

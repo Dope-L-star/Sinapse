@@ -1,0 +1,35 @@
+/* v4.6 · Quoryn (antes A.L.I.A.S.) dentro de SynthFlow: la tarjeta del plan, el chip de «lo respondió Relay/Apex» y el mensaje del resultado.
+   Parte de .agrun (la tarjeta de SuperiorSynth) pero en violeta, que es el color de Quoryn. */
+.alrun{--alc:139,123,255;max-width:640px;border-color:rgba(var(--alc),.38);background:linear-gradient(160deg,rgba(var(--alc),.10),rgba(255,255,255,.02))}
+.alrun .ag-h{align-items:center}
+.alrun .ag-t{flex:1;min-width:0}
+.alrun .ag-t b{color:#cfc7ff}
+.alrun .ag-t small{overflow-wrap:anywhere}
+.alrun .al-ico{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#cfc7ff;background:rgba(var(--alc),.16);border:1px solid rgba(var(--alc),.4)}
+.alrun .al-ico svg{width:26px;height:13px;display:block}
+.alrun .al-x{flex:none;margin-left:auto}
+.alrun .al-s li{align-items:baseline;flex-wrap:wrap}
+.alrun .al-s li i{align-self:center}
+.alrun .al-s .al-t{flex:1 1 180px;min-width:0;overflow-wrap:anywhere}
+.alrun .al-s em{font-style:normal;font:600 10.5px var(--mono,monospace);letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;border:1px solid rgba(var(--alc),.35);color:#cfc7ff}
+.alrun .al-s small{flex-basis:100%;margin-left:26px;color:var(--mute,#8d909c);font-size:12px}
+.alrun .ag-s li.on i{border-color:#8b7bff;border-top-color:transparent}
+.alrun .ag-s li.done i{background:#8b7bff;border-color:#8b7bff}
+.alrun .ag-s li.done i::after{border-color:#120e2a}
+.alrun .ag-s li.skip{text-decoration:line-through;opacity:.6}
+.alrun .ag-s li.bad{opacity:1;color:#ffb4b4}
+.alrun .ag-s li.bad i{border-color:#ff7a7a;background:rgba(255,122,122,.25)}
+.al-bar{display:block;height:4px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.al-bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#3de0ff,#7b3ff2,#ff3d9a);transition:width .5s cubic-bezier(.22,1,.36,1)}
+.al-log{display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.al-log p{margin:0;padding:7px 11px;border-radius:12px;background:rgba(255,255,255,.04);overflow-wrap:anywhere}
+.al-log p.me{align-self:flex-end;background:rgba(var(--alc),.16)}
+.al-b{display:flex;flex-wrap:wrap;gap:8px}
+.al-h{color:var(--mute,#8d909c);font-size:12.5px;overflow-wrap:anywhere}
+.agsum.alhand{align-items:flex-start;margin:2px 0 8px 0;max-width:none}
+.al-hand{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:7px 14px;border-radius:14px;border:1px solid rgba(139,123,255,.32);background:rgba(139,123,255,.07);font-size:13px;color:var(--soft,#c3c5ce)}
+.al-hand .lnk{background:none;border:0;padding:0;color:#cfc7ff;font:inherit;font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.m.bot.alias-msg .who .md{color:#cfc7ff}
+body.aliasing #ptModos [data-pm="agente"][aria-checked="true"]{box-shadow:0 0 0 1px rgba(139,123,255,.55),0 6px 20px rgba(139,123,255,.25)}
+html.noanim .alrun{animation:none}
+@media (max-width:560px){.alrun{padding:12px 13px}.alrun .al-ico{width:38px;height:38px}}

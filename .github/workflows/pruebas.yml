@@ -42,8 +42,10 @@ jobs:
         run: node t/humo/ia-fotos.mjs
       - name: Personalidad de SynthonIA
         run: node t/synthonia/personalidad.mjs
-      - name: Contrato de A.L.I.A.S.
-        run: node t/alias/contrato.mjs
+      - name: Contrato de Quoryn (antes A.L.I.A.S.) y cribado de lo fácil
+        run: node t/alias/contrato.mjs && node t/alias/triage.mjs
+      - name: Quoryn dentro del chat (hola → Relay, pedido real → plan, trabaja solo) y solo para el equipo
+        run: node t/alias/chat.mjs && node t/alias/solo-equipo.mjs
       - name: Cerebro de las IAs (tipo de trabajo, pensar en lo difícil, respuesta vacía → otra IA)
         run: node t/cerebro/cerebro.mjs
       - name: Internet con regla fija (misma pregunta, misma decisión; SynthFlow y A.L.I.A.S. iguales)

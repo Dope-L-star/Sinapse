@@ -6,8 +6,8 @@
 let mapa = {};
 try { mapa = JSON.parse(process.env.SZ_VERSIONES || '{}') || {}; } catch { mapa = {}; }
 
-export const VERSIONABLES = ['core.js', 'chat.js', 'index.js', 'movimiento.js', 'alias.js', 'alias-tools.js', 'pulsem.js', 'ayuda.js',
-  'core.css', 'chat.css', 'index.css', 'movimiento.css', 'alias.css', 'pulsem.css'];
+export const VERSIONABLES = ['core.js', 'chat.js', 'index.js', 'movimiento.js', 'pulsem.js', 'ayuda.js',
+  'core.css', 'chat.css', 'index.css', 'movimiento.css', 'pulsem.css'];
 
 export function versionado(nombre) {
   const limpio = String(nombre).replace(/^\/+/, '');
