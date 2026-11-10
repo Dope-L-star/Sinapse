@@ -1,0 +1,43 @@
+/* ---------- 2026-11-10 · barra de arriba como la del demo Luma (src/chat/16y-partitura-selector.js) ----------
+   Migas «Espacio personal / Chat nuevo» · Esfuerzo ▾ · IA ▾ (donde el demo dice «Modo oscuro») · «+» chat nuevo. */
+.tb-crumbs{display:flex;align-items:baseline;gap:6px;min-width:0;flex:0 1 auto;max-width:34%;font:500 13.5px/1.2 var(--sans);color:var(--mute)}
+.tb-crumbs i{font-style:normal;opacity:.6;flex:none}
+.tb-root{white-space:nowrap;flex:none}
+.tb-now{font-weight:600;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tb-sel{display:flex;align-items:center;gap:8px;flex:none;min-width:0}
+.tb-b{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;min-width:40px;padding:0 14px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.045);color:var(--text);font:600 13.5px/1 var(--sans);white-space:nowrap;cursor:pointer;transition:background .2s,border-color .2s}
+.tb-b:hover{background:rgba(255,255,255,.09)}
+.tb-b:focus-visible{outline:2px solid #3DE0FF;outline-offset:2px}
+.tb-b svg{width:16px;height:16px;flex:none}
+.tb-b .cv{width:13px;height:13px;opacity:.7;transition:transform .25s}
+.tb-b[aria-expanded="true"] .cv{transform:rotate(180deg)}
+.tb-eff.on{border-color:rgba(255,122,69,.5);background:rgba(255,122,69,.1)}
+.tb-ia{max-width:230px;padding-left:10px}
+.tb-ia .tb-l{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.tb-av{display:inline-flex;flex:none}.tb-av[hidden]{display:none}
+.tb-new{padding:0;width:40px}
+.tb-menu{position:fixed;z-index:140;padding:6px;border-radius:18px;border:1px solid rgba(255,255,255,.14);background:rgba(20,19,30,.96);backdrop-filter:blur(22px) saturate(150%);-webkit-backdrop-filter:blur(22px) saturate(150%);box-shadow:0 22px 60px rgba(0,0,0,.5)}
+.tb-menu[hidden]{display:none}
+.tb-menu button{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;padding:10px 12px;border:0;border-radius:12px;background:none;color:var(--text);cursor:pointer;min-height:44px}
+.tb-menu button:hover,.tb-menu button:focus-visible{background:rgba(255,255,255,.08);outline:none}
+.tb-menu button[aria-checked="true"]{background:rgba(255,255,255,.06)}
+.tb-menu b{display:block;font:600 14px/1.2 var(--sans)}
+.tb-menu small{display:block;margin-top:3px;font:400 12px/1.35 var(--sans);color:var(--mute);white-space:normal}
+.tb-menu em{font-style:normal;font-size:12px;color:var(--mute);flex:none}.tb-menu em.ck{color:#3DE0FF}
+.tb-menu button.lk{opacity:.7}
+/* lo que ya está arriba no se repite: la IA elegida (píldora vieja) y, en la caja, los botones de esfuerzo */
+body.pt-flow #pickRow #curChip{display:none}
+body.locked #tbSel,body.locked #tbCrumbs{display:none !important}
+html.simple .tb-b{background:transparent !important;border-color:var(--sline) !important}
+html.simple .tb-menu{background:var(--sside,#1d1c1a);backdrop-filter:none}
+@media (max-width:1100px) and (min-width:761px){.tb-crumbs{max-width:24%}.tb-ia{max-width:170px}}
+@media (max-width:760px){
+  .top{grid-template-areas:"logo sp guide more" "crumb crumb crumb crumb" "tbs tbs tbs tbs" "pick pick pick pick"}
+  .tb-crumbs{grid-area:crumb;max-width:none;font-size:12.5px}
+  .tb-sel{grid-area:tbs;width:100%}
+  .tb-sel .tb-ia{flex:1 1 0;justify-content:space-between;max-width:none}
+  .tb-sel .tb-eff{flex:none}
+  .tb-b{height:42px}
+}
+@media (prefers-reduced-motion:reduce){.tb-b,.tb-b .cv{transition:none}}
+html.noanim .tb-b,html.noanim .tb-b .cv{transition:none}
