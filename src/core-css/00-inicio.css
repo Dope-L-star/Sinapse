@@ -3,7 +3,6 @@
 /* el logo: al señalarlo todo crece parejo y suave (círculos y letras igual); el péndulo se frena desde core.js */
 .logo .mark,a .mark,button .mark{transition:transform .8s cubic-bezier(.22,1,.36,1),opacity .8s var(--ease)}
 .logo:hover .mark,a:hover .mark,button:hover .mark,.cur-hov .mark{transform:scale(1.08)}
-.logo:hover .mark circle,a:hover .mark circle,.logo:hover .mark text,a:hover .mark text{transform:none !important}
 /* sobre una barra de desplazamiento se ve el cursor normal */
 .cursor-bar #cd,.cursor-bar #cr,.cursor-bar #cl{opacity:0 !important;transition:opacity .12s !important}
 

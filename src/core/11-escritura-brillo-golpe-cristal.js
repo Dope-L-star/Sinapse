@@ -81,16 +81,3 @@ function thud(x, y){
   g.animate([{ transform:'scale(.2)', opacity:0 }, { transform:'scale(2.6)', opacity:1, offset:.2 }, { transform:'scale(5)', opacity:0 }], { duration:1100, easing:'cubic-bezier(.16,.8,.3,1)', fill:'both' }).onfinish = () => g.remove();
   r.animate([{ transform:'scale(.3)', opacity:0 }, { transform:'scale(1.2)', opacity:1, offset:.15 }, { transform:'scale(4.2)', opacity:0 }], { duration:1300, easing:'cubic-bezier(.16,.8,.3,1)', fill:'both' }).onfinish = () => r.remove();
 }
-/* portal: la Z carga, se hace zoom hacia adentro y se entra al chat */
-const zoomK = () => Math.hypot(innerWidth, innerHeight) / 2 / ((132 / 48) * 4.7) * 1.12;
-const portalPaint = (p, k) => p.setAttribute('transform', 'translate(24 24) scale(' + k.toFixed(3) + ') translate(-24 -24)');
-function zBox(host){
-  const w = document.createElement('div'); w.className = 'pz';
-  w.innerHTML = '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="' + Z_PATH + '" fill="url(#zgrad)"/></svg>';
-  host.appendChild(w); return { w, p: w.querySelector('path') };
-}
-function portalFill(host){ const z = zBox(host); portalPaint(z.p, zoomK()); return z.p; }
-function portalReveal(p){
-  if (!p) return; const K = zoomK(), t0 = performance.now(), D = 950;
-  (function f(now){ const e = Math.min(1, (now - t0) / D); portalPaint(p, K * Math.pow(2.4, e)); if (e < 1) requestAnimationFrame(f); })(t0);
-}

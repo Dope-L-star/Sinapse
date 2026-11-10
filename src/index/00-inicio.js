@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const { root, $, $$, clamp, fmt, reduce, today, sleepRaw, esc, est, Z_PATH, ico, zWord, API, MANUAL, ALL, byId, save, total, addUsage, toast, hydrateIcons, countTo, charify, typeIn, showAll, S, coins } = SZ;
+const { root, $, $$, clamp, fmt, reduce, today, sleepRaw, esc, est, ico, zWord, API, MANUAL, ALL, byId, save, total, addUsage, toast, hydrateIcons, countTo, charify, typeIn, showAll, S, coins } = SZ;
 const st = () => SZ.state;
 root.classList.add('js', 'lock');
 

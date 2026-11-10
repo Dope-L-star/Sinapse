@@ -49,12 +49,8 @@ const sleepRaw = ms => new Promise(r => setTimeout(r, ms));
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
 const est = s => Math.ceil(s.length / 4);
 
-/* rayo-Z: recta, con el inicio (arriba izquierda) y el final (abajo derecha) en forma de rayo */
-const Z_PATH = 'M13 4H44V12L18 36H49L39 40H45L35 44H4V36L30 12H-1L9 8H3Z';
-
 /* ---------- logos de cada IA ---------- */
 const ICONS = {
-  synthz: () => `<defs><linearGradient id="szig" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fb0ff"/><stop offset=".55" stop-color="#c9566c"/><stop offset="1" stop-color="#e6b65f"/></linearGradient></defs><rect x="1" y="1" width="22" height="22" rx="7" fill="#15121c"/><path d="${Z_PATH}" transform="translate(4.4 4.4) scale(.32)" fill="url(#szig)"/>`,
   puter: () => `<rect x="1" y="1" width="22" height="22" rx="6" fill="#1e2a4a"/><text x="12" y="16.5" text-anchor="middle" font-family="Figtree,system-ui,sans-serif" font-size="13" font-weight="700" fill="#fff">P</text><image href="${PUTER_LOGO}" x="0" y="0" width="24" height="24" preserveAspectRatio="xMidYMid meet" onerror="this.remove()"/>`,
   groq: (c, d) => `<path d="M19.2 7.2A8.6 8.6 0 1 0 20.6 12.9H12.6" fill="none" stroke="${c}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12.6" cy="12.9" r="1.7" fill="${d}"/>`,
   gemini: (c, d) => `<path d="M12 1.5C12.4 7.8 16.2 11.6 22.5 12C16.2 12.4 12.4 16.2 12 22.5C11.6 16.2 7.8 12.4 1.5 12C7.8 11.6 11.6 7.8 12 1.5Z" fill="${c}"/><path d="M19.5 2.5C19.6 4 20.5 4.9 22 5C20.5 5.1 19.6 6 19.5 7.5C19.4 6 18.5 5.1 17 5C18.5 4.9 19.4 4 19.5 2.5Z" fill="${d}"/>`,
@@ -77,7 +73,7 @@ const SPARKS = '<i class="sp s1" aria-hidden="true"></i><i class="sp s2" aria-hi
 const GS = '<span class="gS">S</span>ynth';
 /* v2.8: el degradado de la onda del orbe vive en los íconos (core 25g), siempre visible: antes cada orbe traía uno con el mismo id
    y, si el primero de la página estaba escondido, las ondas de todos los logos de Sonyx desaparecían */
-/* v2.5 · logos del boceto: SymphorIA = Z de vidrio + «Synth» blanco con la Z en degradado; SynthFlow = la esfera de vidrio con la onda */
+/* logos de la marca: SymphorIA = la S de vidrio con su órbita + «Symphor» blanco con «IA» en degradado; SynthFlow = la F de corriente */
 const LOGO_Z = '<img class="lgz" src="media/v30/symphoria.svg" alt="" draggable="false">';
 /* v4.4 · SynthFlow: la F de corriente en vidrio líquido (misma familia que la S de SymphorIA) */
 const flowOrb = cls => '<span class="sforb' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><img src="media/v44/synthflow.svg" alt="" draggable="false"></span>';

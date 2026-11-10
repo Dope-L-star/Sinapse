@@ -82,7 +82,7 @@ for (const W of [390, 1280]){
                  wide:document.documentElement.scrollWidth - document.documentElement.clientWidth };
       });
       check(tag + ' tiene título y descripción', m.title && m.desc, JSON.stringify(m));
-      if (pub) check(tag + ' se ve bien al compartir (canonical, og:image, twitter:card)', /^https:\/\//.test(m.canon) && /^https:\/\/.+og-synthz\.jpg$/.test(m.img) && m.card === 'summary_large_image', JSON.stringify(m));
+      if (pub) check(tag + ' se ve bien al compartir (canonical, og:image, twitter:card)', /^https:\/\//.test(m.canon) && /^https:\/\/.+og-symphoria\.jpg$/.test(m.img) && m.card === 'summary_large_image', JSON.stringify(m));
       else check(tag + ' no se indexa', /noindex/.test(m.robots), m.robots);
       if (file !== 'pulsem.html') check(tag + ' nada se sale por los lados', m.wide <= 1, 'sobran ' + m.wide + ' px');
       if (file === 'chat.html'){

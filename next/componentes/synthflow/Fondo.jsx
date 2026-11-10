@@ -7,16 +7,6 @@ import { FraseTelon } from '../entrada/FraseCarga';
 export default function Fondo(){
   return (
     <>
-      <svg width="0" height="0" style={{position:"absolute"}} aria-hidden="true">
-        <defs>
-          <linearGradient id="zgrad" x1="0" y1="0" x2="1" y2="1">
-            <animateTransform attributeName="gradientTransform" type="rotate" from="0 .5 .5" to="360 .5 .5" dur="16s" repeatCount="indefinite" />
-            <stop offset="0" stopColor="#8fb0ff" />
-            <stop offset=".55" stopColor="#c9566c" />
-            <stop offset="1" stopColor="#e6b65f" />
-          </linearGradient>
-        </defs>
-      </svg>
       <div className="aurora"><i /><i /><i /></div>
       <div className="grain" />
       <div className="glow" id="glow" />

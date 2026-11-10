@@ -1,4 +1,4 @@
-/* ===== v2.5 · logos del boceto ===== */
+/* ===== logos de la marca ===== */
 /* v3.0 · SymphorIA: la S de vidrio con su órbita + «Symphor» blanco con «IA» en degradado (letra Chakra Petch, de la rama simple) */
 .lgz{display:block;flex:none;width:auto;height:38px;aspect-ratio:1;object-fit:contain;filter:drop-shadow(0 0 10px rgba(176,92,255,.45));transition:transform .5s cubic-bezier(.22,1,.36,1),filter .4s}
 a:hover>.lgz,.logo:hover .lgz{transform:rotate(-8deg) scale(1.08);filter:drop-shadow(0 0 14px rgba(255,61,154,.6))}
@@ -6,16 +6,10 @@ a:hover>.lgz,.logo:hover .lgz{transform:rotate(-8deg) scale(1.08);filter:drop-sh
 .zw{font-family:var(--brand,"Chakra Petch",system-ui,sans-serif);font-weight:700;letter-spacing:.01em;color:#f6f3ff}
 .zw .zt{background:linear-gradient(160deg,#9b5cff 0%,#ff3d9a 55%,#ff7a45 100%);-webkit-background-clip:text;background-clip:text;color:transparent;padding-right:.04em}
 .word .zw{font-size:.86em}
-/* SynthFlow: la esfera de vidrio con la onda (la misma del centro de «Todas las IAs») */
-.sforb{position:relative;display:inline-grid;place-items:center;flex:none;width:1.35em;height:1.35em;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.5),rgba(123,63,242,.25) 45%,rgba(10,6,30,.4));
-  border:1px solid rgba(255,255,255,.35);box-shadow:0 0 .5em rgba(123,63,242,.7),inset 0 0 .3em rgba(61,224,255,.35)}
-.sforb svg{width:80%;height:80%;overflow:visible}
-.sforb path{stroke-dasharray:80;animation:sforbw 3.2s ease-in-out infinite}
-@keyframes sforbw{50%{stroke-dashoffset:-14}}
+/* SynthFlow: su logo (la F de corriente, ver 44-v44-iconos-ias.css) va en esta cajita */
+.sforb{position:relative;display:inline-grid;place-items:center;flex:none;width:1.35em;height:1.35em;overflow:visible}
 .flw-w{display:inline-flex;align-items:center;gap:.32em}
 .flw-w .fw-t{font-family:var(--sans,"Figtree",system-ui,sans-serif);font-weight:700;letter-spacing:-.025em;color:#f6f3ff;font-size:.86em}
-html.noanim .sforb path{animation:none}
 html[data-scheme="light"] .zw,html[data-scheme="light"] .flw-w .fw-t{color:#1b1035}
 .logo .lgz.mark,.sf-b .lgz.mark{width:auto}
 .gico .zmini{width:86%;height:86%;object-fit:contain;filter:drop-shadow(0 0 4px rgba(176,92,255,.5))}

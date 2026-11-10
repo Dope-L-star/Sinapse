@@ -139,7 +139,6 @@ export default function PulsemApp() {
   return (
     <>
     <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true"><defs>
-      <linearGradient id="zgrad" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#8fb0ff" /><stop offset=".55" stopColor="#c9566c" /><stop offset="1" stopColor="#ff8f7a" /></linearGradient>
       <linearGradient id="ekgG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="#8fb0ff" /><stop offset=".6" stopColor="#c9566c" /><stop offset="1" stopColor="#e6b65f" /></linearGradient>
     </defs></svg>
     <div className="aurora"><i /><i /><i /></div>
