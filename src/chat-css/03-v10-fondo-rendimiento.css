@@ -1,10 +1,5 @@
 /* ===== v10 ===== */
-/* péndulo de Newton rápido y seguido: tin, sale, tin, sale */
-.mark .sw1{animation:swL 1.15s infinite}
-.mark .sw3{animation:swR 1.15s infinite}
-@keyframes swL{0%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.2,.7,.4,1)}25%{transform:rotate(13deg);animation-timing-function:cubic-bezier(.6,0,.8,.3)}50%,100%{transform:rotate(0deg)}}
-@keyframes swR{0%,50%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.2,.7,.4,1)}75%{transform:rotate(-13deg);animation-timing-function:cubic-bezier(.6,0,.8,.3)}100%{transform:rotate(0deg)}}
-/* al pasar el mouse: deja el péndulo, crece un poquito, se separan y crecen la S y la z */
+/* al pasar el mouse el logo crece un poquito */
 .logo .mark,.back .mark{transition:transform .5s var(--ease),opacity .8s var(--ease)}
 /* fondo repartido por toda la pantalla y que gira suave al bajar */
 .aurora .orbit{position:absolute;inset:0;transform:rotate(calc(var(--sp,0) * 140deg)) scale(calc(1 + var(--sp,0) * .18));transition:transform .5s cubic-bezier(.2,.7,.3,1);will-change:transform}
@@ -13,12 +8,12 @@
 .aurora .orbit i:nth-child(3){left:-12vmax;bottom:-24vmax;right:auto;top:auto}
 .aurora .orbit i:nth-child(4){right:-8vmax;bottom:-18vmax;left:auto;top:auto}
 .aurora::after{background:radial-gradient(ellipse at calc(50% + var(--sp,0) * 30%) calc(30% + var(--sp,0) * 45%),rgba(11,12,16,.2),rgba(11,12,16,.5) 78%)}
-/* modo rendimiento: sin vidrios, sin fondo animado, sin péndulo */
+/* modo rendimiento: sin vidrios y sin fondo animado */
 html.noglass *,html.noglass *::before,html.noglass *::after{backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
 html.noglass .tcard,html.noglass .ctxm{background:#15161d !important}
 html.nobg .aurora i{animation:none !important;opacity:.45}
 html.nobg .aurora .orbit{transform:none !important}
-html.noanim .mark .sw,html.noanim .tcard,html.noanim .ctxm{animation:none !important}
+html.noanim .tcard,html.noanim .ctxm{animation:none !important}
 html.nocur .cursor-on,html.nocur .cursor-on *,html.nocur.cursor-on,html.nocur.cursor-on *{cursor:auto !important}
 html.nocur #cd,html.nocur #cr,html.nocur #cl{display:none !important}
 /* ventanas flotantes comunes */

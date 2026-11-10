@@ -1,11 +1,5 @@
 /* ---------- icono de la pestaña: la S de vidrio (SymphorIA) o la F de corriente (SynthFlow) ---------- */
-function cradleAngles(t, A){
-  const u = (t % 1150) / 1150, out = x => 1 - Math.pow(1 - x, 2.4), inn = x => Math.pow(x, 2.4);
-  const L = u < .25 ? out(u / .25) : u < .5 ? 1 - inn((u - .25) / .25) : 0;
-  const R = u >= .5 && u < .75 ? out((u - .5) / .25) : u >= .75 ? 1 - inn((u - .75) / .25) : 0;
-  return [L * A, -R * A];
-}
-(function favCradle(){
+(function favIcon(){
   const link = document.getElementById('favi'); if (!link) return;
   const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); if (!g) return;
   /* v4.4 · SynthFlow: la F de corriente (media/v44/synthflow.svg); la chispa de la punta late un poquito */

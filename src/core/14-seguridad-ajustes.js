@@ -221,20 +221,6 @@ addEventListener('keydown', e => {
   if (c){ e.preventDefault(); c.click(); }
 });
 
-/* el péndulo del logo se frena con suavidad cuando lo señalas y vuelve a moverse al salir */
-function calmMark(host, on){
-  host.querySelectorAll('.mark .sw').forEach(g => {
-    if (on){
-      if (g._calm) return; g._calm = true;
-      const tf = getComputedStyle(g).transform;
-      g.style.animation = 'none';
-      if (tf && tf !== 'none' && !reduce) g.animate([{ transform:tf }, { transform:'rotate(0deg)' }], { duration:700, easing:'cubic-bezier(.22,1,.36,1)' });
-    } else if (g._calm){ g._calm = false; g.style.animation = ''; }
-  });
-}
-document.addEventListener('pointerover', e => { const h = e.target.closest && e.target.closest('.logo, a, button'); if (h && h.querySelector('.mark .sw')) calmMark(h, true); });
-document.addEventListener('pointerout', e => { const h = e.target.closest && e.target.closest('.logo, a, button'); if (h && !(e.relatedTarget && h.contains(e.relatedTarget)) && h.querySelector('.mark .sw')) calmMark(h, false); });
-
 /* clic con el botón del medio: el cursor cambia al de desplazamiento automático */
 if (document.getElementById('cm')){
   let midT = 0;

@@ -97,7 +97,6 @@ button{background:none;border:0;cursor:pointer}
 
 /* logotipo SymphorIA */
 .word{display:inline-flex;align-items:center;font-family:var(--serif);font-size:28px;line-height:1;letter-spacing:-.02em}
-.zb{width:.8em;height:.8em;margin-left:.08em;overflow:visible;flex:none}
 
 
 #progress{position:fixed;top:0;left:0;right:0;height:2px;z-index:60;transform-origin:left;transform:scaleX(0);background:linear-gradient(90deg,#8fb0ff,#c9566c,#e6b65f)}
@@ -108,8 +107,6 @@ nav.scrolled{background:rgba(11,12,16,.6);backdrop-filter:blur(18px) saturate(1.
 .logo{display:flex;align-items:center;gap:12px}
 .logo .mark{height:30px;width:44px;overflow:visible;transition:opacity .8s var(--ease),transform .9s var(--ease)}
 html:not(.landed) .logo .mark{opacity:0;transform:scale(.6)}
-.mk-s{font-family:var(--serif);font-size:20px;fill:#0b0c10}
-.mk-z{font-family:var(--serif);font-size:9.5px;fill:#0b0c10}
 html:not(.landed) .logo .word{opacity:0}
 .navlinks{display:flex;gap:6px}
 .navlinks a{padding:8px 14px;border-radius:999px;color:var(--mute);font-size:14px;transition:color .3s,background .3s}

@@ -139,7 +139,7 @@
       "permanent": false
     },
     {
-      "source": "/:ruta((?!api/|v/|portal\\.css$|portal\\.js$|sw\\.js$|icon\\.svg$|og-synthz\\.jpg$|robots\\.txt$).+)",
+      "source": "/:ruta((?!api/|v/|portal\\.css$|portal\\.js$|sw\\.js$|icon\\.svg$|og-symphoria\\.jpg$|robots\\.txt$).+)",
       "destination": "https://symphoria.pages.dev/:ruta",
       "permanent": false
     }

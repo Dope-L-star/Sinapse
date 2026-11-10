@@ -63,8 +63,8 @@ if (matchMedia('(pointer: fine)').matches && CFG.cursor){
     lw = el.offsetWidth || b.width; lh = el.offsetHeight || b.height;
     c.style.width = lw + 'px'; c.style.height = lh + 'px'; c.style.boxSizing = 'border-box';
     cl.appendChild(c);
-    /* el logo de la copia imita al original cuadro a cuadro: mismo tamaño y el péndulo frenando igual */
-    const om = el.querySelectorAll('.mark, .mark .sw'), cmk = c.querySelectorAll && c.querySelectorAll('.mark, .mark .sw');
+    /* el logo de la copia imita al original cuadro a cuadro: mismo tamaño */
+    const om = el.querySelectorAll('.mark'), cmk = c.querySelectorAll && c.querySelectorAll('.mark');
     lblSync = om.length && cmk && cmk.length === om.length ? [...om].map((o, i) => { cmk[i].style.animation = 'none'; cmk[i].style.transition = 'none'; return [o, cmk[i]]; }) : null;
   }
   function setHover(el){

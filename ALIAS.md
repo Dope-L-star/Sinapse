@@ -11,7 +11,7 @@ Sistema de lógica e inteligencia aumentada. En la interfaz el nombre se queda *
 
 ## English summary
 
-A.L.I.A.S. takes one goal, splits it into 3–7 visible steps, and runs them one at a time with tools: search (with sources), file (text, code, or PPTX), memory, image, and think. You can pause, approve, or redo a step. Copy lives in `alias-textos.json` (repo root) (`es` and `en`, same keys). The client calls `t('clave')`. Templates live in `alias-plantillas.json`. Free plan, plain language: it is not a full browser and it does not publish apps. Another language later is a new object with the same keys, not a code change.
+A.L.I.A.S. takes one goal, splits it into 3–7 visible steps, and runs them one at a time with tools: search (with sources), file (text, code, or PPTX), memory, image, and think. You can pause, approve, or redo a step. Copy lives in `alias-textos.json` (repo root) (`es` and `en`, same keys). The client calls `t('clave')`. Free plan, plain language: it is not a full browser and it does not publish apps. Another language later is a new object with the same keys, not a code change.
 
 ## Visión
 
@@ -93,9 +93,8 @@ window.ALIAS = {
 ## Cómo se prueba (sin claves)
 
 1. `alias-textos.json` parsea y `es` y `en` tienen las mismas claves, ninguna vacía.
-2. `alias-plantillas.json`: 4 plantillas (`investigacion`, `presentacion`, `estudio`, `codigo`). Cada una tiene `id`, `icono`, `nombre`, `objetivoEjemplo`, `textoAyuda` y de 3 a 6 `pasosSugeridos`. Cada paso tiene `tool` válida, `title` e `input` en `es` y `en`.
-3. Cuando exista la API, con la misma sesión del chat: `plan` devuelve 3–7 pasos en el `lang` pedido; `step` devuelve `output` en ese idioma; si buscó, `sources` trae título y URL. Sin sesión: `ok:false` y `srv.sesion`. Pasado el cupo: `limit:true` y `error` igual a `límite`.
-4. En la página, los rótulos salen de `t('clave')`. Existen `window.ALIAS.plan` y `runStep`.
+2. Cuando exista la API, con la misma sesión del chat: `plan` devuelve 3–7 pasos en el `lang` pedido; `step` devuelve `output` en ese idioma; si buscó, `sources` trae título y URL. Sin sesión: `ok:false` y `srv.sesion`. Pasado el cupo: `limit:true` y `error` igual a `límite`.
+3. En la página, los rótulos salen de `t('clave')`. Existen `window.ALIAS.plan` y `runStep`.
 
 ## Qué no hace aún
 
@@ -111,6 +110,5 @@ window.ALIAS = {
 | Archivo | Qué es |
 | --- | --- |
 | `alias-textos.json` | Interfaz, estados, errores y frases del servidor |
-| `alias-plantillas.json` | Cuatro misiones de ejemplo |
 | `api/alias.js` | Servidor: `plan` y `step` |
 | `ALIAS.md` | Visión, principios, contrato y fases |

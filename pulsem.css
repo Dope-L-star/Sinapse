@@ -67,7 +67,6 @@ button{background:none;border:0;cursor:pointer}
 .rip{position:fixed;left:0;top:0;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;border:1.5px solid rgba(255,255,255,.55);pointer-events:none;z-index:9990}
 
 .word{display:inline-flex;align-items:center;font-family:var(--serif);font-size:28px;line-height:1;letter-spacing:-.02em}
-.zb{width:.8em;height:.8em;margin-left:.08em;overflow:visible;flex:none}
 
 .fc.err{border-color:rgba(255,140,120,.5)}
 .fcs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
@@ -91,7 +90,7 @@ body.drag::after{content:"Suelta tus archivos aquí";position:fixed;inset:14px;z
 .tdots i.on{width:34px;background:var(--tc,#c9566c)}
 .tbtn{display:flex;align-items:center;justify-content:space-between;gap:10px}
 /* v4: el body opaco tapaba el fondo */
-html.noanim .mark .sw,html.noanim .tcard,html.noanim .ctxm{animation:none !important}
+html.noanim .tcard,html.noanim .ctxm{animation:none !important}
 html.nocur .cursor-on,html.nocur .cursor-on *,html.nocur.cursor-on,html.nocur.cursor-on *{cursor:auto !important}
 html.nocur #cd,html.nocur #cr,html.nocur #cl{display:none !important}
 /* ventanas flotantes comunes */
