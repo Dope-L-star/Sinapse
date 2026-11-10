@@ -58,6 +58,11 @@ async function nueva(quien, W = 1280, lang = 'es'){
   }catch(e){} }, [quien ? tok[quien] : '', lang]);
   const p = await ctx.newPage();
   p.on('pageerror', e => errs.push(quien + ' ' + W + ': ' + e.message));
+  if (process.env.DIAG){   /* DIAG=1: cuenta lo que pasa por dentro (para entender un fallo que solo sale en el CI) */
+    p.on('console', m => { if (/error|warn/.test(m.type())) console.log('  [consola ' + m.type() + ']', m.text().slice(0, 240)); });
+    p.on('requestfailed', r => console.log('  [pedido fallido]', r.method(), r.url().slice(0, 120), r.failure() && r.failure().errorText));
+    p.on('response', async r => { if (r.url().includes('/api/')){ let t = ''; try{ t = (await r.text()).slice(0, 200); }catch(e){} console.log('  [api]', r.status(), r.request().method(), r.url().replace(s.base, '').slice(0, 60), t.replace(/\s+/g, ' ')); } });
+  }
   return p;
 }
 const ocultar = p => p.addStyleTag({ content:'#blk,#letreroAlfa{display:none !important}' }).catch(() => {});
@@ -90,6 +95,7 @@ const until = async (fn, ms = LARGO) => { const t0 = Date.now(); while (Date.now
   await until(async () => /Respuesta normal de prueba de Relay/.test(await p.locator('#lane').innerText()) && await p.locator('#lane .alhand').count() === 1);
   await p.waitForTimeout(500);
   check('«hola» NO arma plan ni gasta una IA de planear', calls.plan === 0 && await p.locator('.alrun').count() === 0, 'plan=' + calls.plan);
+  if (process.env.DIAG) console.log('  [chat tras «hola»]', JSON.stringify((await p.locator('#lane').innerText()).slice(0, 400)), '| conn abierta:', await p.locator('#conn.on').count());
   check('«hola» lo responde la IA de siempre (Relay)', await botN(p) > antes && /Respuesta normal de prueba de Relay/.test(await p.locator('#lane').innerText()), String(await botN(p)));
   check('queda el chip «Quoryn vio que era algo fácil…» con «Hacerlo con Quoryn»', await p.locator('#lane .alhand').count() === 1 && /Relay/.test(await p.locator('#lane .alhand').innerText()) && await p.locator('#lane .alhand [data-alforce]').count() === 1);
   check('el modo Agente sigue puesto para el siguiente mensaje', await p.evaluate(() => document.body.classList.contains('aliasing')));
