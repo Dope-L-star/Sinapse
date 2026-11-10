@@ -1,6 +1,6 @@
 // Hecho por: integrador (Claude). Punto de conexión que HERRAMIENTAS pidió: window.ALIAS_DEPS.
-// A.L.I.A.S. es una página aparte (no carga core.js ni chat.js), así que aquí se usan los mismos
-// endpoints y la misma sesión que el chat, sin copiar su código:
+// v4.6 · A.L.I.A.S. ya no tiene página: su motor (16p–16u) viaja dentro de chat.js y lo usa 16w-alias-en-chat.js. Usa los mismos
+// endpoints y la misma sesión que el chat:
 //   token   -> localStorage "synthz:sess" (lo mismo que manda el chat en Authorization: Bearer)
 //   buscar  -> POST /api/ai {action:"search"}   (Tavily/Exa/Wikipedia, con su propio límite)
 //   imagen  -> POST /api/ai {action:"image"}    (requiere cuenta; límite diario propio)
