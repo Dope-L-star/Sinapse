@@ -941,9 +941,9 @@ function pixFace(on){
 }
 async function botThink(work, ms0){
   const ms = ms0 || (3000 + Math.random() * 2000);
-  BOT.think = true; BOT.zen = false; pixFace(true); botRender();
+  BOT.think = true; BOT.zen = false; pixFace(true); botRender(); BOT.stageKeep = ''; botStatus('think'); botStage('pensando', 'piensa', true);
   try{ const [r] = await Promise.all([work ? work() : Promise.resolve(null), sleepRaw(ms)]); return r; }
-  finally{ BOT.think = false; if (BOT.pxm){ BOT.pxm.stop(); BOT.pxm = null; } pixFace(false); }
+  finally{ BOT.think = false; if (BOT.pxm){ BOT.pxm.stop(); BOT.pxm = null; } pixFace(false); botStatus('idle'); }
 }
 function botBubble(text, ms){
   if (!BOT.el || BOT.open || document.querySelector('#vintro,#intro,#portal')) return; let bb = $('#szBotB'); if (!bb){ bb = document.createElement('div'); bb.id = 'szBotB'; document.body.appendChild(bb); }
@@ -960,7 +960,7 @@ function botPlace(){
   const P = BOT.panel, b = BOT.el && botAt(); if (!P || !b) return;
   if (matchMedia('(max-width:760px)').matches){ P.classList.add('sheet'); P.style.left = P.style.top = P.style.right = P.style.bottom = ''; return; }
   P.classList.remove('sheet');
-  const r = b.getBoundingClientRect(), W = Math.min(390, innerWidth - 24), H = Math.min(560, innerHeight - 40);
+  const r = b.getBoundingClientRect(), W = Math.min(410, innerWidth - 24), H = Math.min(690, innerHeight - 40);
   P.style.width = W + 'px'; P.style.height = H + 'px';
   if (b !== BOT.el){
     /* junto a SynthonIA (del lado con más espacio), sin taparla */
@@ -978,20 +978,22 @@ function botOpen(){
   if (!BOT.el) botMount(); if (!BOT.el) return;
   BOT.opener = document.activeElement && document.activeElement !== document.body ? document.activeElement : BOT.el;   /* a11y: a quién devolver el foco al cerrar */
   if (BOT.panel){ BOT.open = true; botA11y(true); BOT.panel.classList.add('on'); botPlace(); botFocusIn(); return; }
-  const P = document.createElement('div'); P.id = 'szBotP'; P.setAttribute('role', 'dialog'); P.setAttribute('aria-label', 'SynthonIA');
-  P.innerHTML = '<div class="bh"><span class="bhf">' + face('feliz', 56) + '</span><div><b>SynthonIA</b><small><i></i>Siempre disponible</small></div><button type="button" class="bx" data-b="min" aria-label="Cerrar">×</button></div>'
-    + '<div class="btabs" hidden><button type="button" data-bt="chat" aria-selected="true">Pregúntame</button><button type="button" data-bt="inbox" aria-selected="false">Bandeja <em class="bn"></em></button></div>'
-    + '<div class="bl" aria-live="polite"></div><div class="bq"></div>'
-    + '<form class="bin"><input type="text" maxlength="600" placeholder="Pregúntame lo que quieras…" aria-label="Pregúntale a SynthonIA" autocomplete="off"><button type="submit" class="bs" aria-label="Enviar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form>'
-    + '<div class="bfoot"><button type="button" class="lnk" data-b="team">Hablar con el equipo</button><button type="button" class="lnk" data-b="fb">Cuéntanos qué mejorar</button><button type="button" class="lnk" data-b="hide">Esconder</button></div>';
+  const P = document.createElement('div'); P.id = 'szBotP'; P.className = 'comp'; P.setAttribute('role', 'dialog'); P.setAttribute('aria-label', SONA.bot);
+  P.innerHTML = sonaPanelHtml();   /* v4.6 · el escenario de ella + la charla + la píldora de escribir (22d-sona-ventana.js) */
   document.body.appendChild(P); BOT.panel = P; BOT.open = true; botA11y(true); botPlace();
   requestAnimationFrame(() => P.classList.add('on'));
   botFocusIn();
   P.addEventListener('click', botClick);
   $('.bin', P).addEventListener('submit', e => { e.preventDefault(); const i = $('.bin input', P), v = i.value.trim(); if (!v) return; i.value = ''; BOT.mode === 'team' || BOT.mode === 'reply' ? botTeamSay(v) : botAsk(v); });
   addEventListener('resize', botPlace);
+  /* v4.6 · ella en el escenario (la misma de la portada), el micrófono si el navegador lo tiene y su reacción cuando le escribes */
+  { const inp = $('.bin input', P), mic = $('.bmic', P); if (mic && sonaMicOk()) mic.hidden = false;
+    const listen = () => { if (!BOT.think && !BOT.rec && inp.value && BOT.stageKeep !== 'listen'){ BOT.stageKeep = 'listen'; botStatus('listen'); botStage('escuchando', 'escucha', true); } };
+    inp.addEventListener('input', listen);
+    inp.addEventListener('blur', () => { if (BOT.stageKeep === 'listen' && !BOT.rec){ BOT.stageKeep = ''; if (!BOT.think){ botStatus('idle'); botStage(BOT.stageMood === 'escuchando' ? 'feliz' : (BOT.stageMood || 'feliz'), 'idle'); } } }); }
+  botStage('feliz', 'saluda');
   botRender();
-  if (!BOT.hist.length) botSay('¡Hola! Soy SynthonIA. Estoy aquí para que nunca te pierdas: pregúntame cómo se hace algo o dónde está, y te lo explico fácil o te lo señalo con mi manita.', 'feliz');
+  if (!BOT.hist.length) botSay(T('¡Hola! Soy Sona. Estoy aquí para que nunca te pierdas: pregúntame cómo se hace algo o dónde está, y te lo explico fácil o te lo señalo con mi manita.', 'Hi! I\'m Sona. I\'m here so you never get lost: ask me how to do something or where it is, and I\'ll explain it simply or point to it with my hand.'), 'feliz', null, 'saluda');
 }
 /* a11y: cerrado, el panel sale del árbol accesible y del foco (inert + aria-hidden); al cerrar el foco vuelve a quien lo abrió */
 function botA11y(on){
@@ -1003,7 +1005,7 @@ function botA11y(on){
 function botFocusIn(){ try{ if (matchMedia('(pointer:coarse)').matches) return; setTimeout(() => { const i = BOT.panel && $('.bin input', BOT.panel); if (i && BOT.open) i.focus({ preventScroll:true }); }, 60); }catch(e){} }
 function botClose(){
   const P = BOT.panel, hadFocus = P && P.contains(document.activeElement);
-  BOT.open = false; if (BOT.think) BOT.zen = true; if (P){ P.classList.remove('on'); botA11y(false); }
+  BOT.open = false; if (BOT.think) BOT.zen = true; if (BOT.rec) botMicStop(); if (P){ P.classList.remove('on'); botA11y(false); }
   if (hadFocus){ const o = BOT.opener && BOT.opener.isConnected ? BOT.opener : BOT.el; try{ if (o && o.focus) o.focus({ preventScroll:true }); }catch(e){} }
   BOT.opener = null;
 }
@@ -1031,7 +1033,7 @@ function botRender(){
     Q.innerHTML = ''; inp.placeholder = 'Responde como ' + (SZ_RANK() || 'equipo') + '…';
   } else if (BOT.mode === 'team' && BOT.help && !CW.el){
     const r = BOT.help;
-    L.innerHTML = '<div class="bctx"><button type="button" class="lnk" data-b="ia">← SynthonIA</button><span>' + (r.status === 'open' ? (r.urgent ? 'Contactando a un Prime, ZFlow o Symmetrix…' : 'El equipo ya recibió tu mensaje') : r.status === 'taken' ? 'Te atiende ' + esc((r.by || {}).name || '') + ' (' + esc((r.by || {}).rank || '') + ')' : 'Conversación terminada') + '</span>' + (r.status !== 'done' ? '<button type="button" class="lnk" data-b="end">Terminar</button>' : '') + '</div>'
+    L.innerHTML = '<div class="bctx"><button type="button" class="lnk" data-b="ia">← ' + SONA.bot + '</button><span>' + (r.status === 'open' ? (r.urgent ? 'Contactando a un Prime, ZFlow o Symmetrix…' : 'El equipo ya recibió tu mensaje') : r.status === 'taken' ? 'Te atiende ' + esc((r.by || {}).name || '') + ' (' + esc((r.by || {}).rank || '') + ')' : 'Conversación terminada') + '</span>' + (r.status !== 'done' ? '<button type="button" class="lnk" data-b="end">Terminar</button>' : '') + '</div>'
       + r.msgs.map(m => botMsgHtml(m.from === 'team' ? { role:'team', name:m.name, rank:m.rank, content:m.text } : { role:'user', content:m.text })).join('')
       + (r.status === 'open' ? botMsgHtml({ role:'assistant', mood:r.urgent ? 'pensando' : 'esperando', content:r.urgent ? 'Ya pasaron más de 15 minutos: estoy avisando otra vez a un Prime, ZFlow o Symmetrix. ¡No te vas a quedar sin respuesta!' : 'Le avisé al equipo. Siempre hay alguien disponible; te respondo aquí mismo apenas escriban (puedes seguir usando SynthFlow).' }) : '');
     Q.innerHTML = ''; inp.placeholder = r.status === 'done' ? 'Escribe para abrir una conversación nueva…' : 'Escríbele al equipo…';
@@ -1051,8 +1053,13 @@ function botSay(text, mood, btn, pose){
   if (B.LANG === 'en') text = trStr(text);   /* v3.0 · en inglés, lo suyo sale traducido (lo de las personas nunca se toca) */
   const D = demoji(text); mood = mood || D.mood || 'feliz';
   BOT.hist.push({ role:'assistant', content:D.text, mood, btn, pose }); BOT.hist = BOT.hist.slice(-30); botFace(mood); SND.blip(mood); botRender();
-  /* en la ventanita, su último mensaje se escribe mientras mueve la boca */
-  if (BOT.open && BOT.panel){ const L = $$('.bl .bm.a', BOT.panel), last = L[L.length - 1], p = last && $('p', last); if (p) setTimeout(() => typeIn(p, { cps:45, max:4.5, onFrame:lipSync([$('.mf .szface', last), ballFace()], D.text) }).catch(() => {}), 80); }
+  /* en la ventanita, su último mensaje se escribe mientras ella (en el escenario) mueve la boca y hace su gesto */
+  if (BOT.open && BOT.panel){
+    botStage(mood, pose); botStatus('talk');
+    const L = $$('.bl .bm.a', BOT.panel), last = L[L.length - 1], p = last && $('p', last);
+    if (p) setTimeout(() => typeIn(p, { cps:45, max:4.5, onFrame:lipSync([botStageHead(), $('.mf .szface', last), ballFace()], D.text) }).then(() => { if (BOT.panel && !BOT.think && !BOT.rec){ BOT.stageKeep = ''; botStatus('idle'); } }).catch(() => {}), 80);
+    else botStatus('idle');
+  }
   /* si cerraste la ventanita mientras pensaba: «Ten paciencia… modo zen…» y luego la respuesta */
   if (!BOT.open && BOT.zen){ BOT.zen = false; botFace('dormida', true); botBubble('Ten paciencia… modo zen…', 1900); setTimeout(() => { botFace(mood, true); botBubble(D.text.length > 240 ? D.text.slice(0, 236) + '…' : D.text, 8000); }, 2000); }
 }
@@ -1422,6 +1429,74 @@ function sonaTaskSay(q){
   const t = sonaPick({ id:'tarea', es:SONA_TASKTXT.es, en:SONA_TASKTXT.en }, L).replace(/\{flow\}/g, SONA.flow);
   return pre + t;
 }
+/* =====================================================================
+   v4.6 · La ventanita de Sona, como una compañera (estilo «compañero» de Grok, con la ropa de la portada)
+   Arriba un escenario con SU mismo dibujo de la portada (la bola de vidrio con ojos cian y las manitas flotantes), grande, con el pentagrama
+   de la marca detrás; ella reacciona: piensa con el dedo en la barbilla, se inclina a escucharte cuando escribes, señala, celebra y mueve
+   la boca (ondas naranjas) cuando habla. Abajo la charla en burbujas de vidrio, sugerencias que se deslizan y una píldora flotante
+   para escribir con micrófono (el dictado del navegador: toca y habla, y el navegador pide el permiso, igual que en el chat).
+   ===================================================================== */
+const T = (es, en) => B.LANG === 'en' ? en : es;
+/* la cara → qué pose del cuerpo (las de SPOSE en 20-synthonia-carita-svg-expresion.js) */
+const SONA_POSE = { senalando:'senala', pensando:'piensa', celebrando:'celebra', sorprendida:'sorpresa', escuchando:'escucha', confundida:'piensa', presenta:'presenta' };
+
+/* el pentagrama de la marca, ondulado, detrás de ella (como la cinta de la portada) */
+function sonaRibbon(){
+  const C = ['#7B3FF2', '#FF3D9A', '#FF7A45', '#FFC857', '#3DE0FF'];
+  return '<svg class="bs-rb" viewBox="0 0 400 270" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="bsFade" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".18" stop-color="#fff"/><stop offset=".82" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient><mask id="bsMask"><rect width="400" height="270" fill="url(#bsFade)"/></mask></defs><g mask="url(#bsMask)" fill="none" stroke-linecap="round">'
+    + C.map((c, i) => '<path class="bs-l" style="--i:' + i + '" d="M-20 ' + (214 + i * 5.2) + ' C 70 ' + (250 + i * 5) + ', 190 ' + (150 + i * 4.6) + ', 420 ' + (128 + i * 5) + '" stroke="' + c + '" stroke-width="4.2"/>').join('')
+    + '</g></svg>';
+}
+const SONA_MIC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+const SONA_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+
+/* el marcador del escenario de ella (se llama al abrir) */
+function sonaPanelHtml(){
+  return '<div class="bstage" aria-hidden="true"><i class="bs-bg"></i>' + sonaRibbon() + '<i class="bs-sp a"></i><i class="bs-sp b"></i><i class="bs-sp c"></i><i class="bs-base"></i><div class="bsc"></div></div>'
+    + '<div class="bh"><div class="bnm"><b>' + SONA.bot + '</b><small><i></i><span class="bst">' + T('Siempre disponible', 'Always here') + '</span></small></div><span class="bal" title="' + T('Versión ALFA', 'ALPHA version') + '">' + T('ALFA', 'ALPHA') + '</span>'
+    + '<button type="button" class="bx" data-b="min" aria-label="' + T('Cerrar', 'Close') + '">×</button></div>'
+    + '<div class="btabs" hidden><button type="button" data-bt="chat" aria-selected="true">' + T('Pregúntame', 'Ask me') + '</button><button type="button" data-bt="inbox" aria-selected="false">' + T('Bandeja', 'Inbox') + ' <em class="bn"></em></button></div>'
+    + '<div class="bl" aria-live="polite"></div><div class="bq"></div>'
+    + '<form class="bin"><button type="button" class="bmic" data-b="mic" aria-label="' + T('Hablarle a Sona', 'Talk to Sona') + '" hidden>' + SONA_MIC + '</button>'
+    + '<input type="text" maxlength="600" placeholder="' + T('Pregúntame lo que quieras…', 'Ask me anything…') + '" aria-label="' + T('Pregúntale a Sona', 'Ask Sona') + '" autocomplete="off">'
+    + '<button type="submit" class="bs" aria-label="' + T('Enviar', 'Send') + '">' + SONA_SEND + '</button></form>'
+    + '<div class="bfoot"><button type="button" class="lnk" data-b="team">' + T('Hablar con el equipo', 'Talk to the team') + '</button><button type="button" class="lnk" data-b="fb">' + T('Cuéntanos qué mejorar', 'Tell us what to improve') + '</button><button type="button" class="lnk" data-b="hide">' + T('Esconder', 'Hide') + '</button></div>';
+}
+
+/* ella en el escenario: cara + pose. Las poses con gesto vuelven solas a descansar */
+function botStage(mood, pose, hold){
+  const P = BOT.panel, host = P && $('.bsc', P); if (!host || typeof synSet !== 'function') return;
+  const m = FACE[mood] ? mood : 'feliz', p = pose && SPOSE[pose] ? pose : (SONA_POSE[m] || 'idle');
+  try{ synSet(host, m, p); }catch(e){ return; }
+  BOT.stageMood = m;
+  clearTimeout(BOT._pt);
+  if (p !== 'idle' && !hold) BOT._pt = setTimeout(() => { if (BOT.panel && !BOT.think && BOT.stageKeep !== 'listen') try{ synSet(host, m === 'senalando' ? 'feliz' : m, 'idle'); }catch(e){} }, p === 'senala' ? 4200 : 2800);
+}
+/* el letrerito de estado (como en Grok): disponible, pensando, hablando, escuchándote */
+function botStatus(k){
+  const P = BOT.panel, el = P && $('.bst', P); if (!el) return;
+  const S = { idle:T('Siempre disponible', 'Always here'), think:T('Pensando…', 'Thinking…'), talk:T('Hablando…', 'Talking…'), listen:T('Escuchándote…', 'Listening…') };
+  el.textContent = S[k] || S.idle; P.dataset.state = k || 'idle';
+}
+/* la cabeza del escenario, para que mueva las ondas de la boca mientras escribe su respuesta */
+const botStageHead = () => { const P = BOT.panel; return P ? $('.bsc .syb-hsvg', P) : null; };
+
+/* ---------- el micrófono: el dictado del navegador (gratis). Como en el chat: toca y habla, el navegador pide el permiso; siempre disponible ---------- */
+const sonaSR = () => { try{ return window.SpeechRecognition || window.webkitSpeechRecognition || null; }catch(e){ return null; } };
+const sonaMicOk = () => !!sonaSR();
+function botMicStop(){ const r = BOT.rec; BOT.rec = null; if (r) try{ r.stop(); }catch(e){} const P = BOT.panel; if (P){ const b = $('.bmic', P); if (b){ b.classList.remove('on'); b.setAttribute('aria-pressed', 'false'); } } BOT.stageKeep = ''; if (BOT.panel && !BOT.think) { botStatus('idle'); botStage(BOT.stageMood || 'feliz', 'idle'); } }
+function botMic(){
+  const P = BOT.panel; if (!P || !sonaMicOk()) return;
+  if (BOT.rec) return botMicStop();
+  const r = new (sonaSR())(), inp = $('.bin input', P), mic = $('.bmic', P); let got = '';
+  r.lang = B.LANG === 'en' ? 'en-US' : ((navigator.languages || []).find(x => x && /^es/i.test(x)) || 'es-ES'); r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
+  r.onresult = e => { got = ''; for (let i = 0; i < e.results.length; i++) got += e.results[i][0].transcript; inp.value = got; };
+  r.onerror = e => { if (e && (e.error === 'not-allowed' || e.error === 'service-not-allowed')){ botSay(T('No me dejaron usar el micrófono. Puedes permitirlo en el candadito de la barra de direcciones, o escribirme aquí.', 'I wasn\'t allowed to use the microphone. You can allow it from the lock icon in the address bar, or just type to me here.'), 'disculpa'); } };
+  r.onend = () => { const wasMine = BOT.rec === r; botMicStop(); const v = inp.value.trim(); if (wasMine && v){ inp.value = ''; BOT.mode === 'team' || BOT.mode === 'reply' ? botTeamSay(v) : botAsk(v); } };
+  try{ r.start(); }catch(e){ return botSay(T('No pude encender el micrófono ahora. Inténtalo otra vez o escríbeme aquí.', 'I couldn\'t turn the microphone on just now. Try again or just type to me here.'), 'disculpa'); }
+  BOT.rec = r; mic.classList.add('on'); mic.setAttribute('aria-pressed', 'true'); BOT.stageKeep = 'listen'; botStatus('listen'); botStage('escuchando', 'escucha', true);
+  clearTimeout(BOT._mt); BOT._mt = setTimeout(() => { if (BOT.rec === r) botMicStop(); }, 20000);
+}
 /* ---- ayuda de personas ---- */
 async function helpApi(o){ return api('help' + (o && o.q ? o.q : ''), o && o.body ? { method:'POST', body:o.body, keep:true } : { keep:true }); }
 async function botTeam(){
@@ -1524,6 +1599,7 @@ async function botClick(e){
   const b = t.closest('[data-b]'); if (!b) return;
   const k = b.dataset.b;
   if (k === 'min') botClose();
+  else if (k === 'mic') botMic();
   else if (k === 'hide'){ botClose(); try{ sessionStorage.setItem('synthz:bothide', '1'); }catch(er){} const el = BOT.el; if (el && el.dataset.reactComponent === 'synthonia-avatar'){ el.classList.remove('on'); /* Deja BOT.el vivo hasta que React procese la retirada y el motor limpie listeners de posición. */ setTimeout(() => dispatchEvent(new Event('symphoria:hide-synthonIA')), 400); } else { BOT.el = null; if (el) setTimeout(() => el.remove(), 400); } toast('SynthonIA se escondió hasta que vuelvas a abrir la página.'); }
   else if (k === 'team') botTeam();
   else if (k === 'fb'){ botClose(); feedbackModal(); }

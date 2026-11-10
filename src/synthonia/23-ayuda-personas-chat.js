@@ -100,6 +100,7 @@ async function botClick(e){
   const b = t.closest('[data-b]'); if (!b) return;
   const k = b.dataset.b;
   if (k === 'min') botClose();
+  else if (k === 'mic') botMic();
   else if (k === 'hide'){ botClose(); try{ sessionStorage.setItem('synthz:bothide', '1'); }catch(er){} const el = BOT.el; if (el && el.dataset.reactComponent === 'synthonia-avatar'){ el.classList.remove('on'); /* Deja BOT.el vivo hasta que React procese la retirada y el motor limpie listeners de posición. */ setTimeout(() => dispatchEvent(new Event('symphoria:hide-synthonIA')), 400); } else { BOT.el = null; if (el) setTimeout(() => el.remove(), 400); } toast('SynthonIA se escondió hasta que vuelvas a abrir la página.'); }
   else if (k === 'team') botTeam();
   else if (k === 'fb'){ botClose(); feedbackModal(); }

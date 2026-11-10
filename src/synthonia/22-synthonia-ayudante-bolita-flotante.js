@@ -168,9 +168,9 @@ function pixFace(on){
 }
 async function botThink(work, ms0){
   const ms = ms0 || (3000 + Math.random() * 2000);
-  BOT.think = true; BOT.zen = false; pixFace(true); botRender();
+  BOT.think = true; BOT.zen = false; pixFace(true); botRender(); BOT.stageKeep = ''; botStatus('think'); botStage('pensando', 'piensa', true);
   try{ const [r] = await Promise.all([work ? work() : Promise.resolve(null), sleepRaw(ms)]); return r; }
-  finally{ BOT.think = false; if (BOT.pxm){ BOT.pxm.stop(); BOT.pxm = null; } pixFace(false); }
+  finally{ BOT.think = false; if (BOT.pxm){ BOT.pxm.stop(); BOT.pxm = null; } pixFace(false); botStatus('idle'); }
 }
 function botBubble(text, ms){
   if (!BOT.el || BOT.open || document.querySelector('#vintro,#intro,#portal')) return; let bb = $('#szBotB'); if (!bb){ bb = document.createElement('div'); bb.id = 'szBotB'; document.body.appendChild(bb); }
@@ -187,7 +187,7 @@ function botPlace(){
   const P = BOT.panel, b = BOT.el && botAt(); if (!P || !b) return;
   if (matchMedia('(max-width:760px)').matches){ P.classList.add('sheet'); P.style.left = P.style.top = P.style.right = P.style.bottom = ''; return; }
   P.classList.remove('sheet');
-  const r = b.getBoundingClientRect(), W = Math.min(390, innerWidth - 24), H = Math.min(560, innerHeight - 40);
+  const r = b.getBoundingClientRect(), W = Math.min(410, innerWidth - 24), H = Math.min(690, innerHeight - 40);
   P.style.width = W + 'px'; P.style.height = H + 'px';
   if (b !== BOT.el){
     /* junto a SynthonIA (del lado con más espacio), sin taparla */
@@ -205,20 +205,22 @@ function botOpen(){
   if (!BOT.el) botMount(); if (!BOT.el) return;
   BOT.opener = document.activeElement && document.activeElement !== document.body ? document.activeElement : BOT.el;   /* a11y: a quién devolver el foco al cerrar */
   if (BOT.panel){ BOT.open = true; botA11y(true); BOT.panel.classList.add('on'); botPlace(); botFocusIn(); return; }
-  const P = document.createElement('div'); P.id = 'szBotP'; P.setAttribute('role', 'dialog'); P.setAttribute('aria-label', 'SynthonIA');
-  P.innerHTML = '<div class="bh"><span class="bhf">' + face('feliz', 56) + '</span><div><b>SynthonIA</b><small><i></i>Siempre disponible</small></div><button type="button" class="bx" data-b="min" aria-label="Cerrar">×</button></div>'
-    + '<div class="btabs" hidden><button type="button" data-bt="chat" aria-selected="true">Pregúntame</button><button type="button" data-bt="inbox" aria-selected="false">Bandeja <em class="bn"></em></button></div>'
-    + '<div class="bl" aria-live="polite"></div><div class="bq"></div>'
-    + '<form class="bin"><input type="text" maxlength="600" placeholder="Pregúntame lo que quieras…" aria-label="Pregúntale a SynthonIA" autocomplete="off"><button type="submit" class="bs" aria-label="Enviar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form>'
-    + '<div class="bfoot"><button type="button" class="lnk" data-b="team">Hablar con el equipo</button><button type="button" class="lnk" data-b="fb">Cuéntanos qué mejorar</button><button type="button" class="lnk" data-b="hide">Esconder</button></div>';
+  const P = document.createElement('div'); P.id = 'szBotP'; P.className = 'comp'; P.setAttribute('role', 'dialog'); P.setAttribute('aria-label', SONA.bot);
+  P.innerHTML = sonaPanelHtml();   /* v4.6 · el escenario de ella + la charla + la píldora de escribir (22d-sona-ventana.js) */
   document.body.appendChild(P); BOT.panel = P; BOT.open = true; botA11y(true); botPlace();
   requestAnimationFrame(() => P.classList.add('on'));
   botFocusIn();
   P.addEventListener('click', botClick);
   $('.bin', P).addEventListener('submit', e => { e.preventDefault(); const i = $('.bin input', P), v = i.value.trim(); if (!v) return; i.value = ''; BOT.mode === 'team' || BOT.mode === 'reply' ? botTeamSay(v) : botAsk(v); });
   addEventListener('resize', botPlace);
+  /* v4.6 · ella en el escenario (la misma de la portada), el micrófono si el navegador lo tiene y su reacción cuando le escribes */
+  { const inp = $('.bin input', P), mic = $('.bmic', P); if (mic && sonaMicOk()) mic.hidden = false;
+    const listen = () => { if (!BOT.think && !BOT.rec && inp.value && BOT.stageKeep !== 'listen'){ BOT.stageKeep = 'listen'; botStatus('listen'); botStage('escuchando', 'escucha', true); } };
+    inp.addEventListener('input', listen);
+    inp.addEventListener('blur', () => { if (BOT.stageKeep === 'listen' && !BOT.rec){ BOT.stageKeep = ''; if (!BOT.think){ botStatus('idle'); botStage(BOT.stageMood === 'escuchando' ? 'feliz' : (BOT.stageMood || 'feliz'), 'idle'); } } }); }
+  botStage('feliz', 'saluda');
   botRender();
-  if (!BOT.hist.length) botSay('¡Hola! Soy SynthonIA. Estoy aquí para que nunca te pierdas: pregúntame cómo se hace algo o dónde está, y te lo explico fácil o te lo señalo con mi manita.', 'feliz');
+  if (!BOT.hist.length) botSay(T('¡Hola! Soy Sona. Estoy aquí para que nunca te pierdas: pregúntame cómo se hace algo o dónde está, y te lo explico fácil o te lo señalo con mi manita.', 'Hi! I\'m Sona. I\'m here so you never get lost: ask me how to do something or where it is, and I\'ll explain it simply or point to it with my hand.'), 'feliz', null, 'saluda');
 }
 /* a11y: cerrado, el panel sale del árbol accesible y del foco (inert + aria-hidden); al cerrar el foco vuelve a quien lo abrió */
 function botA11y(on){
@@ -230,7 +232,7 @@ function botA11y(on){
 function botFocusIn(){ try{ if (matchMedia('(pointer:coarse)').matches) return; setTimeout(() => { const i = BOT.panel && $('.bin input', BOT.panel); if (i && BOT.open) i.focus({ preventScroll:true }); }, 60); }catch(e){} }
 function botClose(){
   const P = BOT.panel, hadFocus = P && P.contains(document.activeElement);
-  BOT.open = false; if (BOT.think) BOT.zen = true; if (P){ P.classList.remove('on'); botA11y(false); }
+  BOT.open = false; if (BOT.think) BOT.zen = true; if (BOT.rec) botMicStop(); if (P){ P.classList.remove('on'); botA11y(false); }
   if (hadFocus){ const o = BOT.opener && BOT.opener.isConnected ? BOT.opener : BOT.el; try{ if (o && o.focus) o.focus({ preventScroll:true }); }catch(e){} }
   BOT.opener = null;
 }
@@ -258,7 +260,7 @@ function botRender(){
     Q.innerHTML = ''; inp.placeholder = 'Responde como ' + (SZ_RANK() || 'equipo') + '…';
   } else if (BOT.mode === 'team' && BOT.help && !CW.el){
     const r = BOT.help;
-    L.innerHTML = '<div class="bctx"><button type="button" class="lnk" data-b="ia">← SynthonIA</button><span>' + (r.status === 'open' ? (r.urgent ? 'Contactando a un Prime, ZFlow o Symmetrix…' : 'El equipo ya recibió tu mensaje') : r.status === 'taken' ? 'Te atiende ' + esc((r.by || {}).name || '') + ' (' + esc((r.by || {}).rank || '') + ')' : 'Conversación terminada') + '</span>' + (r.status !== 'done' ? '<button type="button" class="lnk" data-b="end">Terminar</button>' : '') + '</div>'
+    L.innerHTML = '<div class="bctx"><button type="button" class="lnk" data-b="ia">← ' + SONA.bot + '</button><span>' + (r.status === 'open' ? (r.urgent ? 'Contactando a un Prime, ZFlow o Symmetrix…' : 'El equipo ya recibió tu mensaje') : r.status === 'taken' ? 'Te atiende ' + esc((r.by || {}).name || '') + ' (' + esc((r.by || {}).rank || '') + ')' : 'Conversación terminada') + '</span>' + (r.status !== 'done' ? '<button type="button" class="lnk" data-b="end">Terminar</button>' : '') + '</div>'
       + r.msgs.map(m => botMsgHtml(m.from === 'team' ? { role:'team', name:m.name, rank:m.rank, content:m.text } : { role:'user', content:m.text })).join('')
       + (r.status === 'open' ? botMsgHtml({ role:'assistant', mood:r.urgent ? 'pensando' : 'esperando', content:r.urgent ? 'Ya pasaron más de 15 minutos: estoy avisando otra vez a un Prime, ZFlow o Symmetrix. ¡No te vas a quedar sin respuesta!' : 'Le avisé al equipo. Siempre hay alguien disponible; te respondo aquí mismo apenas escriban (puedes seguir usando SynthFlow).' }) : '');
     Q.innerHTML = ''; inp.placeholder = r.status === 'done' ? 'Escribe para abrir una conversación nueva…' : 'Escríbele al equipo…';
@@ -278,8 +280,13 @@ function botSay(text, mood, btn, pose){
   if (B.LANG === 'en') text = trStr(text);   /* v3.0 · en inglés, lo suyo sale traducido (lo de las personas nunca se toca) */
   const D = demoji(text); mood = mood || D.mood || 'feliz';
   BOT.hist.push({ role:'assistant', content:D.text, mood, btn, pose }); BOT.hist = BOT.hist.slice(-30); botFace(mood); SND.blip(mood); botRender();
-  /* en la ventanita, su último mensaje se escribe mientras mueve la boca */
-  if (BOT.open && BOT.panel){ const L = $$('.bl .bm.a', BOT.panel), last = L[L.length - 1], p = last && $('p', last); if (p) setTimeout(() => typeIn(p, { cps:45, max:4.5, onFrame:lipSync([$('.mf .szface', last), ballFace()], D.text) }).catch(() => {}), 80); }
+  /* en la ventanita, su último mensaje se escribe mientras ella (en el escenario) mueve la boca y hace su gesto */
+  if (BOT.open && BOT.panel){
+    botStage(mood, pose); botStatus('talk');
+    const L = $$('.bl .bm.a', BOT.panel), last = L[L.length - 1], p = last && $('p', last);
+    if (p) setTimeout(() => typeIn(p, { cps:45, max:4.5, onFrame:lipSync([botStageHead(), $('.mf .szface', last), ballFace()], D.text) }).then(() => { if (BOT.panel && !BOT.think && !BOT.rec){ BOT.stageKeep = ''; botStatus('idle'); } }).catch(() => {}), 80);
+    else botStatus('idle');
+  }
   /* si cerraste la ventanita mientras pensaba: «Ten paciencia… modo zen…» y luego la respuesta */
   if (!BOT.open && BOT.zen){ BOT.zen = false; botFace('dormida', true); botBubble('Ten paciencia… modo zen…', 1900); setTimeout(() => { botFace(mood, true); botBubble(D.text.length > 240 ? D.text.slice(0, 236) + '…' : D.text, 8000); }, 2000); }
 }
