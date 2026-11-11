@@ -899,6 +899,10 @@ function greetHtml(g){
    3) Si encuentra errores de verdad, la IA los arregla sola una vez; lo demás queda con «Arreglar con la IA».
    4) El lienzo trae consola, tamaños de pantalla y colores en el código. */
 const CODE_RX = /```|c[oó]digo|program|\bscript|html|\bcss\b|javascript|\bjs\b|typescript|python|\bjava\b|c\+\+|c#|\bphp\b|\bsql\b|react|\bvue\b|svelte|next\.?js|node|\bapi\b|\bbug|depura|debug|compil|funci[oó]n|algoritmo|regex|base de datos|backend|frontend|\bapp\b|aplicaci[oó]n|p[aá]gina web|sitio web|landing|\bweb\b|juego|calculadora|formulario|\bbot\b|terminal|\bbash\b|\bjson\b|tailwind|flutter|kotlin|swift|\brust\b|golang|arduino|excel con macros|macro/i;
+/* v4.5 · pedidos de «hazme / crea / programa… una página, app, juego, script» y de archivos (csv, json, readme…): espejo EXACTO de CODE_ASK_SRC en api/_cerebro.js
+   (t/cerebro/codigo.mjs comprueba que sigan iguales; para regenerar esta línea: node t/cerebro/codigo.mjs --regex). Antes «hazme una calculadora» no se tomaba como código. */
+const CODE_ASK_SRC = "\\b(?:dib[uú]ja(?:me)?|dibujar|draw|haz|hazme|hacer|haga|cr[eé]a|cr[eé]ame|crear|genera|g[eé]nerame|generar|programa|progr[aá]mame|programar|codifica|escribe|escr[ií]beme|escribir|arma|arm[aá]me|armar|construye|constr[uú]yeme|construir|desarrolla|desarr[oó]llame|desarrollar|implementa|implementar|dis[eé][nñ]a|dis[eé][nñ]ame|dis[eé][nñ]ar|monta|montar|make|build|create|generate|write|code|develop|implement|design)\\b[^.\\n?!]{0,60}?\\b(?:p[aá]gina web|p[aá]ginas web|sitio web|web ?app|webapp|website|web ?page|landing(?: page)?|p[aá]gina de (?:inicio|aterrizaje|ventas|contacto|producto|presentaci[oó]n)|portafolio web|portfolio (?:site|website|page)|tienda (?:en l[ií]nea|online|virtual)|e-?commerce|online store|dashboard|panel de (?:control|administraci[oó]n)|admin panel|aplicaci[oó]n|app|juego|videojuego|game|calculadora|calculator|conversor|converter|cron[oó]metro|stopwatch|temporizador|timer|reloj (?:digital|anal[oó]gico)|lista de tareas|to-?do(?: list| app)?|kanban|formulario|chat ?bot|chat ?app|quiz|trivia|piano|metr[oó]nomo|snake|serpiente|tetris|buscaminas|ajedrez|tres en raya|3 en raya|animaci[oó]n (?:css|web|en css|con css|js)|script|programa(?! de (?:entrenamiento|ejercicio|estudio|dieta|alimentaci|televisi|radio|tv|fidelidad|actividades|gobierno|trabajo|capacitaci|formaci|becas|mentor|reuniones|evento))|program|bot|api|backend|frontend|servidor|server|funci[oó]n(?! (?:matem[aá]tica|cuadr[aá]tica|lineal|exponencial|logar[ií]tmica|trigonom))|function|componente|component|m[oó]dulo|librer[ií]a|scraper|crawler|plugin|widget|extensi[oó]n (?:de|para) (?:chrome|firefox|edge|vscode|navegador)|(?:chrome|browser) extension|generador|generator|simulador|simulator|prototipo|prototype|mvp|software|application)\\b|\\b(?:dame|quiero|necesito|me ayudas a (?:hacer|crear|armar|programar)|ay[uú]dame a (?:hacer|crear|armar|programar)|puedes (?:hacer|crear|armar|programar)|give me|i need|i want|help me (?:make|build|create|write|code)|can you (?:make|build|create|write|code))\\b[^.\\n?!]{0,40}?\\b(?:p[aá]gina web|sitio web|landing|aplicaci[oó]n|app|script|bot|api|calculadora|website|web ?app|web ?page|game|function|funci[oó]n)\\b|\\b(?:dib[uú]ja(?:me)?|dibujar|draw|haz|hazme|hacer|haga|cr[eé]a|cr[eé]ame|crear|genera|g[eé]nerame|generar|programa|progr[aá]mame|programar|codifica|escribe|escr[ií]beme|escribir|arma|arm[aá]me|armar|construye|constr[uú]yeme|construir|desarrolla|desarr[oó]llame|desarrollar|implementa|implementar|dis[eé][nñ]a|dis[eé][nñ]ame|dis[eé][nñ]ar|monta|montar|make|build|create|generate|write|code|develop|implement|design|dame|quiero|necesito|me ayudas a (?:hacer|crear|armar|programar)|ay[uú]dame a (?:hacer|crear|armar|programar)|puedes (?:hacer|crear|armar|programar)|give me|i need|i want|help me (?:make|build|create|write|code)|can you (?:make|build|create|write|code))\\b[^.\\n?!]{0,50}?(?:\\b(?:archivo|fichero|file|csv|json|xml|ya?ml|toml|svg|markdown|readme|\\.md\\b|\\btxt\\b|excel|xlsx?|hoja de c[aá]lculo|spreadsheet|\\bun word\\b|word doc(?:ument)?|documento (?:de|en) word|\\bdocx?\\b|pdf|dockerfile|gitignore|requirements)\\b|\\.(?:md|csv|json|txt|svg|xml|ya?ml)\\b)";
+const CODE_ASK = new RegExp(CODE_ASK_SRC, 'i');
 const CODE_FILE_RX = /\.(html?|css|scss|jsx?|tsx?|py|java|c|cpp|cs|go|rs|php|rb|swift|kt|dart|lua|sql|sh|json|vue|svelte|ino)$/i;
 const CODE_SYS = [
   'MODO SYNTHCODE. Eres un ingeniero de software senior y diseñador de producto de primer nivel. Tu código funciona a la primera, es completo, limpio y hermoso. Eres perfeccionista: prefieres revisar dos veces antes que entregar algo roto.',
@@ -934,11 +938,12 @@ function codeMode(chat){
   const u = [...chat].reverse().find(m => m.role === 'user'); if (!u) return false;
   if (isFix(u)) return true;
   const t = String(u.ask || u.content || '');
-  if (CODE_RX.test(t)) return true;
+  if (CODE_RX.test(t) || CODE_ASK.test(t)) return true;
   if ((u.files || []).some(f => CODE_FILE_RX.test(f.name || ''))) return true;
   const i = chat.lastIndexOf(u), prev = chat.slice(Math.max(0, i - 3), i).filter(m => m.role === 'assistant');
   return t.length < 400 && prev.some(m => /```/.test(m.content || ''));
 }
+/* v4.5 · con las IAs conectadas (sz:) el servidor trae un solo manual de archivos y código (api/_cerebro.js): aquí solo lo usan las demás (Puter, OpenRouter…) */
 function codeSystem(chat, saver){ return codeMode(chat) ? (saver ? CODE_SYS_SHORT : CODE_SYS) : ''; }
 
 /* ---------- el probador: corre la página aislada y avisa lo que ve ---------- */
@@ -2074,7 +2079,7 @@ function apiMsgs(chat, vision, o = {}){
   }
   if (o.webAsk) sys.push(webAskSys());   /* v3.8 · la IA puede pedir una búsqueda en internet ella sola */   /* v3.4 · calidad: piensa, revisa la lógica y no inventa */
   if (saver) sys.push('Responde en el idioma del usuario, de forma clara y breve, sin relleno.');
-  { const cs = o.naive ? '' : codeSystem(chat, saver); if (cs) sys.push(cs); }   /* v2.4 · SynthCode: manual de programación cuando pides código */
+  { const cs = o.naive || o.srv ? '' : codeSystem(chat, saver); if (cs) sys.push(cs); }   /* v2.4 · SynthCode: manual de programación cuando pides código · v4.5: con las IAs conectadas lo pone el servidor (un solo manual, sin que se repita ni choque) */
   { const ef = effortHint(); if (ef && !o.naive) sys.push(ef); }   /* v2.3.1 · esfuerzo */
   { const mm = memSystem(); if (mm && !o.naive) sys.push(mm); }
   if (!o.naive && !o.noMarks) sys.push(marcasSystem(chat));   /* v4.0 · título con sentido y memoria redactada por la IA */
@@ -3326,6 +3331,27 @@ function limpiaBucles(t){
   r = r.replace(/(^|\n\n)([^\n`][^\n]{60,})(?:\n\n\2)+(?=\n\n|$)/g, '$1$2');
   return r;
 }
+/* v4.5 · pega lo que escribe la IA al «Continúa…» con lo que ya había, sin repetir ni romper el código:
+   · si el archivo seguía abierto (``` sin cerrar) y la IA vuelve a abrir la cerca, esa línea se quita;
+   · si repite las últimas líneas (o la línea que quedó a medias), no se duplican;
+   · dentro de un archivo, si lo anterior terminó en una línea completa, la continuación empieza en línea nueva (sin espacios metidos a la fuerza). */
+/* contJoin:inicio */
+function contJoin(base, next){
+  base = String(base || ''); let n = String(next || '');
+  const open = (base.match(/```/g) || []).length % 2 === 1;
+  if (open) n = n.replace(/^\s*```[\w+#.-]*[ \t]*\r?\n/, '');
+  const bl = base.split('\n'), nl = n.split('\n'), lastB = bl[bl.length - 1].trim();
+  let cutDone = false;
+  if (lastB.length >= 8 && nl[0].trim().startsWith(lastB)){ bl.pop(); base = bl.join('\n') + (bl.length ? '\n' : ''); cutDone = true; }
+  else for (let k = Math.min(8, nl.length, bl.length); k >= 1; k--){ const a = bl.slice(-k).join('\n').trim(), b = nl.slice(0, k).join('\n').trim(); if (a.length >= 12 && a === b){ n = nl.slice(k).join('\n'); break; } }
+  if (open){
+    if (cutDone || /\s$/.test(base) || /^\s/.test(n)) return base + n;
+    return base + (/[;{}>)\],]$/.test(base) && /^[A-Za-z<}.#@\/*$_]/.test(n) ? '\n' : '') + n;
+  }
+  const glue = (!base || /\s$/.test(base) || /^[\s.,;:!?)\]]/.test(n) || !/[.!?:;)\]*_`]$/.test(base)) ? '' : ' ';
+  return base + glue + n;
+}
+/* contJoin:fin */
 async function runSolo(onFail, o = {}){
   const mid = o.model || selId(), chat = chatArr(), g = gen, vis = info(mid).vision, saver = st().sx.saver;
   const slowT = setTimeout(() => { if (busy[mid] === 'think' && SZ.BOT.react) SZ.BOT.react('slow', { auto:mid === 'sz:auto' }); }, 14000);
@@ -3368,17 +3394,16 @@ async function runSolo(onFail, o = {}){
       /* si la IA se quedó sin espacio (o se cortó la conexión), sigue sola donde quedó: la persona recibe la respuesta completa sin tocar «Continuar» */
       for (let n = 0; n < 3 && !webQ && !r.aborted && !r.swapped && g === gen && (r.finish === 'length' || r.cut); n++){
         const base = r.text, ctl2 = new AbortController(); ctls.add(ctl2);
-        const glue = t => (!base || /\s$/.test(base) || /^[\s.,;:!?)\]]/.test(t) || !/[.!?:;)\]*_`]$/.test(base)) ? '' : ' ';
         let r2 = null;
         try{
           r2 = await SZ.askStream(OR, [...sent, { role:'assistant', content:base }, { role:'user', content:'Continúa exactamente donde te quedaste: sigue desde la última palabra, sin repetir nada de lo anterior, sin saludar y sin decir que continúas. Escribe solo lo que falta.' }],
-            Object.assign({ model:mid, maxTokens:0, signal:ctl2.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { mount(); const full = sinMarcas(base + glue(txt) + txt); W.write(full); if (rv) rv.push(full); });
+            Object.assign({ model:mid, maxTokens:0, signal:ctl2.signal, onReason:t => W.reason(t) }, effortOpts(saver)), txt => { mount(); const full = sinMarcas(contJoin(base, txt)); W.write(full); if (rv) rv.push(full); });
         }catch(e){ r2 = null; }
         finally{ ctls.delete(ctl2); }
         if (!r2 || r2.aborted && !r2.text) break;
         addUsage(r2.prov || SZ.provOf(mid), r2.prompt, r2.completion, true, { est:r2.est, free:/:free$/.test(mid) || r2.prov === 'synthz', rid:r2.rid });
         if (/^\(La IA devolvió una respuesta vacía\.\)$/.test(r2.text)) break;
-        r = Object.assign({}, r, { text:base + glue(r2.text) + r2.text, prompt:r.prompt + r2.prompt, completion:r.completion + r2.completion, ms:r.ms + r2.ms, finish:r2.finish, cut:r2.cut, aborted:r2.aborted, est:r.est || r2.est });
+        r = Object.assign({}, r, { text:contJoin(base, r2.text), prompt:r.prompt + r2.prompt, completion:r.completion + r2.completion, ms:r.ms + r2.ms, finish:r2.finish, cut:r2.cut, aborted:r2.aborted, est:r.est || r2.est });
       }
     }
     if (g !== gen){ if (rv) rv.skip(); return; }
@@ -3477,7 +3502,7 @@ function offerWeb(lastU, onFail, o){
    la fecha de hoy, cómo responde un experto en ese tipo de trabajo y, si es difícil, pensar → resolver → revisar antes de responder. */
 const Q_HARD = /\b(demuestra|resuelve|calcula|deriva|integral|ecuaci[oó]n|probabilidad|optimiza|algoritmo|depura|debug|refactor|por qu[eé] (falla|no funciona)|paso a paso|a fondo|analiza|compara|eval[uú]a|estrategia|dise[nñ]a|arquitectura|acertijo|l[oó]gica|cu[aá]nt[oa]s?|prove|solve|calculate|equation|probability|algorithm|step by step|in depth|analy[sz]e|compare|evaluate|strategy|design|riddle|puzzle|how (many|much))\b/i;
 const Q_EASY = /^\W*(hola+|holi|buenas|buen(os)? d[ií]as|hey|hi|hello|gracias|thanks|thank you|ok(ay)?|vale|listo|s[ií]|no|dale|c[oó]mo est[aá]s|how are you|qu[eé] tal|chao|bye)\b[\s\W]*$/i;
-const Q_KIND = [['code', /\b(c[oó]digo|code|programa|funci[oó]n|function|script|python|javascript|html|css|sql|bug|error|react|node|java|api)\b|```/i],
+const Q_KIND = [['code', /\b(c[oó]digo|code|programa|funci[oó]n|function|script|python|javascript|html|css|sql|bug|error|react|node|java|api)\b|```/i],   /* v4.5 · y los pedidos de «hazme una página / app / archivo…» (CODE_ASK, de 02b): más abajo */
   ['translate', /\b(traduc\w*|translat\w*)\b/i], ['data', /\b(calcul\w*|porcentaje|percent|promedio|average|tabla|datos|data|matem\w*|math|ecuaci[oó]n|equation|\d+\s*[-+*/^x×÷]\s*\d+)\b/i],
   ['summary', /\b(resum\w*|summar\w*|puntos clave|key points|tl;?dr)\b/i], ['write', /\b(escrib\w*|redact\w*|write|correo|email|carta|ensayo|essay|art[ií]culo|historia|story|poema|poem|post|discurso)\b/i]];
 const Q_JOB = {
@@ -3493,7 +3518,7 @@ function qualitySystem(saver, ask, mid){
   const day = new Date().toLocaleDateString(SZ.lang() === 'en' ? 'en-US' : 'es-CO', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
   if (saver) return 'Hoy es ' + day + '. Piensa en silencio antes de responder; revisa cálculos y lógica. No inventes datos.';
   const q = String(ask || '').trim(), easy = !q || Q_EASY.test(q);
-  const kind = (Q_KIND.find(([, rx]) => rx.test(q)) || ['reason'])[0];
+  const kind = CODE_ASK.test(q) ? 'code' : (Q_KIND.find(([, rx]) => rx.test(q)) || ['reason'])[0];
   const hard = !easy && (effKey() === 'deep' || (Q_HARD.test(q) ? 2 : 0) + (/\d\s*[-+*/^=]\s*\d/.test(q) ? 2 : 0) + (/```/.test(q) ? 2 : 0) + (q.length > 400 ? 1 : 0) + (/code|data/.test(kind) ? 1 : 0) >= 3);
   const base = 'Hoy es ' + day + '. Responde como los mejores asistentes del mundo, con precisión y criterio. Empieza por la respuesta (sin saludos, sin repetir la pregunta, sin relleno) y luego explica lo necesario.'
     + ' No inventes datos, citas, enlaces ni funciones: si no lo sabes con certeza o pudo cambiar después de lo que aprendiste, dilo en una frase. Si la pregunta es ambigua, elige la lectura más probable y dilo.'
@@ -3515,6 +3540,7 @@ function revWanted(mid, msg, r){
   const t = msg.content || '';
   if (t.length < 160 || /^\(La IA devolvió una respuesta vacía\.\)$/.test(t)) return false;   /* un saludo o un «sí» no necesita revisión */
   if (/```html/i.test(t) && t.length > 4000) return false;                                 /* las páginas ya las prueba SynthCode */
+  if (/```/.test(t) && t.length > 9000) return false;                                       /* v4.5 · un archivo largo no se manda al revisor: no alcanza a verlo entero y lo devolvía recortado */
   return true;
 }
 function revPacket(chat, msg){

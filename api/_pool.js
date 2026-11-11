@@ -195,13 +195,22 @@ const IMG_PRE = /^data:image\/(jpeg|png|webp|gif);base64,/, IMG_LEN = 2_500_000,
 export const VISION_RX = /gemini|gemma-3(?!n)|llama-4|pixtral|mistral-(small|medium)|[-_/]vl\b|-vl-|vision|qwen2\.5-vl|kimi-vl/i;
 const VIS_ORDER = ['google', 'groq', 'mistral', 'openrouter'];
 const txtLen = m => typeof m.content === 'string' ? m.content.length : m.content[0].text.length;
+/* v4.5 · cuánto se deja de cada mensaje. Antes TODOS se cortaban a 12.000 letras (conservando el principio): al pedir «cámbiale el color» sobre una
+   página de 27.000 letras la IA veía solo el 45 % y perdía el final del archivo, y al pedir «continúa» no veía dónde se había quedado.
+   Ahora el ÚLTIMO mensaje de la IA que trae código y el último de la persona llegan enteros (hasta 60.000 y 40.000 letras). */
+const KEEP_MSG = 12000, KEEP_CODE = 60000, KEEP_LAST_USER = 40000;
+const hasCodeText = t => /```[\s\S]{40,}/.test(t);
 export function normMsgs(messages){
   const list = (Array.isArray(messages) ? messages : []).filter(m => m && ['user', 'assistant', 'system'].includes(m.role) && (typeof m.content === 'string' || Array.isArray(m.content))).slice(-24);
+  const plain = m => typeof m.content === 'string' ? m.content : m.content.filter(p => p && p.type === 'text' && typeof p.text === 'string').map(p => p.text).join('\n');
+  let keep = -1, lastUser = -1;
+  for (let i = list.length - 1; i >= 0; i--){ if (keep < 0 && list[i].role === 'assistant' && hasCodeText(plain(list[i]))) keep = i; if (lastUser < 0 && list[i].role === 'user') lastUser = i; }
+  const capOf = i => i === keep ? KEEP_CODE : i === lastUser ? KEEP_LAST_USER : KEEP_MSG;
   let left = IMG_MAX; const lastUsers = new Set(list.map((m, i) => m.role === 'user' ? i : -1).filter(i => i >= 0).slice(-2));
   const out = new Array(list.length);
   for (let i = list.length - 1; i >= 0; i--){       /* de la más nueva a la más vieja: las fotos recientes tienen prioridad */
-    const m = list[i];
-    if (typeof m.content === 'string'){ out[i] = { role:m.role, content:m.content.slice(0, 12000) }; continue; }
+    const m = list[i], cap = capOf(i);
+    if (typeof m.content === 'string'){ out[i] = { role:m.role, content:m.content.slice(0, cap) }; continue; }
     let text = '', dropped = 0; const imgs = [];
     for (const p of m.content){
       if (!p || typeof p !== 'object') continue;
@@ -212,10 +221,27 @@ export function normMsgs(messages){
         else dropped++;
       }
     }
-    text = text.slice(0, 12000) + (dropped ? '\n[' + dropped + ' imagen(es) adjunta(s) antes]' : '');
+    text = text.slice(0, cap) + (dropped ? '\n[' + dropped + ' imagen(es) adjunta(s) antes]' : '');
     out[i] = imgs.length ? { role:m.role, content:[{ type:'text', text:text.trim() || 'Mira la imagen.' }, ...imgs.map(url => ({ type:'image_url', image_url:{ url } }))] } : { role:m.role, content:text };
   }
-  return { msgs:out, nImg:IMG_MAX - left };
+  return { msgs:out, nImg:IMG_MAX - left, keep };
+}
+/* v4.5 · recorta lo más viejo hasta que quepa, PERO nunca el mensaje de código que se está trabajando (keep) ni el último mensaje.
+   Se quita de a pares (pregunta + respuesta) para que sigan alternando, y se deja el primer mensaje de la persona (casi siempre dice de qué va todo)
+   mientras se pueda. Devuelve cuántos mensajes se quitaron y dónde quedó keep. */
+export function shrinkMsgs(msgs, sys0, keep, budget){
+  const len = () => msgs.reduce((s, m) => s + txtLen(m), 0);
+  let cutN = 0, k = keep;
+  const cut = (j, n) => { msgs.splice(j, n); if (k > j) k -= n; cutN += n; };
+  while (len() > budget){
+    let j = -1;
+    for (let x = sys0 + 1; x < msgs.length - 1; x++) if (x !== k){ j = x; break; }
+    if (j < 0) break;
+    cut(j, j + 1 < msgs.length - 1 && j + 1 !== k ? 2 : 1);
+  }
+  while (len() > budget && msgs.length - 1 > sys0 && k !== sys0) cut(sys0, 1);   /* aún no cabe: se va hasta el primer mensaje de la persona */
+  while (msgs.length > sys0 + 1 && msgs[sys0].role !== 'user' && k !== sys0) cut(sys0, 1);   /* el primero que queda es de la persona (algunos proveedores lo exigen) */
+  return { cutN, keep:k };
 }
 /* con fotos: la IA pedida si ve, y si no (o falla) las mejores que ven de cada proveedor */
 async function visionPlan(model){
@@ -241,7 +267,8 @@ export async function reviewerModel(withImg){
 /* ---------- conversar (con streaming) ---------- */
 const est = s => Math.ceil(String(s || '').length / 4);
 /* cuánto puede escribir cada IA en una sola respuesta (antes eran 1.200: por eso las respuestas largas se cortaban) */
-const OUT_MAX = { groq:6000, mistral:6000, openrouter:6000, google:8000, ollama:6000, cloudflare:3500, siliconflow:4000 };
+/* v4.5 · Google y Mistral dejan escribir bastante más (una página completa de verdad mide 8.000 a 12.000 tokens); Groq y Cloudflare se quedan cortos por su cuota por minuto */
+const OUT_MAX = { groq:6000, mistral:8000, openrouter:8000, google:16000, ollama:6000, cloudflare:3500, siliconflow:4000 };
 const outTok = (prov, asked) => Math.max(64, Math.min(OUT_MAX[prov] || 3500, Math.round(+asked) || 4096));
 /* v3.0 · free: el equipo (Prime, ZFlow y Symmetrix) usa todo sin límite de EnerX para probar (pedido de Sammuel, 27 oct).
    Lo suyo no cuenta para el límite de su conexión (así no le quita a nadie que esté en la misma red) y su batería se ve llena */
@@ -287,12 +314,13 @@ export async function chat({ who, ipKey, messages, model, maxTokens, system, str
   const [used, usedIp] = free ? [0, 0] : (await pipe([['GET', quotaKey(who)], ['GET', quotaKey(ipKey)]])).map(x => +x || 0);
   if (used >= dayLimit) throw err(429, 'Llegaste al límite de hoy. Se renueva a medianoche. Si quieres seguir ya, conecta Puter (gratis, opcional).', 'sz_limit');
   if (usedIp >= Math.max(dayLimit, base) * 3) throw err(429, 'Desde esta conexión ya se usó mucho hoy. Se renueva a medianoche, o conecta Puter (gratis, opcional).', 'sz_limit_ip');
-  let { msgs, nImg } = normMsgs(messages);
+  let { msgs, nImg, keep } = normMsgs(messages);
   /* v4.0 · si la charla es muy larga se quitan los mensajes más viejos, PERO se conserva el primero que escribió la persona
-     (casi siempre dice de qué va todo) y se avisa a la IA que hubo un salto, para que no pierda el hilo */
-  { const sys0 = msgs[0] && msgs[0].role === 'system' ? 1 : 0; let cutN = 0;
-    while (msgs.length > sys0 + 3 && msgs.reduce((s, m) => s + txtLen(m), 0) > 48000){ msgs.splice(sys0 + 1, 2); cutN += 2; }
-    while (msgs.length > 1 && msgs.reduce((s, m) => s + txtLen(m), 0) > 48000) msgs = msgs.slice(1);
+     (casi siempre dice de qué va todo) y se avisa a la IA que hubo un salto, para que no pierda el hilo.
+     v4.5 · y nunca se quita el código en el que se está trabajando: el tope sube lo que haga falta para que quepa entero (hasta 120.000 letras) */
+  { const sys0 = msgs[0] && msgs[0].role === 'system' ? 1 : 0;
+    const prot = (keep >= 0 && msgs[keep] ? txtLen(msgs[keep]) : 0) + (msgs.length ? txtLen(msgs[msgs.length - 1]) : 0), budget = Math.min(120000, Math.max(48000, prot + 24000));
+    const sh = shrinkMsgs(msgs, sys0, keep, budget), cutN = sh.cutN;
     if (cutN && msgs[sys0 + 1] && typeof msgs[sys0].content === 'string' && msgs[sys0].role === 'user') msgs[sys0] = { role:'user', content:msgs[sys0].content + '\n\n[… aquí hubo ' + cutN + ' mensajes más de esta conversación que se omitieron por espacio …]' }; }
   if (!msgs.length || msgs[msgs.length - 1].role !== 'user') throw err(400, 'Escribe un mensaje.', 'sz_empty');
   if (system) msgs = [{ role:'system', content:system }, ...msgs.filter(m => m.role !== 'system')];
@@ -303,6 +331,9 @@ export async function chat({ who, ipKey, messages, model, maxTokens, system, str
     const cat = await models(false), all = [...cat.list, ...(cat.smart || [])], live = route.map(r => all.find(m => m.id === (r && r.id))).filter(Boolean);
     steps = [...live, ...steps.filter(a => !live.some(l => l.id === a.id))].slice(0, 5);
   }
+  /* v4.5 · con un código largo en la charla (más de ~7.000 tokens) los proveedores de cuota corta por minuto (Groq, Cloudflare, SiliconFlow) se dejan para el final:
+     si no les cabe, devolverían «petición muy grande» y se perdería tiempo antes de llegar a uno que sí (Gemini, Mistral, OpenRouter) */
+  if (!nImg && (!model || model === 'sz:auto') && inTok > 7000){ const SMALL = new Set(['groq', 'cloudflare', 'siliconflow']); steps = [...steps.filter(a => !SMALL.has(a.prov)), ...steps.filter(a => SMALL.has(a.prov))]; }
   const tried = [];
   const tell = (m, ok, ms, slow) => { if (onTry) try{ onTry({ m, ok, ms, slow }); }catch(e){} };
   if (nImg && !steps.length) throw err(400, 'Ahora mismo ninguna IA conectada puede ver imágenes. Elige una IA que diga «ve fotos» o envía tu pregunta sin la imagen.', 'sz_novision');
@@ -331,6 +362,11 @@ export async function chat({ who, ipKey, messages, model, maxTokens, system, str
       }catch(e){ up = null; }
       if (!up || !up.ok || (stream && !up.body)){
         const s = up ? up.status : 0, txt = up ? await up.text().catch(() => '') : '';
+        /* v4.5 · «petición demasiado grande» (413, o un aviso de contexto/tamaño): no es culpa de la llave ni del modelo, así que ni se pausa la llave de todos
+           ni se esconde el modelo 6 horas (antes un código largo hacía las dos cosas): se pasa directo a otro proveedor */
+        if (s === 413 || (s === 400 && /context|maximum|too (long|large|many)|reduce|exceed|request too large|tokens? per/i.test(txt))){
+          tried.push(m.prov + ':' + s); await redis('HINCRBY', 'st:' + d, 'big', '1').catch(() => {}); break;
+        }
         /* v4.0 · ese modelo no entiende el parámetro de «pensar más»: se recuerda y se repite sin él (nunca se esconde el modelo por eso) */
         if (s === 400 && exUsed){ NOEX.add(m.id); ki--; continue; }
         tried.push(m.prov + ':' + (s || 'sin respuesta'));

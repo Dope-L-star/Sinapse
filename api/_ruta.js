@@ -119,22 +119,25 @@ export async function used(prov){ const k = 'rt:ld:' + prov + ':' + today(); awa
 
 /* ---------- 2) puntaje de un modelo para un tipo de trabajo ---------- */
 const K = 4;   /* cuántas pruebas «vale» lo que se sabe de antemano antes de confiar en lo medido */
-export function score(m, cat, S, load){
+/* v4.5 · respuestas LARGAS (una página, un archivo entero): cuentan más los proveedores que dejan escribir mucho y menos los de tope corto
+   (Groq corta a 6.000 con su razonamiento incluido y Cloudflare a 3.500: el archivo queda a medias) */
+const LONG_BONUS = { google:2, mistral:1, openrouter:.5, ollama:0, groq:-1, siliconflow:-2, cloudflare:-3 };
+export function score(m, cat, S, load, long){
   const { q, sp } = perfil(m.mid), prior = q[IDX[cat]];
   const s = S[m.id] || { ok:0, fail:0, ms:0, up:0, down:0 }, n = s.ok + s.fail;
   const rate = (s.ok + 0.8 * K) / (n + K);                                    /* % de veces que salió bien (empieza en 80 %) */
   const fb = (s.up - s.down) / (s.up + s.down + 3);                           /* 👍/👎 de las personas, de -1 a 1 */
   const avg = s.ok ? s.ms / s.ok : 0;
   const speed = s.ok >= 3 ? Math.max(1, 10 - avg / 2500) : sp;                /* rapidez medida (o la conocida) */
-  const total = prior + rate * 4 + fb * 2 + speed * 0.3 - (load[m.prov] || 0) * 2.5;
+  const total = prior + rate * 4 + fb * 2 + speed * 0.3 - (load[m.prov] || 0) * 2.5 + (long ? LONG_BONUS[m.prov] || 0 : 0);
   return { total, prior, rate, fb, n, avg, speed };
 }
 
 /* elige: la mejor para este tipo de trabajo + respaldos de OTROS proveedores (así una caída no tumba los dos intentos) */
-export async function pick(cat, n = 4){
+export async function pick(cat, n = 4, o = {}){
   if (!IDX.hasOwnProperty(cat)) cat = 'reason';
   const [cat2, S, load] = await Promise.all([models(false), statsOf(cat), loadOf()]);
-  const ranked = cat2.list.map(m => Object.assign({ m }, score(m, cat, S, load))).sort((a, b) => b.total - a.total);
+  const ranked = cat2.list.map(m => Object.assign({ m }, score(m, cat, S, load, o.long))).sort((a, b) => b.total - a.total);
   const out = [], provs = new Set();
   for (const r of ranked){ if (out.length >= n) break; if (provs.has(r.m.prov)) continue; out.push(r); provs.add(r.m.prov); }
   for (const r of ranked){ if (out.length >= n) break; if (!out.includes(r)) out.push(r); }
@@ -143,11 +146,11 @@ export async function pick(cat, n = 4){
 
 /* v4.0 · para una pregunta difícil: los modelos grandes gratis (cat.smart) ordenados por lo que saben hacer en ESE trabajo y lo medido,
    seguidos de los normales (pick). Uno por proveedor primero, para que una caída no tumbe dos intentos. */
-export async function pickHard(cat, n = 4){
+export async function pickHard(cat, n = 4, o = {}){
   if (!IDX.hasOwnProperty(cat)) cat = 'reason';
   const [cat2, S, load] = await Promise.all([models(false), statsOf(cat), loadOf()]);
   /* en lo difícil pesa más lo que sabe (×1.5) que lo rápido; los grandes llevan un punto extra */
-  const sc = (m, big) => { const x = score(m, cat, S, load); return Object.assign({ m }, x, { total:x.total + x.prior * .5 + (big ? 1 : 0) - x.speed * .3 }); };
+  const sc = (m, big) => { const x = score(m, cat, S, load, o.long); return Object.assign({ m }, x, { total:x.total + x.prior * .5 + (big ? 1 : 0) - x.speed * .3 }); };
   const ranked = [...(cat2.smart || []).map(m => sc(m, true)), ...cat2.list.map(m => sc(m, false))].sort((a, b) => b.total - a.total);
   const out = [], provs = new Set();
   for (const r of ranked){ if (out.length >= n) break; if (provs.has(r.m.prov)) continue; out.push(r); provs.add(r.m.prov); }
