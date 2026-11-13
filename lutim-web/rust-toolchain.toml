@@ -1,0 +1,5 @@
+# Cadena GNU de Rust, ya instalada en este equipo junto con el destino Wasm.
+# Evita depender del enlazador de Visual Studio (MSVC) para las pruebas nativas.
+[toolchain]
+channel = "stable-x86_64-pc-windows-gnu"
+targets = ["wasm32-unknown-unknown"]
