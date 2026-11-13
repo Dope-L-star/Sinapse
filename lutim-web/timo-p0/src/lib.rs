@@ -143,6 +143,16 @@ pub struct Respuesta {
 /// Envía un mensaje a Timo dentro de una conversación y devuelve su respuesta.
 pub fn enviar(conv: &mut Conversacion, interprete: &dyn Interprete, texto: &str) -> Respuesta {
     let lectura = interprete.leer(texto, conv);
+    aplicar_lectura(conv, texto, lectura, interprete.es_simulacion())
+}
+
+/// Aplica una lectura ya obtenida, incluso si el transporte del modelo es asíncrono.
+pub fn aplicar_lectura(
+    conv: &mut Conversacion,
+    texto: &str,
+    lectura: Lectura,
+    simulada: bool,
+) -> Respuesta {
     conv.mensajes.push(Mensaje { autor: Autor::Persona, texto: texto.to_string() });
 
     let (texto_timo, paso) = match lectura {
@@ -193,7 +203,7 @@ pub fn enviar(conv: &mut Conversacion, interprete: &dyn Interprete, texto: &str)
     };
 
     conv.mensajes.push(Mensaje { autor: Autor::Timo, texto: texto_timo.clone() });
-    Respuesta { texto: texto_timo, paso, simulada: interprete.es_simulacion() }
+    Respuesta { texto: texto_timo, paso, simulada }
 }
 
 /// Cambia una sola decisión y deja las demás como estaban.

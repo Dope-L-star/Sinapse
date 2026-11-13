@@ -36,5 +36,5 @@ node servir.mjs
 - **Dependencia incluida.** `Cargo.toml` usa `timo-p0/` dentro del repositorio. El comando de compilación genera `public/` con los archivos para Pages.
 - El intérprete simulado entiende pocas frases; las sugeridas bajo el chat son las que sabe leer.
 - La creación es una lámina de muestra: no se genera contenido.
-- La marca usa el nombre LUTIM y un punto ámbar; el símbolo oficial aún no está integrado.
+- La interfaz incluye el símbolo oficial, una barra lateral con recientes y fijados, y una ruta propia para «Tu panel» (`/#/panel`).
 - Solo en español. Sin probar: lector de pantalla, celular físico, Safari y Firefox.

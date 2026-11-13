@@ -12,9 +12,10 @@ const tipos = {
   '.css': 'text/css; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.wasm': 'application/wasm',
+  '.svg': 'image/svg+xml',
 };
 // La misma política que `_headers` aplica en Pages.
-const csp = "default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+const csp = "default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 
 createServer(async (peticion, respuesta) => {
   const ruta = decodeURIComponent(new URL(peticion.url, 'http://x').pathname);
